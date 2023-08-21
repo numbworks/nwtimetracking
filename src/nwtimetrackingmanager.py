@@ -17,6 +17,18 @@ from numpy import float64
 
 # LOCAL MODULES
 # CLASSES
+class YearlyTarget():
+    
+    '''Represents an amount of hours for a given year.'''
+
+    year : str
+    hours : int
+
+    def __init__(self, year : str, hours : int):
+        
+        self.year = year
+        self.hours = hours
+ 
 # FUNCTIONS
 
 # MAIN
