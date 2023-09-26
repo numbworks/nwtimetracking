@@ -78,6 +78,17 @@ class SettingCollection():
         self.now = now 
 
 # FUNCTIONS
+def get_default_time_tracking_path()-> str:
+
+    '''
+        "c:\...\nwtimetrackingmanager\data\Time Tracking.xlsx"
+    '''
+    
+    path : str = os.getcwd().replace("src", "data")
+    path = os.path.join(path, "Time Tracking.xlsx")
+
+    return path
+
 
 # MAIN
 if __name__ == "__main__":
