@@ -12,6 +12,7 @@ import openpyxl
 import copy
 from pandas import DataFrame
 from datetime import datetime
+from datetime import date
 from pandas import Series
 from numpy import float64
 
@@ -88,7 +89,50 @@ def get_default_time_tracking_path()-> str:
     path = os.path.join(path, "Time Tracking.xlsx")
 
     return path
+def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
+    
+    column_names : list[str] = []
+    column_names.append("Date")                 # [0], date
+    column_names.append("StartTime")            # [1], str
+    column_names.append("EndTime")              # [2], str
+    column_names.append("Duration")             # [3], str
+    column_names.append("Hashtag")              # [4], str
+    column_names.append("Description")          # [5], str
+    column_names.append("ProjectName")          # [6], str
+    column_names.append("ProjectVersion")       # [7], str
+    column_names.append("IsReleaseDate")        # [8], bool
+    column_names.append("Year")                 # [9], int
+    column_names.append("Month")                # [10], int
 
+    dataset_df = pd.read_excel(
+	    io = setting_collection.excel_path, 	
+        skiprows = setting_collection.excel_books_skiprows,
+        nrows = setting_collection.excel_books_nrows,
+	    sheet_name = setting_collection.excel_books_tabname, 
+        engine = 'openpyxl'
+        )
+    
+    dataset_df = dataset_df[column_names]
+
+    dataset_df = dataset_df.replace(
+        to_replace = setting_collection.excel_null_value, 
+        value = np.nan
+    )
+  
+    dataset_df[column_names[0]] = pd.to_datetime(dataset_df[column_names[0]], format="%Y-%m-%d") 
+    dataset_df[column_names[0]] = dataset_df[column_names[0]].apply(lambda x: x.date())
+
+    dataset_df = dataset_df.astype({column_names[1]: str})
+    dataset_df = dataset_df.astype({column_names[2]: str})
+    dataset_df = dataset_df.astype({column_names[3]: str})
+    dataset_df = dataset_df.astype({column_names[4]: str})
+    dataset_df = dataset_df.astype({column_names[5]: str})
+    dataset_df = dataset_df.astype({column_names[7]: str})
+    dataset_df = dataset_df.astype({column_names[8]: bool})
+    dataset_df = dataset_df.astype({column_names[9]: int})
+    dataset_df = dataset_df.astype({column_names[10]: int})
+
+    return dataset_df
 
 # MAIN
 if __name__ == "__main__":
