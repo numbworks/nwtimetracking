@@ -13,6 +13,7 @@ import copy
 from pandas import DataFrame
 from datetime import datetime
 from datetime import date
+from datetime import timedelta
 from pandas import Series
 from numpy import float64
 
@@ -42,10 +43,8 @@ class SettingCollection():
     excel_null_value : str
     n_generic : int
     n_by_month : int
-    show_sessions_df : bool
-    show_tts_by_month_upd_df : bool
-    show_cumulative_df : bool
     now : datetime
+    show_sessions_df : bool
 
     def __init__(
         self,
@@ -58,10 +57,8 @@ class SettingCollection():
         excel_null_value : str,
         n_generic : int,
         n_by_month : int,
-        show_sessions_df : bool,
-        show_tts_by_month_upd_df : bool,
-        show_cumulative_df : bool,
-        now : datetime
+        now : datetime,
+        show_sessions_df : bool
         ):
 
         self.read_years = read_years
@@ -73,10 +70,9 @@ class SettingCollection():
         self.excel_null_value = excel_null_value
         self.n_generic = n_generic
         self.n_by_month = n_by_month
+        self.now = now         
         self.show_sessions_df = show_sessions_df
-        self.show_tts_by_month_upd_df = show_tts_by_month_upd_df
-        self.show_cumulative_df = show_cumulative_df
-        self.now = now 
+
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
@@ -100,7 +96,7 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     column_names.append("Description")          # [5], str
     column_names.append("ProjectName")          # [6], str
     column_names.append("ProjectVersion")       # [7], str
-    column_names.append("IsReleaseDate")        # [8], bool
+    column_names.append("IsReleaseDate")        # [8], str - not bool because it can be Yes/No/null
     column_names.append("Year")                 # [9], int
     column_names.append("Month")                # [10], int
 
@@ -128,7 +124,7 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     dataset_df = dataset_df.astype({column_names[4]: str})
     dataset_df = dataset_df.astype({column_names[5]: str})
     dataset_df = dataset_df.astype({column_names[7]: str})
-    dataset_df = dataset_df.astype({column_names[8]: bool})
+    dataset_df = dataset_df.astype({column_names[8]: str})
     dataset_df = dataset_df.astype({column_names[9]: int})
     dataset_df = dataset_df.astype({column_names[10]: int})
 
