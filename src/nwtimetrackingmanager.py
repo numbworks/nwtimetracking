@@ -23,10 +23,10 @@ class YearlyTarget():
     
     '''Represents an amount of hours for a given year.'''
 
-    year : str
-    hours : int
+    year : int
+    hours : timedelta
 
-    def __init__(self, year : str, hours : int):
+    def __init__(self, year : int, hours : timedelta):
         
         self.year = year
         self.hours = hours
