@@ -40,7 +40,6 @@ class SettingCollection():
     excel_books_skiprows : int
     excel_books_nrows : int
     excel_books_tabname : str
-    excel_null_value : str
     n_generic : int
     n_by_month : int
     now : datetime
@@ -54,7 +53,6 @@ class SettingCollection():
         excel_books_skiprows : int,
         excel_books_nrows : int,
         excel_books_tabname : str,
-        excel_null_value : str,
         n_generic : int,
         n_by_month : int,
         now : datetime,
@@ -67,12 +65,10 @@ class SettingCollection():
         self.excel_books_skiprows = excel_books_skiprows
         self.excel_books_nrows = excel_books_nrows
         self.excel_books_tabname = excel_books_tabname
-        self.excel_null_value = excel_null_value
         self.n_generic = n_generic
         self.n_by_month = n_by_month
         self.now = now         
         self.show_sessions_df = show_sessions_df
-
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
@@ -87,6 +83,10 @@ def get_default_time_tracking_path()-> str:
     return path
 def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     
+    '''
+        Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
+    '''
+
     column_names : list[str] = []
     column_names.append("Date")                 # [0], date
     column_names.append("StartTime")            # [1], str
@@ -109,11 +109,6 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
         )
     
     dataset_df = dataset_df[column_names]
-
-    dataset_df = dataset_df.replace(
-        to_replace = setting_collection.excel_null_value, 
-        value = np.nan
-    )
   
     dataset_df[column_names[0]] = pd.to_datetime(dataset_df[column_names[0]], format="%Y-%m-%d") 
     dataset_df[column_names[0]] = dataset_df[column_names[0]].apply(lambda x: x.date())
