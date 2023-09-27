@@ -34,7 +34,7 @@ class SettingCollection():
 
     '''Represents a collection of settings.'''
 
-    read_years : list[int]
+    years : list[int]
     yearly_targets : list[YearlyTarget]
     excel_path : str
     excel_books_skiprows : int
@@ -47,7 +47,7 @@ class SettingCollection():
 
     def __init__(
         self,
-        read_years : list[int],
+        years : list[int],
         yearly_targets : list[YearlyTarget],
         excel_path : str,
         excel_books_skiprows : int,
@@ -59,7 +59,7 @@ class SettingCollection():
         show_sessions_df : bool
         ):
 
-        self.read_years = read_years
+        self.years = years
         self.yearly_targets = yearly_targets
         self.excel_path = excel_path
         self.excel_books_skiprows = excel_books_skiprows
@@ -132,21 +132,93 @@ def convert_string_to_timedelta(td_str : str) -> timedelta:
     td : timedelta = pd.Timedelta(value = td_str).to_pytimedelta()
 
     return td
-def add_timedeltas(td_1 : timedelta, td_2 : timedelta) -> timedelta:
+def get_yearly_target(yearly_targets : list[YearlyTarget], year : int) -> YearlyTarget:
 
-    '''Performs td_1 + td_2. '''
+    '''Retrieves the YearlyTarget object for the provided "year" or None.'''
 
-    td : timedelta = td_1 + td_2
+    for yearly_target in yearly_targets:
+        if yearly_target.year == year:
+            return yearly_target
+        
+    return None
+def is_yearly_target_met(duration : timedelta, yearly_target : timedelta) -> bool:
 
-    return td
-def substract_timedeltas(td_1 : timedelta, td_2 : timedelta) -> timedelta:
+    if duration >= yearly_target:
+        return True
 
-    '''Performs td_1 - td_2. '''
+    return False
+def format_timedelta(td : timedelta, is_target_diff : bool) -> str:
 
-    td : timedelta = td_1 - td_2
+    '''
+        4 days 19:15:00	=> "115h 15m" (or +115h 15m)
+        -9 days +22:30:00 => "-194h 30m"
+    '''
 
-    return td
+    total_seconds : float = td.total_seconds()
+    hours : int = int(total_seconds // 3600)
+    minutes : int = int((total_seconds % 3600) // 60)
 
+    hours_str : str = str(hours).zfill(2)
+    minutes_str : str = str(minutes ).zfill(2)
+    
+    formatted : str = f"{hours_str}h {minutes_str}m"
+
+    if (is_target_diff == True and td.days >= 0):
+        formatted = f"+{formatted}"
+
+    return formatted
+def get_tt_by_year(sessions_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+
+    '''
+        [0]
+                Date	    StartTime	EndTime	Duration	Hashtag	    Description	ProjectName	ProjectVersion	IsReleaseDate	Year	Month
+            0	2015-10-31	nan	        nan	    8h 00m	    #untagged	nan	        NaN	        nan	            nan	            2015	10
+            1	2015-11-30	nan	        nan	    10h 00m	    #untagged	nan	        NaN	        nan	            nan	            2015	11            
+            ...
+
+        [1]
+                Year	Duration
+            0	2016	25 days 15:15:00
+
+        [2] 
+                Year	Duration	        YearlyTarget        TargetDiff	    IsTargetMet	
+            0	2015	0 days 18:00:00	    0 days 00:00:00	    0 days 18:00:00 True
+            1	2016	25 days 15:15:00	20 days 20:00:00	4 days 19:15:00 True
+            ...
+
+        [3]
+                Year	Duration	YearlyTarget	TargetDiff	IsTargetMet
+            0	2015	18h 00m	    00h 00m	        +18h 00m	True
+            1	2016	615h 15m	500h 00m	    +115h 15m	True
+            ...
+    '''
+
+    cn_year : str = "Year"
+    cn_duration : str = "Duration"
+    cn_yearly_target : str = "YearlyTarget"
+    cn_is_target_met : str = "IsTargetMet"
+    cn_target_diff : str = "TargetDiff"
+
+    tt_by_year_df : DataFrame = sessions_df.copy(deep = True)
+
+    condition : Series = (sessions_df[cn_year].isin(values = years))
+    tt_by_year_df = tt_by_year_df.loc[condition]
+
+    tt_by_year_df[cn_duration] = tt_by_year_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_by_year_df : DataFrame = tt_by_year_df.groupby([cn_year])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_by_year_df = tt_by_year_df.sort_values(by = cn_year).reset_index(drop = True)
+
+    tt_by_year_df[cn_yearly_target] = tt_by_year_df[cn_year].apply(
+        lambda x : get_yearly_target(yearly_targets = yearly_targets, year = x).hours)
+    tt_by_year_df[cn_target_diff] = tt_by_year_df[cn_duration] - tt_by_year_df[cn_yearly_target]
+    tt_by_year_df[cn_is_target_met] = tt_by_year_df.apply(
+        lambda x : is_yearly_target_met(duration = x[cn_duration], yearly_target = x[cn_yearly_target]), axis = 1)    
+
+    tt_by_year_df[cn_duration] = tt_by_year_df[cn_duration].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
+    tt_by_year_df[cn_yearly_target] = tt_by_year_df[cn_yearly_target].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
+    tt_by_year_df[cn_target_diff] = tt_by_year_df[cn_target_diff].apply(lambda x : format_timedelta(td = x, is_target_diff = True))
+
+    return tt_by_year_df
 
 # MAIN
 if __name__ == "__main__":
