@@ -125,6 +125,29 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
 
     return dataset_df
 
+def convert_string_to_timedelta(td_str : str) -> timedelta:
+
+    '''"5h 30m" => 5:30:00'''
+
+    td : timedelta = pd.Timedelta(value = td_str).to_pytimedelta()
+
+    return td
+def add_timedeltas(td_1 : timedelta, td_2 : timedelta) -> timedelta:
+
+    '''Performs td_1 + td_2. '''
+
+    td : timedelta = td_1 + td_2
+
+    return td
+def substract_timedeltas(td_1 : timedelta, td_2 : timedelta) -> timedelta:
+
+    '''Performs td_1 - td_2. '''
+
+    td : timedelta = td_1 - td_2
+
+    return td
+
+
 # MAIN
 if __name__ == "__main__":
     pass
