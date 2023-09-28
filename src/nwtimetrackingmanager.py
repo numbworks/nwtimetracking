@@ -44,6 +44,7 @@ class SettingCollection():
     n_by_month : int
     now : datetime
     show_sessions_df : bool
+    show_tt_by_year_df : bool
 
     def __init__(
         self,
@@ -56,7 +57,8 @@ class SettingCollection():
         n_generic : int,
         n_by_month : int,
         now : datetime,
-        show_sessions_df : bool
+        show_sessions_df : bool,
+        show_tt_by_year_df : bool
         ):
 
         self.years = years
@@ -69,6 +71,7 @@ class SettingCollection():
         self.n_by_month = n_by_month
         self.now = now         
         self.show_sessions_df = show_sessions_df
+        self.show_tt_by_year_df = show_tt_by_year_df
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
