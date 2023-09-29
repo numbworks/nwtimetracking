@@ -438,8 +438,8 @@ def get_raw_tme(sessions_df : DataFrame, years : list[int]) -> DataFrame:
     tt_df = tt_df.groupby(by = [cn_year, cn_month])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
     tt_df = tt_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
   
-    cn_dme : str = "TME"
-    tt_df.rename(columns = {cn_effort : cn_dme}, inplace = True)
+    cn_tme : str = "TME"
+    tt_df.rename(columns = {cn_effort : cn_tme}, inplace = True)
 
     return tt_df
 def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
@@ -492,50 +492,151 @@ def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software
 
     return tt_df
 
-def get_tt_by_year_sp(tt_by_year_month_sp_df : DataFrame) -> DataFrame:
+def get_raw_tt_by_year_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    
+    '''
+            Year	ProjectName	        ProjectVersion	Effort
+        0	2023	nwtraderaanalytics	2.0.0	        0 days 09:15:00
+        1	2023	NW.AutoProffLibrary	1.0.0	        0 days 09:30:00
+        ...
+    '''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    cn_is_software_project : str = "IsSoftwareProject"
+    condition_one : Series = (sessions_df[cn_year].isin(values = years))
+    condition_two : Series = (sessions_df[cn_is_software_project] == True)
+    tt_df = tt_df.loc[condition_one & condition_two]
+
+    cn_descriptor : str = "Descriptor"
+    cn_project_name : str = "ProjectName"
+    cn_project_version : str = "ProjectVersion"
+    tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
+    tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_version(descriptor = x))
+
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df = tt_df.groupby(by = [cn_year, cn_project_name, cn_project_version])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+    tt_df = tt_df.sort_values(by = [cn_year, cn_project_name, cn_project_version]).reset_index(drop = True)
+  
+    condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
+    tt_df = tt_df.loc[condition_three]
+
+    return tt_df
+def get_raw_dye(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    
+    '''
+            Year	DYE
+        0	2023	0 days 09:15:00
+        1	2023	0 days 06:45:00
+        ...
+
+        DYE = DevelopmentYearlyEffort
+    '''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    cn_is_software_project : str = "IsSoftwareProject"
+    condition_one : Series = (sessions_df[cn_year].isin(values = years))
+    condition_two : Series = (sessions_df[cn_is_software_project] == True)
+    tt_df = tt_df.loc[condition_one & condition_two]
+
+    cn_descriptor : str = "Descriptor"
+    cn_project_name : str = "ProjectName"
+    cn_project_version : str = "ProjectVersion"
+    tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
+    tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_version(descriptor = x))
+
+    condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
+    tt_df = tt_df.loc[condition_three]
+
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df = tt_df.groupby(by = [cn_year])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+    tt_df = tt_df.sort_values(by = [cn_year]).reset_index(drop = True)
+  
+    cn_dye : str = "DYE"
+    tt_df.rename(columns = {cn_effort : cn_dye}, inplace = True)
+
+    return tt_df
+def get_raw_tye(sessions_df : DataFrame, years : list[int]) -> DataFrame:
+    
+    '''
+            Year	TYE
+        0	2023	0 days 09:15:00
+        1	2023	0 days 06:45:00
+        ...
+
+        TYE = TotalYearlyEffort
+    '''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    condition : Series = (sessions_df[cn_year].isin(values = years))
+    tt_df = tt_df.loc[condition]
+
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df = tt_df.groupby(by = [cn_year])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+    tt_df = tt_df.sort_values(by = [cn_year]).reset_index(drop = True)
+  
+    cn_tye : str = "TYE"
+    tt_df.rename(columns = {cn_effort : cn_tye}, inplace = True)
+
+    return tt_df
+def get_tt_by_year_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
     '''
         [0] ...
         [1]
 
-                Year	ProjectName	            ProjectVersion	Effort	DME	    %_DME	TME	    %_TME
-            0	2023	nwreadinglistmanager	1.0.0	        45h 15m	45h 15m	300.00	82h 45m	180.28
-            1	2023	nwreadinglistmanager	1.5.0	        16h 15m	19h 15m	84.42	36h 30m	44.52
+                Year	ProjectName     	    ProjectVersion	Effort	DYE	    %_DYE	TYE	    %_TYE
+            0	2023	nwtraderaanalytics	    2.0.0	        09h 15m	09h 15m	100.00	19h 00m	48.68
+            1	2023	nwreadinglistmanager	1.0.0	        06h 45m	06h 45m	100.00	24h 45m	27.27
             ...
     '''
 
-    tt_df : DataFrame = tt_by_year_month_sp_df.copy(deep = True)
+    sp_df : DataFrame = get_raw_tt_by_year_sp(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    dye_df : DataFrame = get_raw_dye(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    tye_df : DataFrame = get_raw_tye(sessions_df = sessions_df, years = years)
 
     cn_year : str = "Year"
-    cn_project_name : str = "ProjectName"
-    cn_project_version : str = "ProjectVersion"
+
+    tt_df : DataFrame = pd.merge(
+        left = sp_df, 
+        right = dye_df, 
+        how = "inner", 
+        left_on = [cn_year], 
+        right_on = [cn_year]
+        )
+    
     cn_effort : str = "Effort"
-    cn_dme : str = "DME"
-    cn_percentage_dme : str = "%_DME"    
-    cn_tme : str = "TME"
-    cn_percentage_tme : str = "%_TME"
+    cn_dye : str = "DYE"
+    cn_percentage_dye : str = "%_DYE"
+    tt_df[cn_percentage_dye] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = x[cn_dye]), axis = 1)        
 
-    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))   
-    tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : convert_string_to_timedelta(td_str = x))
-    tt_df[cn_tme] = tt_df[cn_tme].apply(lambda x : convert_string_to_timedelta(td_str = x))    
-
-    column_names : list[str] = [cn_year, cn_project_name, cn_project_version]
-    agg_instructions : dict[str, str] = { 
-        cn_effort : "sum", 
-        cn_dme : "sum",
-        cn_percentage_dme : "sum",
-        cn_tme : "sum",
-        cn_percentage_tme : "sum"
-        }
-
-    tt_df = tt_df.groupby(by = column_names).agg(agg_instructions).reset_index()
-    tt_df = tt_df.sort_values(by = column_names).reset_index(drop = True)
+    tt_df = pd.merge(
+        left = tt_df, 
+        right = tye_df, 
+        how = "inner", 
+        left_on = [cn_year], 
+        right_on = [cn_year]
+        )   
+   
+    cn_tye : str = "TYE"
+    cn_percentage_tye : str = "%_TYE"
+    tt_df[cn_percentage_tye] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = x[cn_tye]), axis = 1)    
 
     tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))   
-    tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
-    tt_df[cn_tme] = tt_df[cn_tme].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+    tt_df[cn_dye] = tt_df[cn_dye].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+    tt_df[cn_tye] = tt_df[cn_tye].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
 
     return tt_df
+
+
 
 # MAIN
 if __name__ == "__main__":
