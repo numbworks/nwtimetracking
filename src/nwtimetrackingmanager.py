@@ -100,8 +100,8 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     column_names.append("Duration")             # [3], str
     column_names.append("Hashtag")              # [4], str
     column_names.append("Descriptor")           # [5], str
-    column_names.append("IsSoftwareProject")    # [6], str
-    column_names.append("IsReleaseDay")         # [7], str - not bool because it can be Yes/No/null
+    column_names.append("IsSoftwareProject")    # [6], bool
+    column_names.append("IsReleaseDay")         # [7], bool
     column_names.append("Year")                 # [8], int
     column_names.append("Month")                # [9], int
 
@@ -123,8 +123,8 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     dataset_df = dataset_df.astype({column_names[3]: str})
     dataset_df = dataset_df.astype({column_names[4]: str})
     dataset_df = dataset_df.astype({column_names[5]: str})
-    dataset_df = dataset_df.astype({column_names[6]: str})
-    dataset_df = dataset_df.astype({column_names[7]: str})
+    dataset_df = dataset_df.astype({column_names[6]: bool})
+    dataset_df = dataset_df.astype({column_names[7]: bool})
     dataset_df = dataset_df.astype({column_names[8]: int})
     dataset_df = dataset_df.astype({column_names[9]: int})
 
