@@ -156,7 +156,7 @@ def is_yearly_target_met(duration : timedelta, yearly_target : timedelta) -> boo
         return True
 
     return False
-def format_timedelta(td : timedelta, is_target_diff : bool) -> str:
+def format_timedelta(td : timedelta, add_plus_sign : bool) -> str:
 
     '''
         4 days 19:15:00	=> "115h 15m" (or +115h 15m)
@@ -172,7 +172,7 @@ def format_timedelta(td : timedelta, is_target_diff : bool) -> str:
     
     formatted : str = f"{hours_str}h {minutes_str}m"
 
-    if (is_target_diff == True and td.days >= 0):
+    if (add_plus_sign == True and td.days >= 0):
         formatted = f"+{formatted}"
 
     return formatted
@@ -223,9 +223,9 @@ def get_tt_by_year(sessions_df : DataFrame, years : list[int], yearly_targets : 
     tt_df[cn_is_target_met] = tt_df.apply(
         lambda x : is_yearly_target_met(duration = x[cn_duration], yearly_target = x[cn_yearly_target]), axis = 1)    
 
-    tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
-    tt_df[cn_yearly_target] = tt_df[cn_yearly_target].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
-    tt_df[cn_target_diff] = tt_df[cn_target_diff].apply(lambda x : format_timedelta(td = x, is_target_diff = True))
+    tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+    tt_df[cn_yearly_target] = tt_df[cn_yearly_target].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+    tt_df[cn_target_diff] = tt_df[cn_target_diff].apply(lambda x : format_timedelta(td = x, add_plus_sign = True))
 
     return tt_df
 def get_tt_by_year_month(sessions_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
@@ -292,9 +292,9 @@ def get_tt_by_year_month(sessions_df : DataFrame, years : list[int], yearly_targ
 
     tt_df.drop(columns = [cn_yearly_target], axis = 1, inplace = True)
     
-    tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : format_timedelta(td = x, is_target_diff = False))   
-    tt_df[cn_yearly_total] = tt_df[cn_yearly_total].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
-    tt_df[cn_to_target] = tt_df[cn_to_target].apply(lambda x : format_timedelta(td = x, is_target_diff = True))
+    tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))   
+    tt_df[cn_yearly_total] = tt_df[cn_yearly_total].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+    tt_df[cn_to_target] = tt_df[cn_to_target].apply(lambda x : format_timedelta(td = x, add_plus_sign = True))
 
     return tt_df
 
@@ -495,9 +495,9 @@ def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software
     cn_percentage_tme : str = "%_TME"
     tt_df[cn_percentage_tme] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = x[cn_tme]), axis = 1)    
 
-    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, is_target_diff = False))   
-    tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
-    tt_df[cn_tme] = tt_df[cn_tme].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))   
+    tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+    tt_df[cn_tme] = tt_df[cn_tme].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
 
     return tt_df
 
