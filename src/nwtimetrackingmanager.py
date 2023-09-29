@@ -383,7 +383,7 @@ def get_raw_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], soft
     tt_df = tt_df.loc[condition_three]
 
     return tt_df
-def get_raw_dme(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+def get_raw_dme(sessions_df : DataFrame, years : list[int]) -> DataFrame:
     
     '''
             Year	Month	DME
@@ -407,9 +407,6 @@ def get_raw_dme(sessions_df : DataFrame, years : list[int], software_project_nam
     cn_project_version : str = "ProjectVersion"
     tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
     tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_version(descriptor = x))
-
-    condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
-    tt_df = tt_df.loc[condition_three]
 
     cn_month : str = "Month"
     cn_effort : str = "Effort"
@@ -461,7 +458,7 @@ def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software
     '''
 
     sp_df : DataFrame = get_raw_tt_by_year_month_sp(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-    dme_df : DataFrame = get_raw_dme(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    dme_df : DataFrame = get_raw_dme(sessions_df = sessions_df, years = years)
     tme_df : DataFrame = get_raw_tme(sessions_df = sessions_df, years = years)
 
     cn_year : str = "Year"
@@ -530,7 +527,7 @@ def get_raw_tt_by_year_sp(sessions_df : DataFrame, years : list[int], software_p
     tt_df = tt_df.loc[condition_three]
 
     return tt_df
-def get_raw_dye(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+def get_raw_dye(sessions_df : DataFrame, years : list[int]) -> DataFrame:
     
     '''
             Year	DYE
@@ -554,9 +551,6 @@ def get_raw_dye(sessions_df : DataFrame, years : list[int], software_project_nam
     cn_project_version : str = "ProjectVersion"
     tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
     tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_version(descriptor = x))
-
-    condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
-    tt_df = tt_df.loc[condition_three]
 
     cn_effort : str = "Effort"
     tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
@@ -606,7 +600,7 @@ def get_tt_by_year_sp(sessions_df : DataFrame, years : list[int], software_proje
     '''
 
     sp_df : DataFrame = get_raw_tt_by_year_sp(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-    dye_df : DataFrame = get_raw_dye(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    dye_df : DataFrame = get_raw_dye(sessions_df = sessions_df, years = years)
     tye_df : DataFrame = get_raw_tye(sessions_df = sessions_df, years = years)
 
     cn_year : str = "Year"
