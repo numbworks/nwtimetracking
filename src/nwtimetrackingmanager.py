@@ -418,6 +418,88 @@ def get_raw_dme(sessions_df : DataFrame, years : list[int], software_project_nam
     tt_df.rename(columns = {cn_duration : cn_dme}, inplace = True)
 
     return tt_df
+def get_raw_tme(sessions_df : DataFrame, years : list[int]) -> DataFrame:
+    
+    '''
+            Year	Month	TME
+        0	2023	4	    0 days 09:15:00
+        1	2023	6	    0 days 06:45:00
+        ...
+
+        TME = TotalMonthlyEffort
+    '''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    condition : Series = (sessions_df[cn_year].isin(values = years))
+    tt_df = tt_df.loc[condition]
+
+    cn_month : str = "Month"
+    cn_duration : str = "Duration"
+    tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df = tt_df.groupby(by = [cn_year, cn_month])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_df = tt_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
+  
+    cn_dme : str = "TME"
+    tt_df.rename(columns = {cn_duration : cn_dme}, inplace = True)
+
+    return tt_df
+def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+
+    '''
+        [0]
+
+                Year	Month	ProjectName	            ProjectVersion	Effort	        DME	            %_DME	TME	            %_TME
+            0	2023	4	    nwtraderaanalytics	    2.0.0	        0 days 09:15:00	0 days 09:15:00	100.00	0 days 19:00:00	48.68
+            1	2023	6	    nwreadinglistmanager	1.0.0	        0 days 06:45:00	0 days 06:45:00	100.00	1 days 00:45:00	27.27
+            ...
+
+        [1]
+
+                Year	Month	ProjectName     	    ProjectVersion	Effort	DME	    %_DME	TME	    %_TME
+            0	2023	4	    nwtraderaanalytics	    2.0.0	        09h 15m	09h 15m	100.00	19h 00m	48.68
+            1	2023	6	    nwreadinglistmanager	1.0.0	        06h 45m	06h 45m	100.00	24h 45m	27.27
+            ...
+    '''
+
+    sp_df : DataFrame = get_raw_tt_by_year_month_sp(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    dme_df : DataFrame = get_raw_dme(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    tme_df : DataFrame = get_raw_tme(sessions_df = sessions_df, years = years)
+
+    cn_year : str = "Year"
+    cn_month : str = "Month"
+
+    tt_df : DataFrame = pd.merge(
+        left = sp_df, 
+        right = dme_df, 
+        how = "inner", 
+        left_on = [cn_year, cn_month], 
+        right_on = [cn_year, cn_month]
+        )
+    
+    cn_effort : str = "Effort"
+    cn_dme : str = "DME"
+    cn_percentage_dme : str = "%_DME"
+    tt_df[cn_percentage_dme] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = x[cn_dme]), axis = 1)        
+
+    tt_df = pd.merge(
+        left = tt_df, 
+        right = tme_df, 
+        how = "inner", 
+        left_on = [cn_year, cn_month], 
+        right_on = [cn_year, cn_month]
+        )   
+   
+    cn_tme : str = "TME"
+    cn_percentage_tme : str = "%_TME"
+    tt_df[cn_percentage_tme] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = x[cn_tme]), axis = 1)    
+
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, is_target_diff = False))   
+    tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
+    tt_df[cn_tme] = tt_df[cn_tme].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
+
+    return tt_df
 
 # MAIN
 if __name__ == "__main__":
