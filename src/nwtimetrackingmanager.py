@@ -330,13 +330,35 @@ def extract_software_project_version(descriptor : str) -> str:
         return matches[0]
 
     return "ERROR"
-def get_tt_by_year_month_spn(
+def calculate_percentage(part : float, whole : float, rounding_digits : int = 2) -> float:
+
+    '''Calculates a percentage.'''
+
+    prct : float = None
+
+    if part == 0:
+        prct = 0
+    else:
+        prct = (100 * part) / whole
+
+    prct = round(number = prct, ndigits = rounding_digits)
+
+    return prct
+def get_tt_by_year_month_sp(
         sessions_df : DataFrame, 
         years : list[int], 
         yearly_targets : list[YearlyTarget], 
         software_project_names : list[str]) -> DataFrame:
     
     '''
+        [0]
+
+                Year	Month	ProjectName	        ProjectVersion	Duration
+            0	2023	4	    nwtraderaanalytics	2.0.0	        0 days 09:15:00
+            1	2023	5	    NW.AutoProffLibrary	1.0.0	        0 days 09:30:00
+            ...
+
+        [1]          
     
     '''
 
