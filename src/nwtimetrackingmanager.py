@@ -380,6 +380,44 @@ def get_raw_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], soft
     tt_df = tt_df.loc[condition_three]
 
     return tt_df
+def get_raw_dme(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    
+    '''
+            Year	Month	DME
+        0	2023	4	    0 days 09:15:00
+        1	2023	6	    0 days 06:45:00
+        ...
+
+        DME = DevelopmentMonthlyEffort
+    '''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    cn_is_software_project : str = "IsSoftwareProject"
+    condition_one : Series = (sessions_df[cn_year].isin(values = years))
+    condition_two : Series = (sessions_df[cn_is_software_project] == True)
+    tt_df = tt_df.loc[condition_one & condition_two]
+
+    cn_descriptor : str = "Descriptor"
+    cn_project_name : str = "ProjectName"
+    cn_project_version : str = "ProjectVersion"
+    tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
+    tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_version(descriptor = x))
+
+    condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
+    tt_df = tt_df.loc[condition_three]
+
+    cn_month : str = "Month"
+    cn_duration : str = "Duration"
+    tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df = tt_df.groupby(by = [cn_year, cn_month])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_df = tt_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
+  
+    cn_dme : str = "DME"
+    tt_df.rename(columns = {cn_duration : cn_dme}, inplace = True)
+
+    return tt_df
 
 # MAIN
 if __name__ == "__main__":
