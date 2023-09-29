@@ -198,9 +198,6 @@ def get_tt_by_year(sessions_df : DataFrame, years : list[int], yearly_targets : 
 
     cn_year : str = "Year"
     cn_duration : str = "Duration"
-    cn_yearly_target : str = "YearlyTarget"
-    cn_is_target_met : str = "IsTargetMet"
-    cn_target_diff : str = "TargetDiff"
 
     tt_by_year_df : DataFrame = sessions_df.copy(deep = True)
 
@@ -210,6 +207,10 @@ def get_tt_by_year(sessions_df : DataFrame, years : list[int], yearly_targets : 
     tt_by_year_df[cn_duration] = tt_by_year_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
     tt_by_year_df : DataFrame = tt_by_year_df.groupby([cn_year])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
     tt_by_year_df = tt_by_year_df.sort_values(by = cn_year).reset_index(drop = True)
+
+    cn_yearly_target : str = "YearlyTarget"
+    cn_target_diff : str = "TargetDiff"
+    cn_is_target_met : str = "IsTargetMet"
 
     tt_by_year_df[cn_yearly_target] = tt_by_year_df[cn_year].apply(
         lambda x : get_yearly_target(yearly_targets = yearly_targets, year = x).hours)
@@ -222,6 +223,76 @@ def get_tt_by_year(sessions_df : DataFrame, years : list[int], yearly_targets : 
     tt_by_year_df[cn_target_diff] = tt_by_year_df[cn_target_diff].apply(lambda x : format_timedelta(td = x, is_target_diff = True))
 
     return tt_by_year_df
+def get_tt_by_year_month(sessions_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+
+    '''
+        [0]
+
+                    Year	Month	Duration
+            0	    2015	11	    0 days 10:00:00
+            1	    2015	10	    0 days 08:00:00
+            ...
+
+        [1]
+
+                    Year	Month	Duration	    YearlyTotal
+            0	    2015	10	    0 days 08:00:00	0 days 08:00:00
+            1	    2015	11	    0 days 10:00:00	0 days 18:00:00
+            ...
+
+        [2] 
+
+                Year	Month	Duration	    YearlyTotal	    YearlyTarget
+            0	2015	10	    0 days 08:00:00	0 days 08:00:00	0 days 00:00:00
+            1	2015	11	    0 days 10:00:00	0 days 18:00:00	0 days 00:00:00
+            ...
+        
+        [3]
+
+                Year	Month	Duration	    YearlyTotal	    YearlyTarget	ToTarget
+            0	2015	10	    0 days 08:00:00	0 days 08:00:00	0 days 00:00:00	0 days 08:00:00
+            1	2015	11	    0 days 10:00:00	0 days 18:00:00	0 days 00:00:00	0 days 10:00:00        
+            ...
+
+        [4] 
+                Year	Month	Duration	YearlyTotal	ToTarget
+            ...
+            87	2023	1	    06h 00m	    06h 00m	    -394h 00m
+            88	2023	2	    23h 00m	    29h 00m	    -371h 00m
+            89	2023	3	    50h 15m	    79h 15m	    -321h 15m   
+            ...
+    '''
+
+    cn_year : str = "Year"
+    cn_month : str = "Month"
+    cn_duration : str = "Duration"    
+
+    tt_by_year_month_df : DataFrame = sessions_df.copy(deep = True)
+
+    condition : Series = (sessions_df[cn_year].isin(values = years))
+    tt_by_year_month_df = tt_by_year_month_df.loc[condition]
+
+    tt_by_year_month_df[cn_duration] = tt_by_year_month_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_by_year_month_df : DataFrame = tt_by_year_month_df.groupby(by = [cn_year, cn_month])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_by_year_month_df = tt_by_year_month_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
+
+    cn_yearly_total : str = "YearlyTotal"
+    tt_by_year_month_df[cn_yearly_total] = tt_by_year_month_df[cn_duration].groupby(by = tt_by_year_month_df[cn_year]).cumsum()
+
+    cn_yearly_target : str = "YearlyTarget"
+    tt_by_year_month_df[cn_yearly_target] = tt_by_year_month_df[cn_year].apply(
+        lambda x : get_yearly_target(yearly_targets = yearly_targets, year = x).hours)
+
+    cn_to_target : str  = "ToTarget"
+    tt_by_year_month_df[cn_to_target] = tt_by_year_month_df[cn_yearly_total] - tt_by_year_month_df[cn_yearly_target]    
+
+    tt_by_year_month_df.drop(columns = [cn_yearly_target], axis = 1, inplace = True)
+    
+    tt_by_year_month_df[cn_duration] = tt_by_year_month_df[cn_duration].apply(lambda x : format_timedelta(td = x, is_target_diff = False))   
+    tt_by_year_month_df[cn_yearly_total] = tt_by_year_month_df[cn_yearly_total].apply(lambda x : format_timedelta(td = x, is_target_diff = False))
+    tt_by_year_month_df[cn_to_target] = tt_by_year_month_df[cn_to_target].apply(lambda x : format_timedelta(td = x, is_target_diff = True))
+
+    return tt_by_year_month_df
 
 # MAIN
 if __name__ == "__main__":
