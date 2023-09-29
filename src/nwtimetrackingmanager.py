@@ -6,6 +6,7 @@ Alias: nwttm
 
 # GLOBAL MODULES
 import os
+import re
 import pandas as pd
 import numpy as np
 import openpyxl
@@ -295,6 +296,40 @@ def get_tt_by_year_month(sessions_df : DataFrame, years : list[int], yearly_targ
     tt_by_year_month_df[cn_to_target] = tt_by_year_month_df[cn_to_target].apply(lambda x : format_timedelta(td = x, is_target_diff = True))
 
     return tt_by_year_month_df
+
+def extract_software_project_name(descriptor : str) -> str:
+
+    '''
+        "NW.AutoProffLibrary v1.0.0"    => "NW.AutoProffLibrary"
+        "nwreadinglistmanager v1.5.0"   => "nwreadinglistmanager"
+
+        Returns "ERROR" is parsing goes wrong.
+    '''
+
+    pattern : str = r"^[a-zA-Z\.]{2,}"
+    matches : list = re.findall(pattern = pattern, string = descriptor, flags = re.MULTILINE)
+
+    if len(matches) == 1:
+        return matches[0]
+
+    return "ERROR"
+def extract_software_project_version(descriptor : str) -> str: 
+
+    '''
+        "NW.AutoProffLibrary v1.0.0"    => "1.0.0"
+        "nwreadinglistmanager v1.5.0"   => "1.5.0"
+
+        Returns "ERROR" is parsing goes wrong.
+    '''
+
+    pattern : str = r"(?<=v)[0-9\.]{5}$"
+    matches : list = re.findall(pattern = pattern, string = descriptor, flags = re.MULTILINE)
+
+    if len(matches) == 1:
+        return matches[0]
+
+    return "ERROR"
+
 
 # MAIN
 if __name__ == "__main__":
