@@ -445,13 +445,7 @@ def get_raw_tme(sessions_df : DataFrame, years : list[int]) -> DataFrame:
 def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
     '''
-        [0]
-
-                Year	Month	ProjectName	            ProjectVersion	Effort	        DME	            %_DME	TME	            %_TME
-            0	2023	4	    nwtraderaanalytics	    2.0.0	        0 days 09:15:00	0 days 09:15:00	100.00	0 days 19:00:00	48.68
-            1	2023	6	    nwreadinglistmanager	1.0.0	        0 days 06:45:00	0 days 06:45:00	100.00	1 days 00:45:00	27.27
-            ...
-
+        [0] ...
         [1]
 
                 Year	Month	ProjectName     	    ProjectVersion	Effort	DME	    %_DME	TME	    %_TME
@@ -491,6 +485,51 @@ def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software
     cn_tme : str = "TME"
     cn_percentage_tme : str = "%_TME"
     tt_df[cn_percentage_tme] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = x[cn_tme]), axis = 1)    
+
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))   
+    tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+    tt_df[cn_tme] = tt_df[cn_tme].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+
+    return tt_df
+
+def get_tt_by_year_sp(tt_by_year_month_sp_df : DataFrame) -> DataFrame:
+
+    '''
+        [0] ...
+        [1]
+
+                Year	ProjectName	            ProjectVersion	Effort	DME	    %_DME	TME	    %_TME
+            0	2023	nwreadinglistmanager	1.0.0	        45h 15m	45h 15m	300.00	82h 45m	180.28
+            1	2023	nwreadinglistmanager	1.5.0	        16h 15m	19h 15m	84.42	36h 30m	44.52
+            ...
+    '''
+
+    tt_df : DataFrame = tt_by_year_month_sp_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    cn_project_name : str = "ProjectName"
+    cn_project_version : str = "ProjectVersion"
+    cn_effort : str = "Effort"
+    cn_dme : str = "DME"
+    cn_percentage_dme : str = "%_DME"    
+    cn_tme : str = "TME"
+    cn_percentage_tme : str = "%_TME"
+
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))   
+    tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df[cn_tme] = tt_df[cn_tme].apply(lambda x : convert_string_to_timedelta(td_str = x))    
+
+    column_names : list[str] = [cn_year, cn_project_name, cn_project_version]
+    agg_instructions : dict[str, str] = { 
+        cn_effort : "sum", 
+        cn_dme : "sum",
+        cn_percentage_dme : "sum",
+        cn_tme : "sum",
+        cn_percentage_tme : "sum"
+        }
+
+    tt_df = tt_df.groupby(by = column_names).agg(agg_instructions).reset_index()
+    tt_df = tt_df.sort_values(by = column_names).reset_index(drop = True)
 
     tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))   
     tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
