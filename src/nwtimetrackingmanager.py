@@ -44,6 +44,7 @@ class SettingCollection():
     n_generic : int
     n_by_month : int
     now : datetime
+    software_project_names : list[str]
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
@@ -59,6 +60,7 @@ class SettingCollection():
         n_generic : int,
         n_by_month : int,
         now : datetime,
+        software_project_names : list[str],
         show_sessions_df : bool,
         show_tt_by_year_df : bool,
         show_tt_by_year_month_df : bool
@@ -72,7 +74,8 @@ class SettingCollection():
         self.excel_books_tabname = excel_books_tabname
         self.n_generic = n_generic
         self.n_by_month = n_by_month
-        self.now = now         
+        self.now = now
+        self.software_project_names = software_project_names  
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
