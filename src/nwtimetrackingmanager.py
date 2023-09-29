@@ -48,6 +48,8 @@ class SettingCollection():
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
+    show_tt_by_year_month_sp_df : bool
+    show_tt_by_year_sp_df : bool
 
     def __init__(
         self,
@@ -63,7 +65,9 @@ class SettingCollection():
         software_project_names : list[str],
         show_sessions_df : bool,
         show_tt_by_year_df : bool,
-        show_tt_by_year_month_df : bool
+        show_tt_by_year_month_df : bool,
+        show_tt_by_year_month_sp_df : bool,
+        show_tt_by_year_sp_df : bool
         ):
 
         self.years = years
@@ -79,6 +83,8 @@ class SettingCollection():
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
+        self.show_tt_by_year_month_sp_df = show_tt_by_year_month_sp_df
+        self.show_tt_by_year_sp_df = show_tt_by_year_sp_df
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
