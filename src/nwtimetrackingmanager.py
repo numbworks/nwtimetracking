@@ -99,12 +99,11 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     column_names.append("EndTime")              # [2], str
     column_names.append("Duration")             # [3], str
     column_names.append("Hashtag")              # [4], str
-    column_names.append("Description")          # [5], str
-    column_names.append("ProjectName")          # [6], str
-    column_names.append("ProjectVersion")       # [7], str
-    column_names.append("IsReleaseDate")        # [8], str - not bool because it can be Yes/No/null
-    column_names.append("Year")                 # [9], int
-    column_names.append("Month")                # [10], int
+    column_names.append("Descriptor")           # [5], str
+    column_names.append("IsSoftwareProject")    # [6], str
+    column_names.append("IsReleaseDay")         # [7], str - not bool because it can be Yes/No/null
+    column_names.append("Year")                 # [8], int
+    column_names.append("Month")                # [9], int
 
     dataset_df = pd.read_excel(
 	    io = setting_collection.excel_path, 	
@@ -124,10 +123,10 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     dataset_df = dataset_df.astype({column_names[3]: str})
     dataset_df = dataset_df.astype({column_names[4]: str})
     dataset_df = dataset_df.astype({column_names[5]: str})
+    dataset_df = dataset_df.astype({column_names[6]: str})
     dataset_df = dataset_df.astype({column_names[7]: str})
-    dataset_df = dataset_df.astype({column_names[8]: str})
+    dataset_df = dataset_df.astype({column_names[8]: int})
     dataset_df = dataset_df.astype({column_names[9]: int})
-    dataset_df = dataset_df.astype({column_names[10]: int})
 
     return dataset_df
 
@@ -177,9 +176,9 @@ def get_tt_by_year(sessions_df : DataFrame, years : list[int], yearly_targets : 
 
     '''
         [0]
-                Date	    StartTime	EndTime	Duration	Hashtag	    Description	ProjectName	ProjectVersion	IsReleaseDate	Year	Month
-            0	2015-10-31	nan	        nan	    8h 00m	    #untagged	nan	        NaN	        nan	            nan	            2015	10
-            1	2015-11-30	nan	        nan	    10h 00m	    #untagged	nan	        NaN	        nan	            nan	            2015	11            
+                Date	    StartTime	EndTime	Duration	Hashtag	    Descriptor IsSoftwareProject    IsReleaseDay	Year	Month
+            0	2015-10-31	nan	        nan	    8h 00m	    #untagged	nan	       nan	                nan	            2015	10
+            1	2015-11-30	nan	        nan	    10h 00m	    #untagged	nan	       nan	                nan	            2015	11            
             ...
 
         [1]
