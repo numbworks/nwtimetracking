@@ -48,8 +48,8 @@ class SettingCollection():
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
-    show_tt_by_year_month_sp_df : bool
-    show_tt_by_year_sp_df : bool
+    show_tt_by_year_month_spnv_df : bool
+    show_tt_by_year_spnv_df : bool
 
     def __init__(
         self,
@@ -66,8 +66,8 @@ class SettingCollection():
         show_sessions_df : bool,
         show_tt_by_year_df : bool,
         show_tt_by_year_month_df : bool,
-        show_tt_by_year_month_sp_df : bool,
-        show_tt_by_year_sp_df : bool
+        show_tt_by_year_month_spnv_df : bool,
+        show_tt_by_year_spnv_df : bool
         ):
 
         self.years = years
@@ -83,8 +83,8 @@ class SettingCollection():
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
-        self.show_tt_by_year_month_sp_df = show_tt_by_year_month_sp_df
-        self.show_tt_by_year_sp_df = show_tt_by_year_sp_df
+        self.show_tt_by_year_month_spnv_df = show_tt_by_year_month_spnv_df
+        self.show_tt_by_year_spnv_df = show_tt_by_year_spnv_df
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
@@ -350,7 +350,7 @@ def calculate_percentage(part : float, whole : float, rounding_digits : int = 2)
     prct = round(number = prct, ndigits = rounding_digits)
 
     return prct
-def get_raw_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+def get_raw_tt_by_year_month_spnv(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
     
     '''
             Year	Month	ProjectName	        ProjectVersion	Effort
@@ -445,7 +445,7 @@ def get_raw_tme(sessions_df : DataFrame, years : list[int]) -> DataFrame:
     tt_df.rename(columns = {cn_effort : cn_tme}, inplace = True)
 
     return tt_df
-def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+def get_tt_by_year_month_spnv(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
     '''
         [0] ...
@@ -457,7 +457,7 @@ def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software
             ...
     '''
 
-    sp_df : DataFrame = get_raw_tt_by_year_month_sp(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    spnv_df : DataFrame = get_raw_tt_by_year_month_spnv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
     dme_df : DataFrame = get_raw_dme(sessions_df = sessions_df, years = years)
     tme_df : DataFrame = get_raw_tme(sessions_df = sessions_df, years = years)
 
@@ -465,7 +465,7 @@ def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software
     cn_month : str = "Month"
 
     tt_df : DataFrame = pd.merge(
-        left = sp_df, 
+        left = spnv_df, 
         right = dme_df, 
         how = "inner", 
         left_on = [cn_year, cn_month], 
@@ -495,7 +495,7 @@ def get_tt_by_year_month_sp(sessions_df : DataFrame, years : list[int], software
 
     return tt_df
 
-def get_raw_tt_by_year_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+def get_raw_tt_by_year_spnv(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
     
     '''
             Year	ProjectName	        ProjectVersion	Effort
@@ -587,7 +587,7 @@ def get_raw_tye(sessions_df : DataFrame, years : list[int]) -> DataFrame:
     tt_df.rename(columns = {cn_effort : cn_tye}, inplace = True)
 
     return tt_df
-def get_tt_by_year_sp(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+def get_tt_by_year_spnv(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
     '''
         [0] ...
@@ -599,14 +599,14 @@ def get_tt_by_year_sp(sessions_df : DataFrame, years : list[int], software_proje
             ...
     '''
 
-    sp_df : DataFrame = get_raw_tt_by_year_sp(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    spnv_df : DataFrame = get_raw_tt_by_year_spnv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
     dye_df : DataFrame = get_raw_dye(sessions_df = sessions_df, years = years)
     tye_df : DataFrame = get_raw_tye(sessions_df = sessions_df, years = years)
 
     cn_year : str = "Year"
 
     tt_df : DataFrame = pd.merge(
-        left = sp_df, 
+        left = spnv_df, 
         right = dye_df, 
         how = "inner", 
         left_on = [cn_year], 
