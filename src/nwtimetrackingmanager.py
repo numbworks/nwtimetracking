@@ -210,7 +210,7 @@ def get_tt_by_year(sessions_df : DataFrame, years : list[int], yearly_targets : 
 
     cn_duration : str = "Duration"
     tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
-    tt_df : DataFrame = tt_df.groupby([cn_year])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_df = tt_df.groupby([cn_year])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
     tt_df = tt_df.sort_values(by = cn_year).reset_index(drop = True)
 
     cn_yearly_target : str = "YearlyTarget"
@@ -277,7 +277,7 @@ def get_tt_by_year_month(sessions_df : DataFrame, years : list[int], yearly_targ
     cn_month : str = "Month"
     cn_duration : str = "Duration"   
     tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
-    tt_df : DataFrame = tt_df.groupby(by = [cn_year, cn_month])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_df = tt_df.groupby(by = [cn_year, cn_month])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
     tt_df = tt_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
 
     cn_yearly_total : str = "YearlyTotal"
@@ -351,14 +351,27 @@ def get_tt_by_year_month_sp(
         software_project_names : list[str]) -> DataFrame:
     
     '''
-        [0]
+        [tt_df] [0]
 
                 Year	Month	ProjectName	        ProjectVersion	Duration
             0	2023	4	    nwtraderaanalytics	2.0.0	        0 days 09:15:00
             1	2023	5	    NW.AutoProffLibrary	1.0.0	        0 days 09:30:00
             ...
 
-        [1]          
+        [tt_by_year_month_df]
+
+                Year	Month	MonthlyDuration
+            0	2023	4	    0 days 09:15:00
+            1	2023	5	    0 days 09:30:00
+            ...
+
+        [tt_df] [1]
+
+                Year	Month	ProjectName	            ProjectVersion	Duration	    MonthlyDuration
+            ...
+            2	2023	6	    NW.SimCorpExercise	    1.0.0	        0 days 05:00:00	0 days 11:45:00
+            3	2023	6	    nwreadinglistmanager	1.0.0	        0 days 06:45:00	0 days 11:45:00
+            ...
     
     '''
 
@@ -370,18 +383,36 @@ def get_tt_by_year_month_sp(
     condition_two : Series = (sessions_df[cn_is_software_project] == True)
     tt_df = tt_df.loc[condition_one & condition_two]
 
+    cn_month : str = "Month"
+    cn_duration : str = "Duration"
+    cn_monthly_duration : str = "MonthlyDuration"
+    tt_by_year_month_df : DataFrame = tt_df.copy(deep = True)
+    tt_by_year_month_df[cn_duration] = tt_by_year_month_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_by_year_month_df = tt_by_year_month_df.groupby(by = [cn_year, cn_month])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_by_year_month_df = tt_by_year_month_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
+    tt_by_year_month_df.rename(columns = {cn_duration : cn_monthly_duration}, inplace = True)
+
     cn_descriptor : str = "Descriptor"
     cn_project_name : str = "ProjectName"
     cn_project_version : str = "ProjectVersion"
     tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
     tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_version(descriptor = x))
 
-    cn_month : str = "Month"
-    cn_duration : str = "Duration"   
     tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
-    tt_df : DataFrame = tt_df.groupby(by = [cn_year, cn_month, cn_project_name, cn_project_version])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_df = tt_df.groupby(by = [cn_year, cn_month, cn_project_name, cn_project_version])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
     tt_df = tt_df.sort_values(by = [cn_year, cn_month, cn_project_name, cn_project_version]).reset_index(drop = True)
   
+    tt_df = pd.merge(
+        left = tt_df, 
+        right = tt_by_year_month_df, 
+        how = "inner", 
+        left_on = [cn_year, cn_month], 
+        right_on = [cn_year, cn_month]
+        )
+    
+    cn_duration_prct : str = "Duration%"
+    tt_df[cn_duration_prct] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_duration], whole = x[cn_monthly_duration]), axis = 1)
+
     return tt_df
 
 # MAIN
