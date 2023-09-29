@@ -202,8 +202,9 @@ def get_tt_by_year(sessions_df : DataFrame, years : list[int], yearly_targets : 
             ...
     '''
 
-    cn_year : str = "Year"
     tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
     condition : Series = (sessions_df[cn_year].isin(values = years))
     tt_df = tt_df.loc[condition]
 
@@ -267,8 +268,9 @@ def get_tt_by_year_month(sessions_df : DataFrame, years : list[int], yearly_targ
             ...
     '''
 
-    cn_year : str = "Year"
     tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
     condition : Series = (sessions_df[cn_year].isin(values = years))
     tt_df = tt_df.loc[condition]
 
@@ -338,18 +340,26 @@ def get_tt_by_year_month_spn(
     
     '''
 
-    cn_year : str = "Year"
     tt_df : DataFrame = sessions_df.copy(deep = True)
-    condition : Series = (sessions_df[cn_year].isin(values = years))
-    tt_df = tt_df.loc[condition]
+
+    cn_year : str = "Year"
+    cn_is_software_project : str = "IsSoftwareProject"
+    condition_one : Series = (sessions_df[cn_year].isin(values = years))
+    condition_two : Series = (sessions_df[cn_is_software_project] == True)
+    tt_df = tt_df.loc[condition_one & condition_two]
+
+    cn_descriptor : str = "Descriptor"
+    cn_project_name : str = "ProjectName"
+    cn_project_version : str = "ProjectVersion"
+    tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
+    tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_version(descriptor = x))
 
     cn_month : str = "Month"
     cn_duration : str = "Duration"   
     tt_df[cn_duration] = tt_df[cn_duration].apply(lambda x : convert_string_to_timedelta(td_str = x))
-    tt_df : DataFrame = tt_df.groupby(by = [cn_year, cn_month])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
-    tt_df = tt_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
-
-
+    tt_df : DataFrame = tt_df.groupby(by = [cn_year, cn_month, cn_project_name, cn_project_version])[cn_duration].sum().sort_values(ascending = [False]).reset_index(name = cn_duration)
+    tt_df = tt_df.sort_values(by = [cn_year, cn_month, cn_project_name, cn_project_version]).reset_index(drop = True)
+  
     return tt_df
 
 # MAIN
