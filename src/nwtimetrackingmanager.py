@@ -685,33 +685,45 @@ def get_raw_de(sessions_df : DataFrame, years : list[int]) -> timedelta:
     summarized : timedelta = tt_df[cn_effort].sum()
 
     return summarized
-def get_raw_te(sessions_df : DataFrame, years : list[int]) -> timedelta:
+def get_raw_te(sessions_df : DataFrame, years : list[int], remove_untagged : bool) -> timedelta:
 
     '''186 days 11:15:00'''
 
     tt_df : DataFrame = sessions_df.copy(deep = True)
 
     cn_year : str = "Year"
-    condition : Series = (sessions_df[cn_year].isin(values = years))
-    tt_df = tt_df.loc[condition]
+    condition_one : Series = (sessions_df[cn_year].isin(values = years))
+    tt_df = tt_df.loc[condition_one]
+
+    if remove_untagged:
+        cn_hashtag : str = "Hashtag"
+        condition_two : Series = (sessions_df[cn_hashtag] != "#untagged")
+        tt_df = tt_df.loc[condition_two]
 
     cn_effort : str = "Effort"
     tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
     summarized : timedelta = tt_df[cn_effort].sum()
 
     return summarized    
-def get_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+def get_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
 
     '''
             ProjectName	            Effort	    DE	%_DE	TE	        %_TE
         0	nwreadinglistmanager	66h 30m	93h 15m	71.31	4475h 15m	1.49
         1	nwtraderaanalytics	    09h 15m	93h 15m	9.92	4475h 15m	0.21
         ...
+
+        With remove_untagged = True:
+
+            ProjectName	            Effort	DE	    %_DE	TE	        %_TE
+        0	nwreadinglistmanager	66h 30m	93h 15m	71.31	174h 15m	38.16
+        1	nwtraderaanalytics	    09h 15m	93h 15m	9.92	174h 15m	5.31
+        ...
     '''
 
     tt_df : DataFrame = get_raw_tt_by_spn(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
     de : timedelta = get_raw_de(sessions_df = sessions_df, years = years)
-    te : timedelta = get_raw_te(sessions_df = sessions_df, years = years)    
+    te : timedelta = get_raw_te(sessions_df = sessions_df, years = years, remove_untagged = remove_untagged)    
 
     cn_de : str = "DE"
     tt_df[cn_de] = de
