@@ -45,6 +45,7 @@ class SettingCollection():
     n_by_month : int
     now : datetime
     software_project_names : list[str]
+    remove_untagged_from_de : bool
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
@@ -63,6 +64,7 @@ class SettingCollection():
         n_by_month : int,
         now : datetime,
         software_project_names : list[str],
+        remove_untagged_from_de : bool,
         show_sessions_df : bool,
         show_tt_by_year_df : bool,
         show_tt_by_year_month_df : bool,
@@ -79,7 +81,8 @@ class SettingCollection():
         self.n_generic = n_generic
         self.n_by_month = n_by_month
         self.now = now
-        self.software_project_names = software_project_names  
+        self.software_project_names = software_project_names
+        self.remove_untagged_from_de = remove_untagged_from_de
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
