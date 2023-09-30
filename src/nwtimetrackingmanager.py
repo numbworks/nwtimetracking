@@ -525,6 +525,7 @@ def get_raw_tt_by_year_spnv(sessions_df : DataFrame, years : list[int], software
   
     condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
     tt_df = tt_df.loc[condition_three]
+    tt_df = tt_df.sort_values(by = [cn_year, cn_project_name, cn_project_version]).reset_index(drop = True)
 
     return tt_df
 def get_raw_dye(sessions_df : DataFrame, years : list[int]) -> DataFrame:
@@ -637,13 +638,99 @@ def get_tt_by_year_spnv(sessions_df : DataFrame, years : list[int], software_pro
     return tt_df
 
 def get_raw_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame: 
-    pass
-def get_raw_de(sessions_df : DataFrame, years : list[int]) -> DataFrame:
-    pass
-def get_raw_te(sessions_df : DataFrame, years : list[int]) -> DataFrame:
-    pass
+    
+    '''
+            ProjectName	        Effort
+        0	nwtraderaanalytics	0 days 09:15:00
+        1	NW.AutoProffLibrary	0 days 09:30:00
+        ...
+    '''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    cn_is_software_project : str = "IsSoftwareProject"
+    condition_one : Series = (sessions_df[cn_year].isin(values = years))
+    condition_two : Series = (sessions_df[cn_is_software_project] == True)
+    tt_df = tt_df.loc[condition_one & condition_two]
+
+    cn_descriptor : str = "Descriptor"
+    cn_project_name : str = "ProjectName"
+    tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
+
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df = tt_df.groupby(by = [cn_project_name])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+    tt_df = tt_df.sort_values(by = [cn_project_name]).reset_index(drop = True)
+
+    condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
+    tt_df = tt_df.loc[condition_three] 
+    tt_df = tt_df.sort_values(by = [cn_effort], ascending = [False]).reset_index(drop = True)
+
+    return tt_df
+def get_raw_de(sessions_df : DataFrame, years : list[int]) -> timedelta:
+    
+    '''3 days 21:15:00'''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    cn_is_software_project : str = "IsSoftwareProject"
+    condition_one : Series = (sessions_df[cn_year].isin(values = years))
+    condition_two : Series = (sessions_df[cn_is_software_project] == True)
+    tt_df = tt_df.loc[condition_one & condition_two]
+
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    summarized : timedelta = tt_df[cn_effort].sum()
+
+    return summarized
+def get_raw_te(sessions_df : DataFrame, years : list[int]) -> timedelta:
+
+    '''186 days 11:15:00'''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    condition : Series = (sessions_df[cn_year].isin(values = years))
+    tt_df = tt_df.loc[condition]
+
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    summarized : timedelta = tt_df[cn_effort].sum()
+
+    return summarized    
 def get_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
-    pass
+
+    '''
+            ProjectName	            Effort	    DE	%_DE	TE	        %_TE
+        0	nwreadinglistmanager	66h 30m	93h 15m	71.31	4475h 15m	1.49
+        1	nwtraderaanalytics	    09h 15m	93h 15m	9.92	4475h 15m	0.21
+        ...
+    '''
+
+    tt_df : DataFrame = get_raw_tt_by_spn(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+    de : timedelta = get_raw_de(sessions_df = sessions_df, years = years)
+    te : timedelta = get_raw_te(sessions_df = sessions_df, years = years)    
+
+    cn_de : str = "DE"
+    tt_df[cn_de] = de
+
+    cn_effort : str = "Effort"
+    cn_percentage_de : str = "%_DE"
+    tt_df[cn_percentage_de] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = x[cn_de]), axis = 1)      
+
+    cn_te : str = "TE"
+    tt_df[cn_te] = te
+
+    cn_percentage_te : str = "%_TE"
+    tt_df[cn_percentage_te] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = x[cn_te]), axis = 1)     
+
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))   
+    tt_df[cn_de] = tt_df[cn_de].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+    tt_df[cn_te] = tt_df[cn_te].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+
+    return tt_df
 
 
 # MAIN
