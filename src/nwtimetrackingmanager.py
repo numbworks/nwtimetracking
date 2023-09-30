@@ -636,6 +636,14 @@ def get_tt_by_year_spnv(sessions_df : DataFrame, years : list[int], software_pro
 
     return tt_df
 
+def get_raw_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame: 
+    pass
+def get_raw_de(sessions_df : DataFrame, years : list[int]) -> DataFrame:
+    pass
+def get_raw_te(sessions_df : DataFrame, years : list[int]) -> DataFrame:
+    pass
+def get_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    pass
 
 
 # MAIN
