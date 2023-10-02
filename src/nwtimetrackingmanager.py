@@ -46,6 +46,7 @@ class SettingCollection():
     now : datetime
     software_project_names : list[str]
     remove_untagged_from_de : bool
+    definitions : dict[str, str]
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
@@ -66,6 +67,7 @@ class SettingCollection():
         now : datetime,
         software_project_names : list[str],
         remove_untagged_from_de : bool,
+        definitions : dict[str, str],
         show_sessions_df : bool,
         show_tt_by_year_df : bool,
         show_tt_by_year_month_df : bool,
@@ -85,6 +87,7 @@ class SettingCollection():
         self.now = now
         self.software_project_names = software_project_names
         self.remove_untagged_from_de = remove_untagged_from_de
+        self.definitions = definitions
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
@@ -750,6 +753,16 @@ def get_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_n
 
     return tt_df
 
+def try_print_definitions(df : DataFrame, definitions : dict[str, str]) -> None:
+    
+    '''
+	    "DE"    => print("DE: Development Effort")
+        "Year"  => do nothing
+	'''
+    
+    for column_name in df.columns:
+        if definitions.get(column_name) != None:
+            print(f"{column_name}: {definitions[column_name]}")
 
 # MAIN
 if __name__ == "__main__":
