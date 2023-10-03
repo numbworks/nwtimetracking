@@ -789,6 +789,27 @@ def get_default_monthly_tt(year : int) -> DataFrame:
     # can't enforce the year column as "timedelta"
 
     return default_df
+def get_trend_by_timedelta(td_1 : timedelta, td_2 : timedelta) -> str:
+
+    '''
+        0h 30m, 1h 00m => "↑"
+        1h 00m, 0h 30m => "↓"
+        0, 0 => "="
+    '''
+    trend : str = None
+
+    if td_1 < td_2:
+        trend = "↑"
+    elif td_1 > td_2:
+        trend = "↓"
+    else:
+        trend = "="
+
+    return trend
+def get_trend_by_timedelta_string(td_str_1 : str, td_str_2 : str) -> str:
+    return get_trend_by_timedelta(
+        td_1 = convert_string_to_timedelta(td_str = td_str_1), 
+        td_2 = convert_string_to_timedelta(td_str = td_str_2))
 
 # MAIN
 if __name__ == "__main__":
