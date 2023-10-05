@@ -764,7 +764,29 @@ def try_print_definitions(df : DataFrame, definitions : dict[str, str]) -> None:
         if definitions.get(column_name) != None:
             print(f"{column_name}: {definitions[column_name]}")
 
-def get_default_monthly_tt(year : int) -> DataFrame:
+def get_trend_by_timedelta(td_1 : timedelta, td_2 : timedelta) -> str:
+
+    '''
+        0h 30m, 1h 00m => "↑"
+        1h 00m, 0h 30m => "↓"
+        0, 0 => "="
+    '''
+    trend : str = None
+
+    if td_1 < td_2:
+        trend = "↑"
+    elif td_1 > td_2:
+        trend = "↓"
+    else:
+        trend = "="
+
+    return trend
+def get_trend_by_timedelta_string(td_str_1 : str, td_str_2 : str) -> str:
+    return get_trend_by_timedelta(
+        td_1 = convert_string_to_timedelta(td_str = td_str_1), 
+        td_2 = convert_string_to_timedelta(td_str = td_str_2))
+
+def get_default_ttm(year : int) -> DataFrame:
 
     '''
         default_df:
@@ -789,27 +811,62 @@ def get_default_monthly_tt(year : int) -> DataFrame:
     # can't enforce the year column as "timedelta"
 
     return default_df
-def get_trend_by_timedelta(td_1 : timedelta, td_2 : timedelta) -> str:
+def try_complete_ttm(ttm_df : DataFrame, year : int) -> DataFrame:
 
     '''
-        0h 30m, 1h 00m => "↑"
-        1h 00m, 0h 30m => "↓"
-        0, 0 => "="
+        We expect ttm_df to have 12 months: 
+        
+            - if that's the case, we are done with it and we return it;
+            - if it's not the case, we generate a default_df and we use it to fill the missing values.
+
+            ttm_df
+        
+                    Month	2015
+                0	10	    8h 00m
+                1	11	    10h 00m
+                2	12	    0h 00m
+        
+            default_df:
+
+                    Month	2015
+                0	1	    0h 00m
+                1	2	    0h 00m              
+                ... ...     ...
+                11	12	    0h 00m
+
+            missing_df:
+
+                    Month	2015
+                0	1	    0h 00m
+                1	2	    0h 00m              
+                ... ...     ...
+                8	9	    0h 00m                 
+
+            completed_df
+        
+                    Month	2015
+                0	1	    0h 00m
+                1	2	    0h 00m
+                ... ...     ...
+                9	10	    8h 00m
+                10	11	    10h 00m
+                11	12	    0h 00m  
     '''
-    trend : str = None
 
-    if td_1 < td_2:
-        trend = "↑"
-    elif td_1 > td_2:
-        trend = "↓"
-    else:
-        trend = "="
+    cn_month : str = "Month"
 
-    return trend
-def get_trend_by_timedelta_string(td_str_1 : str, td_str_2 : str) -> str:
-    return get_trend_by_timedelta(
-        td_1 = convert_string_to_timedelta(td_str = td_str_1), 
-        td_2 = convert_string_to_timedelta(td_str = td_str_2))
+    if ttm_df[cn_month].count() != 12:
+
+        default_df : DataFrame = get_default_ttm(year = year)
+        missing_df : DataFrame = default_df.loc[~default_df[cn_month].astype(str).isin(ttm_df[cn_month].astype(str))]
+
+        completed_df : DataFrame = pd.concat([ttm_df, missing_df], ignore_index = True)
+        completed_df = completed_df.sort_values(by = cn_month, ascending = [True])
+        completed_df = completed_df.reset_index(drop = True)
+
+        return completed_df
+
+    return ttm_df
 
 # MAIN
 if __name__ == "__main__":
