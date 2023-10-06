@@ -786,6 +786,16 @@ def get_trend_by_timedelta_string(td_str_1 : str, td_str_2 : str) -> str:
         td_1 = convert_string_to_timedelta(td_str = td_str_1), 
         td_2 = convert_string_to_timedelta(td_str = td_str_2))
 
+def enforce_ttm_schema(df : DataFrame) -> DataFrame:
+
+    '''Ensures that the columns of the provided dataframe have the expected data types.'''
+
+    cn_month : str = "Month" 
+
+    df = df.astype({cn_month: int})
+    # can't enforce the year column as "timedelta"
+
+    return df 
 def get_default_ttm(year : int) -> DataFrame:
 
     '''
@@ -807,8 +817,7 @@ def get_default_ttm(year : int) -> DataFrame:
         index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     )
 
-    default_df = default_df.astype({cn_month: int})
-    # can't enforce the year column as "timedelta"
+    default_df = enforce_ttm_schema(df = default_df)
 
     return default_df
 def try_complete_ttm(ttm_df : DataFrame, year : int) -> DataFrame:
@@ -867,6 +876,40 @@ def try_complete_ttm(ttm_df : DataFrame, year : int) -> DataFrame:
         return completed_df
 
     return ttm_df
+def get_ttm(sessions_df : DataFrame, year : int) -> DataFrame:
+    
+    '''
+        ttm_df:
+
+            Filter it out by year.
+
+        ttm_df:
+
+            
+
+    '''
+
+    ttm_df : DataFrame = sessions_df.copy(deep=True)
+
+    cn_year : str = "Year"
+    cn_month : str = "Month" 
+    cn_effort : str = "Effort"
+
+    condition : Series = (sessions_df[cn_year] == year)
+    ttm_df = ttm_df.loc[condition]
+
+    ttm_df[cn_effort] = ttm_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    ttm_df[str(year)] = ttm_df[cn_effort]
+    cn_effort = str(year)    
+
+    ttm_df = ttm_df.groupby([cn_month])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+    ttm_df = ttm_df.sort_values(by = cn_month).reset_index(drop = True)
+
+    ttm_df = try_complete_ttm(ttm_df = ttm_df, year = year)
+    ttm_df = enforce_ttm_schema(df = ttm_df)
+
+    return ttm_df
+
 
 # MAIN
 if __name__ == "__main__":
