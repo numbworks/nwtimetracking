@@ -881,19 +881,34 @@ def get_ttm(sessions_df : DataFrame, year : int) -> DataFrame:
     '''
         ttm_df:
 
-            Filter it out by year.
+            Year	    Month	Effort
+            0	2015	10	    8h 00m
+            1	2015	11	    10h 00m
+            2	2015	12	    0h 00m
 
         ttm_df:
 
-            
+            Year	    Month	2015	        
+            0	2015	10	    0 days 08:00:00
+            1	2015	11	    0 days 10:00:00
+            2	2015	12	    0 days 00:00:00            
 
+        ttm_df:
+
+                Month	2015
+            0	1	    0 days 00:00:00
+            ...
+            9	10	    0 days 08:00:00
+            10	11	    0 days 10:00:00
+            11	12	    0 days 00:00:00
     '''
-
-    ttm_df : DataFrame = sessions_df.copy(deep=True)
 
     cn_year : str = "Year"
     cn_month : str = "Month" 
     cn_effort : str = "Effort"
+
+    ttm_df : DataFrame = sessions_df.copy(deep=True)
+    ttm_df = ttm_df[[cn_year, cn_month, cn_effort]]
 
     condition : Series = (sessions_df[cn_year] == year)
     ttm_df = ttm_df.loc[condition]
