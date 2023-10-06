@@ -1044,6 +1044,45 @@ def get_tts_by_month(sessions_df : DataFrame, years : list) -> DataFrame:
 
     return tts_by_month_df
 
+def update_future_months_to_empty(tts_by_month_df : DataFrame, now : datetime) -> DataFrame:
+
+	'''	
+		If now is 2023-08-09:
+
+            Month	2022	↕	2023
+            ...
+            8	    0h 00m	=	0h 00m
+            9	    1h 00m	↓	0h 00m
+            10	    0h 00m	=	0h 00m
+            11	    0h 00m	=	0h 00m
+            12	    0h 00m	=	0h 00m		            
+
+            Month	2022	↕	2023
+            ...
+            8	    0h 00m	=	0h 00m
+            9	    1h 00m		
+            10	    0h 00m		
+            11	    0h 00m		
+            12	    0h 00m
+	'''
+
+	tts_by_month_upd_df : DataFrame = tts_by_month_df.copy(deep = True)
+
+	now_year : int = now.year
+	now_month : int = now.month	
+	cn_year : str = str(now_year)
+	cn_month : str = "Month"
+	new_value : str = ""
+
+	condition : Series = (tts_by_month_upd_df[cn_month] > now_month)
+	tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
+	    
+	idx_year : int = tts_by_month_upd_df.columns.get_loc(cn_year)
+	idx_trend : int = (idx_year - 1)
+	tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
+
+	return tts_by_month_upd_df
+
 # MAIN
 if __name__ == "__main__":
     pass
