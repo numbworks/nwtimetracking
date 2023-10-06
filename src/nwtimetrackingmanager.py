@@ -920,7 +920,7 @@ def get_trend_by_timedelta(td_1 : timedelta, td_2 : timedelta) -> str:
         trend = "="
 
     return trend
-def expand_raw_ttm_by_year(sessions_df : DataFrame, years : list, tts_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
+def expand_raw_ttm_by_year(sessions_df : DataFrame, years : list, tts_by_month_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
 
     '''    
         actual_df:
@@ -968,7 +968,7 @@ def expand_raw_ttm_by_year(sessions_df : DataFrame, years : list, tts_df : DataF
             ...
     '''
     
-    actual_df : DataFrame = tts_df.copy(deep = True)
+    actual_df : DataFrame = tts_by_month_df.copy(deep = True)
     ttm_df : DataFrame = get_raw_ttm(sessions_df = sessions_df, year = years[i])
 
     cn_month : str = "Month"      
@@ -1015,7 +1015,7 @@ def try_consolidate_trend_column_name(column_name : str) -> str:
         return cn_trend
     
     return column_name
-def get_tts(sessions_df : DataFrame, years : list) -> DataFrame:
+def get_tts_by_month(sessions_df : DataFrame, years : list) -> DataFrame:
 
     '''
             Month	2016	↕   2017	    ↕	2018    ...
@@ -1024,25 +1024,25 @@ def get_tts(sessions_df : DataFrame, years : list) -> DataFrame:
         ...
     '''
 
-    tts_df : DataFrame = None
+    tts_by_month_df : DataFrame = None
     for i in range(len(years)):
 
         if i == 0:
-            tts_df = get_raw_ttm(sessions_df = sessions_df, year = years[i])
+            tts_by_month_df = get_raw_ttm(sessions_df = sessions_df, year = years[i])
         else:
-            tts_df = expand_raw_ttm_by_year(
+            tts_by_month_df = expand_raw_ttm_by_year(
                 sessions_df = sessions_df, 
                 years = years, 
-                tts_df = tts_df, 
+                tts_by_month_df = tts_by_month_df, 
                 i = i, 
                 add_trend = True)
             
     for year in years:
-        tts_df[str(year)] = tts_df[str(year)].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+        tts_by_month_df[str(year)] = tts_by_month_df[str(year)].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
 
-    tts_df.rename(columns = (lambda x : try_consolidate_trend_column_name(column_name = x)), inplace = True)
+    tts_by_month_df.rename(columns = (lambda x : try_consolidate_trend_column_name(column_name = x)), inplace = True)
 
-    return tts_df
+    return tts_by_month_df
 
 # MAIN
 if __name__ == "__main__":
