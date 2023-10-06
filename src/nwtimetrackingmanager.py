@@ -764,7 +764,7 @@ def try_print_definitions(df : DataFrame, definitions : dict[str, str]) -> None:
         if definitions.get(column_name) != None:
             print(f"{column_name}: {definitions[column_name]}")
 
-def enforce_ttm_schema(df : DataFrame) -> DataFrame:
+def enforce_raw_ttm_schema(df : DataFrame) -> DataFrame:
 
     '''Ensures that the columns of the provided dataframe have the expected data types.'''
 
@@ -774,7 +774,7 @@ def enforce_ttm_schema(df : DataFrame) -> DataFrame:
     # can't enforce the year column as "timedelta"
 
     return df 
-def get_default_ttm(year : int) -> DataFrame:
+def get_default_raw_ttm(year : int) -> DataFrame:
 
     '''
         default_df:
@@ -795,10 +795,10 @@ def get_default_ttm(year : int) -> DataFrame:
         index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     )
 
-    default_df = enforce_ttm_schema(df = default_df)
+    default_df = enforce_raw_ttm_schema(df = default_df)
 
     return default_df
-def try_complete_ttm(ttm_df : DataFrame, year : int) -> DataFrame:
+def try_complete_raw_ttm(ttm_df : DataFrame, year : int) -> DataFrame:
 
     '''
         We expect ttm_df to have 12 months: 
@@ -844,7 +844,7 @@ def try_complete_ttm(ttm_df : DataFrame, year : int) -> DataFrame:
 
     if ttm_df[cn_month].count() != 12:
 
-        default_df : DataFrame = get_default_ttm(year = year)
+        default_df : DataFrame = get_default_raw_ttm(year = year)
         missing_df : DataFrame = default_df.loc[~default_df[cn_month].astype(str).isin(ttm_df[cn_month].astype(str))]
 
         completed_df : DataFrame = pd.concat([ttm_df, missing_df], ignore_index = True)
@@ -854,7 +854,7 @@ def try_complete_ttm(ttm_df : DataFrame, year : int) -> DataFrame:
         return completed_df
 
     return ttm_df
-def get_ttm(sessions_df : DataFrame, year : int) -> DataFrame:
+def get_raw_ttm(sessions_df : DataFrame, year : int) -> DataFrame:
     
     '''
         ttm_df:
@@ -898,8 +898,8 @@ def get_ttm(sessions_df : DataFrame, year : int) -> DataFrame:
     ttm_df = ttm_df.groupby([cn_month])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
     ttm_df = ttm_df.sort_values(by = cn_month).reset_index(drop = True)
 
-    ttm_df = try_complete_ttm(ttm_df = ttm_df, year = year)
-    ttm_df = enforce_ttm_schema(df = ttm_df)
+    ttm_df = try_complete_raw_ttm(ttm_df = ttm_df, year = year)
+    ttm_df = enforce_raw_ttm_schema(df = ttm_df)
 
     return ttm_df
 
@@ -920,7 +920,7 @@ def get_trend_by_timedelta(td_1 : timedelta, td_2 : timedelta) -> str:
         trend = "="
 
     return trend
-def expand_ttm_by_year(sessions_df : DataFrame, years : list, tts_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
+def expand_raw_ttm_by_year(sessions_df : DataFrame, years : list, tts_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
 
     '''    
         actual_df:
@@ -969,7 +969,7 @@ def expand_ttm_by_year(sessions_df : DataFrame, years : list, tts_df : DataFrame
     '''
     
     actual_df : DataFrame = tts_df.copy(deep = True)
-    ttm_df : DataFrame = get_ttm(sessions_df = sessions_df, year = years[i])
+    ttm_df : DataFrame = get_raw_ttm(sessions_df = sessions_df, year = years[i])
 
     cn_month : str = "Month"      
     expansion_df = pd.merge(
@@ -1028,9 +1028,9 @@ def get_tts(sessions_df : DataFrame, years : list) -> DataFrame:
     for i in range(len(years)):
 
         if i == 0:
-            tts_df = get_ttm(sessions_df = sessions_df, year = years[i])
+            tts_df = get_raw_ttm(sessions_df = sessions_df, year = years[i])
         else:
-            tts_df = expand_ttm_by_year(
+            tts_df = expand_raw_ttm_by_year(
                 sessions_df = sessions_df, 
                 years = years, 
                 tts_df = tts_df, 
