@@ -53,6 +53,8 @@ class SettingCollection():
     show_tt_by_year_month_spnv_df : bool
     show_tt_by_year_spnv_df : bool
     show_tt_by_spn_df : bool
+    show_tts_by_month_df : bool
+    show_future_values_in_tts_by_month : bool    
 
     def __init__(
         self,
@@ -73,7 +75,9 @@ class SettingCollection():
         show_tt_by_year_month_df : bool,
         show_tt_by_year_month_spnv_df : bool,
         show_tt_by_year_spnv_df : bool,
-        show_tt_by_spn_df : bool
+        show_tt_by_spn_df : bool,
+        show_tts_by_month_df : bool,
+        show_future_values_in_tts_by_month : bool
         ):
 
         self.years = years
@@ -94,6 +98,8 @@ class SettingCollection():
         self.show_tt_by_year_month_spnv_df = show_tt_by_year_month_spnv_df
         self.show_tt_by_year_spnv_df = show_tt_by_year_spnv_df
         self.show_tt_by_spn_df = show_tt_by_spn_df
+        self.show_tts_by_month_df = show_tts_by_month_df
+        self.show_future_values_in_tts_by_month = show_future_values_in_tts_by_month      
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
