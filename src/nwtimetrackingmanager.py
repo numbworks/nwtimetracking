@@ -764,28 +764,6 @@ def try_print_definitions(df : DataFrame, definitions : dict[str, str]) -> None:
         if definitions.get(column_name) != None:
             print(f"{column_name}: {definitions[column_name]}")
 
-def get_trend_by_timedelta(td_1 : timedelta, td_2 : timedelta) -> str:
-
-    '''
-        0h 30m, 1h 00m => "↑"
-        1h 00m, 0h 30m => "↓"
-        0, 0 => "="
-    '''
-    trend : str = None
-
-    if td_1 < td_2:
-        trend = "↑"
-    elif td_1 > td_2:
-        trend = "↓"
-    else:
-        trend = "="
-
-    return trend
-def get_trend_by_timedelta_string(td_str_1 : str, td_str_2 : str) -> str:
-    return get_trend_by_timedelta(
-        td_1 = convert_string_to_timedelta(td_str = td_str_1), 
-        td_2 = convert_string_to_timedelta(td_str = td_str_2))
-
 def enforce_ttm_schema(df : DataFrame) -> DataFrame:
 
     '''Ensures that the columns of the provided dataframe have the expected data types.'''
@@ -925,6 +903,146 @@ def get_ttm(sessions_df : DataFrame, year : int) -> DataFrame:
 
     return ttm_df
 
+def get_trend_by_timedelta(td_1 : timedelta, td_2 : timedelta) -> str:
+
+    '''
+        0h 30m, 1h 00m => "↑"
+        1h 00m, 0h 30m => "↓"
+        0, 0 => "="
+    '''
+    trend : str = None
+
+    if td_1 < td_2:
+        trend = "↑"
+    elif td_1 > td_2:
+        trend = "↓"
+    else:
+        trend = "="
+
+    return trend
+def expand_ttm_by_year(sessions_df : DataFrame, years : list, tts_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
+
+    '''    
+        actual_df:
+
+                Month	2016
+            0	1	    0h 00m
+            1	2	    0h 00m
+            ...
+
+        ttm_df:
+
+                Month	2017
+            0	1	    13h 00m
+            1	2	    1h 00m
+            ...            
+
+        expansion_df:
+
+                Month	2016	2017
+            0	1	    0h 00m	13h 00m
+            1	2	    0h 00m	1h 00m
+            ...
+
+        expansion_df:        
+
+                Month	2016	2017	    ↕1
+            0	1	    0h 00m	13h 00m	    ↑
+            1	2	    0h 00m	1h 00m	    ↑
+            ...
+
+        expansion_df:
+
+                Month	2016	↕1	2017
+            0	1	    0h 00m	↑	13h 00m
+            1	2	    0h 00m	↑	1h 00m
+            ...
+
+        Now that we have the expansion_df, we append it to the right of actual_df:
+
+        actual_df:
+
+                Month	2016	↕1	2017
+            0	1	    0h 00m	↑	13h 00m
+            1	2	    0h 00m	↑	1h 00m
+            ...
+    '''
+    
+    actual_df : DataFrame = tts_df.copy(deep = True)
+    ttm_df : DataFrame = get_ttm(sessions_df = sessions_df, year = years[i])
+
+    cn_month : str = "Month"      
+    expansion_df = pd.merge(
+        left = actual_df, 
+        right = ttm_df, 
+        how = "inner", 
+        left_on = cn_month, 
+        right_on = cn_month)
+
+    if add_trend == True:
+
+        cn_trend : str = f"↕{i}"
+        cn_trend_1 : str = str(years[i-1])   # for ex. "2016"
+        cn_trend_2 : str = str(years[i])     # for ex. "2017"
+        
+        expansion_df[cn_trend] = expansion_df.apply(lambda x : get_trend_by_timedelta(td_1 = x[cn_trend_1], td_2 = x[cn_trend_2]), axis = 1) 
+
+        new_column_names : list = [cn_month, cn_trend_1, cn_trend, cn_trend_2]   # for ex. ["Month", "2016", "↕", "2017"]
+        expansion_df = expansion_df.reindex(columns = new_column_names)
+
+        shared_columns : list = [cn_month, str(years[i-1])] # ["Month", "2016"]
+        actual_df = pd.merge(
+            left = actual_df, 
+            right = expansion_df, 
+            how = "inner", 
+            left_on = shared_columns, 
+            right_on = shared_columns)
+
+    else:
+        actual_df = expansion_df
+
+    return actual_df
+def try_consolidate_trend_column_name(column_name : str) -> str:
+
+    '''
+        "2016"  => "2016"
+        "↕1"    => "↕"
+    '''
+
+    cn_trend : str = "↕"
+
+    if column_name.startswith(cn_trend):
+        return cn_trend
+    
+    return column_name
+def get_tts(sessions_df : DataFrame, years : list) -> DataFrame:
+
+    '''
+            Month	2016	↕   2017	    ↕	2018    ...
+        0	1	    0h 00m	↑	13h 00m		↓	0h 00m
+        1	2	    0h 00m	↑	1h 00m	    ↓	0h 00m
+        ...
+    '''
+
+    tts_df : DataFrame = None
+    for i in range(len(years)):
+
+        if i == 0:
+            tts_df = get_ttm(sessions_df = sessions_df, year = years[i])
+        else:
+            tts_df = expand_ttm_by_year(
+                sessions_df = sessions_df, 
+                years = years, 
+                tts_df = tts_df, 
+                i = i, 
+                add_trend = True)
+            
+    for year in years:
+        tts_df[str(year)] = tts_df[str(year)].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))
+
+    tts_df.rename(columns = (lambda x : try_consolidate_trend_column_name(column_name = x)), inplace = True)
+
+    return tts_df
 
 # MAIN
 if __name__ == "__main__":
