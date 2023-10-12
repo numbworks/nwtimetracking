@@ -655,9 +655,11 @@ def get_tt_by_year_spnv(sessions_df : DataFrame, years : list[int], software_pro
 def get_raw_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame: 
     
     '''
-            ProjectName	        Effort
-        0	nwtraderaanalytics	0 days 09:15:00
-        1	NW.AutoProffLibrary	0 days 09:30:00
+            Hashtag	ProjectName	            Effort
+        0	#python	nwtraderaanalytics	    72h 00m
+        1	#python	nwreadinglistmanager	66h 30m
+        2	#python	nwtimetrackingmanager	18h 45m
+        3	#csharp	NW.WIDJobs	            430h 00m
         ...
     '''
 
@@ -674,13 +676,16 @@ def get_raw_tt_by_spn(sessions_df : DataFrame, years : list[int], software_proje
     tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : extract_software_project_name(descriptor = x))
 
     cn_effort : str = "Effort"
+    cn_hashtag : str = "Hashtag"
     tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
-    tt_df = tt_df.groupby(by = [cn_project_name])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+    tt_df = tt_df.groupby(by = [cn_project_name, cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
     tt_df = tt_df.sort_values(by = [cn_project_name]).reset_index(drop = True)
 
     condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
     tt_df = tt_df.loc[condition_three] 
-    tt_df = tt_df.sort_values(by = [cn_effort], ascending = [False]).reset_index(drop = True)
+    tt_df = tt_df.sort_values(by = [cn_hashtag, cn_effort], ascending = [False, False]).reset_index(drop = True)
+
+    tt_df = tt_df[[cn_hashtag, cn_project_name, cn_effort]]
 
     return tt_df
 def get_raw_de(sessions_df : DataFrame, years : list[int]) -> timedelta:
@@ -723,16 +728,16 @@ def get_raw_te(sessions_df : DataFrame, years : list[int], remove_untagged : boo
 def get_tt_by_spn(sessions_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
 
     '''
-            ProjectName	            Effort	    DE	%_DE	TE	        %_TE
-        0	nwreadinglistmanager	66h 30m	93h 15m	71.31	4475h 15m	1.49
-        1	nwtraderaanalytics	    09h 15m	93h 15m	9.92	4475h 15m	0.21
+            Hashtag     ProjectName	            Effort	    DE	%_DE	TE	        %_TE
+        0	#python     nwreadinglistmanager	66h 30m	93h 15m	71.31	4475h 15m	1.49
+        1	#python     nwtraderaanalytics	    09h 15m	93h 15m	9.92	4475h 15m	0.21
         ...
 
         With remove_untagged = True:
 
-            ProjectName	            Effort	DE	    %_DE	TE	        %_TE
-        0	nwreadinglistmanager	66h 30m	93h 15m	71.31	174h 15m	38.16
-        1	nwtraderaanalytics	    09h 15m	93h 15m	9.92	174h 15m	5.31
+            Hashtag     ProjectName	            Effort	DE	    %_DE	TE	        %_TE
+        0	#python     nwreadinglistmanager	66h 30m	93h 15m	71.31	174h 15m	38.16
+        1	#python     nwtraderaanalytics	    09h 15m	93h 15m	9.92	174h 15m	5.31
         ...
     '''
 
