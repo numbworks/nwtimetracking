@@ -45,6 +45,7 @@ class SettingCollection():
     n_by_month : int
     now : datetime
     software_project_names : list[str]
+    software_project_names_by_spv : list[str]
     remove_untagged_from_de : bool
     definitions : dict[str, str]
     show_sessions_df : bool
@@ -68,6 +69,7 @@ class SettingCollection():
         n_by_month : int,
         now : datetime,
         software_project_names : list[str],
+        software_project_names_by_spv : list[str],
         remove_untagged_from_de : bool,
         definitions : dict[str, str],
         show_sessions_df : bool,
@@ -90,6 +92,7 @@ class SettingCollection():
         self.n_by_month = n_by_month
         self.now = now
         self.software_project_names = software_project_names
+        self.software_project_names_by_spv = software_project_names_by_spv
         self.remove_untagged_from_de = remove_untagged_from_de
         self.definitions = definitions
         self.show_sessions_df = show_sessions_df
