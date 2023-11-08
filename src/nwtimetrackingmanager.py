@@ -54,6 +54,7 @@ class SettingCollection():
     show_tt_by_year_month_spnv_df : bool
     show_tt_by_year_spnv_df : bool
     show_tt_by_spn_df : bool
+    show_tt_by_spn_spv_df : bool
     show_tts_by_month_df : bool
     show_future_values_in_tts_by_month : bool    
 
@@ -78,6 +79,7 @@ class SettingCollection():
         show_tt_by_year_month_spnv_df : bool,
         show_tt_by_year_spnv_df : bool,
         show_tt_by_spn_df : bool,
+        show_tt_by_spn_spv_df : bool,
         show_tts_by_month_df : bool,
         show_future_values_in_tts_by_month : bool
         ):
@@ -101,6 +103,7 @@ class SettingCollection():
         self.show_tt_by_year_month_spnv_df = show_tt_by_year_month_spnv_df
         self.show_tt_by_year_spnv_df = show_tt_by_year_spnv_df
         self.show_tt_by_spn_df = show_tt_by_spn_df
+        self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
         self.show_tts_by_month_df = show_tts_by_month_df
         self.show_future_values_in_tts_by_month = show_future_values_in_tts_by_month      
 
