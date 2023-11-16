@@ -159,6 +159,10 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     dataset_df = dataset_df.astype({column_names[8]: int})
     dataset_df = dataset_df.astype({column_names[9]: int})
 
+    dataset_df[column_names[1]] = dataset_df[column_names[1]].replace('nan', np.nan, inplace = True)
+    dataset_df[column_names[2]] = dataset_df[column_names[2]].replace('nan', np.nan, inplace = True)
+    # dataset_df[column_names[5]] = dataset_df[column_names[5]].replace('nan', np.nan, inplace = True)
+
     return dataset_df
 
 def convert_string_to_timedelta(td_str : str) -> timedelta:
