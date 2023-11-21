@@ -1253,6 +1253,8 @@ def create_effort_status_value_error_message(idx : int, start_time_str : str, en
         message += f"(idx: '{idx}', start_time_str: '{start_time_str}', end_time_str: '{end_time_str}', effort_str: '{effort_str}')."
 
         return message
+def create_effort_status_time_not_among_error_message(time : str) -> str:
+    return f"The provided time ('{time}') is not among the expected time values."
 def create_time_object(time : str) -> datetime:
 
     '''It creates a datetime object suitable for timedelta calculation out of the provided time.'''
@@ -1294,7 +1296,7 @@ def create_time_object(time : str) -> datetime:
     elif time in day_2_times:
         dt_str = f"1900-01-02 {time}"
     else: 
-        raise ValueError(f"The provided time ('{time}') is not among the expected time values.")
+        raise ValueError(create_effort_status_time_not_among_error_message(time = time))
             
     dt : datetime =  datetime.strptime(dt_str, strp_format)
 
