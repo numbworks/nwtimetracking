@@ -48,6 +48,8 @@ class SettingCollection():
     software_project_names_by_spv : list[str]
     remove_untagged_from_de : bool
     definitions : dict[str, str]
+    effort_status_n : int
+    effort_status_is_correct : bool
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
@@ -56,7 +58,8 @@ class SettingCollection():
     show_tt_by_spn_df : bool
     show_tt_by_spn_spv_df : bool
     show_tts_by_month_df : bool
-    show_future_values_in_tts_by_month : bool    
+    show_future_values_in_tts_by_month : bool
+    show_effort_status_df : bool
 
     def __init__(
         self,
@@ -73,6 +76,8 @@ class SettingCollection():
         software_project_names_by_spv : list[str],
         remove_untagged_from_de : bool,
         definitions : dict[str, str],
+        effort_status_n : int,
+        effort_status_is_correct : bool,        
         show_sessions_df : bool,
         show_tt_by_year_df : bool,
         show_tt_by_year_month_df : bool,
@@ -81,7 +86,8 @@ class SettingCollection():
         show_tt_by_spn_df : bool,
         show_tt_by_spn_spv_df : bool,
         show_tts_by_month_df : bool,
-        show_future_values_in_tts_by_month : bool
+        show_future_values_in_tts_by_month : bool,
+        show_effort_status_df : bool
         ):
 
         self.years = years
@@ -97,6 +103,8 @@ class SettingCollection():
         self.software_project_names_by_spv = software_project_names_by_spv
         self.remove_untagged_from_de = remove_untagged_from_de
         self.definitions = definitions
+        self.effort_status_n = effort_status_n,
+        self.effort_status_is_correct = effort_status_is_correct,        
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
@@ -105,7 +113,8 @@ class SettingCollection():
         self.show_tt_by_spn_df = show_tt_by_spn_df
         self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
         self.show_tts_by_month_df = show_tts_by_month_df
-        self.show_future_values_in_tts_by_month = show_future_values_in_tts_by_month      
+        self.show_future_values_in_tts_by_month = show_future_values_in_tts_by_month
+        self.show_effort_status_df = show_effort_status_df     
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
