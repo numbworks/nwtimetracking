@@ -1232,7 +1232,7 @@ def create_efforts_status_for_none_values(idx : int, effort_str : str) -> Effort
         )    
 
     return effort_status
-def create_mismatching_effort_status_message(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
+def create_effort_status_mismatching_message(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
 
     '''
     "The provided row contains a mismatching effort (idx: '4', start_time: '20:00', end_time: '00:00', actual_effort: '3h 00m', expected_effort: '4h 00m')."
@@ -1332,7 +1332,7 @@ def create_effort_status(idx : int, start_time_str : str, end_time_str : str, ef
         
         message : str = "The effort is correct."
         if actual_td != expected_td:
-            message = create_mismatching_effort_status_message(
+            message = create_effort_status_mismatching_message(
                 idx = idx, 
                 start_time_str = start_time_str, 
                 end_time_str = end_time_str, 
