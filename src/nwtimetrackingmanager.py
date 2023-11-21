@@ -161,6 +161,38 @@ class EffortStatus():
         self.expected_str = expected_str
         self.is_correct = is_correct
         self.message = message
+class MessageCollection():
+
+    '''Collects all the messages used for logging and for the exceptions.'''
+
+    @staticmethod
+    def effort_status_mismatching_message(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
+
+        '''
+        "The provided row contains a mismatching effort (idx: '4', start_time: '20:00', end_time: '00:00', actual_effort: '3h 00m', expected_effort: '4h 00m')."
+        '''
+
+        message : str = "The provided row contains a mismatching effort "
+        message += f"(idx: '{idx}', start_time: '{start_time_str}', end_time: '{end_time_str}', actual_effort: '{actual_str}', expected_effort: '{expected_str}')."
+
+        return message
+    
+    @staticmethod
+    def effort_status_value_error_message(idx : int, start_time_str : str, end_time_str : str, effort_str : str):
+
+            '''
+                "It has not been possible to create an EffortStatus for the provided parameters 
+                (idx: '770', start_time_str: '22:00', end_time_str: '00:00 ', effort_str: '2h 00m')."
+            '''
+
+            message : str = "It has not been possible to create an EffortStatus for the provided parameters "
+            message += f"(idx: '{idx}', start_time_str: '{start_time_str}', end_time_str: '{end_time_str}', effort_str: '{effort_str}')."
+
+            return message
+    
+    @staticmethod
+    def effort_status_time_not_among_error_message(time : str) -> str:
+        return f"The provided time ('{time}') is not among the expected time values."
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
@@ -1232,29 +1264,6 @@ def create_effort_status_for_none_values(idx : int, effort_str : str) -> EffortS
         )    
 
     return effort_status
-def create_effort_status_mismatching_message(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
-
-    '''
-    "The provided row contains a mismatching effort (idx: '4', start_time: '20:00', end_time: '00:00', actual_effort: '3h 00m', expected_effort: '4h 00m')."
-    '''
-
-    message : str = "The provided row contains a mismatching effort "
-    message += f"(idx: '{idx}', start_time: '{start_time_str}', end_time: '{end_time_str}', actual_effort: '{actual_str}', expected_effort: '{expected_str}')."
-
-    return message
-def create_effort_status_value_error_message(idx : int, start_time_str : str, end_time_str : str, effort_str : str):
-
-        '''
-            "It has not been possible to create an EffortStatus for the provided parameters 
-            (idx: '770', start_time_str: '22:00', end_time_str: '00:00 ', effort_str: '2h 00m')."
-        '''
-
-        message : str = "It has not been possible to create an EffortStatus for the provided parameters "
-        message += f"(idx: '{idx}', start_time_str: '{start_time_str}', end_time_str: '{end_time_str}', effort_str: '{effort_str}')."
-
-        return message
-def create_effort_status_time_not_among_error_message(time : str) -> str:
-    return f"The provided time ('{time}') is not among the expected time values."
 def create_time_object(time : str) -> datetime:
 
     '''It creates a datetime object suitable for timedelta calculation out of the provided time.'''
@@ -1296,7 +1305,7 @@ def create_time_object(time : str) -> datetime:
     elif time in day_2_times:
         dt_str = f"1900-01-02 {time}"
     else: 
-        raise ValueError(create_effort_status_time_not_among_error_message(time = time))
+        raise ValueError(MessageCollection.effort_status_time_not_among_error_message(time = time))
             
     dt : datetime =  datetime.strptime(dt_str, strp_format)
 
@@ -1321,10 +1330,10 @@ def create_effort_status(idx : int, start_time_str : str, end_time_str : str, ef
         end_time_dt : datetime = create_time_object(time = end_time_str)
 
         actual_str : str = effort_str
-        actual_td : timedelta = nwttm.convert_string_to_timedelta(td_str = effort_str)
+        actual_td : timedelta = convert_string_to_timedelta(td_str = effort_str)
 
         expected_td : timedelta = (end_time_dt - start_time_dt)
-        expected_str : str = nwttm.format_timedelta(td = expected_td, add_plus_sign = False)
+        expected_str : str = format_timedelta(td = expected_td, add_plus_sign = False)
         
         is_correct : bool = True
         if actual_td != expected_td:
@@ -1332,7 +1341,7 @@ def create_effort_status(idx : int, start_time_str : str, end_time_str : str, ef
         
         message : str = "The effort is correct."
         if actual_td != expected_td:
-            message = create_effort_status_mismatching_message(
+            message = MessageCollection.effort_status_mismatching_message(
                 idx = idx, 
                 start_time_str = start_time_str, 
                 end_time_str = end_time_str, 
@@ -1358,7 +1367,7 @@ def create_effort_status(idx : int, start_time_str : str, end_time_str : str, ef
     
     except:
 
-        message : str = create_effort_status_value_error_message(
+        message : str = MessageCollection.effort_status_value_error_message(
             idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
 
         raise ValueError(message)
