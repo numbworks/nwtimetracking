@@ -166,7 +166,7 @@ class MessageCollection():
     '''Collects all the messages used for logging and for the exceptions.'''
 
     @staticmethod
-    def effort_status_mismatching_message(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
+    def effort_status_mismatching_effort(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
 
         '''
         "The provided row contains a mismatching effort (idx: '4', start_time: '20:00', end_time: '00:00', actual_effort: '3h 00m', expected_effort: '4h 00m')."
@@ -178,7 +178,7 @@ class MessageCollection():
         return message
     
     @staticmethod
-    def effort_status_value_error_message(idx : int, start_time_str : str, end_time_str : str, effort_str : str):
+    def effort_status_not_possible_to_create(idx : int, start_time_str : str, end_time_str : str, effort_str : str):
 
             '''
                 "It has not been possible to create an EffortStatus for the provided parameters 
@@ -191,7 +191,7 @@ class MessageCollection():
             return message
     
     @staticmethod
-    def effort_status_time_not_among_error_message(time : str) -> str:
+    def effort_status_not_among_expected_time_values(time : str) -> str:
         return f"The provided time ('{time}') is not among the expected time values."
 
 # FUNCTIONS
@@ -1305,7 +1305,7 @@ def create_time_object(time : str) -> datetime:
     elif time in day_2_times:
         dt_str = f"1900-01-02 {time}"
     else: 
-        raise ValueError(MessageCollection.effort_status_time_not_among_error_message(time = time))
+        raise ValueError(MessageCollection.effort_status_not_among_expected_time_values(time = time))
             
     dt : datetime =  datetime.strptime(dt_str, strp_format)
 
@@ -1341,7 +1341,7 @@ def create_effort_status(idx : int, start_time_str : str, end_time_str : str, ef
         
         message : str = "The effort is correct."
         if actual_td != expected_td:
-            message = MessageCollection.effort_status_mismatching_message(
+            message = MessageCollection.effort_status_mismatching_effort(
                 idx = idx, 
                 start_time_str = start_time_str, 
                 end_time_str = end_time_str, 
@@ -1367,7 +1367,7 @@ def create_effort_status(idx : int, start_time_str : str, end_time_str : str, ef
     
     except:
 
-        message : str = MessageCollection.effort_status_value_error_message(
+        message : str = MessageCollection.effort_status_not_possible_to_create(
             idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
 
         raise ValueError(message)
