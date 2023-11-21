@@ -1210,7 +1210,7 @@ def update_future_months_to_empty(tts_by_month_df : DataFrame, now : datetime) -
 
 	return tts_by_month_upd_df
 
-def create_efforts_status_for_none_values(idx : int, effort_str : str) -> EffortStatus:
+def create_effort_status_for_none_values(idx : int, effort_str : str) -> EffortStatus:
 
     actual_str : str = effort_str
     actual_td : timedelta = convert_string_to_timedelta(td_str = effort_str)
@@ -1315,7 +1315,7 @@ def create_effort_status(idx : int, start_time_str : str, end_time_str : str, ef
     try:
 
         if len(start_time_str) == 0 or len(end_time_str) == 0:
-            return create_efforts_status_for_none_values(idx = idx, effort_str = effort_str)
+            return create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
 
         start_time_dt : datetime = create_time_object(time = start_time_str)
         end_time_dt : datetime = create_time_object(time = end_time_str)
