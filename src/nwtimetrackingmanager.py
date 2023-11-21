@@ -115,6 +115,52 @@ class SettingCollection():
         self.show_tts_by_month_df = show_tts_by_month_df
         self.show_future_values_in_tts_by_month = show_future_values_in_tts_by_month
         self.show_effort_status_df = show_effort_status_df     
+class EffortStatus():
+    
+    '''Represents an effort-related status.'''
+
+    idx : int
+    start_time_str : str
+    start_time_dt : datetime
+
+    end_time_str : str 
+    end_time_dt : datetime
+    
+    actual_str : str
+    actual_td : timedelta 
+
+    expected_td : timedelta
+    expected_str : str 
+
+    is_correct : bool
+    message : str 
+
+    def __init__(
+            self, 
+            idx : int, 
+            start_time_str : str,
+            start_time_dt : datetime,
+            end_time_str : str,
+            end_time_dt : datetime,
+            actual_str : str,
+            actual_td : timedelta,
+            expected_td : timedelta,
+            expected_str : str,
+            is_correct : bool,
+            message : str
+            ):
+        
+        self.idx = idx
+        self.start_time_str = start_time_str
+        self.start_time_dt = start_time_dt
+        self.end_time_str = end_time_str
+        self.end_time_dt = end_time_dt
+        self.actual_str = actual_str
+        self.actual_td = actual_td
+        self.expected_td = expected_td
+        self.expected_str = expected_str
+        self.is_correct = is_correct
+        self.message = message
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
@@ -1163,6 +1209,203 @@ def update_future_months_to_empty(tts_by_month_df : DataFrame, now : datetime) -
 	tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
 
 	return tts_by_month_upd_df
+
+def create_efforts_status_for_none_values(idx : int, effort_str : str) -> EffortStatus:
+
+    actual_str : str = effort_str
+    actual_td : timedelta = convert_string_to_timedelta(td_str = effort_str)
+    is_correct : bool = True
+    message : str = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+
+    effort_status : EffortStatus = EffortStatus(
+        idx = idx,
+        start_time_str = None,
+        start_time_dt = None,
+        end_time_str = None,
+        end_time_dt = None,
+        actual_str = actual_str,
+        actual_td = actual_td,
+        expected_td = None,
+        expected_str = None,
+        is_correct = is_correct,
+        message = message
+        )    
+
+    return effort_status
+def create_mismatching_effort_status_message(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
+
+    '''
+    "The provided row contains a mismatching effort (idx: '4', start_time: '20:00', end_time: '00:00', actual_effort: '3h 00m', expected_effort: '4h 00m')."
+    '''
+
+    message : str = "The provided row contains a mismatching effort "
+    message += f"(idx: '{idx}', start_time: '{start_time_str}', end_time: '{end_time_str}', actual_effort: '{actual_str}', expected_effort: '{expected_str}')."
+
+    return message
+def create_effort_status_value_error_message(idx : int, start_time_str : str, end_time_str : str, effort_str : str):
+
+        '''
+            "It has not been possible to create an EffortStatus for the provided parameters 
+            (idx: '770', start_time_str: '22:00', end_time_str: '00:00 ', effort_str: '2h 00m')."
+        '''
+
+        message : str = "It has not been possible to create an EffortStatus for the provided parameters "
+        message += f"(idx: '{idx}', start_time_str: '{start_time_str}', end_time_str: '{end_time_str}', effort_str: '{effort_str}')."
+
+        return message
+def create_time_object(time : str) -> datetime:
+
+    '''It creates a datetime object suitable for timedelta calculation out of the provided time.'''
+
+    day_1_times : list[str] = [
+        "07:00", "07:15", "07:30", "07:45", 
+        "08:00", "08:15", "08:30", "08:45",
+        "09:00", "09:15", "09:30", "09:45",
+        "10:00", "10:15", "10:30", "10:45",
+        "11:00", "11:15", "11:30", "11:45",
+        "12:00", "12:15", "12:30", "12:45",
+        "13:00", "13:15", "13:30", "13:45",
+        "14:00", "14:15", "14:30", "14:45",
+        "15:00", "15:15", "15:30", "15:45",
+        "16:00", "16:15", "16:30", "16:45",
+        "17:00", "17:15", "17:30", "17:45",
+        "18:00", "18:15", "18:30", "18:45",
+        "19:00", "19:15", "19:30", "19:45",
+        "20:00", "20:15", "20:30", "20:45",
+        "21:00", "21:15", "21:30", "21:45",
+        "22:00", "22:15", "22:30", "22:45",
+        "23:00", "23:15", "23:30", "23:45",
+    ]
+    day_2_times : list[str] = [
+        "00:00", "00:15", "00:30", "00:45", 
+        "01:00", "01:15", "01:30", "01:45",
+        "02:00", "02:15", "02:30", "02:45",
+        "03:00", "03:15", "03:30", "03:45",
+        "04:00", "04:15", "04:30", "04:45",
+        "05:00", "05:15", "05:30", "05:45",
+        "06:00", "06:15", "06:30", "06:45",
+    ]
+
+    strp_format : str = "%Y-%m-%d %H:%M"
+
+    dt_str : str = None
+    if time in day_1_times:
+        dt_str = f"1900-01-01 {time}"
+    elif time in day_2_times:
+        dt_str = f"1900-01-02 {time}"
+    else: 
+        raise ValueError(f"The provided time ('{time}') is not among the expected time values.")
+            
+    dt : datetime =  datetime.strptime(dt_str, strp_format)
+
+    return dt
+def create_effort_status(idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> EffortStatus:
+
+    '''
+        start_time_str, end_time_str:
+            - Expects time values in the "%H:%M" format - for ex. 20:00.
+
+        is_correct:
+            start_time_str = "20:00", end_time_str = "00:00", effort_str = "4h 00m" => True
+            start_time_str = "20:00", end_time_str = "00:00", effort_str = "5h 00m" => False
+    '''
+
+    try:
+
+        if len(start_time_str) == 0 or len(end_time_str) == 0:
+            return create_efforts_status_for_none_values(idx = idx, effort_str = effort_str)
+
+        start_time_dt : datetime = create_time_object(time = start_time_str)
+        end_time_dt : datetime = create_time_object(time = end_time_str)
+
+        actual_str : str = effort_str
+        actual_td : timedelta = nwttm.convert_string_to_timedelta(td_str = effort_str)
+
+        expected_td : timedelta = (end_time_dt - start_time_dt)
+        expected_str : str = nwttm.format_timedelta(td = expected_td, add_plus_sign = False)
+        
+        is_correct : bool = True
+        if actual_td != expected_td:
+            is_correct = False
+        
+        message : str = "The effort is correct."
+        if actual_td != expected_td:
+            message = create_mismatching_effort_status_message(
+                idx = idx, 
+                start_time_str = start_time_str, 
+                end_time_str = end_time_str, 
+                actual_str = actual_str, 
+                expected_str = expected_str
+            )
+        
+        effort_status : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = start_time_str,
+            start_time_dt = start_time_dt,
+            end_time_str = end_time_str,
+            end_time_dt = end_time_dt,
+            actual_str = actual_str,
+            actual_td = actual_td,
+            expected_td = expected_td,
+            expected_str = expected_str,
+            is_correct = is_correct,
+            message = message
+            )
+
+        return effort_status
+    
+    except:
+
+        message : str = create_effort_status_value_error_message(
+            idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
+
+        raise ValueError(message)
+def add_effort_status(sessions_df : DataFrame) -> DataFrame:
+
+    '''
+        StartTime	EndTime	Effort	ES_IsCorrect	ES_Expected	ES_Message
+        21:00       23:00   1h 00m  False           2h 00m      ...
+        ...        
+    '''
+
+    es_df : DataFrame = sessions_df.copy(deep = True)
+    
+    cn_start_time : str = "StartTime"
+    cn_end_time : str = "EndTime"
+    cn_effort : str = "Effort"
+    cn_effort_status : str = "EffortStatus"
+
+    es_df[cn_effort_status] = es_df.apply(
+        lambda x : create_effort_status(
+            idx = x.name, 
+            start_time_str = x[cn_start_time],
+            end_time_str = x[cn_end_time],
+            effort_str = x[cn_effort]),
+            axis = 1)
+    
+    cn_es_is_correct : str = "ES_IsCorrect"
+    cn_es_expected : str = "ES_Expected"
+    cn_es_message : str = "ES_Message"
+
+    es_df[cn_es_is_correct] = es_df[cn_effort_status].apply(lambda x : x.is_correct)
+    es_df[cn_es_expected] = es_df[cn_effort_status].apply(lambda x : x.expected_str)
+    es_df[cn_es_message] = es_df[cn_effort_status].apply(lambda x : x.message)
+
+    es_df = es_df[[cn_start_time, cn_end_time, cn_effort, cn_es_is_correct, cn_es_expected, cn_es_message]]
+
+    return es_df
+def filter_by_is_correct(es_df : DataFrame, is_correct : bool) -> DataFrame:
+
+    '''Returns a DataFrame that contains only rows that match the provided is_correct.'''
+
+    filtered_df : DataFrame = es_df.copy(deep = True)
+
+    cn_es_is_correct : str = "ES_IsCorrect"
+
+    condition : Series = (filtered_df[cn_es_is_correct] == is_correct)
+    filtered_df = es_df.loc[condition]
+
+    return filtered_df
 
 # MAIN
 if __name__ == "__main__":
