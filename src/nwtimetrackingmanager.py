@@ -1202,7 +1202,6 @@ def get_tts_by_month(sessions_df : DataFrame, years : list) -> DataFrame:
     tts_by_month_df.rename(columns = (lambda x : try_consolidate_trend_column_name(column_name = x)), inplace = True)
 
     return tts_by_month_df
-
 def update_future_months_to_empty(tts_by_month_df : DataFrame, now : datetime) -> DataFrame:
 
 	'''	
@@ -1417,6 +1416,75 @@ def filter_by_is_correct(es_df : DataFrame, is_correct : bool) -> DataFrame:
     filtered_df = es_df.loc[condition]
 
     return filtered_df
+
+def create_time_range_id(start_time : str, end_time : str, unknown_id) -> str:
+		
+		'''
+			Creates a unique time range identifier out of the provided parameters.
+			If parameters are empty, it returns unknown_id.
+		'''
+
+		time_range_id : str = f"{start_time}-{end_time}"
+
+		if len(start_time) == 0 or len(end_time) == 0:
+			time_range_id = unknown_id
+
+		return time_range_id
+def create_time_ranges_df(sessions_df : DataFrame, unknown_id : str) -> DataFrame:
+
+		'''
+				TimeRangeId	Occurrences
+			0	Unknown		44
+			1	18:00-20:00	19
+			2	08:00-08:30	16
+			...
+		'''
+
+		time_ranges_df : DataFrame = sessions_df.copy(deep = True)
+		
+		cn_start_time : str = "StartTime"
+		cn_end_time : str = "EndTime"
+		cn_time_range_id : str = "TimeRangeId"
+
+		time_ranges_df = time_ranges_df[[cn_start_time, cn_end_time]]
+		time_ranges_df[cn_time_range_id] = time_ranges_df.apply(
+			lambda x : create_time_range_id(
+				start_time = x[cn_start_time], 
+				end_time = x[cn_end_time], 
+				unknown_id = unknown_id), axis = 1)
+
+		import pandas as pd
+
+		cn_occurrences : str = "Occurrences"
+
+		time_ranges_df = pd.DataFrame(
+			data = time_ranges_df[[cn_time_range_id]].value_counts(),
+			columns=[cn_occurrences]).reset_index()
+		time_ranges_df.sort_values(by = cn_occurrences, ascending = [False], inplace = True)
+		
+		return time_ranges_df
+def remove_unknown_id(time_ranges_df : DataFrame, unknown_id : str) -> DataFrame:
+
+	'''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
+
+	cn_time_range_id : str = "TimeRangeId"
+
+	condition : Series = (time_ranges_df[cn_time_range_id] != unknown_id)
+	time_ranges_df = time_ranges_df.loc[condition]	
+	time_ranges_df.reset_index(drop = True, inplace = True)
+
+	return time_ranges_df
+def filter_by_top_n_occurrences(time_ranges_df : DataFrame, n : int, ascending : bool = False) -> DataFrame:
+
+	'''Returns only the top n rows by "Occurrences" of the provided DataFrame.'''
+
+	cn_occurrences : str = "Occurrences"
+
+	time_ranges_df.sort_values(by = cn_occurrences, ascending = [ascending], inplace = True)
+	time_ranges_df = time_ranges_df.iloc[0:n]
+	time_ranges_df.reset_index(drop = True, inplace = True)
+
+	return time_ranges_df
 
 # MAIN
 if __name__ == "__main__":
