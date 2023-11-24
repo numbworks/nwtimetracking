@@ -50,6 +50,10 @@ class SettingCollection():
     definitions : dict[str, str]
     effort_status_n : int
     effort_status_is_correct : bool
+    time_ranges_unknown_id : str
+    time_ranges_top_n : int
+    time_ranges_remove_unknown_id : bool
+    time_ranges_filter_by_top_n : bool
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
@@ -60,6 +64,7 @@ class SettingCollection():
     show_tts_by_month_df : bool
     show_future_values_in_tts_by_month : bool
     show_effort_status_df : bool
+    show_time_ranges_df : bool
 
     def __init__(
         self,
@@ -77,7 +82,11 @@ class SettingCollection():
         remove_untagged_from_de : bool,
         definitions : dict[str, str],
         effort_status_n : int,
-        effort_status_is_correct : bool,        
+        effort_status_is_correct : bool,
+        time_ranges_unknown_id : str,
+        time_ranges_top_n : int,
+        time_ranges_remove_unknown_id : bool,
+        time_ranges_filter_by_top_n : bool,
         show_sessions_df : bool,
         show_tt_by_year_df : bool,
         show_tt_by_year_month_df : bool,
@@ -87,7 +96,8 @@ class SettingCollection():
         show_tt_by_spn_spv_df : bool,
         show_tts_by_month_df : bool,
         show_future_values_in_tts_by_month : bool,
-        show_effort_status_df : bool
+        show_effort_status_df : bool,
+        show_time_ranges_df : bool
         ):
 
         self.years = years
@@ -104,7 +114,11 @@ class SettingCollection():
         self.remove_untagged_from_de = remove_untagged_from_de
         self.definitions = definitions
         self.effort_status_n = effort_status_n,
-        self.effort_status_is_correct = effort_status_is_correct,        
+        self.effort_status_is_correct = effort_status_is_correct,
+        self.time_ranges_unknown_id = time_ranges_unknown_id
+        self.time_ranges_top_n = time_ranges_top_n
+        self.time_ranges_remove_unknown_id = time_ranges_remove_unknown_id
+        self.time_ranges_filter_by_top_n = time_ranges_filter_by_top_n
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
@@ -114,7 +128,8 @@ class SettingCollection():
         self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
         self.show_tts_by_month_df = show_tts_by_month_df
         self.show_future_values_in_tts_by_month = show_future_values_in_tts_by_month
-        self.show_effort_status_df = show_effort_status_df     
+        self.show_effort_status_df = show_effort_status_df
+        self.show_time_ranges_df = show_time_ranges_df
 class EffortStatus():
     
     '''Represents an effort-related status.'''
