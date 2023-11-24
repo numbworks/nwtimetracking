@@ -1,11 +1,12 @@
 v1.2.0
 - Notebook:
 	- Feature: support for the creation and visualization of a dataframe containing the most common time ranges.
+	- Feature: removed "NaN" from the "Descriptor" field.
 
 v1.1.0
 - Notebook:
 	- Feature: support for the creation of a "time tracking by softwareprojectname-softwareversion" dataframe and for its visualization.
-	- Feature: support for effort diagnostics
+	- Feature: support for effort diagnostics.
 	
 v1.0.0
 - Notebook:
