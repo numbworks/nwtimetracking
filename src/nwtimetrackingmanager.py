@@ -1501,6 +1501,38 @@ def filter_by_top_n_occurrences(time_ranges_df : DataFrame, n : int, ascending :
 
 	return time_ranges_df
 
+def get_raw_tt_by_year_hashtag(sessions_df : DataFrame, years : list[int]) -> DataFrame:
+
+    '''
+        ...
+    '''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_year : str = "Year"
+    condition : Series = (sessions_df[cn_year].isin(values = years))
+    tt_df = tt_df.loc[condition]
+
+    cn_hashtag: str = "Hashtag"
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df = tt_df.groupby(by = [cn_year, cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+    tt_df = tt_df.sort_values(by = [cn_hashtag, cn_year]).reset_index(drop = True)
+
+    return tt_df
+def get_tt_by_year_hashtag(sessions_df : DataFrame, years : list[int]) -> DataFrame:
+
+    '''
+        ...    
+    '''
+ 
+    tt_df : DataFrame = get_raw_tt_by_year_hashtag(sessions_df = sessions_df, years = years)
+
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))   
+
+    return tt_df
+
 # MAIN
 if __name__ == "__main__":
     pass
