@@ -1553,10 +1553,10 @@ def get_tt_by_year_hashtag(sessions_df : DataFrame, years : list[int]) -> DataFr
 def get_raw_tt_by_hashtag(sessions_df : DataFrame) -> DataFrame:
 
     '''
-            Hashtag	        Effort
-        0   #csharp	        0 days 15:15:00
-        1   #maintenance	0 days 02:30:00
-        2   #powershell	    3 days 02:15:00
+            Hashtag	        Effort          Effort%
+        0   #csharp	        0 days 15:15:00 56.49
+        1   #maintenance	0 days 02:30:00 23.97
+        2   #powershell	    3 days 02:15:00 6.43
         ...   
     '''
 
@@ -1566,16 +1566,20 @@ def get_raw_tt_by_hashtag(sessions_df : DataFrame) -> DataFrame:
     cn_effort : str = "Effort"
     tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
     tt_df = tt_df.groupby(by = [cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-    # tt_df = tt_df.sort_values(by = [cn_hashtag, cn_year]).reset_index(drop = True)
+
+    summarized : timedelta = tt_df[cn_effort].sum()
+    
+    cn_effort_prc : str = "Effort%"
+    tt_df[cn_effort_prc] = tt_df.apply(lambda x : calculate_percentage(part = x[cn_effort], whole = summarized), axis = 1)     
 
     return tt_df
 def get_tt_by_hashtag(sessions_df : DataFrame) -> DataFrame:
 
     '''
-            Hashtag	        Effort
-        0   #csharp	        67h 30m
-        1   #maintenance	51h 00m
-        2   #powershell	    04h 30m 
+            Hashtag	        Effort  Effort%
+        0   #csharp	        67h 30m 56.49
+        1   #maintenance	51h 00m 23.97
+        2   #powershell	    04h 30m 6.43
         ...    
     '''
  
