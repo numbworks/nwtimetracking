@@ -50,6 +50,7 @@ class SettingCollection():
     definitions : dict[str, str]
     effort_status_n : int
     effort_status_is_correct : bool
+    tt_by_year_hashtag_years : list[int]
     time_ranges_unknown_id : str
     time_ranges_top_n : int
     time_ranges_remove_unknown_id : bool
@@ -61,6 +62,7 @@ class SettingCollection():
     show_tt_by_year_spnv_df : bool
     show_tt_by_spn_df : bool
     show_tt_by_spn_spv_df : bool
+    show_tt_by_year_hashtag : bool    
     show_tts_by_month_df : bool
     show_future_values_in_tts_by_month : bool
     show_effort_status_df : bool
@@ -81,6 +83,7 @@ class SettingCollection():
         software_project_names_by_spv : list[str],
         remove_untagged_from_de : bool,
         definitions : dict[str, str],
+        tt_by_year_hashtag_years : list[int],
         effort_status_n : int,
         effort_status_is_correct : bool,
         time_ranges_unknown_id : str,
@@ -94,6 +97,7 @@ class SettingCollection():
         show_tt_by_year_spnv_df : bool,
         show_tt_by_spn_df : bool,
         show_tt_by_spn_spv_df : bool,
+        show_tt_by_year_hashtag : bool,
         show_tts_by_month_df : bool,
         show_future_values_in_tts_by_month : bool,
         show_effort_status_df : bool,
@@ -113,6 +117,7 @@ class SettingCollection():
         self.software_project_names_by_spv = software_project_names_by_spv
         self.remove_untagged_from_de = remove_untagged_from_de
         self.definitions = definitions
+        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
         self.effort_status_n = effort_status_n,
         self.effort_status_is_correct = effort_status_is_correct,
         self.time_ranges_unknown_id = time_ranges_unknown_id
@@ -126,6 +131,7 @@ class SettingCollection():
         self.show_tt_by_year_spnv_df = show_tt_by_year_spnv_df
         self.show_tt_by_spn_df = show_tt_by_spn_df
         self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
+        self.show_tt_by_year_hashtag = show_tt_by_year_hashtag
         self.show_tts_by_month_df = show_tts_by_month_df
         self.show_future_values_in_tts_by_month = show_future_values_in_tts_by_month
         self.show_effort_status_df = show_effort_status_df
