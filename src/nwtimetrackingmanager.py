@@ -63,7 +63,8 @@ class SettingCollection():
     show_tt_by_year_spnv_df : bool
     show_tt_by_spn_df : bool
     show_tt_by_spn_spv_df : bool
-    show_tt_by_year_hashtag : bool    
+    show_tt_by_year_hashtag : bool
+    show_tt_by_hashtag : bool
     show_tts_by_month_df : bool
     show_effort_status_df : bool
     show_time_ranges_df : bool
@@ -99,6 +100,7 @@ class SettingCollection():
         show_tt_by_spn_df : bool,
         show_tt_by_spn_spv_df : bool,
         show_tt_by_year_hashtag : bool,
+        show_tt_by_hashtag : bool,
         show_tts_by_month_df : bool,
         show_effort_status_df : bool,
         show_time_ranges_df : bool
@@ -133,6 +135,7 @@ class SettingCollection():
         self.show_tt_by_spn_df = show_tt_by_spn_df
         self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
         self.show_tt_by_year_hashtag = show_tt_by_year_hashtag
+        self.show_tt_by_hashtag = show_tt_by_hashtag
         self.show_tts_by_month_df = show_tts_by_month_df
         self.show_effort_status_df = show_effort_status_df
         self.show_time_ranges_df = show_time_ranges_df
