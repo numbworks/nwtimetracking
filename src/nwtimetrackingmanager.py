@@ -1510,7 +1510,11 @@ def filter_by_top_n_occurrences(time_ranges_df : DataFrame, n : int, ascending :
 def get_raw_tt_by_year_hashtag(sessions_df : DataFrame, years : list[int]) -> DataFrame:
 
     '''
-        ...
+            Year	Hashtag	        Effort
+        0   2023	#csharp	        0 days 15:15:00
+        1   2023	#maintenance	0 days 02:30:00
+        2   2023	#powershell	    3 days 02:15:00
+        ...   
     '''
 
     tt_df : DataFrame = sessions_df.copy(deep = True)
@@ -1529,6 +1533,10 @@ def get_raw_tt_by_year_hashtag(sessions_df : DataFrame, years : list[int]) -> Da
 def get_tt_by_year_hashtag(sessions_df : DataFrame, years : list[int]) -> DataFrame:
 
     '''
+            Year	Hashtag	        Effort
+        0   2023	#csharp	        67h 30m
+        1   2023	#maintenance	51h 00m
+        2   2023	#powershell	    04h 30m 
         ...    
     '''
  
