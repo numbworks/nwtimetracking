@@ -1547,6 +1547,42 @@ def get_tt_by_year_hashtag(sessions_df : DataFrame, years : list[int]) -> DataFr
 
     return tt_df
 
+def get_raw_tt_by_hashtag(sessions_df : DataFrame) -> DataFrame:
+
+    '''
+            Hashtag	        Effort
+        0   #csharp	        0 days 15:15:00
+        1   #maintenance	0 days 02:30:00
+        2   #powershell	    3 days 02:15:00
+        ...   
+    '''
+
+    tt_df : DataFrame = sessions_df.copy(deep = True)
+
+    cn_hashtag: str = "Hashtag"
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : convert_string_to_timedelta(td_str = x))
+    tt_df = tt_df.groupby(by = [cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+    # tt_df = tt_df.sort_values(by = [cn_hashtag, cn_year]).reset_index(drop = True)
+
+    return tt_df
+def get_tt_by_hashtag(sessions_df : DataFrame) -> DataFrame:
+
+    '''
+            Hashtag	        Effort
+        0   #csharp	        67h 30m
+        1   #maintenance	51h 00m
+        2   #powershell	    04h 30m 
+        ...    
+    '''
+ 
+    tt_df : DataFrame = get_raw_tt_by_hashtag(sessions_df = sessions_df)
+
+    cn_effort : str = "Effort"
+    tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : format_timedelta(td = x, add_plus_sign = False))   
+
+    return tt_df
+
 # MAIN
 if __name__ == "__main__":
     pass
