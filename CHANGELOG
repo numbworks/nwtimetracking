@@ -1,6 +1,7 @@
 v1.2.0
 - Notebook:
 	- Feature: support for the creation and visualization of a "time tracking by year-hashtag" dataframe
+	- Feature: support for the creation and visualization of a "time tracking by hashtag" dataframe
 	- Feature: support for the creation and visualization of a dataframe containing the most common time ranges.
 	- Feature: removed "NaN" from the "Descriptor" field.
 
