@@ -3,12 +3,71 @@ import unittest
 import pandas as pd
 from unittest.mock import patch
 from pandas import DataFrame
+from datetime import datetime
+from datetime import timedelta
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 import nwtimetrackingmanager as nwttm
+from nwtimetrackingmanager import YearlyTarget
 from nwtimetrackingmanager import SettingCollection
+
+# SUPPORT METHODS
+class ObjectMother():
+
+    @staticmethod
+    def provide_setting_collection() -> SettingCollection:
+
+         return SettingCollection(
+            years = [2015],
+            yearly_targets = [
+                YearlyTarget(year = 2015, hours = timedelta(hours = 0))
+            ],
+            excel_path = nwttm.get_default_time_tracking_path(),
+            excel_books_skiprows = 0,
+            excel_books_nrows = 920,
+            excel_books_tabname = "Sessions",
+            n_generic = 5,
+            n_by_month = 12,
+            now = datetime.now(),
+            software_project_names = [ 
+                "NW.MarkdownTables" 
+                ],
+            software_project_names_by_spv = [ 
+                "nwreadinglistmanager" 
+                ],    
+            remove_untagged_from_de = True,
+            definitions = { 
+                "DME": "Development Monthly Effort",
+                "TME": "Total Monthly Effort",
+                "DYE": "Development Yearly Effort",
+                "TYE": "Total Yearly Effort",
+                "DE": "Development Effort",
+                "TE": "Total Effort"
+            },    
+            tt_by_year_hashtag_years = [2023],
+            tts_by_month_update_future_values_to_empty = True,     
+            effort_status_n = 25,
+            effort_status_is_correct = False,
+            time_ranges_unknown_id = "Unknown",
+            time_ranges_top_n = 5,
+            time_ranges_remove_unknown_id = True,
+            time_ranges_filter_by_top_n = True,
+            show_sessions_df = False, 
+            show_tt_by_year_df = True,
+            show_tt_by_year_month_df = True,
+            show_tt_by_year_month_spnv_df = False,
+            show_tt_by_year_spnv_df = False, 
+            show_tt_by_spn_df = True,
+            show_tt_by_spn_spv_df = True,
+            show_tt_by_year_hashtag = True,
+            show_tt_by_hashtag = True,
+            show_tts_by_month_df = True,
+            show_effort_status_df = True,
+            show_time_ranges_df = True
+        )
+
 
 # TEST CLASSES
 class GetDefaultTimeTrackingPathTestCase(unittest.TestCase):
@@ -44,7 +103,7 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
             "Month": "10"
             }
         excel_data_df : DataFrame = pd.DataFrame(data = excel_data_dict, index=[0])
-        setting_collection : SettingCollection = SettingCollection()
+        setting_collection : SettingCollection = ObjectMother().provide_setting_collection()
 
         # Act
         with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
