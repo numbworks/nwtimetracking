@@ -3,6 +3,7 @@ import unittest
 import pandas as pd
 from unittest.mock import patch
 from pandas import DataFrame
+from pandas.core.indexes.base import Index
 from datetime import datetime
 from datetime import timedelta
 
@@ -17,7 +18,7 @@ from nwtimetrackingmanager import SettingCollection
 class ObjectMother():
 
     @staticmethod
-    def provide_setting_collection() -> SettingCollection:
+    def get_setting_collection() -> SettingCollection:
 
          return SettingCollection(
             years = [2015],
@@ -68,6 +69,23 @@ class ObjectMother():
             show_time_ranges_df = True
         )
 
+    @staticmethod
+    def get_sessions_dataframe_column_names() -> list[str]:
+
+        column_names : list[str] = []
+        column_names.append("Date")                 # [0], date
+        column_names.append("StartTime")            # [1], str
+        column_names.append("EndTime")              # [2], str
+        column_names.append("Effort")               # [3], str
+        column_names.append("Hashtag")              # [4], str
+        column_names.append("Descriptor")           # [5], str
+        column_names.append("IsSoftwareProject")    # [6], bool
+        column_names.append("IsReleaseDay")         # [7], bool
+        column_names.append("Year")                 # [8], int
+        column_names.append("Month")                # [9], int
+
+        return column_names
+
 
 # TEST CLASSES
 class GetDefaultTimeTrackingPathTestCase(unittest.TestCase):
@@ -103,14 +121,15 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
             "Month": "10"
             }
         excel_data_df : DataFrame = pd.DataFrame(data = excel_data_dict, index=[0])
-        setting_collection : SettingCollection = ObjectMother().provide_setting_collection()
+        setting_collection : SettingCollection = ObjectMother().get_setting_collection()
+        expected_column_names : list[str] = ObjectMother().get_sessions_dataframe_column_names()
 
         # Act
         with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
             actual : str = nwttm.get_sessions_dataset(setting_collection = setting_collection)
 
         # Assert
-        pass
+        self.assertEqual(expected_column_names, actual.columns.tolist())
 
 
 # MAIN
