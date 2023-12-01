@@ -126,9 +126,10 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
     def test_getsessionsdataset_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        excel_data_df : DataFrame = create_excel_data()
+        excel_data_df : DataFrame = ObjectMother().create_excel_data()
         setting_collection : SettingCollection = ObjectMother().create_setting_collection()
         expected_column_names : list[str] = ObjectMother().create_sessions_dataframe_column_names()
+        expected_nan : str = ""
 
         # Act
         with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
@@ -137,6 +138,11 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected_column_names, actual.columns.tolist())
 
+        # check types
+
+        self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
+        self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
+        self.assertEqual(expected_nan, actual[expected_column_names[5]][0])
 
 # MAIN
 if __name__ == "__main__":
