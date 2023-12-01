@@ -18,7 +18,7 @@ from nwtimetrackingmanager import SettingCollection
 class ObjectMother():
 
     @staticmethod
-    def get_setting_collection() -> SettingCollection:
+    def create_setting_collection() -> SettingCollection:
 
          return SettingCollection(
             years = [2015],
@@ -70,7 +70,26 @@ class ObjectMother():
         )
 
     @staticmethod
-    def get_sessions_dataframe_column_names() -> list[str]:
+    def create_excel_data() -> DataFrame:
+
+        excel_data_dict : dict = {
+            "Date": "2015-10-31",
+            "StartTime": "",
+            "EndTime": "",
+            "Effort": "8h 00m",
+            "Hashtag": "#untagged",
+            "Descriptor": "",
+            "IsSoftwareProject": "False",
+            "IsReleaseDay": "False",
+            "Year": "2015",
+            "Month": "10"
+            }
+        excel_data_df : DataFrame = pd.DataFrame(data = excel_data_dict, index=[0])
+
+        return excel_data_df
+
+    @staticmethod
+    def create_sessions_dataframe_column_names() -> list[str]:
 
         column_names : list[str] = []
         column_names.append("Date")                 # [0], date
@@ -85,7 +104,6 @@ class ObjectMother():
         column_names.append("Month")                # [9], int
 
         return column_names
-
 
 # TEST CLASSES
 class GetDefaultTimeTrackingPathTestCase(unittest.TestCase):
@@ -108,21 +126,9 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
     def test_getsessionsdataset_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        excel_data_dict : dict = {
-            "Date": "2015-10-31",
-            "StartTime": "",
-            "EndTime": "",
-            "Effort": "8h 00m",
-            "Hashtag": "#untagged",
-            "Descriptor": "",
-            "IsSoftwareProject": "False",
-            "IsReleaseDay": "False",
-            "Year": "2015",
-            "Month": "10"
-            }
-        excel_data_df : DataFrame = pd.DataFrame(data = excel_data_dict, index=[0])
-        setting_collection : SettingCollection = ObjectMother().get_setting_collection()
-        expected_column_names : list[str] = ObjectMother().get_sessions_dataframe_column_names()
+        excel_data_df : DataFrame = create_excel_data()
+        setting_collection : SettingCollection = ObjectMother().create_setting_collection()
+        expected_column_names : list[str] = ObjectMother().create_sessions_dataframe_column_names()
 
         # Act
         with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
