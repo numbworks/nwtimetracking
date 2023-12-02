@@ -105,6 +105,20 @@ class ObjectMother():
 
         return column_names
 
+    @staticmethod
+    def get_dtype_names(df : DataFrame) -> list[str]:
+
+        '''
+            The default df.dtypes return most dtypes as "object", even if they are "string".
+            This method convert them back to the standard names and return them as list[str].                 
+        '''
+
+        dtype_names : list[str] = []
+        for dtype in df.convert_dtypes().dtypes:
+            dtype_names.append(dtype.name)
+
+        return dtype_names
+
 # TEST CLASSES
 class GetDefaultTimeTrackingPathTestCase(unittest.TestCase):
 
@@ -138,7 +152,9 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected_column_names, actual.columns.tolist())
 
-        # check types
+        # self.assertEqual(type("str"), actual.dtypes.tolist())
+
+
 
         self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
