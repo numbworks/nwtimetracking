@@ -127,6 +127,8 @@ class ObjectMother():
     @staticmethod
     def create_sessions_dataframe_dtype_names() -> list[str]:
 
+        '''Note: the first one should be "date", but it's rendered by Pandas as "object".'''
+
         expected_dtype_names : list[str] = [
             "object",
             "string",
