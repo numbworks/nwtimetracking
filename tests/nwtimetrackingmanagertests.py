@@ -181,6 +181,17 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
         self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[5]][0])
+class ConvertStringToTimedeltaTestCase(unittest.TestCase):
+
+    def test_convertstringtotimedelta_should_when():
+
+        # Arrange
+        td_str : str = "5h 30m"
+
+        # Act
+        # Assert
+
+        pass
 
 # MAIN
 if __name__ == "__main__":
