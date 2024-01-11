@@ -144,6 +144,24 @@ class ObjectMother():
 
         return expected_dtype_names
 
+    @staticmethod
+    def create_yearly_targets() -> list[YearlyTarget]:
+
+        yearly_targets = [
+            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
+            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
+            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
+            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
+        ]
+
+        return yearly_targets
+
 # TEST CLASSES
 class GetDefaultTimeTrackingPathTestCase(unittest.TestCase):
 
@@ -194,6 +212,22 @@ class ConvertStringToTimedeltaTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected_td, actual_td)
+class GetYearlyTargetTestCase(unittest.TestCase):
+
+    def test_getyearlytarget_shouldreturnexpectedhours_whenyearinlist(self):
+
+        # Arrange
+        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
+        year : int = 2024
+        expected_hours : timedelta = timedelta(hours = 250)
+
+        # Act
+        actual_hours : timedelta = nwttm.get_yearly_target(yearly_targets = yearly_targets, year = year).hours
+
+        # Assert
+        self.assertEqual(expected_hours, actual_hours)
+
+    # add None case
 
 # MAIN
 if __name__ == "__main__":
