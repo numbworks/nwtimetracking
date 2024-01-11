@@ -183,15 +183,17 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
         self.assertEqual(expected_nan, actual[expected_column_names[5]][0])
 class ConvertStringToTimedeltaTestCase(unittest.TestCase):
 
-    def test_convertstringtotimedelta_should_when():
+    def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
 
         # Arrange
         td_str : str = "5h 30m"
+        expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
 
         # Act
-        # Assert
+        actual_td : str = nwttm.convert_string_to_timedelta(td_str = td_str)
 
-        pass
+        # Assert
+        self.assertEqual(expected_td, actual_td)
 
 # MAIN
 if __name__ == "__main__":
