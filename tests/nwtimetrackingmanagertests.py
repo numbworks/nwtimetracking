@@ -237,6 +237,30 @@ class GetYearlyTargetTestCase(unittest.TestCase):
 
         # Assert
         self.assertIsNone(yearly_target)
+class IsYearlyTargetMetTestCase(unittest.TestCase):
+
+    def test_isyearlytargetmet_shouldreturntrue_whenyearlytargetismet(self):
+
+        # Arrange
+        effort : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        yearly_target : timedelta = pd.Timedelta(hours = 250)
+
+        # Act
+        actual : bool = nwttm.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        
+        # Assert
+        self.assertTrue(actual)
+    def test_isyearlytargetmet_shouldreturnfalse_whenyearlytargetisnotmet(self):
+
+        # Arrange
+        effort : timedelta = pd.Timedelta(hours = 249)
+        yearly_target : timedelta = pd.Timedelta(hours = 250)
+
+        # Act
+        actual : bool = nwttm.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+
+        # Assert
+        self.assertFalse(actual)        
 
 # MAIN
 if __name__ == "__main__":
