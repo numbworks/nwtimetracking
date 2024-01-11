@@ -226,8 +226,17 @@ class GetYearlyTargetTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected_hours, actual_hours)
+    def test_getyearlytarget_shouldreturnnone_whenyearnotinlist(self):
 
-    # add None case
+        # Arrange
+        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
+        year : int = 2010
+
+        # Act
+        yearly_target : YearlyTarget = nwttm.get_yearly_target(yearly_targets = yearly_targets, year = year)
+
+        # Assert
+        self.assertIsNone(yearly_target)
 
 # MAIN
 if __name__ == "__main__":
