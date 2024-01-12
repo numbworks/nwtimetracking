@@ -448,7 +448,7 @@ def extract_software_project_name(descriptor : str) -> str:
         Returns "ERROR" is parsing goes wrong.
     '''
 
-    pattern : str = r"^[a-zA-Z\.]{2,}"
+    pattern : str = r"\b[a-zA-Z\.]{2,}(?=[ v]{2}[0-9]{1}[\.]{1}[0-9]{1}[\.]{1}[0-9]{1})"
     matches : list = re.findall(pattern = pattern, string = descriptor, flags = re.MULTILINE)
 
     if len(matches) == 1:

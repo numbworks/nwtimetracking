@@ -286,6 +286,33 @@ class FormatTimedeltaTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected, actual)
 
+# get_tt_by_year, get_tt_by_year_month
+        
+class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
+
+    def test_extractsoftwareprojectname_shouldreturnexpectedstring_whenproperstring(self):
+
+        # Arrange
+        descriptor : str = "NW.AutoProffLibrary v1.0.0"
+        expected : str = "NW.AutoProffLibrary"
+
+        # Act
+        actual : str = nwttm.extract_software_project_name(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectname_shouldreturnerror_whenunproperstring(self):
+
+        # Arrange
+        descriptor : str = "Some gibberish"
+        expected : str = "ERROR"
+
+        # Act
+        actual : str = nwttm.extract_software_project_name(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)        
+
 # MAIN
 if __name__ == "__main__":
     result = unittest.main(argv=[''], verbosity=3, exit=False)
