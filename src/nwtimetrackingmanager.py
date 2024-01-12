@@ -479,6 +479,8 @@ def calculate_percentage(part : float, whole : float, rounding_digits : int = 2)
 
     if part == 0:
         prct = 0
+    elif whole == 0:
+        prct = 0
     else:
         prct = (100 * part) / whole
 

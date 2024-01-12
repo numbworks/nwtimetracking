@@ -336,7 +336,73 @@ class ExtractSoftwareProjectVersionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)        
+class CalculatePercentageTestCase(unittest.TestCase):
 
+    def test_calculatepercentage_shouldreturnexpectedfloat_when0and16(self):
+
+        # Arrange
+        part : float = 0
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 0.00
+        
+        # Act
+        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_calculatepercentage_shouldreturnexpectedfloat_when4and0(self):
+
+        # Arrange
+        part : float = 4
+        whole : float = 0
+        rounding_digits : int = 2
+        expected : float = 0.00
+        
+        # Act
+        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)        
+    def test_calculatepercentage_shouldreturnexpectedfloat_when4and16(self):
+
+        # Arrange
+        part : float = 4
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 25.00
+        
+        # Act
+        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_calculatepercentage_shouldreturnexpectedfloat_when16and16(self):
+
+        # Arrange
+        part : float = 16
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 100.00
+        
+        # Act
+        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)        
+    def test_calculatepercentage_shouldreturnexpectedfloat_when3and9and4(self):
+
+        # Arrange
+        part : float = 3
+        whole : float = 9
+        rounding_digits : int = 4
+        expected : float = 33.3333
+        
+        # Act
+        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
 
 # MAIN
 if __name__ == "__main__":
