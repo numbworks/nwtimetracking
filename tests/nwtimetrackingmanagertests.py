@@ -301,7 +301,7 @@ class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-    def test_extractsoftwareprojectname_shouldreturnerror_whenunproperstring(self):
+    def test_extractsoftwareprojectname_shouldreturnerrorstring_whenunproperstring(self):
 
         # Arrange
         descriptor : str = "Some gibberish"
