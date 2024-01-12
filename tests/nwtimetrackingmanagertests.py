@@ -312,6 +312,31 @@ class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)        
+class ExtractSoftwareProjectVersionTestCase(unittest.TestCase):
+
+    def test_extractsoftwareprojectversion_shouldreturnexpectedstring_whenproperstring(self):
+
+        # Arrange
+        descriptor : str = "NW.AutoProffLibrary v1.0.0"
+        expected : str = "1.0.0"
+
+        # Act
+        actual : str = nwttm.extract_software_project_version(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectversion_shouldreturnerrorstring_whenunproperstring(self):
+
+        # Arrange
+        descriptor : str = "Some gibberish"
+        expected : str = "ERROR"
+
+        # Act
+        actual : str = nwttm.extract_software_project_version(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)        
+
 
 # MAIN
 if __name__ == "__main__":
