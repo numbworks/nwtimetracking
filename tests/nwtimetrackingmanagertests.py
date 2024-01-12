@@ -261,6 +261,30 @@ class IsYearlyTargetMetTestCase(unittest.TestCase):
 
         # Assert
         self.assertFalse(actual)        
+class FormatTimedeltaTestCase(unittest.TestCase):
+
+    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
+
+        # Arrange
+        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "255h 30m"
+
+        # Act
+        actual : str = nwttm.format_timedelta(td = td, add_plus_sign = False)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussigntrue(self):    
+
+        # Arrange
+        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "+255h 30m"
+
+        # Act
+        actual : str = nwttm.format_timedelta(td = td, add_plus_sign = True)
+        
+        # Assert
+        self.assertEqual(expected, actual)
 
 # MAIN
 if __name__ == "__main__":

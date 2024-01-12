@@ -310,8 +310,7 @@ def format_timedelta(td : timedelta, add_plus_sign : bool) -> str:
     minutes : int = int((total_seconds % 3600) // 60)
 
     hours_str : str = str(hours).zfill(2)
-    minutes_str : str = str(minutes ).zfill(2)
-    
+    minutes_str : str = str(minutes ).zfill(2)    
     formatted : str = f"{hours_str}h {minutes_str}m"
 
     if (add_plus_sign == True and td.days >= 0):
