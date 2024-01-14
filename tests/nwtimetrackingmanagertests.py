@@ -13,6 +13,7 @@ sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 import nwtimetrackingmanager as nwttm
 from nwtimetrackingmanager import YearlyTarget
 from nwtimetrackingmanager import SettingCollection
+from nwtimetrackingmanager import EffortStatus
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -32,6 +33,26 @@ class SupportMethodProvider():
             dtype_names.append(dtype.name)
 
         return dtype_names
+
+    @staticmethod
+    def are_effort_statuses_equal(ef1 : EffortStatus, ef2 : EffortStatus) -> bool:
+
+        '''
+            Returns True if all the fields of the two objects contain the same values.
+        '''
+
+        return (ef1.idx == ef2.idx and
+                 ef1.start_time_str == ef2.start_time_str and 
+                 ef1.start_time_dt == ef2.start_time_dt and
+                 ef1.end_time_str == ef2.end_time_str and 
+                 ef1.end_time_dt == ef2.end_time_dt and  
+                 ef1.actual_str == ef2.actual_str and 
+                 ef1.actual_td == ef2.actual_td and
+                 ef1.expected_str == ef2.expected_str and 
+                 ef1.expected_td == ef2.expected_td and
+                 ef1.is_correct == ef2.is_correct and
+                 ef1.message == ef2.message
+            )
 class ObjectMother():
 
     '''Collects all the DTOs required by the unit tests.'''
@@ -403,6 +424,36 @@ class CalculatePercentageTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+
+# get_raw_tt_by_year_month_spn ... update_future_months_to_empty
+
+class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
+
+    def test_createeffortstatusfornonevalues_should_when(self):
+
+        # Arrange
+        idx : int = 1
+        effort_str : str = "5h 30m"
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = None,
+            start_time_dt = None,
+            end_time_str = None,
+            end_time_dt = None,
+            actual_str = effort_str,
+            actual_td = timedelta(hours = 5, minutes = 30),
+            expected_td = None,
+            expected_str = None,
+            is_correct = True,
+            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+            ) 
+
+        # Act
+        actual : EffortStatus = nwttm.create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
+
+        # Assert
+        comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison)
 
 # MAIN
 if __name__ == "__main__":
