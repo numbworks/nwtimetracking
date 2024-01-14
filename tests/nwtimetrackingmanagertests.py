@@ -523,13 +523,13 @@ class CreateTimObjectTestCase(unittest.TestCase):
         "00:01",
         "gibberish text"
     ])
-    def test_createtimeobject_shouldraiseexception_whennotamongtimevalues(self, time : str):
+    def test_createtimeobject_shouldraisevalueerrorexception_whennotamongtimevalues(self, time : str):
 
         # Arrange
         expected_message : str = MessageCollection.effort_status_not_among_expected_time_values(time = time)
         
         # Act
-        with self.assertRaises(Exception) as context:
+        with self.assertRaises(ValueError) as context:
             actual : datetime = nwttm.create_time_object(time = time)
 
         # Assert
