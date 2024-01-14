@@ -15,6 +15,7 @@ import nwtimetrackingmanager as nwttm
 from nwtimetrackingmanager import YearlyTarget
 from nwtimetrackingmanager import SettingCollection
 from nwtimetrackingmanager import EffortStatus
+from nwtimetrackingmanager import MessageCollection
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -441,9 +442,6 @@ class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
         actual_td : timedelta):
 
         # Arrange
-        #idx : int = 1
-        #effort_str : str = "5h 30m"
-        #actual_td : timedelta = timedelta(hours = 5, minutes = 30)
         expected : EffortStatus = EffortStatus(
             idx = idx,
             start_time_str = None,
@@ -464,6 +462,78 @@ class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
         # Assert
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
         self.assertTrue(comparison)
+class CreateTimObjectTestCase(unittest.TestCase):
+
+    @parameterized.expand([
+        "07:00", "07:15", "07:30", "07:45", 
+        "08:00", "08:15", "08:30", "08:45",
+        "09:00", "09:15", "09:30", "09:45",
+        "10:00", "10:15", "10:30", "10:45",
+        "11:00", "11:15", "11:30", "11:45",
+        "12:00", "12:15", "12:30", "12:45",
+        "13:00", "13:15", "13:30", "13:45",
+        "14:00", "14:15", "14:30", "14:45",
+        "15:00", "15:15", "15:30", "15:45",
+        "16:00", "16:15", "16:30", "16:45",
+        "17:00", "17:15", "17:30", "17:45",
+        "18:00", "18:15", "18:30", "18:45",
+        "19:00", "19:15", "19:30", "19:45",
+        "20:00", "20:15", "20:30", "20:45",
+        "21:00", "21:15", "21:30", "21:45",
+        "22:00", "22:15", "22:30", "22:45",
+        "23:00", "23:15", "23:30", "23:45"
+    ])
+    def test_createtimeobject_shouldreturnexpecteddatatime_whenday1time(self, time : str):
+
+        # Arrange
+        strp_format : str = "%Y-%m-%d %H:%M"
+        dt_str = f"1900-01-01 {time}"
+        expected : datetime = datetime.strptime(dt_str, strp_format)
+
+        # Act
+        actual : datetime = nwttm.create_time_object(time = time)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        "00:00", "00:15", "00:30", "00:45", 
+        "01:00", "01:15", "01:30", "01:45",
+        "02:00", "02:15", "02:30", "02:45",
+        "03:00", "03:15", "03:30", "03:45",
+        "04:00", "04:15", "04:30", "04:45",
+        "05:00", "05:15", "05:30", "05:45",
+        "06:00", "06:15", "06:30", "06:45"
+    ])
+    def test_createtimeobject_shouldreturnexpecteddatatime_whenday2time(self, time : str):
+
+        # Arrange
+        strp_format : str = "%Y-%m-%d %H:%M"
+        dt_str = f"1900-01-02 {time}"
+        expected : datetime = datetime.strptime(dt_str, strp_format)
+
+        # Act
+        actual : datetime = nwttm.create_time_object(time = time)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        "07:04",
+        "00:01",
+        "gibberish text"
+    ])
+    def test_createtimeobject_shouldraiseexception_whennotamongtimevalues(self, time : str):
+
+        # Arrange
+        expected_message : str = MessageCollection.effort_status_not_among_expected_time_values(time = time)
+        
+        # Act
+        with self.assertRaises(Exception) as context:
+            actual : datetime = nwttm.create_time_object(time = time)
+
+        # Assert
+        self.assertTrue(expected_message in str(context.exception))
 
 # MAIN
 if __name__ == "__main__":
