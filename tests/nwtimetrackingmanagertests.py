@@ -1,11 +1,12 @@
 # GLOBAL MODULES
 import unittest
 import pandas as pd
-from unittest.mock import patch
 from pandas import DataFrame
 from pandas.core.indexes.base import Index
 from datetime import datetime
 from datetime import timedelta
+from unittest.mock import patch
+from parameterized import parameterized
 
 # LOCAL MODULES
 import sys, os
@@ -429,11 +430,20 @@ class CalculatePercentageTestCase(unittest.TestCase):
 
 class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
 
-    def test_createeffortstatusfornonevalues_should_when(self):
+    @parameterized.expand([
+        [1, "5h 30m", timedelta(hours = 5, minutes = 30)],
+        [2, "2h 00m", timedelta(hours = 2, minutes = 00)]
+    ])
+    def test_createeffortstatusfornonevalues_shouldreturnexpectedobject_wheninvoked(
+        self, 
+        idx : int, 
+        effort_str : str, 
+        actual_td : timedelta):
 
         # Arrange
-        idx : int = 1
-        effort_str : str = "5h 30m"
+        #idx : int = 1
+        #effort_str : str = "5h 30m"
+        #actual_td : timedelta = timedelta(hours = 5, minutes = 30)
         expected : EffortStatus = EffortStatus(
             idx = idx,
             start_time_str = None,
@@ -441,7 +451,7 @@ class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
             end_time_str = None,
             end_time_dt = None,
             actual_str = effort_str,
-            actual_td = timedelta(hours = 5, minutes = 30),
+            actual_td = actual_td,
             expected_td = None,
             expected_str = None,
             is_correct = True,
