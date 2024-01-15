@@ -534,6 +534,46 @@ class CreateTimObjectTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(expected_message in str(context.exception))
+class CreateEffortStatusTestCase(unittest.TestCase):
+
+    @parameterized.expand([
+        [1, "07:00", "", "5h 30m"],
+        [1, "", "07:00", "5h 30m"]
+    ])
+    def test_createeffortstatus_shouldreturnexpectobject_whenstarttimeorendtimeareempty(
+            self,
+            idx : int, 
+            start_time_str : str, 
+            end_time_str : str, 
+            effort_str : str):
+
+        # Arrange
+        actual_td : timedelta = nwttm.convert_string_to_timedelta(td_str = effort_str)        
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = None,
+            start_time_dt = None,
+            end_time_str = None,
+            end_time_dt = None,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = None,
+            expected_str = None,
+            is_correct = True,
+            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+            ) 
+                
+        # Act
+        actual : EffortStatus = nwttm.create_effort_status(
+            idx = idx, 
+            start_time_str = start_time_str,
+            end_time_str = end_time_str,
+            effort_str = effort_str)
+
+        # Assert
+        comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison)    
+
 
 # MAIN
 if __name__ == "__main__":
