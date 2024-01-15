@@ -582,10 +582,12 @@ class CreateEffortStatusTestCase(unittest.TestCase):
         end_time_str : str = "08:00"
         effort_str : str = "01h 00m"
 
-        start_time_dt : datetime = nwttm.create_time_object(time = start_time_str)
-        end_time_dt : datetime = nwttm.create_time_object(time = end_time_str)
+        strp_format : str = "%Y-%m-%d %H:%M"
+
+        start_time_dt : datetime = datetime.strptime(f"1900-01-01 {start_time_str}", strp_format)
+        end_time_dt : datetime = datetime.strptime(f"1900-01-01 {end_time_str}", strp_format)
         actual_str = effort_str
-        actual_td : timedelta = nwttm.convert_string_to_timedelta(td_str = actual_str)
+        actual_td : timedelta = pd.Timedelta(value = actual_str).to_pytimedelta()
         expected_str : str = actual_str
         expected_td : timedelta = actual_td
 
