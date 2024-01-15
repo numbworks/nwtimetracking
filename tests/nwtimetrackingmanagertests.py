@@ -574,6 +574,45 @@ class CreateEffortStatusTestCase(unittest.TestCase):
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
         self.assertTrue(comparison)    
 
+    def test_createeffortstatus_shouldreturnexpectobject_wheneffortiscorrect(self):
+
+        # Arrange
+        idx : int = 1
+        start_time_str : str = "07:00" 
+        end_time_str : str = "08:00"
+        effort_str : str = "01h 00m"
+
+        start_time_dt : datetime = nwttm.create_time_object(time = start_time_str)
+        end_time_dt : datetime = nwttm.create_time_object(time = end_time_str)
+        actual_str = effort_str
+        actual_td : timedelta = nwttm.convert_string_to_timedelta(td_str = actual_str)
+        expected_str : str = actual_str
+        expected_td : timedelta = actual_td
+
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = start_time_str,
+            start_time_dt = start_time_dt,
+            end_time_str = end_time_str,
+            end_time_dt = end_time_dt,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = expected_td,
+            expected_str = expected_str,
+            is_correct = True,
+            message = "The effort is correct."
+            )
+
+        # Act
+        actual : EffortStatus = nwttm.create_effort_status(
+            idx = idx, 
+            start_time_str = start_time_str,
+            end_time_str = end_time_str,
+            effort_str = effort_str)
+
+        # Assert
+        comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison) 
 
 # MAIN
 if __name__ == "__main__":
