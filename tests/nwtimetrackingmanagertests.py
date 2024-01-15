@@ -590,6 +590,56 @@ class CreateEffortStatusTestCase(unittest.TestCase):
         actual_td : timedelta = pd.Timedelta(value = actual_str).to_pytimedelta()
         expected_str : str = actual_str
         expected_td : timedelta = actual_td
+        is_correct : bool = True
+        message : str = "The effort is correct."
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = start_time_str,
+            start_time_dt = start_time_dt,
+            end_time_str = end_time_str,
+            end_time_dt = end_time_dt,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = expected_td,
+            expected_str = expected_str,
+            is_correct = is_correct,
+            message = message
+            )
+
+        # Act
+        actual : EffortStatus = nwttm.create_effort_status(
+            idx = idx, 
+            start_time_str = start_time_str,
+            end_time_str = end_time_str,
+            effort_str = effort_str)
+
+        # Assert
+        comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison) 
+    def test_createeffortstatus_shouldreturnexpectobject_wheneffortisnotcorrect(self):
+
+        # Arrange
+        idx : int = 1
+        start_time_str : str = "07:00" 
+        end_time_str : str = "08:00"
+        effort_str : str = "02h 00m"
+
+        strp_format : str = "%Y-%m-%d %H:%M"
+
+        start_time_dt : datetime = datetime.strptime(f"1900-01-01 {start_time_str}", strp_format)
+        end_time_dt : datetime = datetime.strptime(f"1900-01-01 {end_time_str}", strp_format)
+        actual_str = effort_str
+        actual_td : timedelta = pd.Timedelta(value = actual_str).to_pytimedelta()
+        expected_str : str = "01h 00m"
+        expected_td : timedelta = pd.Timedelta(value = expected_str).to_pytimedelta()
+        is_correct : bool = False 
+        message : str = MessageCollection.effort_status_mismatching_effort(
+                            idx = idx, 
+                            start_time_str = start_time_str, 
+                            end_time_str = end_time_str, 
+                            actual_str = actual_str, 
+                            expected_str = expected_str
+                    )
 
         expected : EffortStatus = EffortStatus(
             idx = idx,
@@ -601,8 +651,8 @@ class CreateEffortStatusTestCase(unittest.TestCase):
             actual_td = actual_td,
             expected_td = expected_td,
             expected_str = expected_str,
-            is_correct = True,
-            message = "The effort is correct."
+            is_correct = is_correct,
+            message = message
             )
 
         # Act
