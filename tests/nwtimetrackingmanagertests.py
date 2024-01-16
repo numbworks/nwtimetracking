@@ -693,6 +693,33 @@ class CreateEffortStatusTestCase(unittest.TestCase):
         # Assert
         self.assertTrue(expected_message in str(context.exception))
 
+# add_effort_status, filter_by_is_correct
+        
+class CreateTimeRangeIdTestCase(unittest.TestCase):
+
+    @parameterized.expand([
+        ["07:00", "08:00", "UNKNOWN", "07:00-08:00"],
+        ["", "08:00", "UNKNOWN", "UNKNOWN"],
+        ["07:00", "", "UNKNOWN", "UNKNOWN"]
+    ])
+    def test_createtimerangeid_shouldreturnexpectedtimerangeid_wheninvoked(
+            self,
+            start_time : str, 
+            end_time : str, 
+            unknown_id : str,
+            expected : str):
+
+        # Arrange
+        # Act
+        actual : str = nwttm.create_time_range_id(
+            start_time=start_time, 
+            end_time=end_time,
+            unknown_id=unknown_id
+            )
+
+        # Assert
+        self.assertEqual(expected, actual)
+
 # MAIN
 if __name__ == "__main__":
     result = unittest.main(argv=[''], verbosity=3, exit=False)

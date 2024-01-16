@@ -1442,7 +1442,7 @@ def filter_by_is_correct(es_df : DataFrame, is_correct : bool) -> DataFrame:
 
     return filtered_df
 
-def create_time_range_id(start_time : str, end_time : str, unknown_id) -> str:
+def create_time_range_id(start_time : str, end_time : str, unknown_id : str) -> str:
 		
 		'''
 			Creates a unique time range identifier out of the provided parameters.
