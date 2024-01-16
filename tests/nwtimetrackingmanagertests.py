@@ -666,6 +666,33 @@ class CreateEffortStatusTestCase(unittest.TestCase):
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
         self.assertTrue(comparison) 
 
+    @parameterized.expand([
+        ["Some Gibberish", "08:00", "01h 00m"],
+        ["07:00", "Some Gibberish", "01h 00m"],
+        ["07:00", "08:00", "Some Gibberish"]
+    ])
+    def test_createeffortstatus_shouldraisevalueerrorexception_whenunproperparameters(
+            self, 
+            start_time_str : str, 
+            end_time_str : str, 
+            effort_str : str):
+
+        # Arrange
+        idx : int = 1        
+        expected_message : str = MessageCollection.effort_status_not_possible_to_create(
+            idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
+        
+        # Act
+        with self.assertRaises(ValueError) as context:
+            actual : EffortStatus = nwttm.create_effort_status(
+                idx = idx, 
+                start_time_str = start_time_str,
+                end_time_str = end_time_str,
+                effort_str = effort_str)
+
+        # Assert
+        self.assertTrue(expected_message in str(context.exception))
+
 # MAIN
 if __name__ == "__main__":
     result = unittest.main(argv=[''], verbosity=3, exit=False)
