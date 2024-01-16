@@ -1,6 +1,8 @@
 v1.3.0
 - Other:
-	- Added unit tests for all the non-dataframe-related functions.
+	- Feature: added unit tests for all the non-dataframe-related functions (41% code coverage).
+- Documentation:
+	- Feature: updated to v1.3.0.
 
 v1.2.0
 - Notebook:
