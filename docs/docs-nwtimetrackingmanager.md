@@ -6,6 +6,7 @@ Contact: numbworks@gmail.com
 | Date | Author | Description |
 |---|---|---|
 | 2023-08-21 | numbworks | Created. |
+| 2024-01-16 | numbworks | Updated to v1.3.0. |
 
 ## Introduction
 
@@ -36,12 +37,12 @@ If, for some reason the `Setup` block doesn't work, you can open a terminal and 
 - ```pip3 install numpy==1.24.0```
 - ```pip3 install openpyxl==3.0.10```
 - ```pip3 install coverage==7.2.3```
+- ```pip3 install parameterized==0.9.0```
 
 To run the unit tests, open a terminal and run the following commands:
 
-- `cd <base_folder>\nwtimetrackingmanager\test`
-- `coverage run -m unittest nwcorecomponentstests.py`
-- `coverage report`
+- `cd <base_folder>\nwtimetrackingmanager\tests`
+- `clear && coverage run -m unittest nwtimetrackingmanagertests.py && coverage report`
 
 ## For Developers
 
