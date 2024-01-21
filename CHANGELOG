@@ -1,3 +1,10 @@
+v2.0.0 - BREAKING CHANGES
+- Notebook:
+		Feature: Added support for check_python_version() in nwcorecomponents.
+		Feature: Migrated from Python 3.11.x to 3.12.1 and updated libraries accordingly (framework freeze).
+- Documentation:
+	- Feature: updated to v2.0.0.
+
 v1.3.0
 - Other:
 	- Feature: added unit tests for all the non-dataframe-related functions (41% code coverage).
