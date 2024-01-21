@@ -1478,13 +1478,11 @@ def create_time_ranges_df(sessions_df : DataFrame, unknown_id : str) -> DataFram
 				end_time = x[cn_end_time], 
 				unknown_id = unknown_id), axis = 1)
 
-		import pandas as pd
-
 		cn_occurrences : str = "Occurrences"
 
 		time_ranges_df = pd.DataFrame(
 			data = time_ranges_df[[cn_time_range_id]].value_counts(),
-			columns=[cn_occurrences]).reset_index()
+			columns=[cn_occurrences]).reset_index(names = [cn_time_range_id])
 		time_ranges_df.sort_values(by = cn_occurrences, ascending = [False], inplace = True)
 		
 		return time_ranges_df
