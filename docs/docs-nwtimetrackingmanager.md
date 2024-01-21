@@ -7,6 +7,7 @@ Contact: numbworks@gmail.com
 |---|---|---|
 | 2023-08-21 | numbworks | Created. |
 | 2024-01-16 | numbworks | Updated to v1.3.0. |
+| 2024-01-21 | numbworks | Updated to v2.0.0. |
 
 ## Introduction
 
@@ -21,7 +22,7 @@ This project may not be useful for many (not generic enough), but I decided to u
 In order to run this Jupyter Notebook:
 
 1. Download and install [Python 3.x](https://www.python.org/downloads/);
-      - This has been tested with the following Python version: `3.11.0`
+      - This has been tested with the following Python version: `3.12.1`
 2. Download and install [Visual Studio Code](https://code.visualstudio.com/Download);
 3. Download and install the following extension within Visual Studio Code: [Jupyter](https://marketplace.visualstudio.com/items?itemName=ms-toolsai.jupyter)
 4. Open a terminal and run the following commands:
@@ -31,18 +32,14 @@ In order to run this Jupyter Notebook:
 7. Click on `Run All`;
 8. Done!
 
-If, for some reason the `Setup` block doesn't work, you can open a terminal and run the following commands to install the required packages:
-
-- ```pip3 install pandas==1.5.2```
-- ```pip3 install numpy==1.24.0```
-- ```pip3 install openpyxl==3.0.10```
-- ```pip3 install coverage==7.2.3```
-- ```pip3 install parameterized==0.9.0```
+If, for some reason the `Setup` block doesn't work, you can open a terminal and run the ```pip install``` commands to install the required packages:
 
 To run the unit tests, open a terminal and run the following commands:
 
 - `cd <base_folder>\nwtimetrackingmanager\tests`
-- `clear && coverage run -m unittest nwtimetrackingmanagertests.py && coverage report`
+- `coverage run nwcorecomponentstests.py`
+- `coverage run -a nwtimetrackingmanagertests.py`
+- `coverage report`
 
 ## For Developers
 
