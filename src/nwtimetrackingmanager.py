@@ -1480,10 +1480,10 @@ def create_time_ranges_df(sessions_df : DataFrame, unknown_id : str) -> DataFram
 
 		cn_occurrences : str = "Occurrences"
 
-		time_ranges_df = pd.DataFrame(
-			data = time_ranges_df[[cn_time_range_id]].value_counts(),
-			columns=[cn_occurrences]).reset_index(names = [cn_time_range_id])
-		time_ranges_df.sort_values(by = cn_occurrences, ascending = [False], inplace = True)
+		time_ranges_df = time_ranges_df[[cn_time_range_id]].groupby(by = [cn_time_range_id], as_index=False).agg(
+                count = pd.NamedAgg(column = cn_time_range_id, aggfunc = "count"))
+		time_ranges_df.rename(columns={"count" : cn_occurrences}, inplace = True)
+		time_ranges_df = time_ranges_df.sort_values(by = [cn_occurrences], ascending = False).reset_index(drop = True)
 		
 		return time_ranges_df
 def remove_unknown_id(time_ranges_df : DataFrame, unknown_id : str) -> DataFrame:
