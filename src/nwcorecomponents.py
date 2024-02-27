@@ -63,7 +63,7 @@ class DataFrameReverser:
         df_str : str = "pd.DataFrame({"
 
         for column in df.columns:
-            values : list = self.__convert_values_to_source_code(df[column].tolist())
+            values : list = self.__convert_values_to_source_code(df[column].values.tolist())
             dtype : Any = self.__convert_dtype_to_source_code(df.dtypes[column])
             df_str += f'\n\t\'{column}\': np.array({values}, dtype={dtype}),'
 

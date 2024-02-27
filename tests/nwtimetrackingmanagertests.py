@@ -362,6 +362,54 @@ class ObjectMother():
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
 
     @staticmethod
+    def create_tts_by_month_df() -> DataFrame:
+
+        '''
+				Month	2015	↕	2016	↕	2017	↕	2018	↕	2019	↕	2020	↕	2021	↕	2022	↕	2023	↕	2024
+			0	1		00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m
+			1	2		00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	↑	36h 00m
+			...
+        '''
+
+        return pd.DataFrame({
+                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int32),
+                '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)				
+            }, index=pd.RangeIndex(start=0, stop=12, step=1))
+
+    @staticmethod
+    def create_tts_by_month_upd_df() -> DataFrame:
+
+        '''
+				Month	2015	↕	2016	↕	2017	↕	2018	↕	2019	↕	2020	↕	2021	↕	2022	↕	2023	↕	2024
+			0	1		00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m
+			1	2		00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	↑	36h 00m
+			...
+        '''
+
+        return pd.DataFrame({
+                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int32),
+                '2015': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2016': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2017': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2018': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2019': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2020': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2021': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2022': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2023': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕': np.array(['=', '↑', '', '', '', '', '', '', '', '', '', ''], dtype=object),
+                '2024': np.array(['00h 00m', '36h 00m', '', '', '', '', '', '', '', '', '', ''], dtype=object)				
+            }, index=pd.RangeIndex(start=0, stop=12, step=1))
+
+    @staticmethod
     def create_time_ranges_df() -> DataFrame:
 
         '''
@@ -714,6 +762,20 @@ class GetTTBySpnSpvTestCase(unittest.TestCase):
 
 # ...
 
+class GetTTSByMonthTestCase(unittest.TestCase):
+
+    def test_getttsbymonth_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tts_by_month_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.get_tts_by_month(sessions_df = sessions_df, years = years)
+
+        # Assert
+        assert_frame_equal(expected_df, actual_df)  
 class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
 
     @parameterized.expand([
