@@ -696,6 +696,21 @@ class GetTTBySpnTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
+class GetTTBySpnSpvTestCase(unittest.TestCase):
+
+    def test_getttbyspnspv_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_spn_spv_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.get_tt_by_spn_spv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)  
 
 # ...
 
