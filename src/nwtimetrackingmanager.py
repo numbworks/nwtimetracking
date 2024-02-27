@@ -20,20 +20,15 @@ from numpy import float64
 from dataclasses import dataclass
 
 # LOCAL MODULES
-
-
-# CLASSES
+# DATACLASSES
+@dataclass(frozen=True)
 class YearlyTarget():
     
     '''Represents an amount of hours for a given year.'''
 
     year : int
     hours : timedelta
-
-    def __init__(self, year : int, hours : timedelta):
-        
-        self.year = year
-        self.hours = hours
+@dataclass(frozen=True)
 class SettingBag():
 
     '''Represents a collection of settings.'''
@@ -71,77 +66,7 @@ class SettingBag():
     show_tts_by_month_df : bool
     show_effort_status_df : bool
     show_time_ranges_df : bool
-
-    def __init__(
-        self,
-        years : list[int],
-        yearly_targets : list[YearlyTarget],
-        excel_path : str,
-        excel_books_skiprows : int,
-        excel_books_nrows : int,
-        excel_books_tabname : str,
-        n_generic : int,
-        n_by_month : int,
-        now : datetime,
-        software_project_names : list[str],
-        software_project_names_by_spv : list[str],
-        remove_untagged_from_de : bool,
-        definitions : dict[str, str],
-        tt_by_year_hashtag_years : list[int],
-        tts_by_month_update_future_values_to_empty : bool,
-        effort_status_n : int,
-        effort_status_is_correct : bool,
-        time_ranges_unknown_id : str,
-        time_ranges_top_n : int,
-        time_ranges_remove_unknown_id : bool,
-        time_ranges_filter_by_top_n : bool,
-        show_sessions_df : bool,
-        show_tt_by_year_df : bool,
-        show_tt_by_year_month_df : bool,
-        show_tt_by_year_month_spnv_df : bool,
-        show_tt_by_year_spnv_df : bool,
-        show_tt_by_spn_df : bool,
-        show_tt_by_spn_spv_df : bool,
-        show_tt_by_year_hashtag : bool,
-        show_tt_by_hashtag : bool,
-        show_tts_by_month_df : bool,
-        show_effort_status_df : bool,
-        show_time_ranges_df : bool
-        ):
-
-        self.years = years
-        self.yearly_targets = yearly_targets
-        self.excel_path = excel_path
-        self.excel_books_skiprows = excel_books_skiprows
-        self.excel_books_nrows = excel_books_nrows
-        self.excel_books_tabname = excel_books_tabname
-        self.n_generic = n_generic
-        self.n_by_month = n_by_month
-        self.now = now
-        self.software_project_names = software_project_names
-        self.software_project_names_by_spv = software_project_names_by_spv
-        self.remove_untagged_from_de = remove_untagged_from_de
-        self.definitions = definitions
-        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
-        self.tts_by_month_update_future_values_to_empty = tts_by_month_update_future_values_to_empty
-        self.effort_status_n = effort_status_n,
-        self.effort_status_is_correct = effort_status_is_correct,
-        self.time_ranges_unknown_id = time_ranges_unknown_id
-        self.time_ranges_top_n = time_ranges_top_n
-        self.time_ranges_remove_unknown_id = time_ranges_remove_unknown_id
-        self.time_ranges_filter_by_top_n = time_ranges_filter_by_top_n
-        self.show_sessions_df = show_sessions_df
-        self.show_tt_by_year_df = show_tt_by_year_df
-        self.show_tt_by_year_month_df = show_tt_by_year_month_df
-        self.show_tt_by_year_month_spnv_df = show_tt_by_year_month_spnv_df
-        self.show_tt_by_year_spnv_df = show_tt_by_year_spnv_df
-        self.show_tt_by_spn_df = show_tt_by_spn_df
-        self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
-        self.show_tt_by_year_hashtag = show_tt_by_year_hashtag
-        self.show_tt_by_hashtag = show_tt_by_hashtag
-        self.show_tts_by_month_df = show_tts_by_month_df
-        self.show_effort_status_df = show_effort_status_df
-        self.show_time_ranges_df = show_time_ranges_df
+@dataclass(frozen=True)
 class EffortStatus():
     
     '''Represents an effort-related status.'''
@@ -162,32 +87,7 @@ class EffortStatus():
     is_correct : bool
     message : str 
 
-    def __init__(
-            self, 
-            idx : int, 
-            start_time_str : str,
-            start_time_dt : datetime,
-            end_time_str : str,
-            end_time_dt : datetime,
-            actual_str : str,
-            actual_td : timedelta,
-            expected_td : timedelta,
-            expected_str : str,
-            is_correct : bool,
-            message : str
-            ):
-        
-        self.idx = idx
-        self.start_time_str = start_time_str
-        self.start_time_dt = start_time_dt
-        self.end_time_str = end_time_str
-        self.end_time_dt = end_time_dt
-        self.actual_str = actual_str
-        self.actual_td = actual_td
-        self.expected_td = expected_td
-        self.expected_str = expected_str
-        self.is_correct = is_correct
-        self.message = message
+# CLASSES
 class MessageCollection():
 
     '''Collects all the messages used for logging and for the exceptions.'''
