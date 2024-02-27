@@ -647,12 +647,6 @@ class CalculatePercentageTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-
-# get_raw_tt_by_year_month_spn
-# get_raw_tt_by_year_month_spnv 
-# get_raw_dme
-# get_raw_tme
-
 class GetTTByYearMonthSpnvTestCase(unittest.TestCase):
 
     def test_getttbyyearmonthspnv_shouldreturnexpecteddataframe_wheninvoked(self):
@@ -668,11 +662,6 @@ class GetTTByYearMonthSpnvTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-
-# get_raw_tt_by_year_spnv
-# get_raw_de
-# get_raw_tye
-
 class GetTTByYearSpnvTestCase(unittest.TestCase):
 
     def test_getttbyyearspnv_shouldreturnexpecteddataframe_wheninvoked(self):
@@ -688,6 +677,25 @@ class GetTTByYearSpnvTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
+class GetTTBySpnTestCase(unittest.TestCase):
+
+    @parameterized.expand([
+        [True],
+        [False]
+    ])
+    def test_getttbyspn_shouldreturnexpecteddataframe_wheninvoked(self, remove_untagged : bool):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_spn_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.get_tt_by_spn(sessions_df = sessions_df, years = years, software_project_names = software_project_names, remove_untagged = remove_untagged)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)  
 
 # ...
 
