@@ -1004,6 +1004,20 @@ class CreateTimeRangeIdTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+class CreateTimeRangesTestCase(unittest.TestCase):
+
+    def test_createtimeranges_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        unknown_id : str = "unknown"
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_time_ranges_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.create_time_ranges_df(sessions_df = sessions_df, unknown_id = unknown_id)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)  
 class GetTTByYearHashtagTestCase(unittest.TestCase):
 
     def test_getttbyyearhashtag_shouldreturnexpecteddataframe_wheninvoked(self):
