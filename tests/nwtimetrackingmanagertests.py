@@ -365,9 +365,9 @@ class ObjectMother():
     def create_tts_by_month_df() -> DataFrame:
 
         '''
-				Month	2015	↕	2016	↕	2017	↕	2018	↕	2019	↕	2020	↕	2021	↕	2022	↕	2023	↕	2024
-			0	1		00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m
-			1	2		00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	↑	36h 00m
+				Month	2024
+			0	1		00h 00m
+			1	2		36h 00m
 			...
         '''
 
@@ -380,33 +380,15 @@ class ObjectMother():
     def create_tts_by_month_upd_df() -> DataFrame:
 
         '''
-				Month	2015	↕	2016	↕	2017	↕	2018	↕	2019	↕	2020	↕	2021	↕	2022	↕	2023	↕	2024
-			0	1		00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m
-			1	2		00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	=	00h 00m	↑	36h 00m
+				Month	2024
+			0	1		00h 00m
+			1	2		36h 00m
 			...
         '''
 
         return pd.DataFrame({
-                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int32),
-                '2015': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2016': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2017': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2018': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2019': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2020': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2021': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2022': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2023': np.array(['00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕': np.array(['=', '↑', '', '', '', '', '', '', '', '', '', ''], dtype=object),
-                '2024': np.array(['00h 00m', '36h 00m', '', '', '', '', '', '', '', '', '', ''], dtype=object)				
+                'Month': np.array(['1', '2', '', '', '', '', '', '', '', '', '', ''], dtype=object),
+                '2024': np.array(['00h 00m', '36h 00m', '', '', '', '', '', '', '', '', '', ''], dtype=object)
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
 
     @staticmethod
@@ -759,9 +741,6 @@ class GetTTBySpnSpvTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
-
-# ...
-
 class GetTTSByMonthTestCase(unittest.TestCase):
 
     def test_getttsbymonth_shouldreturnexpecteddataframe_wheninvoked(self):
@@ -775,7 +754,21 @@ class GetTTSByMonthTestCase(unittest.TestCase):
         actual_df : DataFrame  = nwttm.get_tts_by_month(sessions_df = sessions_df, years = years)
 
         # Assert
-        assert_frame_equal(expected_df, actual_df)  
+        assert_frame_equal(expected_df, actual_df)
+class UpdateFutureMonthsToEmptyTestCase(unittest.TestCase):
+
+    def test_updatefuturemonthstoempty_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        now : datetime = datetime(2024, 2, 27)
+        tts_by_month_df : DataFrame = ObjectMother().create_tts_by_month_df()
+        expected_df : DataFrame = ObjectMother().create_tts_by_month_upd_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.update_future_months_to_empty(tts_by_month_df = tts_by_month_df, now = now)
+
+        # Assert
+        assert_frame_equal(expected_df, actual_df)
 class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
 
     @parameterized.expand([
@@ -1038,10 +1031,7 @@ class CreateEffortStatusTestCase(unittest.TestCase):
                 effort_str = effort_str)
 
         # Assert
-        self.assertTrue(expected_message in str(context.exception))
-
-# add_effort_status, filter_by_is_correct
-        
+        self.assertTrue(expected_message in str(context.exception))  
 class CreateTimeRangeIdTestCase(unittest.TestCase):
 
     @parameterized.expand([
