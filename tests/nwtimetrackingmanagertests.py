@@ -1009,7 +1009,7 @@ class CreateTimeRangesTestCase(unittest.TestCase):
     def test_createtimeranges_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        unknown_id : str = "unknown"
+        unknown_id : str = "Unknown"
         sessions_df : DataFrame = ObjectMother().create_sessions_df()
         expected_df : DataFrame = ObjectMother().create_time_ranges_df()
 
