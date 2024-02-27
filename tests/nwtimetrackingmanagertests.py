@@ -1,12 +1,15 @@
 # GLOBAL MODULES
 import unittest
+import numpy as np
 import pandas as pd
+from datetime import datetime
+from datetime import date
+from datetime import timedelta
+from numpy import int32
 from pandas import DataFrame
 from pandas.core.indexes.base import Index
-from datetime import datetime
-from datetime import timedelta
-from unittest.mock import patch
 from parameterized import parameterized
+from unittest.mock import patch
 
 # LOCAL MODULES
 import sys, os
@@ -131,7 +134,7 @@ class ObjectMother():
         return excel_data_df
 
     @staticmethod
-    def create_sessions_dataframe_column_names() -> list[str]:
+    def create_sessions_df_column_names() -> list[str]:
 
         column_names : list[str] = []
         column_names.append("Date")                 # [0], date
@@ -148,7 +151,7 @@ class ObjectMother():
         return column_names
 
     @staticmethod
-    def create_sessions_dataframe_dtype_names() -> list[str]:
+    def create_sessions_df_dtype_names() -> list[str]:
 
         '''Note: the first one should be "date", but it's rendered by Pandas as "object".'''
 
@@ -185,6 +188,197 @@ class ObjectMother():
 
         return yearly_targets
 
+    @staticmethod
+    def create_sessions_df() -> DataFrame:
+
+        '''
+                Date	    StartTime	EndTime	Effort	Hashtag	        Descriptor	                    IsSoftwareProject	IsReleaseDay	Year	Month
+            980	2024-02-12	21:00	    22:00	1h 00m	#maintenance		                            False	            False	        2024	2
+            981	2024-02-13	11:00	    13:00	2h 00m	#csharp	        NW.Shared.Serialization v1.0.0	True	            True	        2024	2
+            982	2024-02-13	14:30	    16:45	2h 15m	#csharp	        NW.Shared.Serialization v1.0.0	True	            True	        2024	2        
+            ...
+        '''
+
+        return pd.DataFrame({
+                'Date': np.array([date(2024, 2, 12), date(2024, 2, 13), date(2024, 2, 13), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 15), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 25), date(2024, 2, 25), date(2024, 2, 26)], dtype=str),
+                'StartTime': np.array(['21:00', '11:00', '14:30', '08:00', '17:15', '20:00', '17:15', '11:00', '13:30', '17:00', '22:00', '23:00', '11:15', '15:30', '20:15', '08:45', '13:30', '15:30', '10:15', '14:00', '08:15'], dtype=str),
+                'EndTime': np.array(['22:00', '13:00', '16:45', '08:30', '18:00', '20:15', '17:45', '12:30', '15:00', '18:00', '23:00', '23:30', '13:00', '18:00', '21:15', '12:15', '14:00', '16:30', '13:00', '19:45', '12:45'], dtype=str),
+                'Effort': np.array(['1h 00m', '2h 00m', '2h 15m', '0h 30m', '0h 45m', '0h 15m', '0h 30m', '1h 30m', '1h 30m', '1h 00m', '1h 00m', '0h 30m', '1h 45m', '2h 30m', '1h 00m', '3h 30m', '0h 30m', '1h 00m', '2h 45m', '5h 45m', '4h 30m'], dtype=str),
+                'Hashtag': np.array(['#maintenance', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#maintenance', '#maintenance', '#python', '#python', '#maintenance', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying'], dtype=str),
+                'Descriptor': np.array(['', 'NW.Shared.Serialization v1.0.0', 'NW.Shared.Serialization v1.0.0', 'NW.NGramTextClassification v4.2.0', 'NW.NGramTextClassification v4.2.0', 'NW.UnivariateForecasting v4.2.0', 'NW.UnivariateForecasting v4.2.0', '', '', 'nwreadinglistmanager v2.1.0', 'nwreadinglistmanager v2.1.0', '', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.'], dtype=str),
+                'IsSoftwareProject': np.array([False, True, True, True, True, True, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
+                'IsReleaseDay': np.array([False, True, True, True, True, False, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
+                'Year': np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int32),
+                'Month': np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int32),
+            }, index=pd.RangeIndex(start=980, stop=1001, step=1))
+
+    @staticmethod
+    def create_tt_by_year_df() -> DataFrame:
+
+        '''
+                Year	Effort	YearlyTarget	TargetDiff	IsTargetMet
+            0	2024	36h 00m	250h 00m	    -214h 00m	False        
+        '''
+
+        return pd.DataFrame({
+                'Year': np.array([2024], dtype=int32),
+                'Effort': np.array(['36h 00m'], dtype=object),
+                'YearlyTarget': np.array(['250h 00m'], dtype=object),
+                'TargetDiff': np.array(['-214h 00m'], dtype=object),
+                'IsTargetMet': np.array([False], dtype=bool),
+            }, index=pd.RangeIndex(start=0, stop=1, step=1))
+
+    @staticmethod
+    def create_tt_by_year_month_df() -> DataFrame:
+
+        '''
+                Year	Month	Effort	YearlyTotal	ToTarget
+            0	2024	2	    36h 00m	36h 00m	    -214h 00m
+        '''
+
+        return pd.DataFrame({
+                'Year': np.array([2024], dtype=int32),
+                'Month': np.array([2], dtype=int32),
+                'Effort': np.array(['36h 00m'], dtype=object),
+                'YearlyTotal': np.array(['36h 00m'], dtype=object),
+                'ToTarget': np.array(['-214h 00m'], dtype=object),
+            }, index=pd.RangeIndex(start=0, stop=1, step=1))
+
+    @staticmethod
+    def create_tt_by_year_month_spnv_df() -> DataFrame:
+
+        '''
+                Year	Month	ProjectName	                ProjectVersion	Effort	DME	    %_DME	TME	    %_TME
+            0	2024	2	    NW.NGramTextClassification	4.2.0	        01h 15m	08h 45m	14.29	36h 00m	3.47
+            1	2024	2	    NW.Shared.Serialization	    1.0.0	        04h 15m	08h 45m	48.57	36h 00m	11.81
+            2	2024	2	    NW.UnivariateForecasting	4.2.0	        00h 45m	08h 45m	8.57	36h 00m	2.08
+            3	2024	2	    nwreadinglistmanager	    2.1.0	        02h 00m	08h 45m	22.86	36h 00m	5.56
+        '''
+
+        return pd.DataFrame({
+                'Year': np.array([2024, 2024, 2024, 2024], dtype=int32),
+                'Month': np.array([2, 2, 2, 2], dtype=int32),
+                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+                'DME': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                '%_DME': np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
+                'TME': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                '%_TME': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+
+    @staticmethod
+    def create_tt_by_year_spnv_df() -> DataFrame:
+
+        '''
+                Year	ProjectName	                ProjectVersion	Effort	DYE	    %_DYE	TYE	        %_TYE
+            0	2024	NW.NGramTextClassification	4.2.0	        01h 15m	08h 45m	14.29	36h 00m	    3.47
+            1	2024	NW.Shared.Serialization	    1.0.0	        04h 15m	08h 45m	48.57	36h 00m	    11.81
+            2	2024	NW.UnivariateForecasting	4.2.0	        00h 45m	08h 45m	8.57	36h 00m	    2.08
+            3	2024	nwreadinglistmanager	    2.1.0	        02h 00m	08h 45m	22.86	36h 00m	    5.56
+        '''
+
+        return pd.DataFrame({
+                'Year': np.array([2024, 2024, 2024, 2024], dtype=int32),
+                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+                'DYE': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                '%_DYE': np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
+                'TYE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                '%_TYE': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+
+    @staticmethod
+    def create_tt_by_spn_df() -> DataFrame:
+
+        '''
+                Hashtag	ProjectName	                Effort	DE	    %_DE	TE	    %_TE
+            0	#python	nwreadinglistmanager	    02h 00m	08h 45m	22.86	36h 00m	5.56
+            1	#csharp	NW.Shared.Serialization	    04h 15m	08h 45m	48.57	36h 00m	11.81
+            2	#csharp	NW.NGramTextClassification	01h 15m	08h 45m	14.29	36h 00m	3.47
+            3	#csharp	NW.UnivariateForecasting	00h 45m	08h 45m	8.57	36h 00m	2.08        
+        '''
+
+        return pd.DataFrame({
+                'Hashtag': np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object),
+                'ProjectName': np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
+                'Effort': np.array(['02h 00m', '04h 15m', '01h 15m', '00h 45m'], dtype=object),
+                'DE': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                '%_DE': np.array([22.86, 48.57, 14.29, 8.57], dtype= np.float64),
+                'TE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                '%_TE': np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+
+    @staticmethod
+    def create_tt_by_spn_spv_df() -> DataFrame:
+
+        '''
+                ProjectName	                ProjectVersion	Effort
+            0	NW.NGramTextClassification	4.2.0	        01h 15m
+            1	NW.Shared.Serialization	    1.0.0	        04h 15m
+            2	NW.UnivariateForecasting	4.2.0	        00h 45m
+            3	nwreadinglistmanager	    2.1.0	        02h 00m
+        '''
+
+        return pd.DataFrame({
+                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+
+    @staticmethod
+    def create_tt_by_year_hashtag_df() -> DataFrame:
+
+        '''
+                Year	Hashtag	        Effort
+            0	2024	#csharp	        06h 15m
+            1	2024	#maintenance	04h 30m
+            2	2024	#python	        02h 00m
+            3	2024	#studying	    23h 15m
+        '''
+
+        return pd.DataFrame({
+                'Year': np.array([2024, 2024, 2024, 2024], dtype=int32),
+                'Hashtag': np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
+                'Effort': np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+
+    @staticmethod
+    def create_tt_by_hashtag_df() -> DataFrame:
+
+        '''
+                Hashtag	        Effort	Effort%
+            0	#studying	    23h 15m	64.58
+            1	#csharp	        06h 15m	17.36
+            2	#maintenance	04h 30m	12.50
+            3	#python	        02h 00m	5.56
+        '''
+
+        return pd.DataFrame({
+                'Hashtag': np.array(['#studying', '#csharp', '#maintenance', '#python'], dtype=object),
+                'Effort': np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
+                'Effort%': np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+
+    @staticmethod
+    def create_time_ranges_df() -> DataFrame:
+
+        '''
+                TimeRangeId	Occurrences
+            0	08:00-08:30	1
+            1	08:15-12:45	1
+            2	08:45-12:15	1
+            3	10:15-13:00	1
+            4	11:00-12:30	1
+            ...        
+        '''
+
+        return pd.DataFrame({
+                'TimeRangeId': np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
+                'Occurrences': np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
+            }, index=pd.RangeIndex(start=0, stop=21, step=1))
+
 # TEST CLASSES
 class GetDefaultTimeTrackingPathTestCase(unittest.TestCase):
 
@@ -208,8 +402,8 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
         # Arrange
         excel_data_df : DataFrame = ObjectMother().create_excel_data()
         setting_collection : SettingCollection = ObjectMother().create_setting_collection()
-        expected_column_names : list[str] = ObjectMother().create_sessions_dataframe_column_names()
-        expected_dtype_names : list[str] = ObjectMother().create_sessions_dataframe_dtype_names()
+        expected_column_names : list[str] = ObjectMother().create_sessions_df_column_names()
+        expected_dtype_names : list[str] = ObjectMother().create_sessions_df_dtype_names()
         expected_nan : str = ""
 
         # Act
