@@ -517,9 +517,21 @@ class GetTTByYearTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
+class GetTTByYearMonthTestCase(unittest.TestCase):
 
-# get_tt_by_year, get_tt_by_year_month
-        
+    def test_getttbyyearmonth_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_year_month_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.get_tt_by_year_month(sessions_df = sessions_df, years = years, yearly_targets = yearly_targets)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
 class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
 
     def test_extractsoftwareprojectname_shouldreturnexpectedstring_whenproperstring(self):
