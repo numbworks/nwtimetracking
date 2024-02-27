@@ -1018,6 +1018,33 @@ class CreateTimeRangesTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
+class RemoveUnknownIdTestCase(unittest.TestCase):
+
+    def test_removeunknownid_shouldreturnexpecteddataframe_whencontainsunknownid(self):
+
+        # Arrange
+        unknown_id : str = "Unknown"
+        expected_df : DataFrame = ObjectMother().create_time_ranges_df()   
+        time_ranges_df : DataFrame = ObjectMother().create_time_ranges_df()
+        time_ranges_df.loc[len(time_ranges_df.index)] = [unknown_id, 3]
+
+        # Act
+        actual_df : DataFrame  = nwttm.remove_unknown_id(time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+
+        # Assert
+        assert_frame_equal(expected_df, actual_df)  
+    def test_removeunknownid_shouldreturnexpecteddataframe_whendoesnotcontainunknownid(self):
+
+        # Arrange
+        unknown_id : str = "Unknown"
+        expected_df : DataFrame = ObjectMother().create_time_ranges_df()   
+        time_ranges_df : DataFrame = ObjectMother().create_time_ranges_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.remove_unknown_id(time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+
+        # Assert
+        assert_frame_equal(expected_df, actual_df)  
 class GetTTByYearHashtagTestCase(unittest.TestCase):
 
     def test_getttbyyearhashtag_shouldreturnexpecteddataframe_wheninvoked(self):
