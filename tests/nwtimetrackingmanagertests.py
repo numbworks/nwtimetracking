@@ -7,7 +7,7 @@ from datetime import date
 from datetime import timedelta
 from numpy import int32
 from pandas import DataFrame
-from pandas.core.indexes.base import Index
+from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from unittest.mock import patch
 
@@ -16,7 +16,7 @@ import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 import nwtimetrackingmanager as nwttm
 from nwtimetrackingmanager import YearlyTarget
-from nwtimetrackingmanager import SettingCollection
+from nwtimetrackingmanager import SettingBag
 from nwtimetrackingmanager import EffortStatus
 from nwtimetrackingmanager import MessageCollection
 
@@ -63,9 +63,9 @@ class ObjectMother():
     '''Collects all the DTOs required by the unit tests.'''
 
     @staticmethod
-    def create_setting_collection() -> SettingCollection:
+    def create_setting_bag() -> SettingBag:
 
-         return SettingCollection(
+         return SettingBag(
             years = [2015],
             yearly_targets = [
                 YearlyTarget(year = 2015, hours = timedelta(hours = 0))
@@ -401,14 +401,14 @@ class GetSessionsDatasetTestCase(unittest.TestCase):
 
         # Arrange
         excel_data_df : DataFrame = ObjectMother().create_excel_data()
-        setting_collection : SettingCollection = ObjectMother().create_setting_collection()
+        setting_bag : SettingBag = ObjectMother().create_setting_bag()
         expected_column_names : list[str] = ObjectMother().create_sessions_df_column_names()
         expected_dtype_names : list[str] = ObjectMother().create_sessions_df_dtype_names()
         expected_nan : str = ""
 
         # Act
         with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
-            actual : str = nwttm.get_sessions_dataset(setting_collection = setting_collection)
+            actual : str = nwttm.get_sessions_dataset(setting_bag = setting_bag)
 
         # Assert
         self.assertEqual(expected_column_names, actual.columns.tolist())
@@ -502,6 +502,21 @@ class FormatTimedeltaTestCase(unittest.TestCase):
         
         # Assert
         self.assertEqual(expected, actual)
+class GetTTByYearTestCase(unittest.TestCase):
+
+    def test_getttbyyear_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_year_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.get_tt_by_year(sessions_df = sessions_df, years = years, yearly_targets = yearly_targets)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
 
 # get_tt_by_year, get_tt_by_year_month
         
