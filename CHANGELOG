@@ -1,7 +1,12 @@
+v2.2.0
+- Notebook:
+	- Feature: "Bag Pattern" adopted into the codebase (SettingCollection => SettingBag).
+	- Maintenance: Increased unit test coverage from 56% to 89%.
+
 v2.0.0 - BREAKING CHANGES
 - Notebook:
-		Feature: Added support for check_python_version() in nwcorecomponents.
-		Feature: Migrated from Python 3.11.x to 3.12.1 and updated libraries accordingly (framework freeze).
+	- Feature: Added support for check_python_version() in nwcorecomponents.
+	- Feature: Migrated from Python 3.11.x to 3.12.1 and updated libraries accordingly (framework freeze).
 - Documentation:
 	- Feature: updated to v2.0.0.
 
