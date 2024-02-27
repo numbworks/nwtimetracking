@@ -17,21 +17,19 @@ from datetime import date
 from datetime import timedelta
 from pandas import Series
 from numpy import float64
+from dataclasses import dataclass
 
 # LOCAL MODULES
-# CLASSES
+# DATACLASSES
+@dataclass(frozen=True)
 class YearlyTarget():
     
     '''Represents an amount of hours for a given year.'''
 
     year : int
     hours : timedelta
-
-    def __init__(self, year : int, hours : timedelta):
-        
-        self.year = year
-        self.hours = hours
-class SettingCollection():
+@dataclass(frozen=True)
+class SettingBag():
 
     '''Represents a collection of settings.'''
 
@@ -68,77 +66,7 @@ class SettingCollection():
     show_tts_by_month_df : bool
     show_effort_status_df : bool
     show_time_ranges_df : bool
-
-    def __init__(
-        self,
-        years : list[int],
-        yearly_targets : list[YearlyTarget],
-        excel_path : str,
-        excel_books_skiprows : int,
-        excel_books_nrows : int,
-        excel_books_tabname : str,
-        n_generic : int,
-        n_by_month : int,
-        now : datetime,
-        software_project_names : list[str],
-        software_project_names_by_spv : list[str],
-        remove_untagged_from_de : bool,
-        definitions : dict[str, str],
-        tt_by_year_hashtag_years : list[int],
-        tts_by_month_update_future_values_to_empty : bool,
-        effort_status_n : int,
-        effort_status_is_correct : bool,
-        time_ranges_unknown_id : str,
-        time_ranges_top_n : int,
-        time_ranges_remove_unknown_id : bool,
-        time_ranges_filter_by_top_n : bool,
-        show_sessions_df : bool,
-        show_tt_by_year_df : bool,
-        show_tt_by_year_month_df : bool,
-        show_tt_by_year_month_spnv_df : bool,
-        show_tt_by_year_spnv_df : bool,
-        show_tt_by_spn_df : bool,
-        show_tt_by_spn_spv_df : bool,
-        show_tt_by_year_hashtag : bool,
-        show_tt_by_hashtag : bool,
-        show_tts_by_month_df : bool,
-        show_effort_status_df : bool,
-        show_time_ranges_df : bool
-        ):
-
-        self.years = years
-        self.yearly_targets = yearly_targets
-        self.excel_path = excel_path
-        self.excel_books_skiprows = excel_books_skiprows
-        self.excel_books_nrows = excel_books_nrows
-        self.excel_books_tabname = excel_books_tabname
-        self.n_generic = n_generic
-        self.n_by_month = n_by_month
-        self.now = now
-        self.software_project_names = software_project_names
-        self.software_project_names_by_spv = software_project_names_by_spv
-        self.remove_untagged_from_de = remove_untagged_from_de
-        self.definitions = definitions
-        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
-        self.tts_by_month_update_future_values_to_empty = tts_by_month_update_future_values_to_empty
-        self.effort_status_n = effort_status_n,
-        self.effort_status_is_correct = effort_status_is_correct,
-        self.time_ranges_unknown_id = time_ranges_unknown_id
-        self.time_ranges_top_n = time_ranges_top_n
-        self.time_ranges_remove_unknown_id = time_ranges_remove_unknown_id
-        self.time_ranges_filter_by_top_n = time_ranges_filter_by_top_n
-        self.show_sessions_df = show_sessions_df
-        self.show_tt_by_year_df = show_tt_by_year_df
-        self.show_tt_by_year_month_df = show_tt_by_year_month_df
-        self.show_tt_by_year_month_spnv_df = show_tt_by_year_month_spnv_df
-        self.show_tt_by_year_spnv_df = show_tt_by_year_spnv_df
-        self.show_tt_by_spn_df = show_tt_by_spn_df
-        self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
-        self.show_tt_by_year_hashtag = show_tt_by_year_hashtag
-        self.show_tt_by_hashtag = show_tt_by_hashtag
-        self.show_tts_by_month_df = show_tts_by_month_df
-        self.show_effort_status_df = show_effort_status_df
-        self.show_time_ranges_df = show_time_ranges_df
+@dataclass(frozen=True)
 class EffortStatus():
     
     '''Represents an effort-related status.'''
@@ -159,32 +87,7 @@ class EffortStatus():
     is_correct : bool
     message : str 
 
-    def __init__(
-            self, 
-            idx : int, 
-            start_time_str : str,
-            start_time_dt : datetime,
-            end_time_str : str,
-            end_time_dt : datetime,
-            actual_str : str,
-            actual_td : timedelta,
-            expected_td : timedelta,
-            expected_str : str,
-            is_correct : bool,
-            message : str
-            ):
-        
-        self.idx = idx
-        self.start_time_str = start_time_str
-        self.start_time_dt = start_time_dt
-        self.end_time_str = end_time_str
-        self.end_time_dt = end_time_dt
-        self.actual_str = actual_str
-        self.actual_td = actual_td
-        self.expected_td = expected_td
-        self.expected_str = expected_str
-        self.is_correct = is_correct
-        self.message = message
+# CLASSES
 class MessageCollection():
 
     '''Collects all the messages used for logging and for the exceptions.'''
@@ -229,11 +132,9 @@ def get_default_time_tracking_path()-> str:
     path = os.path.join(path, "Time Tracking.xlsx")
 
     return path
-def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
-    
-    '''
-        Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
-    '''
+def enforce_dataframe_definition_for_sessions_df(sessions_df : DataFrame) -> DataFrame:
+
+    '''Enforces definition for the provided dataframe.'''
 
     column_names : list[str] = []
     column_names.append("Date")                 # [0], date
@@ -247,34 +148,43 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     column_names.append("Year")                 # [8], int
     column_names.append("Month")                # [9], int
 
-    dataset_df = pd.read_excel(
-	    io = setting_collection.excel_path, 	
-        skiprows = setting_collection.excel_books_skiprows,
-        nrows = setting_collection.excel_books_nrows,
-	    sheet_name = setting_collection.excel_books_tabname, 
+    sessions_df = sessions_df[column_names]
+  
+    sessions_df[column_names[0]] = pd.to_datetime(sessions_df[column_names[0]], format="%Y-%m-%d") 
+    sessions_df[column_names[0]] = sessions_df[column_names[0]].apply(lambda x: x.date())
+
+    sessions_df = sessions_df.astype({column_names[1]: str})
+    sessions_df = sessions_df.astype({column_names[2]: str})
+    sessions_df = sessions_df.astype({column_names[3]: str})
+    sessions_df = sessions_df.astype({column_names[4]: str})
+    sessions_df = sessions_df.astype({column_names[5]: str})
+    sessions_df = sessions_df.astype({column_names[6]: bool})
+    sessions_df = sessions_df.astype({column_names[7]: bool})
+    sessions_df = sessions_df.astype({column_names[8]: int})
+    sessions_df = sessions_df.astype({column_names[9]: int})
+
+    sessions_df[column_names[1]] = sessions_df[column_names[1]].replace('nan', '')
+    sessions_df[column_names[2]] = sessions_df[column_names[2]].replace('nan', '')
+    sessions_df[column_names[5]] = sessions_df[column_names[5]].replace('nan', '')
+
+    return sessions_df
+def get_sessions_dataset(setting_bag : SettingBag) -> DataFrame:
+    
+    '''
+        Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
+    '''
+
+    sessions_df : DataFrame = pd.read_excel(
+	    io = setting_bag.excel_path, 	
+        skiprows = setting_bag.excel_books_skiprows,
+        nrows = setting_bag.excel_books_nrows,
+	    sheet_name = setting_bag.excel_books_tabname, 
         engine = 'openpyxl'
         )
     
-    dataset_df = dataset_df[column_names]
-  
-    dataset_df[column_names[0]] = pd.to_datetime(dataset_df[column_names[0]], format="%Y-%m-%d") 
-    dataset_df[column_names[0]] = dataset_df[column_names[0]].apply(lambda x: x.date())
+    sessions_df = enforce_dataframe_definition_for_sessions_df(sessions_df = sessions_df)
 
-    dataset_df = dataset_df.astype({column_names[1]: str})
-    dataset_df = dataset_df.astype({column_names[2]: str})
-    dataset_df = dataset_df.astype({column_names[3]: str})
-    dataset_df = dataset_df.astype({column_names[4]: str})
-    dataset_df = dataset_df.astype({column_names[5]: str})
-    dataset_df = dataset_df.astype({column_names[6]: bool})
-    dataset_df = dataset_df.astype({column_names[7]: bool})
-    dataset_df = dataset_df.astype({column_names[8]: int})
-    dataset_df = dataset_df.astype({column_names[9]: int})
-
-    dataset_df[column_names[1]] = dataset_df[column_names[1]].replace('nan', '')
-    dataset_df[column_names[2]] = dataset_df[column_names[2]].replace('nan', '')
-    dataset_df[column_names[5]] = dataset_df[column_names[5]].replace('nan', '')
-
-    return dataset_df
+    return sessions_df
 
 def convert_string_to_timedelta(td_str : str) -> timedelta:
 
@@ -948,7 +858,7 @@ def try_print_definitions(df : DataFrame, definitions : dict[str, str]) -> None:
         if definitions.get(column_name) != None:
             print(f"{column_name}: {definitions[column_name]}")
 
-def enforce_raw_ttm_schema(df : DataFrame) -> DataFrame:
+def enforce_dataframe_definition_for_raw_ttm_df(df : DataFrame) -> DataFrame:
 
     '''Ensures that the columns of the provided dataframe have the expected data types.'''
 
@@ -979,7 +889,7 @@ def get_default_raw_ttm(year : int) -> DataFrame:
         index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
     )
 
-    default_df = enforce_raw_ttm_schema(df = default_df)
+    default_df = enforce_dataframe_definition_for_raw_ttm_df(df = default_df)
 
     return default_df
 def try_complete_raw_ttm(ttm_df : DataFrame, year : int) -> DataFrame:
@@ -1083,7 +993,7 @@ def get_raw_ttm(sessions_df : DataFrame, year : int) -> DataFrame:
     ttm_df = ttm_df.sort_values(by = cn_month).reset_index(drop = True)
 
     ttm_df = try_complete_raw_ttm(ttm_df = ttm_df, year = year)
-    ttm_df = enforce_raw_ttm_schema(df = ttm_df)
+    ttm_df = enforce_dataframe_definition_for_raw_ttm_df(df = ttm_df)
 
     return ttm_df
 

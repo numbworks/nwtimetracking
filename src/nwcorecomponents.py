@@ -6,25 +6,87 @@ Alias: nwcc
 
 # GLOBAL MODULES
 import os
+import re
 import requests
 import sys
 import seaborn as sns
-from pandas import DataFrame
 from datetime import datetime
 from datetime import date
 from numpy import float64
+from pandas import DataFrame
+from typing import Tuple
+from typing import Any
 
 # LOCAL MODULES
 # CLASSES
+class DataFrameReverser:
+
+    '''
+        Encapsulates the logic to convert a dataframe object to some source code usable for creating it. 
+
+        Based upon:
+        https://stackoverflow.com/questions/41769882/pandas-dataframe-to-code
+    '''
+
+    def __init__(self) -> None:
+        pass
+    def __convert_values_to_source_code(self, values : list) -> str:
+
+        '''Converts values to source code.'''
+
+        values_str : str = str(values)
+        values_str = re.sub(r" nan(?<![,\]])", " np.nan", values_str)
+        
+        return values_str
+    def __convert_dtype_to_source_code(self, dtype : Any) -> str:
+
+        '''Converts dtype to source code.'''
+
+        dtype_str : str = str(dtype)
+        dtype_str = re.sub(r"float64", " np.float64", dtype_str)
+        dtype_str = re.sub(r"int64", " np.int64", dtype_str)
+
+        return dtype_str
+    def __clean_dataframe_string(self, df_str : str) -> str:
+
+        '''Performs a sequence of cleaning procedures.'''
+
+        # To fix: "TypeError: descriptor 'date' for 'datetime.datetime' objects doesn't apply to a 'int' object"
+        df_str = df_str.replace("datetime.date(", "date(")
+
+        return df_str        
+
+    def convert_dataframe_to_source_code(self, df : DataFrame) -> str:
+
+        '''Converts dataframe to source code.'''
+
+        df_str : str = "pd.DataFrame({"
+
+        for column in df.columns:
+            values : list = self.__convert_values_to_source_code(df[column].values.tolist())
+            dtype : Any = self.__convert_dtype_to_source_code(df.dtypes[column])
+            df_str += f'\n\t\'{column}\': np.array({values}, dtype={dtype}),'
+
+        df_str += "\n}"
+
+        values : list  = self.__convert_values_to_source_code(df.index)
+        dtype : Any = self.__convert_dtype_to_source_code(df.index.dtype)
+
+        df_str += f', index=pd.{values}'
+        df_str += ')'
+
+        df_str = self.__clean_dataframe_string(df_str = df_str)
+
+        return df_str
 
 # FUNCTIONS
-def check_python_version(expected_version : (int, int, int) = (3, 12, 1)) -> None:
+def check_python_version(expected_version : Tuple[int, int, int] = (3, 12, 1)) -> None:
 
     '''Prints a warning message if the installed Python version doesn't match the expected one.'''
 
     expected_version_str : str = f"{expected_version[0]}.{expected_version[1]}.{expected_version[2]}"
 
-    installed_version : (int, int, int) = (sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
+    installed_version : Tuple[int, int, int] = (sys.version_info.major, sys.version_info.minor, sys.version_info.micro)
     installed_version_str : str = f"{installed_version[0]}.{installed_version[1]}.{installed_version[2]}"
 
     if installed_version == expected_version:
