@@ -17,8 +17,11 @@ from datetime import date
 from datetime import timedelta
 from pandas import Series
 from numpy import float64
+from dataclasses import dataclass
 
 # LOCAL MODULES
+
+
 # CLASSES
 class YearlyTarget():
     
@@ -31,7 +34,7 @@ class YearlyTarget():
         
         self.year = year
         self.hours = hours
-class SettingCollection():
+class SettingBag():
 
     '''Represents a collection of settings.'''
 
@@ -229,7 +232,7 @@ def get_default_time_tracking_path()-> str:
     path = os.path.join(path, "Time Tracking.xlsx")
 
     return path
-def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
+def get_sessions_dataset(setting_bag : SettingBag) -> DataFrame:
     
     '''
         Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
@@ -248,10 +251,10 @@ def get_sessions_dataset(setting_collection : SettingCollection) -> DataFrame:
     column_names.append("Month")                # [9], int
 
     dataset_df = pd.read_excel(
-	    io = setting_collection.excel_path, 	
-        skiprows = setting_collection.excel_books_skiprows,
-        nrows = setting_collection.excel_books_nrows,
-	    sheet_name = setting_collection.excel_books_tabname, 
+	    io = setting_bag.excel_path, 	
+        skiprows = setting_bag.excel_books_skiprows,
+        nrows = setting_bag.excel_books_nrows,
+	    sheet_name = setting_bag.excel_books_tabname, 
         engine = 'openpyxl'
         )
     
