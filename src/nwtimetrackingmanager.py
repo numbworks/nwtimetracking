@@ -132,11 +132,9 @@ def get_default_time_tracking_path()-> str:
     path = os.path.join(path, "Time Tracking.xlsx")
 
     return path
-def get_sessions_dataset(setting_bag : SettingBag) -> DataFrame:
-    
-    '''
-        Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
-    '''
+def enforce_dataframe_definition_for_sessions_df(sessions_df : DataFrame) -> DataFrame:
+
+    '''Enforces definition for the provided dataframe.'''
 
     column_names : list[str] = []
     column_names.append("Date")                 # [0], date
@@ -150,7 +148,33 @@ def get_sessions_dataset(setting_bag : SettingBag) -> DataFrame:
     column_names.append("Year")                 # [8], int
     column_names.append("Month")                # [9], int
 
-    dataset_df = pd.read_excel(
+    sessions_df = sessions_df[column_names]
+  
+    sessions_df[column_names[0]] = pd.to_datetime(sessions_df[column_names[0]], format="%Y-%m-%d") 
+    sessions_df[column_names[0]] = sessions_df[column_names[0]].apply(lambda x: x.date())
+
+    sessions_df = sessions_df.astype({column_names[1]: str})
+    sessions_df = sessions_df.astype({column_names[2]: str})
+    sessions_df = sessions_df.astype({column_names[3]: str})
+    sessions_df = sessions_df.astype({column_names[4]: str})
+    sessions_df = sessions_df.astype({column_names[5]: str})
+    sessions_df = sessions_df.astype({column_names[6]: bool})
+    sessions_df = sessions_df.astype({column_names[7]: bool})
+    sessions_df = sessions_df.astype({column_names[8]: int})
+    sessions_df = sessions_df.astype({column_names[9]: int})
+
+    sessions_df[column_names[1]] = sessions_df[column_names[1]].replace('nan', '')
+    sessions_df[column_names[2]] = sessions_df[column_names[2]].replace('nan', '')
+    sessions_df[column_names[5]] = sessions_df[column_names[5]].replace('nan', '')
+
+    return sessions_df
+def get_sessions_dataset(setting_bag : SettingBag) -> DataFrame:
+    
+    '''
+        Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
+    '''
+
+    sessions_df : DataFrame = pd.read_excel(
 	    io = setting_bag.excel_path, 	
         skiprows = setting_bag.excel_books_skiprows,
         nrows = setting_bag.excel_books_nrows,
@@ -158,26 +182,9 @@ def get_sessions_dataset(setting_bag : SettingBag) -> DataFrame:
         engine = 'openpyxl'
         )
     
-    dataset_df = dataset_df[column_names]
-  
-    dataset_df[column_names[0]] = pd.to_datetime(dataset_df[column_names[0]], format="%Y-%m-%d") 
-    dataset_df[column_names[0]] = dataset_df[column_names[0]].apply(lambda x: x.date())
+    sessions_df = enforce_dataframe_definition_for_sessions_df(sessions_df = sessions_df)
 
-    dataset_df = dataset_df.astype({column_names[1]: str})
-    dataset_df = dataset_df.astype({column_names[2]: str})
-    dataset_df = dataset_df.astype({column_names[3]: str})
-    dataset_df = dataset_df.astype({column_names[4]: str})
-    dataset_df = dataset_df.astype({column_names[5]: str})
-    dataset_df = dataset_df.astype({column_names[6]: bool})
-    dataset_df = dataset_df.astype({column_names[7]: bool})
-    dataset_df = dataset_df.astype({column_names[8]: int})
-    dataset_df = dataset_df.astype({column_names[9]: int})
-
-    dataset_df[column_names[1]] = dataset_df[column_names[1]].replace('nan', '')
-    dataset_df[column_names[2]] = dataset_df[column_names[2]].replace('nan', '')
-    dataset_df[column_names[5]] = dataset_df[column_names[5]].replace('nan', '')
-
-    return dataset_df
+    return sessions_df
 
 def convert_string_to_timedelta(td_str : str) -> timedelta:
 
