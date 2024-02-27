@@ -1018,7 +1018,19 @@ class GetTTByYearHashtagTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
+class GetTTByHashtagTestCase(unittest.TestCase):
 
+    def test_getttbyhashtag_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_hashtag_df()
+
+        # Act
+        actual_df : DataFrame  = nwttm.get_tt_by_hashtag(sessions_df = sessions_df)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)  
 
 # MAIN
 if __name__ == "__main__":
