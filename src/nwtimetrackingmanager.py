@@ -1574,7 +1574,36 @@ class TimeTrackingManager():
         time_ranges_df.reset_index(drop = True, inplace = True)
 
         return time_ranges_df
-    
+class YearProvider():
+
+    '''Collects all the logic related to the retrieval of year-related information.'''
+
+    def get_all_years(self) -> list[int]:
+
+        '''Returns a list of years.'''
+
+        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+
+        return years
+    def get_all_yearly_targets(self) -> list[YearlyTarget]:
+
+        '''Returns a list of years.'''
+
+        yearly_targets : list[YearlyTarget] = [
+            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
+            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
+            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
+            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
+        ]
+
+        return yearly_targets
+
 # MAIN
 if __name__ == "__main__":
     pass
