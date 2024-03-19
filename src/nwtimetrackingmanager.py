@@ -5,22 +5,27 @@ Alias: nwttm
 '''
 
 # GLOBAL MODULES
-import os
-import re
-import pandas as pd
 import numpy as np
+import os
+import pandas as pd
+import re
 import openpyxl
-import copy
-from pandas import DataFrame
+from dataclasses import dataclass
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
-from pandas import Series
 from numpy import float64
-from dataclasses import dataclass
+from pandas import DataFrame
+from pandas import Series
 
 # LOCAL MODULES
-# DATACLASSES
+
+# CONSTANTS
+MODULE_ALIAS : str = "nwttm"
+MODULE_NAME : str = "nwtimetrackingmanager"
+MODULE_VERSION : str = "3.0.0"
+
+# DTOs
 @dataclass(frozen=True)
 class YearlyTarget():
     
@@ -87,7 +92,7 @@ class EffortStatus():
     is_correct : bool
     message : str 
 
-# CLASSES
+# STATIC CLASSES
 class MessageCollection():
 
     '''Collects all the messages used for logging and for the exceptions.'''
@@ -120,6 +125,8 @@ class MessageCollection():
     @staticmethod
     def effort_status_not_among_expected_time_values(time : str) -> str:
         return f"The provided time ('{time}') is not among the expected time values."
+
+# CLASSES
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
