@@ -1,3 +1,12 @@
+v3.0.0
+- Libraries:
+	- Refactoring: "nwcorecomponents" replaced by "nwshared".
+	- Refactoring: "nwtimetrackingmanager" migrated to an OOP structure.
+- Notebook:
+	- Refactoring: re-structured to match the feature rationalization exercise performed in the libraries.	
+- Documentation:
+	- Feature: updated to v3.0.0.
+
 v2.2.0
 - Notebook:
 	- Feature: "Bag Pattern" adopted into the codebase (SettingCollection => SettingBag).
