@@ -34,44 +34,6 @@ class YearlyTarget():
     year : int
     hours : timedelta
 @dataclass(frozen=True)
-class SettingBag():
-
-    '''Represents a collection of settings.'''
-
-    years : list[int]
-    yearly_targets : list[YearlyTarget]
-    excel_path : str
-    excel_books_skiprows : int
-    excel_books_nrows : int
-    excel_books_tabname : str
-    n_generic : int
-    n_by_month : int
-    now : datetime
-    software_project_names : list[str]
-    software_project_names_by_spv : list[str]
-    remove_untagged_from_de : bool
-    definitions : dict[str, str]
-    effort_status_n : int
-    effort_status_is_correct : bool
-    tt_by_year_hashtag_years : list[int]
-    tts_by_month_update_future_values_to_empty : bool
-    time_ranges_unknown_id : str
-    time_ranges_top_n : int
-    time_ranges_remove_unknown_id : bool
-    time_ranges_filter_by_top_n : bool
-    show_sessions_df : bool
-    show_tt_by_year_df : bool
-    show_tt_by_year_month_df : bool
-    show_tt_by_year_month_spnv_df : bool
-    show_tt_by_year_spnv_df : bool
-    show_tt_by_spn_df : bool
-    show_tt_by_spn_spv_df : bool
-    show_tt_by_year_hashtag : bool
-    show_tt_by_hashtag : bool
-    show_tts_by_month_df : bool
-    show_effort_status_df : bool
-    show_time_ranges_df : bool
-@dataclass(frozen=True)
 class EffortStatus():
     
     '''Represents an effort-related status.'''
@@ -127,11 +89,129 @@ class MessageCollection():
         return f"The provided time ('{time}') is not among the expected time values."
 
 # CLASSES
+class SettingBag():
+
+    '''Represents a collection of settings.'''
+
+    show_sessions_df : bool
+    show_tt_by_year_df : bool
+    show_tt_by_year_month_df : bool
+    show_tt_by_year_month_spnv_df : bool
+    show_tt_by_year_spnv_df : bool
+    show_tt_by_spn_df : bool
+    show_tt_by_spn_spv_df : bool
+    show_tt_by_year_hashtag : bool
+    show_tt_by_hashtag : bool
+    show_tts_by_month_df : bool
+    show_effort_status_df : bool
+    show_time_ranges_df : bool
+    years : list[int]
+    yearly_targets : list[YearlyTarget]
+    excel_path : str
+    excel_books_skiprows : int
+    excel_books_nrows : int
+    excel_books_tabname : str
+    software_project_names : list[str]
+    software_project_names_by_spv : list[str]
+    tt_by_year_hashtag_years : list[int]
+
+    n_generic : int
+    n_by_month : int
+    now : datetime
+    remove_untagged_from_de : bool
+    definitions : dict[str, str]
+    effort_status_n : int
+    effort_status_is_correct : bool
+    tts_by_month_update_future_values_to_empty : bool
+    time_ranges_unknown_id : str
+    time_ranges_top_n : int
+    time_ranges_remove_unknown_id : bool
+    time_ranges_filter_by_top_n : bool
+
+    def __init__(
+        self,
+        show_sessions_df : bool,
+        show_tt_by_year_df : bool,
+        show_tt_by_year_month_df : bool,
+        show_tt_by_year_month_spnv_df : bool,
+        show_tt_by_year_spnv_df : bool,
+        show_tt_by_spn_df : bool,
+        show_tt_by_spn_spv_df : bool,
+        show_tt_by_year_hashtag : bool,
+        show_tt_by_hashtag : bool,
+        show_tts_by_month_df : bool,
+        show_effort_status_df : bool,
+        show_time_ranges_df : bool, 
+        years : list[int],
+        yearly_targets : list[YearlyTarget],
+        excel_path : str,
+        excel_books_skiprows : int,
+        excel_books_nrows : int,
+        excel_books_tabname : str,
+        software_project_names : list[str],
+        software_project_names_by_spv : list[str],
+        tt_by_year_hashtag_years : list[int],
+
+        n_generic : int = 5,
+        n_by_month : int = 12,
+        now : datetime = datetime.now(),
+        remove_untagged_from_de : bool = True,
+        definitions : dict[str, str] = { 
+            "DME": "Development Monthly Effort",
+            "TME": "Total Monthly Effort",
+            "DYE": "Development Yearly Effort",
+            "TYE": "Total Yearly Effort",
+            "DE": "Development Effort",
+            "TE": "Total Effort"
+        },
+        effort_status_n : int = 25,
+        effort_status_is_correct : bool = False,
+        tts_by_month_update_future_values_to_empty : bool = True,
+        time_ranges_unknown_id : str = "Unknown",
+        time_ranges_top_n : int = 5,
+        time_ranges_remove_unknown_id : bool = True,
+        time_ranges_filter_by_top_n : bool  = True       
+        ) -> None:
+        
+        self.show_sessions_df = show_sessions_df
+        self.show_tt_by_year_df = show_tt_by_year_df
+        self.show_tt_by_year_month_df = show_tt_by_year_month_df
+        self.show_tt_by_year_month_spnv_df = show_tt_by_year_month_spnv_df
+        self.show_tt_by_year_spnv_df = show_tt_by_year_spnv_df
+        self.show_tt_by_spn_df = show_tt_by_spn_df
+        self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
+        self.show_tt_by_year_hashtag = show_tt_by_year_hashtag
+        self.show_tt_by_hashtag = show_tt_by_hashtag
+        self.show_tts_by_month_df = show_tts_by_month_df
+        self.show_effort_status_df = show_effort_status_df
+        self.show_time_ranges_df = show_time_ranges_df
+        self.years = years
+        self.yearly_targets = yearly_targets
+        self.excel_path = excel_path
+        self.excel_books_skiprows = excel_books_skiprows
+        self.excel_books_nrows = excel_books_nrows
+        self.excel_books_tabname = excel_books_tabname
+        self.software_project_names = software_project_names
+        self.software_project_names_by_spv = software_project_names_by_spv
+        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
+        
+        self.n_generic = n_generic
+        self.n_by_month = n_by_month
+        self.now = now
+        self.remove_untagged_from_de = remove_untagged_from_de
+        self.definitions = definitions
+        self.effort_status_n = effort_status_n
+        self.effort_status_is_correct = effort_status_is_correct
+        self.tts_by_month_update_future_values_to_empty = tts_by_month_update_future_values_to_empty
+        self.time_ranges_unknown_id = time_ranges_unknown_id
+        self.time_ranges_top_n = time_ranges_top_n
+        self.time_ranges_remove_unknown_id = time_ranges_remove_unknown_id
+        self.time_ranges_filter_by_top_n = time_ranges_filter_by_top_n
 
 # FUNCTIONS
 def get_default_time_tracking_path()-> str:
 
-    '''
+    r'''
         "c:\...\nwtimetrackingmanager\data\Time Tracking.xlsx"
     '''
     
