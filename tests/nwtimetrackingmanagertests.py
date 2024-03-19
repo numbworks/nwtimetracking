@@ -14,11 +14,7 @@ from unittest.mock import patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-import nwtimetrackingmanager as nwttm
-from nwtimetrackingmanager import YearlyTarget
-from nwtimetrackingmanager import SettingBag
-from nwtimetrackingmanager import EffortStatus
-from nwtimetrackingmanager import MessageCollection
+from nwtimetrackingmanager import YearlyTarget, SettingBag, EffortStatus, MessageCollection, TimeTrackingManager
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -70,7 +66,7 @@ class ObjectMother():
             yearly_targets = [
                 YearlyTarget(year = 2015, hours = timedelta(hours = 0))
             ],
-            excel_path = nwttm.get_default_time_tracking_path(),
+            excel_path = TimeTrackingManager().get_default_time_tracking_path(),
             excel_books_skiprows = 0,
             excel_books_nrows = 920,
             excel_books_tabname = "Sessions",
@@ -410,43 +406,7 @@ class ObjectMother():
             }, index=pd.RangeIndex(start=0, stop=21, step=1))
 
 # TEST CLASSES
-class GetDefaultTimeTrackingPathTestCase(unittest.TestCase):
-
-    def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
-        
-        '''"C:/project_dir/src/" => "C:/project_dir/data/Time Tracking.xlsx"'''
-
-        # Arrange
-        expected : str = "C:/project_dir/data/Time Tracking.xlsx"
-
-        # Act
-        with patch.object(os, 'getcwd', return_value="C:/project_dir/src/") as mocked_context:
-            actual : str = nwttm.get_default_time_tracking_path()
-
-        # Assert
-        self.assertEqual(expected, actual)
-class GetSessionsDatasetTestCase(unittest.TestCase):
-
-    def test_getsessionsdataset_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        excel_data_df : DataFrame = ObjectMother().create_excel_data()
-        setting_bag : SettingBag = ObjectMother().create_setting_bag()
-        expected_column_names : list[str] = ObjectMother().create_sessions_df_column_names()
-        expected_dtype_names : list[str] = ObjectMother().create_sessions_df_dtype_names()
-        expected_nan : str = ""
-
-        # Act
-        with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
-            actual : str = nwttm.get_sessions_dataset(setting_bag = setting_bag)
-
-        # Assert
-        self.assertEqual(expected_column_names, actual.columns.tolist())
-        self.assertEqual(expected_dtype_names, SupportMethodProvider().get_dtype_names(df = actual))
-        self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
-        self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
-        self.assertEqual(expected_nan, actual[expected_column_names[5]][0])
-class ConvertStringToTimedeltaTestCase(unittest.TestCase):
+class TimeTrackingManagerTestCase(unittest.TestCase):
 
     def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
 
@@ -455,12 +415,10 @@ class ConvertStringToTimedeltaTestCase(unittest.TestCase):
         expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
 
         # Act
-        actual_td : str = nwttm.__convert_string_to_timedelta(td_str = td_str)
+        actual_td : str = TimeTrackingManager()._TimeTrackingManager__convert_string_to_timedelta(td_str = td_str)
 
         # Assert
         self.assertEqual(expected_td, actual_td)
-class GetYearlyTargetTestCase(unittest.TestCase):
-
     def test_getyearlytarget_shouldreturnexpectedhours_whenyearinlist(self):
 
         # Arrange
@@ -469,7 +427,7 @@ class GetYearlyTargetTestCase(unittest.TestCase):
         expected_hours : timedelta = timedelta(hours = 250)
 
         # Act
-        actual_hours : timedelta = nwttm.__get_yearly_target(yearly_targets = yearly_targets, year = year).hours
+        actual_hours : timedelta = TimeTrackingManager()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year).hours
 
         # Assert
         self.assertEqual(expected_hours, actual_hours)
@@ -480,12 +438,10 @@ class GetYearlyTargetTestCase(unittest.TestCase):
         year : int = 2010
 
         # Act
-        yearly_target : YearlyTarget = nwttm.__get_yearly_target(yearly_targets = yearly_targets, year = year)
+        yearly_target : YearlyTarget = TimeTrackingManager()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year)
 
         # Assert
         self.assertIsNone(yearly_target)
-class IsYearlyTargetMetTestCase(unittest.TestCase):
-
     def test_isyearlytargetmet_shouldreturntrue_whenyearlytargetismet(self):
 
         # Arrange
@@ -493,7 +449,7 @@ class IsYearlyTargetMetTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = nwttm.__is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        actual : bool = TimeTrackingManager()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target)
         
         # Assert
         self.assertTrue(actual)
@@ -504,12 +460,10 @@ class IsYearlyTargetMetTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = nwttm.__is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        actual : bool = TimeTrackingManager()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target)
 
         # Assert
-        self.assertFalse(actual)        
-class FormatTimedeltaTestCase(unittest.TestCase):
-
+        self.assertFalse(actual)
     def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
 
         # Arrange
@@ -517,7 +471,7 @@ class FormatTimedeltaTestCase(unittest.TestCase):
         expected : str = "255h 30m"
 
         # Act
-        actual : str = nwttm.__format_timedelta(td = td, add_plus_sign = False)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = False)
         
         # Assert
         self.assertEqual(expected, actual)
@@ -528,42 +482,10 @@ class FormatTimedeltaTestCase(unittest.TestCase):
         expected : str = "+255h 30m"
 
         # Act
-        actual : str = nwttm.__format_timedelta(td = td, add_plus_sign = True)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = True)
         
         # Assert
         self.assertEqual(expected, actual)
-class GetTTByYearTestCase(unittest.TestCase):
-
-    def test_getttbyyear_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
-        sessions_df : DataFrame = ObjectMother().create_sessions_df()
-        expected_df : DataFrame = ObjectMother().create_tt_by_year_df()
-
-        # Act
-        actual_df : DataFrame  = nwttm.get_tt_by_year(sessions_df = sessions_df, years = years, yearly_targets = yearly_targets)
-
-        # Assert
-        assert_frame_equal(expected_df , actual_df)
-class GetTTByYearMonthTestCase(unittest.TestCase):
-
-    def test_getttbyyearmonth_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
-        sessions_df : DataFrame = ObjectMother().create_sessions_df()
-        expected_df : DataFrame = ObjectMother().create_tt_by_year_month_df()
-
-        # Act
-        actual_df : DataFrame  = nwttm.get_tt_by_year_month(sessions_df = sessions_df, years = years, yearly_targets = yearly_targets)
-
-        # Assert
-        assert_frame_equal(expected_df , actual_df)
-class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
-
     def test_extractsoftwareprojectname_shouldreturnexpectedstring_whenproperstring(self):
 
         # Arrange
@@ -571,7 +493,7 @@ class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
         expected : str = "NW.AutoProffLibrary"
 
         # Act
-        actual : str = nwttm.__extract_software_project_name(descriptor = descriptor)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -582,12 +504,10 @@ class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
         expected : str = "ERROR"
 
         # Act
-        actual : str = nwttm.__extract_software_project_name(descriptor = descriptor)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor)
 
         # Assert
-        self.assertEqual(expected, actual)        
-class ExtractSoftwareProjectVersionTestCase(unittest.TestCase):
-
+        self.assertEqual(expected, actual)   
     def test_extractsoftwareprojectversion_shouldreturnexpectedstring_whenproperstring(self):
 
         # Arrange
@@ -595,7 +515,7 @@ class ExtractSoftwareProjectVersionTestCase(unittest.TestCase):
         expected : str = "1.0.0"
 
         # Act
-        actual : str = nwttm.__extract_software_project_version(descriptor = descriptor)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -606,12 +526,10 @@ class ExtractSoftwareProjectVersionTestCase(unittest.TestCase):
         expected : str = "ERROR"
 
         # Act
-        actual : str = nwttm.__extract_software_project_version(descriptor = descriptor)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor)
 
         # Assert
-        self.assertEqual(expected, actual)        
-class CalculatePercentageTestCase(unittest.TestCase):
-
+        self.assertEqual(expected, actual)  
     def test_calculatepercentage_shouldreturnexpectedfloat_when0and16(self):
 
         # Arrange
@@ -621,7 +539,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 0.00
         
         # Act
-        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -634,7 +552,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 0.00
         
         # Act
-        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -647,7 +565,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 25.00
         
         # Act
-        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -660,7 +578,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 100.00
         
         # Act
-        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -673,247 +591,10 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 33.3333
         
         # Act
-        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)
-class GetTTByYearMonthSpnvTestCase(unittest.TestCase):
-
-    def test_getttbyyearmonthspnv_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        sessions_df : DataFrame = ObjectMother().create_sessions_df()
-        expected_df : DataFrame = ObjectMother().create_tt_by_year_month_spnv_df()
-
-        # Act
-        actual_df : DataFrame  = nwttm.get_tt_by_year_month_spnv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-
-        # Assert
-        assert_frame_equal(expected_df , actual_df)
-class GetTTByYearSpnvTestCase(unittest.TestCase):
-
-    def test_getttbyyearspnv_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        sessions_df : DataFrame = ObjectMother().create_sessions_df()
-        expected_df : DataFrame = ObjectMother().create_tt_by_year_spnv_df()
-
-        # Act
-        actual_df : DataFrame  = nwttm.get_tt_by_year_spnv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-
-        # Assert
-        assert_frame_equal(expected_df , actual_df)
-class GetTTBySpnTestCase(unittest.TestCase):
-
-    @parameterized.expand([
-        [True],
-        [False]
-    ])
-    def test_getttbyspn_shouldreturnexpecteddataframe_wheninvoked(self, remove_untagged : bool):
-
-        # Arrange
-        years : list[int] = [2024]
-        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        sessions_df : DataFrame = ObjectMother().create_sessions_df()
-        expected_df : DataFrame = ObjectMother().create_tt_by_spn_df()
-
-        # Act
-        actual_df : DataFrame  = nwttm.get_tt_by_spn(sessions_df = sessions_df, years = years, software_project_names = software_project_names, remove_untagged = remove_untagged)
-
-        # Assert
-        assert_frame_equal(expected_df , actual_df)  
-class GetTTBySpnSpvTestCase(unittest.TestCase):
-
-    def test_getttbyspnspv_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        sessions_df : DataFrame = ObjectMother().create_sessions_df()
-        expected_df : DataFrame = ObjectMother().create_tt_by_spn_spv_df()
-
-        # Act
-        actual_df : DataFrame  = nwttm.get_tt_by_spn_spv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-
-        # Assert
-        assert_frame_equal(expected_df , actual_df)  
-class GetTTSByMonthTestCase(unittest.TestCase):
-
-    def test_getttsbymonth_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        sessions_df : DataFrame = ObjectMother().create_sessions_df()
-        expected_df : DataFrame = ObjectMother().create_tts_by_month_df()
-
-        # Act
-        actual_df : DataFrame  = nwttm.get_tts_by_month(sessions_df = sessions_df, years = years)
-
-        # Assert
-        assert_frame_equal(expected_df, actual_df)
-class UpdateFutureMonthsToEmptyTestCase(unittest.TestCase):
-
-    def test_updatefuturemonthstoempty_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        now : datetime = datetime(2024, 2, 27)
-        tts_by_month_df : DataFrame = ObjectMother().create_tts_by_month_df()
-        expected_df : DataFrame = ObjectMother().create_tts_by_month_upd_df()
-
-        # Act
-        actual_df : DataFrame  = nwttm.update_future_months_to_empty(tts_by_month_df = tts_by_month_df, now = now)
-
-        # Assert
-        assert_frame_equal(expected_df, actual_df)
-class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
-
-    @parameterized.expand([
-        [1, "5h 30m", timedelta(hours = 5, minutes = 30)],
-        [2, "2h 00m", timedelta(hours = 2, minutes = 00)]
-    ])
-    def test_createeffortstatusfornonevalues_shouldreturnexpectedobject_wheninvoked(
-        self, 
-        idx : int, 
-        effort_str : str, 
-        actual_td : timedelta):
-
-        # Arrange
-        expected : EffortStatus = EffortStatus(
-            idx = idx,
-            start_time_str = None,
-            start_time_dt = None,
-            end_time_str = None,
-            end_time_dt = None,
-            actual_str = effort_str,
-            actual_td = actual_td,
-            expected_td = None,
-            expected_str = None,
-            is_correct = True,
-            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
-            ) 
-
-        # Act
-        actual : EffortStatus = nwttm.__create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
-
-        # Assert
-        comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
-        self.assertTrue(comparison)
-class CreateTimObjectTestCase(unittest.TestCase):
-
-    @parameterized.expand([
-        "07:00", "07:15", "07:30", "07:45", 
-        "08:00", "08:15", "08:30", "08:45",
-        "09:00", "09:15", "09:30", "09:45",
-        "10:00", "10:15", "10:30", "10:45",
-        "11:00", "11:15", "11:30", "11:45",
-        "12:00", "12:15", "12:30", "12:45",
-        "13:00", "13:15", "13:30", "13:45",
-        "14:00", "14:15", "14:30", "14:45",
-        "15:00", "15:15", "15:30", "15:45",
-        "16:00", "16:15", "16:30", "16:45",
-        "17:00", "17:15", "17:30", "17:45",
-        "18:00", "18:15", "18:30", "18:45",
-        "19:00", "19:15", "19:30", "19:45",
-        "20:00", "20:15", "20:30", "20:45",
-        "21:00", "21:15", "21:30", "21:45",
-        "22:00", "22:15", "22:30", "22:45",
-        "23:00", "23:15", "23:30", "23:45"
-    ])
-    def test_createtimeobject_shouldreturnexpecteddatatime_whenday1time(self, time : str):
-
-        # Arrange
-        strp_format : str = "%Y-%m-%d %H:%M"
-        dt_str = f"1900-01-01 {time}"
-        expected : datetime = datetime.strptime(dt_str, strp_format)
-
-        # Act
-        actual : datetime = nwttm.__create_time_object(time = time)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        "00:00", "00:15", "00:30", "00:45", 
-        "01:00", "01:15", "01:30", "01:45",
-        "02:00", "02:15", "02:30", "02:45",
-        "03:00", "03:15", "03:30", "03:45",
-        "04:00", "04:15", "04:30", "04:45",
-        "05:00", "05:15", "05:30", "05:45",
-        "06:00", "06:15", "06:30", "06:45"
-    ])
-    def test_createtimeobject_shouldreturnexpecteddatatime_whenday2time(self, time : str):
-
-        # Arrange
-        strp_format : str = "%Y-%m-%d %H:%M"
-        dt_str = f"1900-01-02 {time}"
-        expected : datetime = datetime.strptime(dt_str, strp_format)
-
-        # Act
-        actual : datetime = nwttm.__create_time_object(time = time)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        "07:04",
-        "00:01",
-        "gibberish text"
-    ])
-    def test_createtimeobject_shouldraisevalueerrorexception_whennotamongtimevalues(self, time : str):
-
-        # Arrange
-        expected_message : str = MessageCollection.effort_status_not_among_expected_time_values(time = time)
-        
-        # Act
-        with self.assertRaises(ValueError) as context:
-            actual : datetime = nwttm.__create_time_object(time = time)
-
-        # Assert
-        self.assertTrue(expected_message in str(context.exception))
-class CreateEffortStatusTestCase(unittest.TestCase):
-
-    @parameterized.expand([
-        [1, "07:00", "", "5h 30m"],
-        [1, "", "07:00", "5h 30m"]
-    ])
-    def test_createeffortstatus_shouldreturnexpectobject_whenstarttimeorendtimeareempty(
-            self,
-            idx : int, 
-            start_time_str : str, 
-            end_time_str : str, 
-            effort_str : str):
-
-        # Arrange
-        actual_td : timedelta = nwttm.__convert_string_to_timedelta(td_str = effort_str)        
-        expected : EffortStatus = EffortStatus(
-            idx = idx,
-            start_time_str = None,
-            start_time_dt = None,
-            end_time_str = None,
-            end_time_dt = None,
-            actual_str = effort_str,
-            actual_td = actual_td,
-            expected_td = None,
-            expected_str = None,
-            is_correct = True,
-            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
-            ) 
-                
-        # Act
-        actual : EffortStatus = nwttm.__create_effort_status(
-            idx = idx, 
-            start_time_str = start_time_str,
-            end_time_str = end_time_str,
-            effort_str = effort_str)
-
-        # Assert
-        comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
-        self.assertTrue(comparison)    
-
     def test_createeffortstatus_shouldreturnexpectobject_wheneffortiscorrect(self):
 
         # Arrange
@@ -947,7 +628,7 @@ class CreateEffortStatusTestCase(unittest.TestCase):
             )
 
         # Act
-        actual : EffortStatus = nwttm.__create_effort_status(
+        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(
             idx = idx, 
             start_time_str = start_time_str,
             end_time_str = end_time_str,
@@ -996,7 +677,7 @@ class CreateEffortStatusTestCase(unittest.TestCase):
             )
 
         # Act
-        actual : EffortStatus = nwttm.__create_effort_status(
+        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(
             idx = idx, 
             start_time_str = start_time_str,
             end_time_str = end_time_str,
@@ -1006,6 +687,142 @@ class CreateEffortStatusTestCase(unittest.TestCase):
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
         self.assertTrue(comparison) 
 
+    @parameterized.expand([
+        [1, "5h 30m", timedelta(hours = 5, minutes = 30)],
+        [2, "2h 00m", timedelta(hours = 2, minutes = 00)]
+    ])
+    def test_createeffortstatusfornonevalues_shouldreturnexpectedobject_wheninvoked(
+        self, 
+        idx : int, 
+        effort_str : str, 
+        actual_td : timedelta):
+
+        # Arrange
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = None,
+            start_time_dt = None,
+            end_time_str = None,
+            end_time_dt = None,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = None,
+            expected_str = None,
+            is_correct = True,
+            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+            ) 
+
+        # Act
+        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
+
+        # Assert
+        comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison)
+    @parameterized.expand([
+        "07:00", "07:15", "07:30", "07:45", 
+        "08:00", "08:15", "08:30", "08:45",
+        "09:00", "09:15", "09:30", "09:45",
+        "10:00", "10:15", "10:30", "10:45",
+        "11:00", "11:15", "11:30", "11:45",
+        "12:00", "12:15", "12:30", "12:45",
+        "13:00", "13:15", "13:30", "13:45",
+        "14:00", "14:15", "14:30", "14:45",
+        "15:00", "15:15", "15:30", "15:45",
+        "16:00", "16:15", "16:30", "16:45",
+        "17:00", "17:15", "17:30", "17:45",
+        "18:00", "18:15", "18:30", "18:45",
+        "19:00", "19:15", "19:30", "19:45",
+        "20:00", "20:15", "20:30", "20:45",
+        "21:00", "21:15", "21:30", "21:45",
+        "22:00", "22:15", "22:30", "22:45",
+        "23:00", "23:15", "23:30", "23:45"
+    ])
+    def test_createtimeobject_shouldreturnexpecteddatatime_whenday1time(self, time : str):
+
+        # Arrange
+        strp_format : str = "%Y-%m-%d %H:%M"
+        dt_str = f"1900-01-01 {time}"
+        expected : datetime = datetime.strptime(dt_str, strp_format)
+
+        # Act
+        actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    @parameterized.expand([
+        "00:00", "00:15", "00:30", "00:45", 
+        "01:00", "01:15", "01:30", "01:45",
+        "02:00", "02:15", "02:30", "02:45",
+        "03:00", "03:15", "03:30", "03:45",
+        "04:00", "04:15", "04:30", "04:45",
+        "05:00", "05:15", "05:30", "05:45",
+        "06:00", "06:15", "06:30", "06:45"
+    ])
+    def test_createtimeobject_shouldreturnexpecteddatatime_whenday2time(self, time : str):
+
+        # Arrange
+        strp_format : str = "%Y-%m-%d %H:%M"
+        dt_str = f"1900-01-02 {time}"
+        expected : datetime = datetime.strptime(dt_str, strp_format)
+
+        # Act
+        actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    @parameterized.expand([
+        "07:04",
+        "00:01",
+        "gibberish text"
+    ])
+    def test_createtimeobject_shouldraisevalueerrorexception_whennotamongtimevalues(self, time : str):
+
+        # Arrange
+        expected_message : str = MessageCollection.effort_status_not_among_expected_time_values(time = time)
+        
+        # Act
+        with self.assertRaises(ValueError) as context:
+            actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time)
+
+        # Assert
+        self.assertTrue(expected_message in str(context.exception))
+    @parameterized.expand([
+        [1, "07:00", "", "5h 30m"],
+        [1, "", "07:00", "5h 30m"]
+    ])
+    def test_createeffortstatus_shouldreturnexpectobject_whenstarttimeorendtimeareempty(
+            self,
+            idx : int, 
+            start_time_str : str, 
+            end_time_str : str, 
+            effort_str : str):
+
+        # Arrange
+        actual_td : timedelta = TimeTrackingManager()._TimeTrackingManager__convert_string_to_timedelta(td_str = effort_str)        
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = None,
+            start_time_dt = None,
+            end_time_str = None,
+            end_time_dt = None,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = None,
+            expected_str = None,
+            is_correct = True,
+            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+            ) 
+                
+        # Act
+        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(
+            idx = idx, 
+            start_time_str = start_time_str,
+            end_time_str = end_time_str,
+            effort_str = effort_str)
+
+        # Assert
+        comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison)
     @parameterized.expand([
         ["Some Gibberish", "08:00", "01h 00m"],
         ["07:00", "Some Gibberish", "01h 00m"],
@@ -1024,16 +841,14 @@ class CreateEffortStatusTestCase(unittest.TestCase):
         
         # Act
         with self.assertRaises(ValueError) as context:
-            actual : EffortStatus = nwttm.__create_effort_status(
+            actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(
                 idx = idx, 
                 start_time_str = start_time_str,
                 end_time_str = end_time_str,
                 effort_str = effort_str)
 
         # Assert
-        self.assertTrue(expected_message in str(context.exception))  
-class CreateTimeRangeIdTestCase(unittest.TestCase):
-
+        self.assertTrue(expected_message in str(context.exception)) 
     @parameterized.expand([
         ["07:00", "08:00", "UNKNOWN", "07:00-08:00"],
         ["", "08:00", "UNKNOWN", "UNKNOWN"],
@@ -1048,7 +863,7 @@ class CreateTimeRangeIdTestCase(unittest.TestCase):
 
         # Arrange
         # Act
-        actual : str = nwttm.__create_time_range_id(
+        actual : str = TimeTrackingManager()._TimeTrackingManager__create_time_range_id(
             start_time=start_time, 
             end_time=end_time,
             unknown_id=unknown_id
@@ -1056,8 +871,128 @@ class CreateTimeRangeIdTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-class CreateTimeRangesTestCase(unittest.TestCase):
 
+    def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
+        
+        '''"C:/project_dir/src/" => "C:/project_dir/data/Time Tracking.xlsx"'''
+
+        # Arrange
+        expected : str = "C:/project_dir/data/Time Tracking.xlsx"
+
+        # Act
+        with patch.object(os, 'getcwd', return_value="C:/project_dir/src/") as mocked_context:
+            actual : str = TimeTrackingManager().get_default_time_tracking_path()
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_getsessionsdataset_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        excel_data_df : DataFrame = ObjectMother().create_excel_data()
+        setting_bag : SettingBag = ObjectMother().create_setting_bag()
+        expected_column_names : list[str] = ObjectMother().create_sessions_df_column_names()
+        expected_dtype_names : list[str] = ObjectMother().create_sessions_df_dtype_names()
+        expected_nan : str = ""
+
+        # Act
+        with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
+            actual : str = TimeTrackingManager().get_sessions_dataset(setting_bag = setting_bag)
+
+        # Assert
+        self.assertEqual(expected_column_names, actual.columns.tolist())
+        self.assertEqual(expected_dtype_names, SupportMethodProvider().get_dtype_names(df = actual))
+        self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
+        self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
+        self.assertEqual(expected_nan, actual[expected_column_names[5]][0])
+    def test_getttbyyear_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_year_df()
+
+        # Act
+        actual_df : DataFrame  = TimeTrackingManager().get_tt_by_year(sessions_df = sessions_df, years = years, yearly_targets = yearly_targets)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
+    def test_getttbyyearmonth_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_year_month_df()
+
+        # Act
+        actual_df : DataFrame  = TimeTrackingManager().get_tt_by_year_month(sessions_df = sessions_df, years = years, yearly_targets = yearly_targets)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
+    def test_getttbyyearmonthspnv_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_year_month_spnv_df()
+
+        # Act
+        actual_df : DataFrame  = TimeTrackingManager().get_tt_by_year_month_spnv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
+    def test_getttbyyearspnv_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_year_spnv_df()
+
+        # Act
+        actual_df : DataFrame  = TimeTrackingManager().get_tt_by_year_spnv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)      
+    def test_getttbyspnspv_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_spn_spv_df()
+
+        # Act
+        actual_df : DataFrame  = TimeTrackingManager().get_tt_by_spn_spv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df) 
+    def test_getttsbymonth_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tts_by_month_df()
+
+        # Act
+        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_month(sessions_df = sessions_df, years = years)
+
+        # Assert
+        assert_frame_equal(expected_df, actual_df)
+    def test_updatefuturemonthstoempty_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        now : datetime = datetime(2024, 2, 27)
+        tts_by_month_df : DataFrame = ObjectMother().create_tts_by_month_df()
+        expected_df : DataFrame = ObjectMother().create_tts_by_month_upd_df()
+
+        # Act
+        actual_df : DataFrame  = TimeTrackingManager().update_future_months_to_empty(tts_by_month_df = tts_by_month_df, now = now)
+
+        # Assert
+        assert_frame_equal(expected_df, actual_df)
     def test_createtimeranges_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1066,12 +1001,10 @@ class CreateTimeRangesTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_time_ranges_df()
 
         # Act
-        actual_df : DataFrame  = nwttm.create_time_ranges_df(sessions_df = sessions_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TimeTrackingManager().create_time_ranges_df(sessions_df = sessions_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
-class RemoveUnknownIdTestCase(unittest.TestCase):
-
     def test_removeunknownid_shouldreturnexpecteddataframe_whencontainsunknownid(self):
 
         # Arrange
@@ -1081,7 +1014,7 @@ class RemoveUnknownIdTestCase(unittest.TestCase):
         time_ranges_df.loc[len(time_ranges_df.index)] = [unknown_id, 3]
 
         # Act
-        actual_df : DataFrame  = nwttm.remove_unknown_id(time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TimeTrackingManager().remove_unknown_id(time_ranges_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
@@ -1093,12 +1026,10 @@ class RemoveUnknownIdTestCase(unittest.TestCase):
         time_ranges_df : DataFrame = ObjectMother().create_time_ranges_df()
 
         # Act
-        actual_df : DataFrame  = nwttm.remove_unknown_id(time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TimeTrackingManager().remove_unknown_id(time_ranges_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
-class GetTTByYearHashtagTestCase(unittest.TestCase):
-
     def test_getttbyyearhashtag_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1107,12 +1038,10 @@ class GetTTByYearHashtagTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_hashtag_df()
 
         # Act
-        actual_df : DataFrame  = nwttm.get_tt_by_year_hashtag(sessions_df = sessions_df, years = years)
+        actual_df : DataFrame  = TimeTrackingManager().get_tt_by_year_hashtag(sessions_df = sessions_df, years = years)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
-class GetTTByHashtagTestCase(unittest.TestCase):
-
     def test_getttbyhashtag_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1120,10 +1049,28 @@ class GetTTByHashtagTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_hashtag_df()
 
         # Act
-        actual_df : DataFrame  = nwttm.get_tt_by_hashtag(sessions_df = sessions_df)
+        actual_df : DataFrame  = TimeTrackingManager().get_tt_by_hashtag(sessions_df = sessions_df)
 
         # Assert
-        assert_frame_equal(expected_df , actual_df)  
+        assert_frame_equal(expected_df , actual_df)
+
+    @parameterized.expand([
+        [True],
+        [False]
+    ])
+    def test_getttbyspn_shouldreturnexpecteddataframe_wheninvoked(self, remove_untagged : bool):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_spn_df()
+
+        # Act
+        actual_df : DataFrame  = TimeTrackingManager().get_tt_by_spn(sessions_df = sessions_df, years = years, software_project_names = software_project_names, remove_untagged = remove_untagged)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df) 
 
 # MAIN
 if __name__ == "__main__":
