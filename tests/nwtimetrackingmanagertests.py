@@ -455,7 +455,7 @@ class ConvertStringToTimedeltaTestCase(unittest.TestCase):
         expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
 
         # Act
-        actual_td : str = nwttm.convert_string_to_timedelta(td_str = td_str)
+        actual_td : str = nwttm.__convert_string_to_timedelta(td_str = td_str)
 
         # Assert
         self.assertEqual(expected_td, actual_td)
@@ -469,7 +469,7 @@ class GetYearlyTargetTestCase(unittest.TestCase):
         expected_hours : timedelta = timedelta(hours = 250)
 
         # Act
-        actual_hours : timedelta = nwttm.get_yearly_target(yearly_targets = yearly_targets, year = year).hours
+        actual_hours : timedelta = nwttm.__get_yearly_target(yearly_targets = yearly_targets, year = year).hours
 
         # Assert
         self.assertEqual(expected_hours, actual_hours)
@@ -480,7 +480,7 @@ class GetYearlyTargetTestCase(unittest.TestCase):
         year : int = 2010
 
         # Act
-        yearly_target : YearlyTarget = nwttm.get_yearly_target(yearly_targets = yearly_targets, year = year)
+        yearly_target : YearlyTarget = nwttm.__get_yearly_target(yearly_targets = yearly_targets, year = year)
 
         # Assert
         self.assertIsNone(yearly_target)
@@ -493,7 +493,7 @@ class IsYearlyTargetMetTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = nwttm.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        actual : bool = nwttm.__is_yearly_target_met(effort = effort, yearly_target = yearly_target)
         
         # Assert
         self.assertTrue(actual)
@@ -504,7 +504,7 @@ class IsYearlyTargetMetTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = nwttm.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        actual : bool = nwttm.__is_yearly_target_met(effort = effort, yearly_target = yearly_target)
 
         # Assert
         self.assertFalse(actual)        
@@ -517,7 +517,7 @@ class FormatTimedeltaTestCase(unittest.TestCase):
         expected : str = "255h 30m"
 
         # Act
-        actual : str = nwttm.format_timedelta(td = td, add_plus_sign = False)
+        actual : str = nwttm.__format_timedelta(td = td, add_plus_sign = False)
         
         # Assert
         self.assertEqual(expected, actual)
@@ -528,7 +528,7 @@ class FormatTimedeltaTestCase(unittest.TestCase):
         expected : str = "+255h 30m"
 
         # Act
-        actual : str = nwttm.format_timedelta(td = td, add_plus_sign = True)
+        actual : str = nwttm.__format_timedelta(td = td, add_plus_sign = True)
         
         # Assert
         self.assertEqual(expected, actual)
@@ -571,7 +571,7 @@ class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
         expected : str = "NW.AutoProffLibrary"
 
         # Act
-        actual : str = nwttm.extract_software_project_name(descriptor = descriptor)
+        actual : str = nwttm.__extract_software_project_name(descriptor = descriptor)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -582,7 +582,7 @@ class ExtractSoftwareProjectNameTestCase(unittest.TestCase):
         expected : str = "ERROR"
 
         # Act
-        actual : str = nwttm.extract_software_project_name(descriptor = descriptor)
+        actual : str = nwttm.__extract_software_project_name(descriptor = descriptor)
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -595,7 +595,7 @@ class ExtractSoftwareProjectVersionTestCase(unittest.TestCase):
         expected : str = "1.0.0"
 
         # Act
-        actual : str = nwttm.extract_software_project_version(descriptor = descriptor)
+        actual : str = nwttm.__extract_software_project_version(descriptor = descriptor)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -606,7 +606,7 @@ class ExtractSoftwareProjectVersionTestCase(unittest.TestCase):
         expected : str = "ERROR"
 
         # Act
-        actual : str = nwttm.extract_software_project_version(descriptor = descriptor)
+        actual : str = nwttm.__extract_software_project_version(descriptor = descriptor)
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -621,7 +621,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 0.00
         
         # Act
-        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -634,7 +634,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 0.00
         
         # Act
-        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -647,7 +647,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 25.00
         
         # Act
-        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -660,7 +660,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 100.00
         
         # Act
-        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -673,7 +673,7 @@ class CalculatePercentageTestCase(unittest.TestCase):
         expected : float = 33.3333
         
         # Act
-        actual : float = nwttm.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = nwttm.__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -797,7 +797,7 @@ class CreateEffortStatusForNoneValuesTestCase(unittest.TestCase):
             ) 
 
         # Act
-        actual : EffortStatus = nwttm.create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
+        actual : EffortStatus = nwttm.__create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
 
         # Assert
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
@@ -831,7 +831,7 @@ class CreateTimObjectTestCase(unittest.TestCase):
         expected : datetime = datetime.strptime(dt_str, strp_format)
 
         # Act
-        actual : datetime = nwttm.create_time_object(time = time)
+        actual : datetime = nwttm.__create_time_object(time = time)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -853,7 +853,7 @@ class CreateTimObjectTestCase(unittest.TestCase):
         expected : datetime = datetime.strptime(dt_str, strp_format)
 
         # Act
-        actual : datetime = nwttm.create_time_object(time = time)
+        actual : datetime = nwttm.__create_time_object(time = time)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -870,7 +870,7 @@ class CreateTimObjectTestCase(unittest.TestCase):
         
         # Act
         with self.assertRaises(ValueError) as context:
-            actual : datetime = nwttm.create_time_object(time = time)
+            actual : datetime = nwttm.__create_time_object(time = time)
 
         # Assert
         self.assertTrue(expected_message in str(context.exception))
@@ -888,7 +888,7 @@ class CreateEffortStatusTestCase(unittest.TestCase):
             effort_str : str):
 
         # Arrange
-        actual_td : timedelta = nwttm.convert_string_to_timedelta(td_str = effort_str)        
+        actual_td : timedelta = nwttm.__convert_string_to_timedelta(td_str = effort_str)        
         expected : EffortStatus = EffortStatus(
             idx = idx,
             start_time_str = None,
@@ -904,7 +904,7 @@ class CreateEffortStatusTestCase(unittest.TestCase):
             ) 
                 
         # Act
-        actual : EffortStatus = nwttm.create_effort_status(
+        actual : EffortStatus = nwttm.__create_effort_status(
             idx = idx, 
             start_time_str = start_time_str,
             end_time_str = end_time_str,
@@ -947,7 +947,7 @@ class CreateEffortStatusTestCase(unittest.TestCase):
             )
 
         # Act
-        actual : EffortStatus = nwttm.create_effort_status(
+        actual : EffortStatus = nwttm.__create_effort_status(
             idx = idx, 
             start_time_str = start_time_str,
             end_time_str = end_time_str,
@@ -996,7 +996,7 @@ class CreateEffortStatusTestCase(unittest.TestCase):
             )
 
         # Act
-        actual : EffortStatus = nwttm.create_effort_status(
+        actual : EffortStatus = nwttm.__create_effort_status(
             idx = idx, 
             start_time_str = start_time_str,
             end_time_str = end_time_str,
@@ -1024,7 +1024,7 @@ class CreateEffortStatusTestCase(unittest.TestCase):
         
         # Act
         with self.assertRaises(ValueError) as context:
-            actual : EffortStatus = nwttm.create_effort_status(
+            actual : EffortStatus = nwttm.__create_effort_status(
                 idx = idx, 
                 start_time_str = start_time_str,
                 end_time_str = end_time_str,
@@ -1048,7 +1048,7 @@ class CreateTimeRangeIdTestCase(unittest.TestCase):
 
         # Arrange
         # Act
-        actual : str = nwttm.create_time_range_id(
+        actual : str = nwttm.__create_time_range_id(
             start_time=start_time, 
             end_time=end_time,
             unknown_id=unknown_id
