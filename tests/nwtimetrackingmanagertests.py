@@ -14,7 +14,8 @@ from unittest.mock import patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetrackingmanager import YearlyTarget, SettingBag, EffortStatus, MessageCollection, TimeTrackingManager
+from nwtimetrackingmanager import YearlyTarget, SettingBag, EffortStatus, MessageCollection
+from nwtimetrackingmanager import TimeTrackingManager, YearProvider
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -54,6 +55,37 @@ class SupportMethodProvider():
                  ef1.is_correct == ef2.is_correct and
                  ef1.message == ef2.message
             )
+
+    @staticmethod
+    def are_yearly_targets_equal(yt1 : YearlyTarget, yt2 : YearlyTarget) -> bool:
+
+        '''
+            Returns True if all the fields of the two objects contain the same values.
+        '''
+
+        return (yt1.hours == yt2.hours and yt1.year == yt2.year)
+    
+    @staticmethod
+    def are_lists_of_yearly_targets_equal(list1 : list[YearlyTarget], list2 : list[YearlyTarget]) -> bool:
+
+        '''
+            Returns True if all the fields of the two objects contain the same values.
+        '''
+
+        if (list1 == None and list2 == None):
+            return True
+
+        if (list1 == None or list2 == None):
+            return False
+
+        if (len(list1) != len(list2)):
+            return False
+
+        for i in range(len(list1)):
+            if (SupportMethodProvider.are_yearly_targets_equal(yt1 = list1[i], yt2 = list2[i]) == False):
+                return False
+
+        return True
 class ObjectMother():
 
     '''Collects all the DTOs required by the unit tests.'''
@@ -1071,6 +1103,39 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 
+class YearProviderTestCase(unittest.TestCase):
+
+    def test_getallyears_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+
+        # Act
+        actual : list[int] = YearProvider().get_all_years()
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_getallyearlytargets_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[YearlyTarget] = [
+            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
+            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
+            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
+            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
+        ]
+
+        # Act
+        actual : list[YearlyTarget] = YearProvider().get_all_yearly_targets()
+
+        # Assert
+        self.assertTrue(SupportMethodProvider.are_lists_of_yearly_targets_equal(list1 = expected, list2 = actual))
 
 # MAIN
 if __name__ == "__main__":
