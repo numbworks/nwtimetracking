@@ -8,6 +8,7 @@ Contact: numbworks@gmail.com
 | 2023-08-21 | numbworks | Created. |
 | 2024-01-16 | numbworks | Updated to v1.3.0. |
 | 2024-01-21 | numbworks | Updated to v2.0.0. |
+| 2024-03-19 | numbworks | Updated to v3.0.0. |
 
 ## Introduction
 
@@ -37,7 +38,7 @@ If, for some reason the `Setup` block doesn't work, you can open a terminal and 
 To run the unit tests, open a terminal and run the following commands:
 
 - `cd <base_folder>\nwtimetrackingmanager\tests`
-- `coverage run nwcorecomponentstests.py`
+- `coverage run nwsharedtests.py`
 - `coverage run -a nwtimetrackingmanagertests.py`
 - `coverage report`
 
