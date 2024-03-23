@@ -3,12 +3,13 @@ A collection of shared components.
 
 Alias: nwsh
 '''
-# Constants
+
+# INFORMATION
 MODULE_ALIAS : str = "nwsh"
 MODULE_NAME : str = "nwshared"
-MODULE_VERSION : str = "1.0.0"
+MODULE_VERSION : str = "1.1.0"
 
-# Global Modules
+# GLOBAL MODULES
 import base64
 import os
 import re
@@ -24,7 +25,8 @@ from pandas import DataFrame, Series
 from typing import Callable, Tuple
 from typing import Any
 
-# Static Classes
+# CONSTANTS
+# STATIC CLASSES
 class MessageCollection():
 
     '''Collects all the messages used for logging and for the exceptions.'''
@@ -47,7 +49,7 @@ class MessageCollection():
         required_str : str = MessageCollection.__format_version(version = required)
         return f"Warning! The installed Python is not matching the expected one (installed: '{installed_str}', expected: '{required_str}')."
 
-# Classes
+# CLASSES
 class OutlierManager():
     
     '''Collects all the logic related to the outlier management.'''
@@ -426,6 +428,25 @@ class Formatter():
         formatted : str = f"${rounded:.2f}"
 
         return formatted
+    def format_rating(self, rating : int) -> str:
+
+        '''"★★★★★", "★★★★☆", ...'''
+
+        black_star : str = "★"
+        white_star : str = "☆"
+
+        if rating == 1:
+            return f"{black_star}{white_star*4}"
+        elif rating == 2:
+            return f"{black_star*2}{white_star*3}"
+        elif rating == 3:
+            return f"{black_star*3}{white_star*2}"
+        elif rating == 4:
+            return f"{black_star*4}{white_star*1}"
+        elif rating == 5:
+            return f"{black_star*5}"            
+        else:
+            return str(rating)
 class Converter():
 
     '''Collects all the logic related to converting tasks.'''
@@ -464,7 +485,16 @@ class Converter():
         A4_sheets += 1
 
         return A4_sheets
+class LambdaProvider():
 
-# Main
+    '''Provides useful lambda functions.'''
+
+    def get_default_logging_lambda(self) -> Callable[[str], None]:
+
+        '''An adapter around print().'''
+
+        return lambda msg : print(msg)
+
+# MAIN
 if __name__ == "__main__":
     pass

@@ -29,7 +29,7 @@ In order to run this Jupyter Notebook:
 4. Open a terminal and run the following commands:
     - ```python.exe -m pip install --upgrade pip```
 5. Launch Visual Studio Code and open `src/nwtimetrackingmanager.ipynb`;
-6. Edit the `SettingCollection` object according to your needs;
+6. Edit the `SettingBag` object according to your needs;
 7. Click on `Run All`;
 8. Done!
 
@@ -38,7 +38,7 @@ If, for some reason the `Setup` block doesn't work, you can open a terminal and 
 To run the unit tests, open a terminal and run the following commands:
 
 - `cd <base_folder>\nwtimetrackingmanager\tests`
-- `coverage run nwsharedtests.py`
+- `coverage run -m unittest nwsharedtests.py`
 - `coverage run -a nwtimetrackingmanagertests.py`
 - `coverage report`
 

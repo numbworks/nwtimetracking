@@ -15,7 +15,7 @@ from unittest.mock import patch
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetrackingmanager import YearlyTarget, SettingBag, EffortStatus, MessageCollection
-from nwtimetrackingmanager import TimeTrackingManager, YearProvider
+from nwtimetrackingmanager import DefaultPathProvider, YearProvider, TimeTrackingManager
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -438,6 +438,54 @@ class ObjectMother():
             }, index=pd.RangeIndex(start=0, stop=21, step=1))
 
 # TEST CLASSES
+class DefaultPathProviderTestCase(unittest.TestCase):
+
+    def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
+        
+        '''"C:/project_dir/src/" => "C:/project_dir/data/Time Tracking.xlsx"'''
+
+        # Arrange
+        expected : str = "C:/project_dir/data/Time Tracking.xlsx"
+
+        # Act
+        with patch.object(os, 'getcwd', return_value="C:/project_dir/src/") as mocked_context:
+            actual : str = DefaultPathProvider().get_default_time_tracking_path()
+
+        # Assert
+        self.assertEqual(expected, actual)
+class YearProviderTestCase(unittest.TestCase):
+
+    def test_getallyears_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+
+        # Act
+        actual : list[int] = YearProvider().get_all_years()
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_getallyearlytargets_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[YearlyTarget] = [
+            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
+            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
+            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
+            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
+        ]
+
+        # Act
+        actual : list[YearlyTarget] = YearProvider().get_all_yearly_targets()
+
+        # Assert
+        self.assertTrue(SupportMethodProvider.are_lists_of_yearly_targets_equal(list1 = expected, list2 = actual))
 class TimeTrackingManagerTestCase(unittest.TestCase):
 
     def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
@@ -904,19 +952,6 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected, actual)
 
-    def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
-        
-        '''"C:/project_dir/src/" => "C:/project_dir/data/Time Tracking.xlsx"'''
-
-        # Arrange
-        expected : str = "C:/project_dir/data/Time Tracking.xlsx"
-
-        # Act
-        with patch.object(os, 'getcwd', return_value="C:/project_dir/src/") as mocked_context:
-            actual : str = TimeTrackingManager().get_default_time_tracking_path()
-
-        # Assert
-        self.assertEqual(expected, actual)
     def test_getsessionsdataset_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1103,39 +1138,6 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 
-class YearProviderTestCase(unittest.TestCase):
-
-    def test_getallyears_shouldreturnexpectedlist_wheninvoked(self):
-
-        # Arrange
-        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
-
-        # Act
-        actual : list[int] = YearProvider().get_all_years()
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_getallyearlytargets_shouldreturnexpectedlist_wheninvoked(self):
-
-        # Arrange
-        expected : list[YearlyTarget] = [
-            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
-            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
-            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
-        ]
-
-        # Act
-        actual : list[YearlyTarget] = YearProvider().get_all_yearly_targets()
-
-        # Assert
-        self.assertTrue(SupportMethodProvider.are_lists_of_yearly_targets_equal(list1 = expected, list2 = actual))
 
 # MAIN
 if __name__ == "__main__":

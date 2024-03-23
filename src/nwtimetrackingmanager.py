@@ -4,6 +4,11 @@ A collection of components to handle "Time Tracking.xlsx".
 Alias: nwttm
 '''
 
+# INFORMATION
+MODULE_ALIAS : str = "nwttm"
+MODULE_NAME : str = "nwtimetrackingmanager"
+MODULE_VERSION : str = "3.0.0"
+
 # GLOBAL MODULES
 import numpy as np
 import os
@@ -17,41 +22,7 @@ from pandas import DataFrame
 from pandas import Series
 
 # LOCAL MODULES
-
 # CONSTANTS
-MODULE_ALIAS : str = "nwttm"
-MODULE_NAME : str = "nwtimetrackingmanager"
-MODULE_VERSION : str = "3.0.0"
-
-# DTOs
-@dataclass(frozen=True)
-class YearlyTarget():
-    
-    '''Represents an amount of hours for a given year.'''
-
-    year : int
-    hours : timedelta
-@dataclass(frozen=True)
-class EffortStatus():
-    
-    '''Represents an effort-related status.'''
-
-    idx : int
-    start_time_str : str
-    start_time_dt : datetime
-
-    end_time_str : str 
-    end_time_dt : datetime
-    
-    actual_str : str
-    actual_td : timedelta 
-
-    expected_td : timedelta
-    expected_str : str 
-
-    is_correct : bool
-    message : str 
-
 # STATIC CLASSES
 class MessageCollection():
 
@@ -85,6 +56,35 @@ class MessageCollection():
     @staticmethod
     def effort_status_not_among_expected_time_values(time : str) -> str:
         return f"The provided time ('{time}') is not among the expected time values."
+
+# DTOs
+@dataclass(frozen=True)
+class YearlyTarget():
+    
+    '''Represents an amount of hours for a given year.'''
+
+    year : int
+    hours : timedelta
+@dataclass(frozen=True)
+class EffortStatus():
+    
+    '''Represents an effort-related status.'''
+
+    idx : int
+    start_time_str : str
+    start_time_dt : datetime
+
+    end_time_str : str 
+    end_time_dt : datetime
+    
+    actual_str : str
+    actual_td : timedelta 
+
+    expected_td : timedelta
+    expected_str : str 
+
+    is_correct : bool
+    message : str 
 
 # CLASSES
 class SettingBag():
@@ -205,6 +205,49 @@ class SettingBag():
         self.time_ranges_top_n = time_ranges_top_n
         self.time_ranges_remove_unknown_id = time_ranges_remove_unknown_id
         self.time_ranges_filter_by_top_n = time_ranges_filter_by_top_n
+class DefaultPathProvider():
+
+    '''Responsible for proviving the default path to the dataset.'''
+
+    def get_default_time_tracking_path(self)-> str:
+
+        r'''
+            "c:\...\nwtimetrackingmanager\data\Time Tracking.xlsx"
+        '''
+        
+        path : str = os.getcwd().replace("src", "data")
+        path = os.path.join(path, "Time Tracking.xlsx")
+
+        return path
+class YearProvider():
+
+    '''Collects all the logic related to the retrieval of year-related information.'''
+
+    def get_all_years(self) -> list[int]:
+
+        '''Returns a list of years.'''
+
+        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+
+        return years
+    def get_all_yearly_targets(self) -> list[YearlyTarget]:
+
+        '''Returns a list of years.'''
+
+        yearly_targets : list[YearlyTarget] = [
+            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
+            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
+            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
+            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
+        ]
+
+        return yearly_targets    
 class TimeTrackingManager():
 
     '''Collects all the logic related to the management of "Time Tracking.xlsx".'''
@@ -1068,16 +1111,6 @@ class TimeTrackingManager():
 
         return tt_df
 
-    def get_default_time_tracking_path(self)-> str:
-
-        r'''
-            "c:\...\nwtimetrackingmanager\data\Time Tracking.xlsx"
-        '''
-        
-        path : str = os.getcwd().replace("src", "data")
-        path = os.path.join(path, "Time Tracking.xlsx")
-
-        return path
     def get_sessions_dataset(self, setting_bag : SettingBag) -> DataFrame:
         
         '''
@@ -1574,35 +1607,6 @@ class TimeTrackingManager():
         time_ranges_df.reset_index(drop = True, inplace = True)
 
         return time_ranges_df
-class YearProvider():
-
-    '''Collects all the logic related to the retrieval of year-related information.'''
-
-    def get_all_years(self) -> list[int]:
-
-        '''Returns a list of years.'''
-
-        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
-
-        return years
-    def get_all_yearly_targets(self) -> list[YearlyTarget]:
-
-        '''Returns a list of years.'''
-
-        yearly_targets : list[YearlyTarget] = [
-            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
-            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
-            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
-        ]
-
-        return yearly_targets
 
 # MAIN
 if __name__ == "__main__":

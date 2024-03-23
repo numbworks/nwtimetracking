@@ -1,4 +1,4 @@
-# Global Modules
+# GLOBAL MODULES
 import os
 import pandas as pd
 import requests
@@ -13,13 +13,13 @@ from typing import Tuple
 from unittest import mock
 from unittest.mock import call, mock_open, patch
 
-# Local Modules
+# LOCAL MODULES
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 from nwshared import OutlierManager, FilePathManager, FileManager, PageManager
 from nwshared import PlotManager, DataFrameReverser, VersionChecker, Formatter
 from nwshared import Converter
 
-# Support Methods
+# SUPPORT METHODS
 class ObjectMother():
 
     '''Collects all the DTOs required by the unit tests.'''
@@ -38,7 +38,7 @@ class ObjectMother():
 
         return df
 
-# Test Classes
+# TEST CLASSES
 class OutlierManagerTestCase(unittest.TestCase):
 
     def test_tryremovelowerboundoutliers_shouldremoveoutlier_whencolumnvaluesmatchcriteria(self):
@@ -406,6 +406,23 @@ class FormatterTestCase(unittest.TestCase):
 
         # Act
         actual : str = Formatter().format_usd_amount(amount = amount, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [5, "★★★★★"],
+        [4, "★★★★☆"],
+        [3, "★★★☆☆"],
+        [2, "★★☆☆☆"],
+        [1, "★☆☆☆☆"],
+        [0, "0"]
+    ])
+    def test_formatrating_shouldreturnexpectedstring_wheninvoked(self, rating : int, expected : str):
+        
+        # Arrange
+        # Act
+        actual : str = Formatter().format_rating(rating = rating)
 
         # Assert
         self.assertEqual(expected, actual)
