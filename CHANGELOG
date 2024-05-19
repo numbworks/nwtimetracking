@@ -1,3 +1,9 @@
+v3.2.0
+- Libraries:
+	- Refactoring: changed name from nwtimetrackingmanager to nwtimetracking
+- Documentation:
+	- Feature: updated to v3.2.0.
+
 v3.0.0
 - Libraries:
 	- Refactoring: "nwcorecomponents" replaced by "nwshared".

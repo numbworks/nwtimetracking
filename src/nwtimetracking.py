@@ -1,13 +1,13 @@
 '''
 A collection of components to handle "Time Tracking.xlsx".
 
-Alias: nwttm
+Alias: nwtt
 '''
 
 # INFORMATION
-MODULE_ALIAS : str = "nwttm"
-MODULE_NAME : str = "nwtimetrackingmanager"
-MODULE_VERSION : str = "3.0.0"
+MODULE_ALIAS : str = "nwtt"
+MODULE_NAME : str = "nwtimetracking"
+MODULE_VERSION : str = "3.2.0"
 
 # GLOBAL MODULES
 import numpy as np

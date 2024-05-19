@@ -14,8 +14,8 @@ from unittest.mock import patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetrackingmanager import YearlyTarget, SettingBag, EffortStatus, MessageCollection
-from nwtimetrackingmanager import DefaultPathProvider, YearProvider, TimeTrackingManager
+from nwtimetracking import YearlyTarget, SettingBag, EffortStatus, MessageCollection
+from nwtimetracking import DefaultPathProvider, YearProvider, TimeTrackingManager
 
 # SUPPORT METHODS
 class SupportMethodProvider():
