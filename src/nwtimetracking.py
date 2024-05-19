@@ -24,7 +24,7 @@ from pandas import Series
 # LOCAL MODULES
 # CONSTANTS
 # STATIC CLASSES
-class MessageCollection():
+class _MessageCollection():
 
     '''Collects all the messages used for logging and for the exceptions.'''
 
@@ -985,7 +985,7 @@ class TimeTrackingManager():
         elif time in day_2_times:
             dt_str = f"1900-01-02 {time}"
         else: 
-            raise ValueError(MessageCollection.effort_status_not_among_expected_time_values(time = time))
+            raise ValueError(_MessageCollection.effort_status_not_among_expected_time_values(time = time))
                 
         dt : datetime =  datetime.strptime(dt_str, strp_format)
 
@@ -1021,7 +1021,7 @@ class TimeTrackingManager():
             
             message : str = "The effort is correct."
             if actual_td != expected_td:
-                message = MessageCollection.effort_status_mismatching_effort(
+                message = _MessageCollection.effort_status_mismatching_effort(
                     idx = idx, 
                     start_time_str = start_time_str, 
                     end_time_str = end_time_str, 
@@ -1047,7 +1047,7 @@ class TimeTrackingManager():
         
         except:
 
-            message : str = MessageCollection.effort_status_not_possible_to_create(
+            message : str = _MessageCollection.effort_status_not_possible_to_create(
                 idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
 
             raise ValueError(message)
