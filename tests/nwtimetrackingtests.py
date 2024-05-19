@@ -98,7 +98,7 @@ class ObjectMother():
             yearly_targets = [
                 YearlyTarget(year = 2015, hours = timedelta(hours = 0))
             ],
-            excel_path = TimeTrackingManager().get_default_time_tracking_path(),
+            excel_path = DefaultPathProvider().get_default_time_tracking_path(),
             excel_books_skiprows = 0,
             excel_books_nrows = 920,
             excel_books_tabname = "Sessions",
