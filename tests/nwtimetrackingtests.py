@@ -14,8 +14,8 @@ from unittest.mock import patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetrackingmanager import YearlyTarget, SettingBag, EffortStatus, MessageCollection
-from nwtimetrackingmanager import DefaultPathProvider, YearProvider, TimeTrackingManager
+from nwtimetracking import YearlyTarget, SettingBag, EffortStatus, _MessageCollection
+from nwtimetracking import DefaultPathProvider, YearProvider, TimeTrackingManager
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -98,7 +98,7 @@ class ObjectMother():
             yearly_targets = [
                 YearlyTarget(year = 2015, hours = timedelta(hours = 0))
             ],
-            excel_path = TimeTrackingManager().get_default_time_tracking_path(),
+            excel_path = DefaultPathProvider().get_default_time_tracking_path(),
             excel_books_skiprows = 0,
             excel_books_nrows = 920,
             excel_books_tabname = "Sessions",
@@ -734,7 +734,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_str : str = "01h 00m"
         expected_td : timedelta = pd.Timedelta(value = expected_str).to_pytimedelta()
         is_correct : bool = False 
-        message : str = MessageCollection.effort_status_mismatching_effort(
+        message : str = _MessageCollection.effort_status_mismatching_effort(
                             idx = idx, 
                             start_time_str = start_time_str, 
                             end_time_str = end_time_str, 
@@ -858,7 +858,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
     def test_createtimeobject_shouldraisevalueerrorexception_whennotamongtimevalues(self, time : str):
 
         # Arrange
-        expected_message : str = MessageCollection.effort_status_not_among_expected_time_values(time = time)
+        expected_message : str = _MessageCollection.effort_status_not_among_expected_time_values(time = time)
         
         # Act
         with self.assertRaises(ValueError) as context:
@@ -916,7 +916,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Arrange
         idx : int = 1        
-        expected_message : str = MessageCollection.effort_status_not_possible_to_create(
+        expected_message : str = _MessageCollection.effort_status_not_possible_to_create(
             idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
         
         # Act

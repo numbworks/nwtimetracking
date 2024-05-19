@@ -1,4 +1,4 @@
-# nwtimetrackingmanager
+# nwtimetracking
 
 ![codecoverage_library.svg](codecoverage.svg)
 
@@ -14,7 +14,7 @@ Contact: numbworks@gmail.com
 
 From the documentation:
 
-> nwtimetrackingmanager is a Jupyter Notebook designed to analyze the Excel file I use to annotate the durations of all my sessions of extra work and continuos learning, so that I can run analyses on them. This software is born to overcome the lack of support for durations (timedeltas) in Excel.
+> nwtimetracking is a Jupyter Notebook designed to analyze the Excel file I use to annotate the durations of all my sessions of extra work and continuos learning, so that I can run analyses on them. This software is born to overcome the lack of support for durations (timedeltas) in Excel.
 
 ## Download the source code
 
@@ -24,17 +24,17 @@ I assume you are on `Windows`, but the software should run without issues on `Li
 2. Open `Windows Powershell` (or `Windows Terminal` or similar) and type:
 
 ```powershell
-PS C:\> mkdir nwtimetrackingmanager
-PS C:\> cd .\nwtimetrackingmanager\
-PS C:\nwreadinglistmanager> git clone https://github.com/numbworks/nwtimetrackingmanager.git
+PS C:\> mkdir nwtimetracking
+PS C:\> cd .\nwtimetracking\
+PS C:\nwreadinglistmanager> git clone https://github.com/numbworks/nwtimetracking.git
 ```
 
-3. Open `src/nwtimetrackingmanager.ipynb` with `Visual Studio Code` or other `Jupyter Notebook`-enabled environment;
+3. Open `src/nwtimetracking.ipynb` with `Visual Studio Code` or other `Jupyter Notebook`-enabled environment;
 4. Done!
 
 ## Getting started
 
-- [Documentation](docs/docs-nwtimetrackingmanager.md)
+- [Documentation](docs/docs-nwtimetracking.md)
 
 ## Other links
 
