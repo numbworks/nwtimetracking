@@ -1,3 +1,9 @@
+v3.3.0
+- Libraries:
+	- Refactoring: moved nwshared to its own package.
+- Documentation:
+	- Feature: updated to v3.3.0.
+
 v3.2.0
 - Libraries:
 	- Refactoring: changed name from nwtimetrackingmanager to nwtimetracking
