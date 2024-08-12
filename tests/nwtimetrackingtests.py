@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
-from numpy import int32
+from numpy import int64
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
@@ -192,8 +192,8 @@ class ObjectMother():
             "string",
             "boolean",
             "boolean",
-            "Int32",
-            "Int32"
+            "Int64",
+            "Int64"
         ]
 
         return expected_dtype_names
@@ -236,8 +236,8 @@ class ObjectMother():
                 'Descriptor': np.array(['', 'NW.Shared.Serialization v1.0.0', 'NW.Shared.Serialization v1.0.0', 'NW.NGramTextClassification v4.2.0', 'NW.NGramTextClassification v4.2.0', 'NW.UnivariateForecasting v4.2.0', 'NW.UnivariateForecasting v4.2.0', '', '', 'nwreadinglistmanager v2.1.0', 'nwreadinglistmanager v2.1.0', '', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.'], dtype=str),
                 'IsSoftwareProject': np.array([False, True, True, True, True, True, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
                 'IsReleaseDay': np.array([False, True, True, True, True, False, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
-                'Year': np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int32),
-                'Month': np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int32),
+                'Year': np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int64),
+                'Month': np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int64),
             }, index=pd.RangeIndex(start=980, stop=1001, step=1))
 
     @staticmethod
@@ -249,7 +249,7 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024], dtype=int32),
+                'Year': np.array([2024], dtype=int64),
                 'Effort': np.array(['36h 00m'], dtype=object),
                 'YearlyTarget': np.array(['250h 00m'], dtype=object),
                 'TargetDiff': np.array(['-214h 00m'], dtype=object),
@@ -265,8 +265,8 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024], dtype=int32),
-                'Month': np.array([2], dtype=int32),
+                'Year': np.array([2024], dtype=int64),
+                'Month': np.array([2], dtype=int64),
                 'Effort': np.array(['36h 00m'], dtype=object),
                 'YearlyTotal': np.array(['36h 00m'], dtype=object),
                 'ToTarget': np.array(['-214h 00m'], dtype=object),
@@ -284,8 +284,8 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int32),
-                'Month': np.array([2, 2, 2, 2], dtype=int32),
+                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
+                'Month': np.array([2, 2, 2, 2], dtype=int64),
                 'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
                 'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
                 'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
@@ -307,7 +307,7 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int32),
+                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
                 'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
                 'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
                 'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
@@ -367,7 +367,7 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int32),
+                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
                 'Hashtag': np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
                 'Effort': np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
@@ -400,7 +400,7 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int32),
+                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
                 '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)				
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
 
@@ -963,7 +963,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Act
         with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
-            actual : str = TimeTrackingManager().get_sessions_dataset(setting_bag = setting_bag)
+            actual : DataFrame = TimeTrackingManager().get_sessions_dataset(setting_bag = setting_bag)
 
         # Assert
         self.assertEqual(expected_column_names, actual.columns.tolist())

@@ -1,3 +1,9 @@
+v3.4.0
+- Application:
+	- Feature: added support for Visual Studio Code's Dev Containers.
+- Documentation:
+	- Feature: updated to v3.4.0.
+
 v3.3.0
 - Libraries:
 	- Refactoring: moved nwshared to its own package.
