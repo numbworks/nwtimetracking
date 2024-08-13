@@ -44,25 +44,27 @@ To run this application on Windows and Linux:
     - [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
     - [Docker](https://marketplace.visualstudio.com/items?itemName=ms-azuretools.vscode-docker)
 
-6. Click on <ins>File</ins> > <ins>Preferences</ins> > <ins>Settings</ins> and change the following setting as below:
+6. In order for the Jupyter Notebook to automatically detect changes in the underlying library, click on <ins>File</ins> > <ins>Preferences</ins> > <ins>Settings</ins> and change the following setting as below:
 
     ```
     "jupyter.runStartupCommands": [
         "%load_ext autoreload", "%autoreload 2"
     ]
     ```
-7. Click on <ins>File</ins> > <ins>Open folder</ins> > `nwtimetracking`;
-8. Click on <ins>View</ins> > <ins>Command Palette</ins> and type:
+
+7. In order for Pylance to perform type checking, set the `python.analysis.typeCheckingMode` setting to `basic`;
+8. Click on <ins>File</ins> > <ins>Open folder</ins> > `nwtimetracking`;
+9. Click on <ins>View</ins> > <ins>Command Palette</ins> and type:
 
     ```
     > Dev Container: Reopen in Container
     ```
 
-9. Wait some minutes for the container defined in the <ins>.devcointainer</ins> folder to be built;
-10. Open the notebook file (<ins>src/nwtimetracking.ipynb</ins>);
-11. Edit the `SettingBag` object according to your needs;
-12. Click on <ins>Run All</ins>;
-13. Done!
+10. Wait some minutes for the container defined in the <ins>.devcointainer</ins> folder to be built;
+11. Open the notebook file (<ins>src/nwtimetracking.ipynb</ins>);
+12. Edit the `SettingBag` object according to your needs;
+13. Click on <ins>Run All</ins>;
+14. Done!
 
 ## Unit Tests
 
