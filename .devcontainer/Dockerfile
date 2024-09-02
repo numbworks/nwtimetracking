@@ -1,4 +1,4 @@
-FROM python:3.12.5-bullseye
+FROM python:3.12.5-bookworm
 
 RUN pip install numpy==1.26.3
 RUN pip install pyarrow==15.0.0
