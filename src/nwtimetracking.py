@@ -91,6 +91,14 @@ class SettingBag():
 
     '''Represents a collection of settings.'''
 
+    years : list[int]
+    yearly_targets : list[YearlyTarget]
+    excel_path : str
+    excel_books_nrows : int
+    software_project_names : list[str]
+    software_project_names_by_spv : list[str]
+    tt_by_year_hashtag_years : list[int]
+
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
@@ -103,16 +111,8 @@ class SettingBag():
     show_tts_by_month_df : bool
     show_effort_status_df : bool
     show_time_ranges_df : bool
-    years : list[int]
-    yearly_targets : list[YearlyTarget]
-    excel_path : str
     excel_books_skiprows : int
-    excel_books_nrows : int
     excel_books_tabname : str
-    software_project_names : list[str]
-    software_project_names_by_spv : list[str]
-    tt_by_year_hashtag_years : list[int]
-
     n_generic : int
     n_by_month : int
     now : datetime
@@ -127,29 +127,29 @@ class SettingBag():
     time_ranges_filter_by_top_n : bool
 
     def __init__(
-        self,
-        show_sessions_df : bool,
-        show_tt_by_year_df : bool,
-        show_tt_by_year_month_df : bool,
-        show_tt_by_year_month_spnv_df : bool,
-        show_tt_by_year_spnv_df : bool,
-        show_tt_by_spn_df : bool,
-        show_tt_by_spn_spv_df : bool,
-        show_tt_by_year_hashtag : bool,
-        show_tt_by_hashtag : bool,
-        show_tts_by_month_df : bool,
-        show_effort_status_df : bool,
-        show_time_ranges_df : bool, 
+        self, 
         years : list[int],
         yearly_targets : list[YearlyTarget],
         excel_path : str,
-        excel_books_skiprows : int,
         excel_books_nrows : int,
-        excel_books_tabname : str,
         software_project_names : list[str],
         software_project_names_by_spv : list[str],
         tt_by_year_hashtag_years : list[int],
 
+        show_sessions_df : bool = False,
+        show_tt_by_year_df : bool = True,
+        show_tt_by_year_month_df : bool = True,
+        show_tt_by_year_month_spnv_df : bool = False,
+        show_tt_by_year_spnv_df : bool = False,
+        show_tt_by_spn_df : bool = True,
+        show_tt_by_spn_spv_df : bool = True,
+        show_tt_by_year_hashtag : bool = True,
+        show_tt_by_hashtag : bool = True,
+        show_tts_by_month_df : bool = True,
+        show_effort_status_df : bool = True,
+        show_time_ranges_df : bool = True,
+        excel_books_skiprows : int = 0,
+        excel_books_tabname : str = "Sessions",
         n_generic : int = 5,
         n_by_month : int = 12,
         now : datetime = datetime.now(),
@@ -171,6 +171,14 @@ class SettingBag():
         time_ranges_filter_by_top_n : bool  = True       
         ) -> None:
         
+        self.years = years
+        self.yearly_targets = yearly_targets
+        self.excel_path = excel_path
+        self.excel_books_nrows = excel_books_nrows
+        self.software_project_names = software_project_names
+        self.software_project_names_by_spv = software_project_names_by_spv
+        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
+
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
@@ -183,16 +191,8 @@ class SettingBag():
         self.show_tts_by_month_df = show_tts_by_month_df
         self.show_effort_status_df = show_effort_status_df
         self.show_time_ranges_df = show_time_ranges_df
-        self.years = years
-        self.yearly_targets = yearly_targets
-        self.excel_path = excel_path
         self.excel_books_skiprows = excel_books_skiprows
-        self.excel_books_nrows = excel_books_nrows
         self.excel_books_tabname = excel_books_tabname
-        self.software_project_names = software_project_names
-        self.software_project_names_by_spv = software_project_names_by_spv
-        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
-        
         self.n_generic = n_generic
         self.n_by_month = n_by_month
         self.now = now
