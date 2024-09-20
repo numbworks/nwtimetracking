@@ -67,17 +67,17 @@ class EffortStatus():
     '''Represents an effort-related status.'''
 
     idx : int
-    start_time_str : str
-    start_time_dt : datetime
+    start_time_str : Optional[str]
+    start_time_dt : Optional[datetime]
 
-    end_time_str : str 
-    end_time_dt : datetime
+    end_time_str : Optional[str] 
+    end_time_dt : Optional[datetime]
     
     actual_str : str
     actual_td : timedelta 
 
-    expected_td : timedelta
-    expected_str : str 
+    expected_td : Optional[timedelta]
+    expected_str : Optional[str] 
 
     is_correct : bool
     message : str 
@@ -1100,9 +1100,8 @@ class TimeTrackingManager():
         tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
         tt_df = tt_df.groupby(by = [cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
 
-        summarized : timedelta = tt_df[cn_effort].sum()
-        
         cn_effort_prc : str = "Effort%"
+        summarized : float = tt_df[cn_effort].sum()
         tt_df[cn_effort_prc] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = summarized), axis = 1)     
 
         return tt_df
