@@ -1403,7 +1403,8 @@ class TimeTrackingManager():
             ...
         '''
 
-        tts_by_month_df : DataFrame = None
+        tts_by_month_df : DataFrame = pd.DataFrame()
+
         for i in range(len(years)):
 
             if i == 0:
