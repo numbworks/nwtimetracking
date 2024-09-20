@@ -1,3 +1,8 @@
+v3.5.0
+- Application:
+	- Feature: added support for DisplayPreProcessor, increased amount of default parameters in SettingBag.
+	- Refactoring: moved packaging information to setup.py.
+
 v3.4.0
 - Application:
 	- Feature: added support for Visual Studio Code's Dev Containers.
