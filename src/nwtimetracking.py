@@ -15,7 +15,7 @@ from datetime import datetime
 from datetime import timedelta
 from pandas import DataFrame
 from pandas import Series
-from typing import Optional
+from typing import Optional, cast
 
 # LOCAL MODULES
 # CONSTANTS
@@ -1499,7 +1499,7 @@ class TimeTrackingManager():
         condition : Series = (tts_by_month_upd_df[cn_month] > now_month)
         tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
             
-        idx_year : int = tts_by_month_upd_df.columns.get_loc(cn_year)
+        idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
         idx_trend : int = (idx_year - 1)
         tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
 
