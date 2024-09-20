@@ -15,6 +15,7 @@ from datetime import datetime
 from datetime import timedelta
 from pandas import DataFrame
 from pandas import Series
+from typing import Optional
 
 # LOCAL MODULES
 # CONSTANTS
@@ -300,7 +301,7 @@ class TimeTrackingManager():
         td : timedelta = pd.Timedelta(value = td_str).to_pytimedelta()
 
         return td
-    def __get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> YearlyTarget:
+    def __get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> Optional[YearlyTarget]:
 
         '''Retrieves the YearlyTarget object for the provided "year" or None.'''
 
@@ -370,7 +371,7 @@ class TimeTrackingManager():
 
         '''Calculates a percentage.'''
 
-        prct : float = None
+        prct : Optional[float] = None
 
         if part == 0:
             prct = 0
@@ -812,7 +813,7 @@ class TimeTrackingManager():
             1h 00m, 0h 30m => "↓"
             0, 0 => "="
         '''
-        trend : str = None
+        trend : Optional[str] = None
 
         if td_1 < td_2:
             trend = "↑"
@@ -974,7 +975,7 @@ class TimeTrackingManager():
 
         strp_format : str = "%Y-%m-%d %H:%M"
 
-        dt_str : str = None
+        dt_str : Optional[str] = None
         if time in day_1_times:
             dt_str = f"1900-01-01 {time}"
         elif time in day_2_times:
