@@ -15,7 +15,7 @@ from datetime import datetime
 from datetime import timedelta
 from pandas import DataFrame
 from pandas import Series
-from typing import Optional, cast
+from typing import Any, Optional, cast
 
 # LOCAL MODULES
 # CONSTANTS
@@ -1047,6 +1047,18 @@ class TimeTrackingManager():
                 idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
 
             raise ValueError(message)
+    def __create_effort_status_and_cast_to_any(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> Any:
+
+        '''
+            Wrapper method created to overcome the following error raised by df.apply():
+
+                Argument of type "(x: Unknown) -> EffortStatus" cannot be assigned to parameter "f" of type "(...) -> Series[Any]" in function "apply"
+                Type "(x: Unknown) -> EffortStatus" is not assignable to type "(...) -> Series[Any]"
+                    Function return type "EffortStatus" is incompatible with type "Series[Any]"
+                    "EffortStatus" is not assignable to "Series[Any]"            
+        '''
+
+        return cast(Any, self.__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str))    
     def __create_time_range_id(self, start_time : str, end_time : str, unknown_id : str) -> str:
             
             '''
@@ -1520,12 +1532,12 @@ class TimeTrackingManager():
         cn_effort_status : str = "EffortStatus"
 
         es_df[cn_effort_status] = es_df.apply(
-            lambda x : self.__create_effort_status(
-                idx = x.name, 
-                start_time_str = x[cn_start_time],
-                end_time_str = x[cn_end_time],
-                effort_str = x[cn_effort]),
-                axis = 1)
+            f = lambda x : self.__create_effort_status_and_cast_to_any(
+                    idx = x.name, 
+                    start_time_str = x[cn_start_time],
+                    end_time_str = x[cn_end_time],
+                    effort_str = x[cn_effort]),
+            axis = 1)
         
         cn_es_is_correct : str = "ES_IsCorrect"
         cn_es_expected : str = "ES_Expected"
