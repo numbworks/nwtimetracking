@@ -1532,7 +1532,7 @@ class TimeTrackingManager():
         cn_effort_status : str = "EffortStatus"
 
         es_df[cn_effort_status] = es_df.apply(
-            f = lambda x : self.__create_effort_status_and_cast_to_any(
+            lambda x : self.__create_effort_status_and_cast_to_any(
                     idx = x.name, 
                     start_time_str = x[cn_start_time],
                     end_time_str = x[cn_end_time],
