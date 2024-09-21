@@ -4,11 +4,6 @@ A collection of components to handle "Time Tracking.xlsx".
 Alias: nwtt
 '''
 
-# INFORMATION
-MODULE_ALIAS : str = "nwtt"
-MODULE_NAME : str = "nwtimetracking"
-MODULE_VERSION : str = "3.4.0"
-
 # GLOBAL MODULES
 import numpy as np
 import os
@@ -20,6 +15,7 @@ from datetime import datetime
 from datetime import timedelta
 from pandas import DataFrame
 from pandas import Series
+from typing import Any, Optional, cast
 
 # LOCAL MODULES
 # CONSTANTS
@@ -71,17 +67,17 @@ class EffortStatus():
     '''Represents an effort-related status.'''
 
     idx : int
-    start_time_str : str
-    start_time_dt : datetime
+    start_time_str : Optional[str]
+    start_time_dt : Optional[datetime]
 
-    end_time_str : str 
-    end_time_dt : datetime
+    end_time_str : Optional[str] 
+    end_time_dt : Optional[datetime]
     
     actual_str : str
     actual_td : timedelta 
 
-    expected_td : timedelta
-    expected_str : str 
+    expected_td : Optional[timedelta]
+    expected_str : Optional[str] 
 
     is_correct : bool
     message : str 
@@ -90,6 +86,14 @@ class EffortStatus():
 class SettingBag():
 
     '''Represents a collection of settings.'''
+
+    years : list[int]
+    yearly_targets : list[YearlyTarget]
+    excel_path : str
+    excel_books_nrows : int
+    software_project_names : list[str]
+    software_project_names_by_spv : list[str]
+    tt_by_year_hashtag_years : list[int]
 
     show_sessions_df : bool
     show_tt_by_year_df : bool
@@ -103,16 +107,8 @@ class SettingBag():
     show_tts_by_month_df : bool
     show_effort_status_df : bool
     show_time_ranges_df : bool
-    years : list[int]
-    yearly_targets : list[YearlyTarget]
-    excel_path : str
     excel_books_skiprows : int
-    excel_books_nrows : int
     excel_books_tabname : str
-    software_project_names : list[str]
-    software_project_names_by_spv : list[str]
-    tt_by_year_hashtag_years : list[int]
-
     n_generic : int
     n_by_month : int
     now : datetime
@@ -127,29 +123,29 @@ class SettingBag():
     time_ranges_filter_by_top_n : bool
 
     def __init__(
-        self,
-        show_sessions_df : bool,
-        show_tt_by_year_df : bool,
-        show_tt_by_year_month_df : bool,
-        show_tt_by_year_month_spnv_df : bool,
-        show_tt_by_year_spnv_df : bool,
-        show_tt_by_spn_df : bool,
-        show_tt_by_spn_spv_df : bool,
-        show_tt_by_year_hashtag : bool,
-        show_tt_by_hashtag : bool,
-        show_tts_by_month_df : bool,
-        show_effort_status_df : bool,
-        show_time_ranges_df : bool, 
+        self, 
         years : list[int],
         yearly_targets : list[YearlyTarget],
         excel_path : str,
-        excel_books_skiprows : int,
         excel_books_nrows : int,
-        excel_books_tabname : str,
         software_project_names : list[str],
         software_project_names_by_spv : list[str],
         tt_by_year_hashtag_years : list[int],
 
+        show_sessions_df : bool = False,
+        show_tt_by_year_df : bool = True,
+        show_tt_by_year_month_df : bool = True,
+        show_tt_by_year_month_spnv_df : bool = False,
+        show_tt_by_year_spnv_df : bool = False,
+        show_tt_by_spn_df : bool = True,
+        show_tt_by_spn_spv_df : bool = True,
+        show_tt_by_year_hashtag : bool = True,
+        show_tt_by_hashtag : bool = True,
+        show_tts_by_month_df : bool = True,
+        show_effort_status_df : bool = True,
+        show_time_ranges_df : bool = True,
+        excel_books_skiprows : int = 0,
+        excel_books_tabname : str = "Sessions",
         n_generic : int = 5,
         n_by_month : int = 12,
         now : datetime = datetime.now(),
@@ -171,6 +167,14 @@ class SettingBag():
         time_ranges_filter_by_top_n : bool  = True       
         ) -> None:
         
+        self.years = years
+        self.yearly_targets = yearly_targets
+        self.excel_path = excel_path
+        self.excel_books_nrows = excel_books_nrows
+        self.software_project_names = software_project_names
+        self.software_project_names_by_spv = software_project_names_by_spv
+        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
+
         self.show_sessions_df = show_sessions_df
         self.show_tt_by_year_df = show_tt_by_year_df
         self.show_tt_by_year_month_df = show_tt_by_year_month_df
@@ -183,16 +187,8 @@ class SettingBag():
         self.show_tts_by_month_df = show_tts_by_month_df
         self.show_effort_status_df = show_effort_status_df
         self.show_time_ranges_df = show_time_ranges_df
-        self.years = years
-        self.yearly_targets = yearly_targets
-        self.excel_path = excel_path
         self.excel_books_skiprows = excel_books_skiprows
-        self.excel_books_nrows = excel_books_nrows
         self.excel_books_tabname = excel_books_tabname
-        self.software_project_names = software_project_names
-        self.software_project_names_by_spv = software_project_names_by_spv
-        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
-        
         self.n_generic = n_generic
         self.n_by_month = n_by_month
         self.now = now
@@ -305,7 +301,7 @@ class TimeTrackingManager():
         td : timedelta = pd.Timedelta(value = td_str).to_pytimedelta()
 
         return td
-    def __get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> YearlyTarget:
+    def __get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> Optional[YearlyTarget]:
 
         '''Retrieves the YearlyTarget object for the provided "year" or None.'''
 
@@ -375,7 +371,7 @@ class TimeTrackingManager():
 
         '''Calculates a percentage.'''
 
-        prct : float = None
+        prct : Optional[float] = None
 
         if part == 0:
             prct = 0
@@ -817,7 +813,7 @@ class TimeTrackingManager():
             1h 00m, 0h 30m => "↓"
             0, 0 => "="
         '''
-        trend : str = None
+        trend : Optional[str] = None
 
         if td_1 < td_2:
             trend = "↑"
@@ -979,7 +975,7 @@ class TimeTrackingManager():
 
         strp_format : str = "%Y-%m-%d %H:%M"
 
-        dt_str : str = None
+        dt_str : Optional[str] = None
         if time in day_1_times:
             dt_str = f"1900-01-01 {time}"
         elif time in day_2_times:
@@ -1051,6 +1047,18 @@ class TimeTrackingManager():
                 idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
 
             raise ValueError(message)
+    def __create_effort_status_and_cast_to_any(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> Any:
+
+        '''
+            Wrapper method created to overcome the following error raised by df.apply():
+
+                Argument of type "(x: Unknown) -> EffortStatus" cannot be assigned to parameter "f" of type "(...) -> Series[Any]" in function "apply"
+                Type "(x: Unknown) -> EffortStatus" is not assignable to type "(...) -> Series[Any]"
+                    Function return type "EffortStatus" is incompatible with type "Series[Any]"
+                    "EffortStatus" is not assignable to "Series[Any]"            
+        '''
+
+        return cast(Any, self.__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str))    
     def __create_time_range_id(self, start_time : str, end_time : str, unknown_id : str) -> str:
             
             '''
@@ -1104,9 +1112,8 @@ class TimeTrackingManager():
         tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
         tt_df = tt_df.groupby(by = [cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
 
-        summarized : timedelta = tt_df[cn_effort].sum()
-        
         cn_effort_prc : str = "Effort%"
+        summarized : float = tt_df[cn_effort].sum()
         tt_df[cn_effort_prc] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = summarized), axis = 1)     
 
         return tt_df
@@ -1408,7 +1415,8 @@ class TimeTrackingManager():
             ...
         '''
 
-        tts_by_month_df : DataFrame = None
+        tts_by_month_df : DataFrame = pd.DataFrame()
+
         for i in range(len(years)):
 
             if i == 0:
@@ -1503,7 +1511,7 @@ class TimeTrackingManager():
         condition : Series = (tts_by_month_upd_df[cn_month] > now_month)
         tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
             
-        idx_year : int = tts_by_month_upd_df.columns.get_loc(cn_year)
+        idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
         idx_trend : int = (idx_year - 1)
         tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
 
@@ -1524,12 +1532,12 @@ class TimeTrackingManager():
         cn_effort_status : str = "EffortStatus"
 
         es_df[cn_effort_status] = es_df.apply(
-            lambda x : self.__create_effort_status(
-                idx = x.name, 
-                start_time_str = x[cn_start_time],
-                end_time_str = x[cn_end_time],
-                effort_str = x[cn_effort]),
-                axis = 1)
+            lambda x : self.__create_effort_status_and_cast_to_any(
+                    idx = x.name, 
+                    start_time_str = x[cn_start_time],
+                    end_time_str = x[cn_end_time],
+                    effort_str = x[cn_effort]),
+            axis = 1)
         
         cn_es_is_correct : str = "ES_IsCorrect"
         cn_es_expected : str = "ES_Expected"
