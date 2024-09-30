@@ -240,7 +240,7 @@ class YearProvider():
             YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
             YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
             YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
+            YearlyTarget(year = 2024, hours = timedelta(hours = 500))
         ]
 
         return yearly_targets    
