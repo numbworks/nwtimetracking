@@ -244,6 +244,46 @@ class YearProvider():
         ]
 
         return yearly_targets    
+class SoftwareProjectNameProvider():
+
+    '''Collects all the logic related to the retrieval of software project names.'''
+
+    def get_all_software_project_names(self) -> list[str]:
+
+        '''Returns a list of software project names.'''
+
+        software_project_names : list[str] = [
+            "NW.MarkdownTables",
+            "NW.NGramTextClassification",
+            "NW.UnivariateForecasting",
+            "NW.Shared.Files",
+            "NW.Shared.Serialization",
+            "NW.Shared.Validation",
+            "nwreadinglist",
+            "nwtimetracking",
+            "nwtraderaanalytics",
+            "nwshared"
+        ]
+
+        return software_project_names
+    def get_all_software_project_names_by_spv(self) -> list[str]:
+
+        '''Returns a list of software project names to breakdown by version.'''
+
+        software_project_names_by_spv : list[str] = [
+            "NW.MarkdownTables",
+            "NW.NGramTextClassification",
+            "NW.UnivariateForecasting",
+            "NW.Shared.Files",        
+            "NW.Shared.Serialization",
+            "NW.Shared.Validation",
+            "nwreadinglist",
+            "nwtimetracking",
+            "nwtraderaanalytics",
+            "nwshared"
+        ]
+
+        return software_project_names_by_spv
 class TimeTrackingManager():
 
     '''Collects all the logic related to the management of "Time Tracking.xlsx".'''
