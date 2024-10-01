@@ -14,7 +14,7 @@ from unittest.mock import patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import YearlyTarget, SettingBag, EffortStatus, _MessageCollection
+from nwtimetracking import SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
 from nwtimetracking import DefaultPathProvider, YearProvider, TimeTrackingManager
 
 # SUPPORT METHODS
@@ -478,7 +478,7 @@ class YearProviderTestCase(unittest.TestCase):
             YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
             YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
             YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
+            YearlyTarget(year = 2024, hours = timedelta(hours = 500))
         ]
 
         # Act
@@ -486,6 +486,50 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(SupportMethodProvider.are_lists_of_yearly_targets_equal(list1 = expected, list2 = actual))
+class SoftwareProjectNameProviderTestCase(unittest.TestCase):
+
+    def test_getallsoftwareprojectnames_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[str] = [
+            "NW.MarkdownTables",
+            "NW.NGramTextClassification",
+            "NW.UnivariateForecasting",
+            "NW.Shared.Files",
+            "NW.Shared.Serialization",
+            "NW.Shared.Validation",
+            "nwreadinglist",
+            "nwtimetracking",
+            "nwtraderaanalytics",
+            "nwshared"
+        ]
+
+        # Act
+        actual : list[str] = SoftwareProjectNameProvider().get_all_software_project_names()
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_getallsoftwareprojectnamesbyspv_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[str] = [
+            "NW.MarkdownTables",
+            "NW.NGramTextClassification",
+            "NW.UnivariateForecasting",
+            "NW.Shared.Files",        
+            "NW.Shared.Serialization",
+            "NW.Shared.Validation",
+            "nwreadinglist",
+            "nwtimetracking",
+            "nwtraderaanalytics",
+            "nwshared"
+        ]
+
+        # Act
+        actual : list[str] = SoftwareProjectNameProvider().get_all_software_project_names_by_spv()
+
+        # Assert
+        self.assertEqual(expected, actual)
 class TimeTrackingManagerTestCase(unittest.TestCase):
 
     def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
