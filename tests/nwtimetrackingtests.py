@@ -1,5 +1,4 @@
 # GLOBAL MODULES
-from typing import Tuple
 import unittest
 import numpy as np
 import pandas as pd
@@ -10,6 +9,8 @@ from numpy import int64
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
+from types import FunctionType
+from typing import Tuple
 from unittest.mock import Mock, call, patch
 
 # LOCAL MODULES
@@ -17,7 +18,7 @@ import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetracking import ComponentBag, MarkdownProcessor, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
 from nwtimetracking import DefaultPathProvider, YearProvider, TimeTrackingManager
-from nwshared import MarkdownHelper, Formatter, FilePathManager
+from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -474,6 +475,19 @@ class ObjectMother():
         return (component_bag, setting_bag, markdown_processor) 
 
 # TEST CLASSES
+class ComponentBagTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
+
+        # Arrange
+        # Act
+        component_bag : ComponentBag = ComponentBag()
+
+        # Assert
+        self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
+        self.assertIsInstance(component_bag.file_manager, FileManager)
+        self.assertIsInstance(component_bag.logging_function, FunctionType)
+        self.assertIsInstance(component_bag.markdown_helper, MarkdownHelper)
 class DefaultPathProviderTestCase(unittest.TestCase):
 
     def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
