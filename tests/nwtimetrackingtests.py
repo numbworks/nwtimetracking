@@ -9,13 +9,16 @@ from numpy import int64
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
-from unittest.mock import patch
+from types import FunctionType
+from typing import Tuple
+from unittest.mock import Mock, call, patch
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import YearlyTarget, SettingBag, EffortStatus, _MessageCollection
+from nwtimetracking import ComponentBag, MarkdownProcessor, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
 from nwtimetracking import DefaultPathProvider, YearProvider, TimeTrackingManager
+from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -141,7 +144,6 @@ class ObjectMother():
             show_effort_status_df = True,
             show_time_ranges_df = True
         )
-
     @staticmethod
     def create_excel_data() -> DataFrame:
 
@@ -160,7 +162,6 @@ class ObjectMother():
         excel_data_df : DataFrame = pd.DataFrame(data = excel_data_dict, index=[0])
 
         return excel_data_df
-
     @staticmethod
     def create_sessions_df_column_names() -> list[str]:
 
@@ -177,7 +178,6 @@ class ObjectMother():
         column_names.append("Month")                # [9], int
 
         return column_names
-
     @staticmethod
     def create_sessions_df_dtype_names() -> list[str]:
 
@@ -197,7 +197,6 @@ class ObjectMother():
         ]
 
         return expected_dtype_names
-
     @staticmethod
     def create_yearly_targets() -> list[YearlyTarget]:
 
@@ -215,7 +214,6 @@ class ObjectMother():
         ]
 
         return yearly_targets
-
     @staticmethod
     def create_sessions_df() -> DataFrame:
 
@@ -255,7 +253,6 @@ class ObjectMother():
                 'TargetDiff': np.array(['-214h 00m'], dtype=object),
                 'IsTargetMet': np.array([False], dtype=bool),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))
-
     @staticmethod
     def create_tt_by_year_month_df() -> DataFrame:
 
@@ -271,7 +268,6 @@ class ObjectMother():
                 'YearlyTotal': np.array(['36h 00m'], dtype=object),
                 'ToTarget': np.array(['-214h 00m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))
-
     @staticmethod
     def create_tt_by_year_month_spnv_df() -> DataFrame:
 
@@ -294,7 +290,6 @@ class ObjectMother():
                 'TME': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
                 '%_TME': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-
     @staticmethod
     def create_tt_by_year_spnv_df() -> DataFrame:
 
@@ -316,7 +311,6 @@ class ObjectMother():
                 'TYE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
                 '%_TYE': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-
     @staticmethod
     def create_tt_by_spn_df() -> DataFrame:
 
@@ -337,7 +331,6 @@ class ObjectMother():
                 'TE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
                 '%_TE': np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-
     @staticmethod
     def create_tt_by_spn_spv_df() -> DataFrame:
 
@@ -354,7 +347,6 @@ class ObjectMother():
                 'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
                 'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-
     @staticmethod
     def create_tt_by_year_hashtag_df() -> DataFrame:
 
@@ -371,7 +363,6 @@ class ObjectMother():
                 'Hashtag': np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
                 'Effort': np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-
     @staticmethod
     def create_tt_by_hashtag_df() -> DataFrame:
 
@@ -388,7 +379,6 @@ class ObjectMother():
                 'Effort': np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
                 'Effort%': np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-
     @staticmethod
     def create_tts_by_month_df() -> DataFrame:
 
@@ -403,7 +393,6 @@ class ObjectMother():
                 'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
                 '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)				
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
-
     @staticmethod
     def create_tts_by_month_upd_df() -> DataFrame:
 
@@ -418,7 +407,6 @@ class ObjectMother():
                 'Month': np.array(['1', '2', '', '', '', '', '', '', '', '', '', ''], dtype=object),
                 '2024': np.array(['00h 00m', '36h 00m', '', '', '', '', '', '', '', '', '', ''], dtype=object)
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
-
     @staticmethod
     def create_time_ranges_df() -> DataFrame:
 
@@ -437,7 +425,69 @@ class ObjectMother():
                 'Occurrences': np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
             }, index=pd.RangeIndex(start=0, stop=21, step=1))
 
+    @staticmethod
+    def create_dtos_for_ttsbymonthmd() -> Tuple[DataFrame, str]:
+
+        data : list = [
+            [1, "00h 00m", "↑", "18h 00m", "↑", "88h 30m", "↓", "80h 15m", "↓", "60h 00m", "↓", "29h 15m", "↑", "53h 00m", "↓", "00h 00m", "↑", "06h 00m", "↑", "45h 45m"]
+        ]
+        columns : list[str] = ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022", "↕", "2023", "↕", "2024"]
+        df : DataFrame = pd.DataFrame(data, columns = columns)
+
+        lines : list[str] = [
+            "## Revision History",
+            "",
+            "|Date|Author|Description|",
+            "|---|---|---|",
+            "|2020-12-22|numbworks|Created.|",
+            "|2024-10-01|numbworks|Last update.|",
+            "",
+            "## Time Tracking By Month",
+            "",
+            "|   Month | 2015    | ↕   | 2016    | ↕   | 2017    | ↕   | 2018    | ↕   | 2019    | ↕   | 2020    | ↕   | 2021    | ↕   | 2022    | ↕   | 2023    | ↕   | 2024    |",
+            "|--------:|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|",
+            "|       1 | 00h 00m | ↑   | 18h 00m | ↑   | 88h 30m | ↓   | 80h 15m | ↓   | 60h 00m | ↓   | 29h 15m | ↑   | 53h 00m | ↓   | 00h 00m | ↑   | 06h 00m | ↑   | 45h 45m |"
+        ]
+        expected : str = "\n".join(lines) + "\n"
+
+        return (df, expected)
+    @staticmethod
+    def create_service_objects_for_ttsbymonthmd() -> Tuple[ComponentBag, SettingBag, MarkdownProcessor]:
+
+        component_bag : Mock = Mock()
+        component_bag.logging_function = Mock()
+        component_bag.file_manager.save_content = Mock()
+        component_bag.markdown_helper = MarkdownHelper(formatter = Formatter())
+        component_bag.file_path_manager = FilePathManager()        
+        
+        setting_bag : Mock = Mock()
+        setting_bag.last_update = datetime(2024, 10, 1)
+        setting_bag.tts_by_month_file_name = "TIMETRACKINGBYMONTH.md"
+        setting_bag.working_folder_path = "/home/nwtimetracking/"
+        setting_bag.show_tts_by_month_md = True
+        setting_bag.save_tts_by_month_md = True
+
+        markdown_processor : MarkdownProcessor = MarkdownProcessor(
+			component_bag = component_bag, 
+			setting_bag = setting_bag
+			)        
+
+        return (component_bag, setting_bag, markdown_processor) 
+
 # TEST CLASSES
+class ComponentBagTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
+
+        # Arrange
+        # Act
+        component_bag : ComponentBag = ComponentBag()
+
+        # Assert
+        self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
+        self.assertIsInstance(component_bag.file_manager, FileManager)
+        self.assertIsInstance(component_bag.logging_function, FunctionType)
+        self.assertIsInstance(component_bag.markdown_helper, MarkdownHelper)
 class DefaultPathProviderTestCase(unittest.TestCase):
 
     def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
@@ -478,7 +528,7 @@ class YearProviderTestCase(unittest.TestCase):
             YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
             YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
             YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
+            YearlyTarget(year = 2024, hours = timedelta(hours = 500))
         ]
 
         # Act
@@ -486,6 +536,50 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(SupportMethodProvider.are_lists_of_yearly_targets_equal(list1 = expected, list2 = actual))
+class SoftwareProjectNameProviderTestCase(unittest.TestCase):
+
+    def test_getallsoftwareprojectnames_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[str] = [
+            "NW.MarkdownTables",
+            "NW.NGramTextClassification",
+            "NW.UnivariateForecasting",
+            "NW.Shared.Files",
+            "NW.Shared.Serialization",
+            "NW.Shared.Validation",
+            "nwreadinglist",
+            "nwtimetracking",
+            "nwtraderaanalytics",
+            "nwshared"
+        ]
+
+        # Act
+        actual : list[str] = SoftwareProjectNameProvider().get_all_software_project_names()
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_getallsoftwareprojectnamesbyspv_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[str] = [
+            "NW.MarkdownTables",
+            "NW.NGramTextClassification",
+            "NW.UnivariateForecasting",
+            "NW.Shared.Files",        
+            "NW.Shared.Serialization",
+            "NW.Shared.Validation",
+            "nwreadinglist",
+            "nwtimetracking",
+            "nwtraderaanalytics",
+            "nwshared"
+        ]
+
+        # Act
+        actual : list[str] = SoftwareProjectNameProvider().get_all_software_project_names_by_spv()
+
+        # Assert
+        self.assertEqual(expected, actual)
 class TimeTrackingManagerTestCase(unittest.TestCase):
 
     def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
@@ -1138,6 +1232,26 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 
+class MarkdownProcessorTestCase(unittest.TestCase):
+
+    def test_processttsbymonthmd_shouldlogandsave_whenshowandsavearetrue(self) -> None:
+
+		# Arrange
+        file_name : str = "TIMETRACKINGBYMONTH.md"
+        file_path : str = f"/home/nwtimetracking/{file_name}"
+        tts_by_month_upd_df, expected = ObjectMother().create_dtos_for_ttsbymonthmd()
+        component_bag, _, markdown_processor = ObjectMother().create_service_objects_for_ttsbymonthmd()        
+
+        # Act
+        markdown_processor.process_tts_by_month_md(tts_by_month_upd_df = tts_by_month_upd_df)
+
+        # Assert
+        self.assertEqual(component_bag.logging_function.call_count, 2)
+        component_bag.logging_function.assert_has_calls([
+            call(file_name + "\n"),
+            call(expected)
+        ])
+        component_bag.file_manager.save_content.assert_called_with(content = expected, file_path = file_path)
 
 # MAIN
 if __name__ == "__main__":

@@ -15,9 +15,11 @@ from datetime import datetime
 from datetime import timedelta
 from pandas import DataFrame
 from pandas import Series
-from typing import Any, Optional, cast
+from typing import Any, Callable, Optional, cast
 
 # LOCAL MODULES
+from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper
+
 # CONSTANTS
 # STATIC CLASSES
 class _MessageCollection():
@@ -121,6 +123,11 @@ class SettingBag():
     time_ranges_top_n : int
     time_ranges_remove_unknown_id : bool
     time_ranges_filter_by_top_n : bool
+    working_folder_path : str
+    last_update : datetime
+    tts_by_month_file_name : str
+    show_tts_by_month_md : bool
+    save_tts_by_month_md : bool
 
     def __init__(
         self, 
@@ -164,7 +171,12 @@ class SettingBag():
         time_ranges_unknown_id : str = "Unknown",
         time_ranges_top_n : int = 5,
         time_ranges_remove_unknown_id : bool = True,
-        time_ranges_filter_by_top_n : bool  = True       
+        time_ranges_filter_by_top_n : bool  = True,
+        working_folder_path : str = "/home/nwtimetracking/",
+        last_update : datetime = datetime.now(),
+        tts_by_month_file_name : str = "TIMETRACKINGBYMONTH.md",
+        show_tts_by_month_md : bool = False,
+        save_tts_by_month_md : bool = False
         ) -> None:
         
         self.years = years
@@ -201,6 +213,31 @@ class SettingBag():
         self.time_ranges_top_n = time_ranges_top_n
         self.time_ranges_remove_unknown_id = time_ranges_remove_unknown_id
         self.time_ranges_filter_by_top_n = time_ranges_filter_by_top_n
+        self.working_folder_path = working_folder_path
+        self.last_update = last_update
+        self.tts_by_month_file_name = tts_by_month_file_name
+        self.show_tts_by_month_md = show_tts_by_month_md
+        self.save_tts_by_month_md = save_tts_by_month_md
+class ComponentBag():
+
+    '''Represents a collection of components.'''
+
+    file_path_manager : FilePathManager
+    file_manager : FileManager
+    logging_function : Callable[[str], None]
+    markdown_helper : MarkdownHelper
+
+    def __init__(
+            self, 
+            file_path_manager : FilePathManager = FilePathManager(),
+            file_manager : FileManager = FileManager(file_path_manager = FilePathManager()),
+            logging_function : Callable[[str], None] = LambdaProvider().get_default_logging_function(),
+            markdown_helper : MarkdownHelper = MarkdownHelper(formatter = Formatter())) -> None:
+
+        self.file_path_manager = file_path_manager
+        self.file_manager = file_manager
+        self.logging_function = logging_function
+        self.markdown_helper = markdown_helper
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -244,6 +281,46 @@ class YearProvider():
         ]
 
         return yearly_targets    
+class SoftwareProjectNameProvider():
+
+    '''Collects all the logic related to the retrieval of software project names.'''
+
+    def get_all_software_project_names(self) -> list[str]:
+
+        '''Returns a list of software project names.'''
+
+        software_project_names : list[str] = [
+            "NW.MarkdownTables",
+            "NW.NGramTextClassification",
+            "NW.UnivariateForecasting",
+            "NW.Shared.Files",
+            "NW.Shared.Serialization",
+            "NW.Shared.Validation",
+            "nwreadinglist",
+            "nwtimetracking",
+            "nwtraderaanalytics",
+            "nwshared"
+        ]
+
+        return software_project_names
+    def get_all_software_project_names_by_spv(self) -> list[str]:
+
+        '''Returns a list of software project names to breakdown by version.'''
+
+        software_project_names_by_spv : list[str] = [
+            "NW.MarkdownTables",
+            "NW.NGramTextClassification",
+            "NW.UnivariateForecasting",
+            "NW.Shared.Files",        
+            "NW.Shared.Serialization",
+            "NW.Shared.Validation",
+            "nwreadinglist",
+            "nwtimetracking",
+            "nwtraderaanalytics",
+            "nwshared"
+        ]
+
+        return software_project_names_by_spv
 class TimeTrackingManager():
 
     '''Collects all the logic related to the management of "Time Tracking.xlsx".'''
@@ -1615,6 +1692,53 @@ class TimeTrackingManager():
         time_ranges_df.reset_index(drop = True, inplace = True)
 
         return time_ranges_df
+class MarkdownProcessor():
+
+    '''Collects all the logic related to the processing of Markdown content.'''
+
+    __component_bag : ComponentBag
+    __setting_bag : SettingBag    
+
+    def __init__(self, component_bag : ComponentBag, setting_bag : SettingBag) -> None:
+
+        self.__component_bag = component_bag
+        self.__setting_bag = setting_bag
+
+    def __get_tts_by_month_md(self, last_update : datetime, tts_by_month_upd_df : DataFrame) -> str:
+
+        '''Creates the Markdown content for a "Time Tracking By Month" file out of the provided dataframe.'''
+
+        md_paragraph_title : str = "Time Tracking By Month"
+
+        markdown_header : str = self.__component_bag.markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = md_paragraph_title)
+        tts_by_month_upd_md : str = tts_by_month_upd_df.to_markdown(index = False)
+
+        md_content : str = markdown_header
+        md_content += "\n"
+        md_content += tts_by_month_upd_md
+        md_content += "\n"
+
+        return md_content
+
+    def process_tts_by_month_md(self, tts_by_month_upd_df : DataFrame) -> None:
+
+        '''Performs all the tasks related to the "Time Tracking By Month" file.'''
+
+        content : str = self.__get_tts_by_month_md(       
+            last_update = self.__setting_bag.last_update, 
+            tts_by_month_upd_df = tts_by_month_upd_df)
+
+        if self.__setting_bag.show_tts_by_month_md:
+            file_name_content : str = self.__component_bag.markdown_helper.format_file_name_as_content(file_name = self.__setting_bag.tts_by_month_file_name)
+            self.__component_bag.logging_function(file_name_content)
+            self.__component_bag.logging_function(content)
+
+        if self.__setting_bag.save_tts_by_month_md:            
+            file_path : str = self.__component_bag.file_path_manager.create_file_path(
+                folder_path = self.__setting_bag.working_folder_path,
+                file_name = self.__setting_bag.tts_by_month_file_name)
+            
+            self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
 
 # MAIN
 if __name__ == "__main__":

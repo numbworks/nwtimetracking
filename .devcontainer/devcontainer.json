@@ -11,5 +11,8 @@
 				"ms-toolsai.jupyter"
 			]
 		}
-	}
+	},
+    "mounts": [
+        "source=${localEnv:USERPROFILE}/Desktop/nwtimetracking/,target=/home/nwtimetracking/,type=bind,consistency=cached"
+    ]	
 }

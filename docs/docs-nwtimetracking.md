@@ -12,6 +12,7 @@ Contact: numbworks@gmail.com
 | 2024-05-19 | numbworks | Updated to v3.2.0. |
 | 2024-05-20 | numbworks | Updated to v3.3.0. |
 | 2024-08-12 | numbworks | Updated to v3.4.0. |
+| 2024-10-01 | numbworks | Updated to v3.7.0. |
 
 ## Introduction
 
@@ -74,18 +75,26 @@ To run the unit tests in Visual Studio Code (while still connected to the Dev Co
 2. select the Python interpreter inside the Dev Container (if asked);
 3. Done! 
 
-To calculate the unit test coverage in Visual Studio Code (while still connected to the Dev Container):
+To calculate the total unit test coverage in Visual Studio Code (while still connected to the Dev Container):
 
 1. <ins>Terminal</ins> > <ins>New Terminal</ins>;
-2. Run the following commands:
+2. Run the following commands to get the total unit test coverage:
 
     ```
     cd tests
     coverage run -m unittest nwtimetrackingtests.py
-    coverage report
+    coverage report --omit=nwtimetrackingtests.py
     ```
 
-3. Done!
+3. Run the following commands to get the unit test coverage per class:
+
+    ```
+    cd tests
+    coverage run -m unittest nwtimetrackingtests.py
+    coverage html --omit=nwtimetrackingtests.py && sed -n '/<table class="index" data-sortable>/,/<\/table>/p' htmlcov/class_index.html | pandoc --from html --to plain && sleep 3 && rm -rf htmlcov
+    ```
+
+4. Done!
 
 ## Known Issues - nwshared
 
