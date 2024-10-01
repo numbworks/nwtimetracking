@@ -121,6 +121,7 @@ class SettingBag():
     time_ranges_top_n : int
     time_ranges_remove_unknown_id : bool
     time_ranges_filter_by_top_n : bool
+    working_folder_path : str 
 
     def __init__(
         self, 
@@ -164,7 +165,8 @@ class SettingBag():
         time_ranges_unknown_id : str = "Unknown",
         time_ranges_top_n : int = 5,
         time_ranges_remove_unknown_id : bool = True,
-        time_ranges_filter_by_top_n : bool  = True       
+        time_ranges_filter_by_top_n : bool  = True,
+        working_folder_path : str = "/home/nwtimetracking/"
         ) -> None:
         
         self.years = years
@@ -201,6 +203,7 @@ class SettingBag():
         self.time_ranges_top_n = time_ranges_top_n
         self.time_ranges_remove_unknown_id = time_ranges_remove_unknown_id
         self.time_ranges_filter_by_top_n = time_ranges_filter_by_top_n
+        self.working_folder_path = working_folder_path
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
