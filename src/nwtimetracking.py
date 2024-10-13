@@ -1255,7 +1255,7 @@ class TimeTrackingManager():
         cn_is_target_met : str = "IsTargetMet"
 
         tt_df[cn_yearly_target] = tt_df[cn_year].apply(
-            lambda x : self.__get_yearly_target(yearly_targets = yearly_targets, year = x).hours)
+            lambda x : cast(YearlyTarget, self.__get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
         tt_df[cn_target_diff] = tt_df[cn_effort] - tt_df[cn_yearly_target]
         tt_df[cn_is_target_met] = tt_df.apply(
             lambda x : self.__is_yearly_target_met(effort = x[cn_effort], yearly_target = x[cn_yearly_target]), axis = 1)    
@@ -1322,7 +1322,7 @@ class TimeTrackingManager():
 
         cn_yearly_target : str = "YearlyTarget"
         tt_df[cn_yearly_target] = tt_df[cn_year].apply(
-            lambda x : self.__get_yearly_target(yearly_targets = yearly_targets, year = x).hours)
+            lambda x : cast(YearlyTarget, self.__get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
 
         cn_to_target : str  = "ToTarget"
         tt_df[cn_to_target] = tt_df[cn_yearly_total] - tt_df[cn_yearly_target]    
