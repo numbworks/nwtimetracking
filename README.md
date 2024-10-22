@@ -4,13 +4,6 @@
 
 Contact: numbworks@gmail.com
 
-## Revision History
-
-| Date | Author | Description |
-|---|---|---|
-| 2023-08-21 | numbworks | Created. |
-| 2024-08-12 | numbworks | Updated to v3.4.0. |
-
 ## Introduction
 
 From the documentation:
