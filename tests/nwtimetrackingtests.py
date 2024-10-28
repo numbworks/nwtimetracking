@@ -551,7 +551,8 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwreadinglist",
             "nwtimetracking",
             "nwtraderaanalytics",
-            "nwshared"
+            "nwshared",
+            "nwpackageversions"
         ]
 
         # Act
@@ -572,7 +573,8 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwreadinglist",
             "nwtimetracking",
             "nwtraderaanalytics",
-            "nwshared"
+            "nwshared",
+            "nwpackageversions"
         ]
 
         # Act
@@ -589,7 +591,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
 
         # Act
-        actual_td : str = TimeTrackingManager()._TimeTrackingManager__convert_string_to_timedelta(td_str = td_str)
+        actual_td : str = TimeTrackingManager()._TimeTrackingManager__convert_string_to_timedelta(td_str = td_str) # type: ignore
 
         # Assert
         self.assertEqual(expected_td, actual_td)
@@ -601,7 +603,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_hours : timedelta = timedelta(hours = 250)
 
         # Act
-        actual_hours : timedelta = TimeTrackingManager()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year).hours
+        actual_hours : timedelta = TimeTrackingManager()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year).hours # type: ignore
 
         # Assert
         self.assertEqual(expected_hours, actual_hours)
@@ -612,7 +614,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         year : int = 2010
 
         # Act
-        yearly_target : YearlyTarget = TimeTrackingManager()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year)
+        yearly_target : YearlyTarget = TimeTrackingManager()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year) # type: ignore
 
         # Assert
         self.assertIsNone(yearly_target)
@@ -623,7 +625,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = TimeTrackingManager()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        actual : bool = TimeTrackingManager()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target) # type: ignore
         
         # Assert
         self.assertTrue(actual)
@@ -634,7 +636,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = TimeTrackingManager()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        actual : bool = TimeTrackingManager()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target) # type: ignore
 
         # Assert
         self.assertFalse(actual)
@@ -645,7 +647,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "255h 30m"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = False)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = False) # type: ignore
         
         # Assert
         self.assertEqual(expected, actual)
@@ -656,7 +658,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "+255h 30m"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = True)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = True) # type: ignore
         
         # Assert
         self.assertEqual(expected, actual)
@@ -667,7 +669,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "NW.AutoProffLibrary"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -678,7 +680,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "ERROR"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)   
@@ -689,7 +691,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "1.0.0"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -700,7 +702,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "ERROR"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor)
+        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)  
@@ -713,7 +715,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 0.00
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -726,7 +728,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 0.00
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -739,7 +741,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 25.00
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -752,7 +754,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 100.00
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -765,7 +767,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 33.3333
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -802,11 +804,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             )
 
         # Act
-        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(
-            idx = idx, 
-            start_time_str = start_time_str,
-            end_time_str = end_time_str,
-            effort_str = effort_str)
+        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str,end_time_str = end_time_str,effort_str = effort_str) # type: ignore
 
         # Assert
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
@@ -851,11 +849,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             )
 
         # Act
-        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(
-            idx = idx, 
-            start_time_str = start_time_str,
-            end_time_str = end_time_str,
-            effort_str = effort_str)
+        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str) # type: ignore
 
         # Assert
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
@@ -887,7 +881,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             ) 
 
         # Act
-        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
+        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status_for_none_values(idx = idx, effort_str = effort_str) # type: ignore
 
         # Assert
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
@@ -919,7 +913,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : datetime = datetime.strptime(dt_str, strp_format)
 
         # Act
-        actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time)
+        actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -940,7 +934,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : datetime = datetime.strptime(dt_str, strp_format)
 
         # Act
-        actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time)
+        actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -956,7 +950,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         
         # Act
         with self.assertRaises(ValueError) as context:
-            actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time)
+            actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time) # type: ignore
 
         # Assert
         self.assertTrue(expected_message in str(context.exception))
@@ -972,7 +966,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             effort_str : str):
 
         # Arrange
-        actual_td : timedelta = TimeTrackingManager()._TimeTrackingManager__convert_string_to_timedelta(td_str = effort_str)        
+        actual_td : timedelta = TimeTrackingManager()._TimeTrackingManager__convert_string_to_timedelta(td_str = effort_str) # type: ignore
         expected : EffortStatus = EffortStatus(
             idx = idx,
             start_time_str = None,
@@ -1015,11 +1009,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         
         # Act
         with self.assertRaises(ValueError) as context:
-            actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(
-                idx = idx, 
-                start_time_str = start_time_str,
-                end_time_str = end_time_str,
-                effort_str = effort_str)
+            actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)  # type: ignore
 
         # Assert
         self.assertTrue(expected_message in str(context.exception)) 
@@ -1037,11 +1027,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Arrange
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__create_time_range_id(
-            start_time=start_time, 
-            end_time=end_time,
-            unknown_id=unknown_id
-            )
+        actual : str = TimeTrackingManager()._TimeTrackingManager__create_time_range_id(start_time = start_time, end_time = end_time, unknown_id = unknown_id) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -1160,12 +1146,16 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         unknown_id : str = "Unknown"
         sessions_df : DataFrame = ObjectMother().create_sessions_df()
         expected_df : DataFrame = ObjectMother().create_time_ranges_df()
+        expected_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
+        expected_df.reset_index(drop = True, inplace = True)
 
         # Act
         actual_df : DataFrame  = TimeTrackingManager().create_time_ranges_df(sessions_df = sessions_df, unknown_id = unknown_id)
+        actual_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
+        actual_df.reset_index(drop = True, inplace = True)
 
         # Assert
-        assert_frame_equal(expected_df , actual_df)  
+        assert_frame_equal(expected_df, actual_df)  
     def test_removeunknownid_shouldreturnexpecteddataframe_whencontainsunknownid(self):
 
         # Arrange

@@ -13,6 +13,7 @@ Contact: numbworks@gmail.com
 | 2024-05-20 | numbworks | Updated to v3.3.0. |
 | 2024-08-12 | numbworks | Updated to v3.4.0. |
 | 2024-10-01 | numbworks | Updated to v3.7.0. |
+| 2024-10-28 | numbworks | Updated to v3.8.0. |
 
 ## Introduction
 
@@ -71,7 +72,7 @@ To run this application on Windows and Linux:
 
 To run the unit tests in Visual Studio Code (while still connected to the Dev Container):
 
-1.  click on the <ins>Testing</ins> icon on the sidebar, right-click on <ins>tests</ins> > <ins>Run Test</ins>;
+1. click on the <ins>Testing</ins> icon on the sidebar, right-click on <ins>tests</ins> > <ins>Run Test</ins>;
 2. select the Python interpreter inside the Dev Container (if asked);
 3. Done! 
 
@@ -95,6 +96,25 @@ To calculate the total unit test coverage in Visual Studio Code (while still con
     ```
 
 4. Done!
+
+## Dependency Update
+
+To check for the updatability of the dependencies this library is built upon, you can use the `nwpackageversions` library. Please:
+
+1. Launch Visual Studio Code;
+2. Click on <ins>File</ins> > <ins>Open folder</ins> > `nwtimetracking`;
+3. <ins>Terminal</ins> > <ins>New Terminal</ins>;
+4. Run the following commands to perform the dependency check (it requires an internet connection):
+
+    ```
+    cd src
+    python3
+    from nwpackageversions import RequirementChecker
+    RequirementChecker().check("/workspaces/nwtimetracking/.devcontainer/Dockerfile")
+    ```
+
+5. You will get a log containing a list of up-to-date and out-of-date dependencies, that you can use to decide which update to perform.
+6. Done!
 
 ## Known Issues - nwshared
 
