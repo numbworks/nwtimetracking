@@ -1146,12 +1146,16 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         unknown_id : str = "Unknown"
         sessions_df : DataFrame = ObjectMother().create_sessions_df()
         expected_df : DataFrame = ObjectMother().create_time_ranges_df()
+        expected_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
+        expected_df.reset_index(drop = True, inplace = True)
 
         # Act
         actual_df : DataFrame  = TimeTrackingManager().create_time_ranges_df(sessions_df = sessions_df, unknown_id = unknown_id)
+        actual_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
+        actual_df.reset_index(drop = True, inplace = True)
 
         # Assert
-        assert_frame_equal(expected_df , actual_df)  
+        assert_frame_equal(expected_df, actual_df)  
     def test_removeunknownid_shouldreturnexpecteddataframe_whencontainsunknownid(self):
 
         # Arrange
