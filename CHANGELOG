@@ -1,3 +1,12 @@
+v3.8.0
+- Application:
+	- Maintenance: dependency update (numpy 1.26.3 => 2.1.2, pyarrow 15.0.0 => 17.0.0, openpyxl 3.1.0 => 3.1.5).
+	- Maintenance: dependency update (pandas 2.2.0 => 2.2.3, requests 2.31.0 => 2.32.3, coverage 7.6.1 => 7.6.4).
+	- Maintenance: dependency update (jupyter 1.0.0 => 1.1.0, nwshared 1.4.0 => 1.6.0, nwpackageversions 1.0.0 => 1.2.0).
+	- Refactoring: previous two "check" cells combined into one ("Language/Requirement Checks").
+- Documentation:
+	- Feature: updated to v3.8.0.
+
 v3.7.0
 - Application:
 	- Feature: expanded the use of DisplayPreProcessor in the notebook.
