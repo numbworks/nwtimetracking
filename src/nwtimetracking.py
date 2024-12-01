@@ -1122,10 +1122,10 @@ class TimeTrackingManager():
         
         except:
 
-            message : str = _MessageCollection.effort_status_not_possible_to_create(
+            error : str = _MessageCollection.effort_status_not_possible_to_create(
                 idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
 
-            raise ValueError(message)
+            raise ValueError(error)
     def __create_effort_status_and_cast_to_any(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> Any:
 
         '''
