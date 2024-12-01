@@ -4,6 +4,6 @@
 # INFORMATION
 MODULE_ALIAS : str = "nwtt"
 MODULE_NAME : str = "nwtimetracking"
-MODULE_VERSION : str = "3.8.0"
+MODULE_VERSION : str = "3.9.0"
 
 # SETUP
