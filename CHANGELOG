@@ -1,3 +1,11 @@
+v3.9.0
+- Library:
+	- Feature: makefile added.
+	- Bugfix: types fixed according to mypy analysis.
+	- Maintenance: dependency update (nwshared v1.7.0 => v1.8.0, nwpackageversions v1.6.0 => v1.8.0).
+- Documentation:
+	- Feature: updated to v3.9.0.
+
 v3.8.0
 - Application:
 	- Maintenance: dependency update (numpy 1.26.3 => 2.1.2, pyarrow 15.0.0 => 17.0.0, openpyxl 3.1.0 => 3.1.5).
