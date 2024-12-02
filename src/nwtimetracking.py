@@ -11,10 +11,9 @@ import pandas as pd
 import re
 import openpyxl
 from dataclasses import dataclass
-from datetime import datetime
-from datetime import timedelta
-from pandas import DataFrame
-from pandas import Series
+from datetime import datetime, timedelta
+from enum import StrEnum
+from pandas import DataFrame, Series
 from typing import Any, Callable, Optional, cast
 
 # LOCAL MODULES
@@ -54,6 +53,20 @@ class _MessageCollection():
     @staticmethod
     def effort_status_not_among_expected_time_values(time : str) -> str:
         return f"The provided time ('{time}') is not among the expected time values."
+class TTCN(StrEnum):
+    
+    '''Collects all the column names used by ...'''
+
+    DATE = "Date"
+    STARTTIME = "StartTime"
+    ENDTIME = "EndTime"
+    EFFORT = "Effort"
+    HASHTAG = "Hashtag"
+    DESCRIPTOR = "Descriptor"
+    ISSOFTWAREPROJECT = "IsSoftwareProject"
+    ISRELEASEDAY = "IsReleaseDay"
+    YEAR = "Year"
+    MONTH = "Month"
 
 # DTOs
 @dataclass(frozen=True)
@@ -332,16 +345,16 @@ class TimeTrackingManager():
         '''Enforces definition for the provided dataframe.'''
 
         column_names : list[str] = []
-        column_names.append("Date")                 # [0], date
-        column_names.append("StartTime")            # [1], str
-        column_names.append("EndTime")              # [2], str
-        column_names.append("Effort")               # [3], str
-        column_names.append("Hashtag")              # [4], str
-        column_names.append("Descriptor")           # [5], str
-        column_names.append("IsSoftwareProject")    # [6], bool
-        column_names.append("IsReleaseDay")         # [7], bool
-        column_names.append("Year")                 # [8], int
-        column_names.append("Month")                # [9], int
+        column_names.append(TTCN.DATE)              # [0], date
+        column_names.append(TTCN.STARTTIME)         # [1], str
+        column_names.append(TTCN.ENDTIME)           # [2], str
+        column_names.append(TTCN.EFFORT)            # [3], str
+        column_names.append(TTCN.HASHTAG)           # [4], str
+        column_names.append(TTCN.DESCRIPTOR)        # [5], str
+        column_names.append(TTCN.ISSOFTWAREPROJECT) # [6], bool
+        column_names.append(TTCN.ISRELEASEDAY)      # [7], bool
+        column_names.append(TTCN.YEAR)              # [8], int
+        column_names.append(TTCN.MONTH)             # [9], int
 
         sessions_df = sessions_df[column_names]
     
