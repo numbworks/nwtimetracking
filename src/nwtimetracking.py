@@ -81,6 +81,7 @@ class TTCN(StrEnum):
     DYE = "DYE"
     TYE = "TYE"
     TREND = "↕"
+    EFFORTPRC = "Effort%"
 
 # DTOs
 @dataclass(frozen=True)
@@ -1142,14 +1143,11 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_hashtag: str = "Hashtag"
-        cn_effort : str = "Effort"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tt_df = tt_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
 
-        cn_effort_prc : str = "Effort%"
-        summarized : float = tt_df[cn_effort].sum()
-        tt_df[cn_effort_prc] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = summarized), axis = 1)     
+        summarized : float = tt_df[TTCN.EFFORT].sum()
+        tt_df[TTCN.EFFORTPRC] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
 
         return tt_df
 
