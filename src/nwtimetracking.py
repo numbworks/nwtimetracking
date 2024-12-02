@@ -95,6 +95,10 @@ class TTCN(StrEnum):
     TE = "TE"
     PERCDE = "%_DE"
     PERCTE = "%_TE"
+    EFFORTSTATUS = "EffortStatus"
+    ESISCORRECT = "ES_IsCorrect"
+    ESEXPECTED = "ES_Expected"
+    ESMESSAGE = "ES_Message"
 
 # DTOs
 @dataclass(frozen=True)
@@ -1528,28 +1532,19 @@ class TimeTrackingManager():
 
         es_df : DataFrame = sessions_df.copy(deep = True)
         
-        cn_start_time : str = "StartTime"
-        cn_end_time : str = "EndTime"
-        cn_effort : str = "Effort"
-        cn_effort_status : str = "EffortStatus"
-
-        es_df[cn_effort_status] = es_df.apply(
+        es_df[TTCN.EFFORTSTATUS] = es_df.apply(
             lambda x : self.__create_effort_status_and_cast_to_any(
                     idx = x.name, 
-                    start_time_str = x[cn_start_time],
-                    end_time_str = x[cn_end_time],
-                    effort_str = x[cn_effort]),
+                    start_time_str = x[TTCN.STARTTIME],
+                    end_time_str = x[TTCN.ENDTIME],
+                    effort_str = x[TTCN.EFFORT]),
             axis = 1)
         
-        cn_es_is_correct : str = "ES_IsCorrect"
-        cn_es_expected : str = "ES_Expected"
-        cn_es_message : str = "ES_Message"
+        es_df[TTCN.ESISCORRECT] = es_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
+        es_df[TTCN.ESEXPECTED] = es_df[TTCN.EFFORTSTATUS].apply(lambda x : x.expected_str)
+        es_df[TTCN.ESMESSAGE] = es_df[TTCN.EFFORTSTATUS].apply(lambda x : x.message)
 
-        es_df[cn_es_is_correct] = es_df[cn_effort_status].apply(lambda x : x.is_correct)
-        es_df[cn_es_expected] = es_df[cn_effort_status].apply(lambda x : x.expected_str)
-        es_df[cn_es_message] = es_df[cn_effort_status].apply(lambda x : x.message)
-
-        es_df = es_df[[cn_start_time, cn_end_time, cn_effort, cn_es_is_correct, cn_es_expected, cn_es_message]]
+        es_df = es_df[[TTCN.STARTTIME, TTCN.ENDTIME, TTCN.EFFORT, TTCN.ESISCORRECT, TTCN.ESEXPECTED, TTCN.ESMESSAGE]]
 
         return es_df
     def filter_by_is_correct(self, es_df : DataFrame, is_correct : bool) -> DataFrame:
