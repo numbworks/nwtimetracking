@@ -70,6 +70,7 @@ class TTCN(StrEnum):
     PROJECTNAME = "ProjectName"
     PROJECTVERSION = "ProjectVersion"
     DME = "DME"
+    TME = "TME"
 
 # DTOs
 @dataclass(frozen=True)
@@ -541,18 +542,13 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_year : str = "Year"
-        condition : Series = (sessions_df[cn_year].isin(values = years))
+        condition : Series = (sessions_df[TTCN.YEAR].isin(values = years))
         tt_df = tt_df.loc[condition]
 
-        cn_month : str = "Month"
-        cn_effort : str = "Effort"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [cn_year, cn_month])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        tt_df = tt_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
-    
-        cn_tme : str = "TME"
-        tt_df.rename(columns = {cn_effort : cn_tme}, inplace = True)
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
+        tt_df.rename(columns = {TTCN.EFFORT : TTCN.TME}, inplace = True)
 
         return tt_df
     def __get_raw_tt_by_year_spnv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
