@@ -20,46 +20,6 @@ from typing import Any, Callable, Optional, cast
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper
 
 # CONSTANTS
-# STATIC CLASSES
-class _MessageCollection():
-
-    '''Collects all the messages used for logging and for the exceptions.'''
-
-    @staticmethod
-    def effort_status_mismatching_effort(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
-
-        '''
-        "The provided row contains a mismatching effort (idx: '4', start_time: '20:00', end_time: '00:00', actual_effort: '3h 00m', expected_effort: '4h 00m')."
-        '''
-
-        message : str = "The provided row contains a mismatching effort "
-        message += f"(idx: '{idx}', start_time: '{start_time_str}', end_time: '{end_time_str}', actual_effort: '{actual_str}', expected_effort: '{expected_str}')."
-
-        return message
-    
-    @staticmethod
-    def effort_status_not_possible_to_create(idx : int, start_time_str : str, end_time_str : str, effort_str : str):
-
-            '''
-                "It has not been possible to create an EffortStatus for the provided parameters 
-                (idx: '770', start_time_str: '22:00', end_time_str: '00:00 ', effort_str: '2h 00m')."
-            '''
-
-            message : str = "It has not been possible to create an EffortStatus for the provided parameters "
-            message += f"(idx: '{idx}', start_time_str: '{start_time_str}', end_time_str: '{end_time_str}', effort_str: '{effort_str}')."
-
-            return message
-    
-    @staticmethod
-    def effort_status_not_among_expected_time_values(time : str) -> str:
-        return f"The provided time ('{time}') is not among the expected time values."
-    
-    @staticmethod
-    def starttime_endtime_are_empty() -> str:
-        return "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
-    @staticmethod
-    def effort_is_correct() -> str:
-        return "The effort is correct."
 class TTCN(StrEnum):
     
     '''Collects all the column names used by ...'''
@@ -101,6 +61,47 @@ class TTCN(StrEnum):
     ESMESSAGE = "ES_Message"
     TIMERANGEID = "TimeRangeId"
     OCCURRENCES = "Occurrences"
+
+# STATIC CLASSES
+class _MessageCollection():
+
+    '''Collects all the messages used for logging and for the exceptions.'''
+
+    @staticmethod
+    def effort_status_mismatching_effort(idx : int, start_time_str : str, end_time_str : str, actual_str : str, expected_str : str) -> str:
+
+        '''
+        "The provided row contains a mismatching effort (idx: '4', start_time: '20:00', end_time: '00:00', actual_effort: '3h 00m', expected_effort: '4h 00m')."
+        '''
+
+        message : str = "The provided row contains a mismatching effort "
+        message += f"(idx: '{idx}', start_time: '{start_time_str}', end_time: '{end_time_str}', actual_effort: '{actual_str}', expected_effort: '{expected_str}')."
+
+        return message
+    
+    @staticmethod
+    def effort_status_not_possible_to_create(idx : int, start_time_str : str, end_time_str : str, effort_str : str):
+
+            '''
+                "It has not been possible to create an EffortStatus for the provided parameters 
+                (idx: '770', start_time_str: '22:00', end_time_str: '00:00 ', effort_str: '2h 00m')."
+            '''
+
+            message : str = "It has not been possible to create an EffortStatus for the provided parameters "
+            message += f"(idx: '{idx}', start_time_str: '{start_time_str}', end_time_str: '{end_time_str}', effort_str: '{effort_str}')."
+
+            return message
+    
+    @staticmethod
+    def effort_status_not_among_expected_time_values(time : str) -> str:
+        return f"The provided time ('{time}') is not among the expected time values."
+    
+    @staticmethod
+    def starttime_endtime_are_empty() -> str:
+        return "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+    @staticmethod
+    def effort_is_correct() -> str:
+        return "The effort is correct."
 
 # DTOs
 @dataclass(frozen=True)
