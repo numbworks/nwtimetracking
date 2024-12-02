@@ -131,6 +131,24 @@ class EffortStatus():
 
     is_correct : bool
     message : str 
+@dataclass(frozen = True)
+class TTSummary():
+
+    '''Collects all the dataframes and markdowns.'''
+
+    tt_df : DataFrame
+    tts_by_month_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_year_df : DataFrame
+    tts_by_year_month_df : DataFrame
+    tts_by_year_month_spnv_df : DataFrame
+    tts_by_year_spnv_df : DataFrame
+    tts_by_spn_df : DataFrame
+    tts_by_spn_spv_df : DataFrame
+    tts_by_year_hashtag_df : DataFrame
+    tts_by_hashtag_df : DataFrame
+    tts_by_efs_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_tr_df : DataFrame
+    tts_by_month_md : str
 
 # CLASSES
 class SettingBag():
@@ -1634,7 +1652,6 @@ class TTMarkdownFactory():
         md_content += "\n"
 
         return md_content
-
 
 # MAIN
 if __name__ == "__main__":
