@@ -87,6 +87,8 @@ class TTCN(StrEnum):
     ISTARGETMET = "IsTargetMet"
     YEARLYTOTAL = "YearlyTotal"
     TOTARGET = "ToTarget"
+    PERCDME = "%_DME"
+    PERCTME = "%_TME"
 
 # DTOs
 @dataclass(frozen=True)
@@ -1296,37 +1298,28 @@ class TimeTrackingManager():
         dme_df : DataFrame = self.__get_raw_dme(sessions_df = sessions_df, years = years)
         tme_df : DataFrame = self.__get_raw_tme(sessions_df = sessions_df, years = years)
 
-        cn_year : str = "Year"
-        cn_month : str = "Month"
-
         tt_df : DataFrame = pd.merge(
             left = spnv_df, 
             right = dme_df, 
             how = "inner", 
-            left_on = [cn_year, cn_month], 
-            right_on = [cn_year, cn_month]
+            left_on = [TTCN.YEAR, TTCN.MONTH], 
+            right_on = [TTCN.YEAR, TTCN.MONTH]
             )
         
-        cn_effort : str = "Effort"
-        cn_dme : str = "DME"
-        cn_percentage_dme : str = "%_DME"
-        tt_df[cn_percentage_dme] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = x[cn_dme]), axis = 1)        
+        tt_df[TTCN.PERCDME] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DME]), axis = 1)        
 
         tt_df = pd.merge(
             left = tt_df, 
             right = tme_df, 
             how = "inner", 
-            left_on = [cn_year, cn_month], 
-            right_on = [cn_year, cn_month]
+            left_on = [TTCN.YEAR, TTCN.MONTH], 
+            right_on = [TTCN.YEAR, TTCN.MONTH]
             )   
     
-        cn_tme : str = "TME"
-        cn_percentage_tme : str = "%_TME"
-        tt_df[cn_percentage_tme] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = x[cn_tme]), axis = 1)    
-
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tt_df[cn_dme] = tt_df[cn_dme].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[cn_tme] = tt_df[cn_tme].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tt_df[TTCN.PERCTME] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TME]), axis = 1)    
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tt_df[TTCN.DME] = tt_df[TTCN.DME].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tt_df[TTCN.TME] = tt_df[TTCN.TME].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
 
         return tt_df
     def get_tt_by_year_spnv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
