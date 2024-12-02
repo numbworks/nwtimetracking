@@ -1553,9 +1553,7 @@ class TimeTrackingManager():
 
         filtered_df : DataFrame = es_df.copy(deep = True)
 
-        cn_es_is_correct : str = "ES_IsCorrect"
-
-        condition : Series = (filtered_df[cn_es_is_correct] == is_correct)
+        condition : Series = (filtered_df[TTCN.ESISCORRECT] == is_correct)
         filtered_df = es_df.loc[condition]
 
         return filtered_df
