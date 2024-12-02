@@ -726,12 +726,11 @@ class TimeTrackingManager():
                 ...
         '''
 
-        cn_month : str = "Month"
         td : timedelta = self.__convert_string_to_timedelta(td_str = "0h 00m")
 
         default_df : DataFrame = pd.DataFrame(
             {
-                f"{cn_month}": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                f"{TTCN.MONTH}": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
                 f"{str(year)}": [td, td, td, td, td, td, td, td, td, td, td, td]
             },
             index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
