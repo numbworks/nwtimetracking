@@ -1136,7 +1136,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tts_by_month_upd_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().update_future_months_to_empty(tts_by_month_df = tts_by_month_df, now = now)
+        actual_df : DataFrame  = TTDataFrameFactory().__update_future_months_to_empty(tts_by_month_df = tts_by_month_df, now = now)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)
@@ -1150,7 +1150,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df.reset_index(drop = True, inplace = True)
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_time_ranges(tt_df = sessions_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_tr(tt_df = sessions_df, unknown_id = unknown_id)
         actual_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
         actual_df.reset_index(drop = True, inplace = True)
 

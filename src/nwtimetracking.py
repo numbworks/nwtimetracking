@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import StrEnum
 from pandas import DataFrame, Series
-from typing import Any, Callable, Optional, cast
+from typing import Any, Callable, Optional, Tuple, cast
 
 # LOCAL MODULES
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper
@@ -1181,6 +1181,53 @@ class TTDataFrameFactory():
             actual_df = expansion_df
 
         return actual_df
+    def __update_future_months_to_empty(self, tts_by_month_df : DataFrame, now : datetime) -> DataFrame:
+
+        '''	
+            If now is 2023-08-09:
+
+                Month	2022	↕	2023
+                ...
+                8	    0h 00m	=	0h 00m
+                9	    1h 00m	↓	0h 00m
+                10	    0h 00m	=	0h 00m
+                11	    0h 00m	=	0h 00m
+                12	    0h 00m	=	0h 00m		            
+
+                Month	2022	↕	2023
+                ...
+                8	    0h 00m	=	0h 00m
+                9	    1h 00m		
+                10	    0h 00m		
+                11	    0h 00m		
+                12	    0h 00m
+        '''
+
+        tts_by_month_upd_df : DataFrame = tts_by_month_df.copy(deep = True)
+
+        now_year : int = now.year
+        now_month : int = now.month	
+        cn_year : str = str(now_year)
+        new_value : str = ""
+
+        condition : Series = (tts_by_month_upd_df[TTCN.MONTH] > now_month)
+        tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
+            
+        idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
+        idx_trend : int = (idx_year - 1)
+        tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
+
+        return tts_by_month_upd_df
+    def __filter_by_is_correct(self, tts_by_efs_df : DataFrame, is_correct : bool) -> DataFrame:
+
+        '''Returns a DataFrame that contains only rows that match the provided is_correct.'''
+
+        filtered_df : DataFrame = tts_by_efs_df.copy(deep = True)
+
+        condition : Series = (filtered_df[TTCN.ESISCORRECT] == is_correct)
+        filtered_df = tts_by_efs_df.loc[condition]
+
+        return filtered_df
 
     def create_tt(self, setting_bag : SettingBag) -> DataFrame:
         
@@ -1198,13 +1245,15 @@ class TTDataFrameFactory():
         tt_df = self.__enforce_dataframe_definition_for_tt_df(tt_df = tt_df)
 
         return tt_df
-    def create_tts_by_month(self, tt_df : DataFrame, years : list) -> DataFrame:
+    def create_tts_by_month(self, tt_df : DataFrame, years : list, now : datetime) -> Tuple[DataFrame, DataFrame]:
 
         '''
                 Month	2016	↕   2017	    ↕	2018    ...
             0	1	    0h 00m	↑	13h 00m		↓	0h 00m
             1	2	    0h 00m	↑	1h 00m	    ↓	0h 00m
             ...
+
+            Returns: (tts_by_month_df, tts_by_month_upd_df).
         '''
 
         tts_df : DataFrame = pd.DataFrame()
@@ -1225,8 +1274,9 @@ class TTDataFrameFactory():
             tts_df[str(year)] = tts_df[str(year)].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
 
         tts_df.rename(columns = (lambda x : self.__df_helper.try_consolidate_trend_column_name(column_name = x)), inplace = True)
+        tts_upd_df : DataFrame = self.__update_future_months_to_empty(tts_by_month_df = tts_df, now = now)
 
-        return tts_df
+        return (tts_df, tts_upd_df)
     def create_tts_by_year(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
 
         '''
@@ -1488,7 +1538,35 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
-    def create_tts_by_time_ranges(self, tt_df : DataFrame, unknown_id : str) -> DataFrame:
+    def create_tts_by_efs(self, tt_df : DataFrame, is_correct : bool) -> Tuple[DataFrame, DataFrame]:
+
+        '''
+            StartTime	EndTime	Effort	ES_IsCorrect	ES_Expected	ES_Message
+            21:00       23:00   1h 00m  False           2h 00m      ...
+            ...
+
+            Returns (tts_by_efs_df, tts_by_efs_flt_df).
+        '''
+
+        tts_df : DataFrame = tt_df.copy(deep = True)
+        
+        tts_df[TTCN.EFFORTSTATUS] = tts_df.apply(
+            lambda x : self.__df_helper.create_effort_status_and_cast_to_any(
+                    idx = x.name, 
+                    start_time_str = x[TTCN.STARTTIME],
+                    end_time_str = x[TTCN.ENDTIME],
+                    effort_str = x[TTCN.EFFORT]),
+            axis = 1)
+        
+        tts_df[TTCN.ESISCORRECT] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
+        tts_df[TTCN.ESEXPECTED] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.expected_str)
+        tts_df[TTCN.ESMESSAGE] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.message)
+        tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME, TTCN.EFFORT, TTCN.ESISCORRECT, TTCN.ESEXPECTED, TTCN.ESMESSAGE]]
+
+        tts_flt_df : DataFrame = self.__filter_by_is_correct(tts_by_efs_df = tts_df, is_correct = is_correct)
+
+        return (tts_df, tts_flt_df)
+    def create_tts_by_tr(self, tt_df : DataFrame, unknown_id : str) -> DataFrame:
 
             '''
                     TimeRangeId	Occurrences
@@ -1513,31 +1591,6 @@ class TTDataFrameFactory():
             tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = False).reset_index(drop = True)
             
             return tts_df
-    def create_tts_by_effort_status(self, tt_df : DataFrame) -> DataFrame:
-
-        '''
-            StartTime	EndTime	Effort	ES_IsCorrect	ES_Expected	ES_Message
-            21:00       23:00   1h 00m  False           2h 00m      ...
-            ...        
-        '''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-        
-        tts_df[TTCN.EFFORTSTATUS] = tts_df.apply(
-            lambda x : self.__df_helper.create_effort_status_and_cast_to_any(
-                    idx = x.name, 
-                    start_time_str = x[TTCN.STARTTIME],
-                    end_time_str = x[TTCN.ENDTIME],
-                    effort_str = x[TTCN.EFFORT]),
-            axis = 1)
-        
-        tts_df[TTCN.ESISCORRECT] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
-        tts_df[TTCN.ESEXPECTED] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.expected_str)
-        tts_df[TTCN.ESMESSAGE] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.message)
-
-        tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME, TTCN.EFFORT, TTCN.ESISCORRECT, TTCN.ESEXPECTED, TTCN.ESMESSAGE]]
-
-        return tts_df
 
     def try_print_definitions(self, df : DataFrame, definitions : dict[str, str]) -> None:
         
@@ -1549,53 +1602,6 @@ class TTDataFrameFactory():
         for column_name in df.columns:
             if definitions.get(column_name) != None:
                 print(f"{column_name}: {definitions[column_name]}")
-    def update_future_months_to_empty(self, tts_by_month_df : DataFrame, now : datetime) -> DataFrame:
-
-        '''	
-            If now is 2023-08-09:
-
-                Month	2022	↕	2023
-                ...
-                8	    0h 00m	=	0h 00m
-                9	    1h 00m	↓	0h 00m
-                10	    0h 00m	=	0h 00m
-                11	    0h 00m	=	0h 00m
-                12	    0h 00m	=	0h 00m		            
-
-                Month	2022	↕	2023
-                ...
-                8	    0h 00m	=	0h 00m
-                9	    1h 00m		
-                10	    0h 00m		
-                11	    0h 00m		
-                12	    0h 00m
-        '''
-
-        tts_by_month_upd_df : DataFrame = tts_by_month_df.copy(deep = True)
-
-        now_year : int = now.year
-        now_month : int = now.month	
-        cn_year : str = str(now_year)
-        new_value : str = ""
-
-        condition : Series = (tts_by_month_upd_df[TTCN.MONTH] > now_month)
-        tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
-            
-        idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
-        idx_trend : int = (idx_year - 1)
-        tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
-
-        return tts_by_month_upd_df
-    def filter_by_is_correct(self, tts_by_effort_status_df : DataFrame, is_correct : bool) -> DataFrame:
-
-        '''Returns a DataFrame that contains only rows that match the provided is_correct.'''
-
-        filtered_df : DataFrame = tts_by_effort_status_df.copy(deep = True)
-
-        condition : Series = (filtered_df[TTCN.ESISCORRECT] == is_correct)
-        filtered_df = tts_by_effort_status_df.loc[condition]
-
-        return filtered_df
     def remove_unknown_id(self, tts_by_time_ranges_df : DataFrame, unknown_id : str) -> DataFrame:
 
         '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
