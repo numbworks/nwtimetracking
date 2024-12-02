@@ -905,13 +905,12 @@ class TimeTrackingManager():
         actual_df : DataFrame = tts_by_month_df.copy(deep = True)
         ttm_df : DataFrame = self.__get_raw_ttm(sessions_df = sessions_df, year = years[i])
 
-        cn_month : str = "Month"      
         expansion_df = pd.merge(
             left = actual_df, 
             right = ttm_df, 
             how = "inner", 
-            left_on = cn_month, 
-            right_on = cn_month)
+            left_on = TTCN.MONTH, 
+            right_on = TTCN.MONTH)
 
         if add_trend == True:
 
@@ -921,10 +920,10 @@ class TimeTrackingManager():
             
             expansion_df[cn_trend] = expansion_df.apply(lambda x : self.__get_trend_by_timedelta(td_1 = x[cn_trend_1], td_2 = x[cn_trend_2]), axis = 1) 
 
-            new_column_names : list = [cn_month, cn_trend_1, cn_trend, cn_trend_2]   # for ex. ["Month", "2016", "↕", "2017"]
+            new_column_names : list = [TTCN.MONTH, cn_trend_1, cn_trend, cn_trend_2]   # for ex. ["Month", "2016", "↕", "2017"]
             expansion_df = expansion_df.reindex(columns = new_column_names)
 
-            shared_columns : list = [cn_month, str(years[i-1])] # ["Month", "2016"]
+            shared_columns : list = [TTCN.MONTH, str(years[i-1])] # ["Month", "2016"]
             actual_df = pd.merge(
                 left = actual_df, 
                 right = expansion_df, 
