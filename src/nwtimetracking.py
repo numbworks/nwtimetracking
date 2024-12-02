@@ -677,18 +677,15 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_year : str = "Year"
-        condition_one : Series = (sessions_df[cn_year].isin(values = years))
+        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
         tt_df = tt_df.loc[condition_one]
 
         if remove_untagged:
-            cn_hashtag : str = "Hashtag"
-            condition_two : Series = (sessions_df[cn_hashtag] != "#untagged")
+            condition_two : Series = (sessions_df[TTCN.HASHTAG] != "#untagged")
             tt_df = tt_df.loc[condition_two]
 
-        cn_effort : str = "Effort"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        summarized : timedelta = tt_df[cn_effort].sum()
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        summarized : timedelta = tt_df[TTCN.EFFORT].sum()
 
         return summarized    
     def __get_raw_tt_by_spn_spv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
