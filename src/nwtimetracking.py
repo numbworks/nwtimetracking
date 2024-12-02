@@ -820,22 +820,18 @@ class TimeTrackingManager():
                 11	12	    0 days 00:00:00
         '''
 
-        cn_year : str = "Year"
-        cn_month : str = "Month" 
-        cn_effort : str = "Effort"
-
         ttm_df : DataFrame = sessions_df.copy(deep=True)
-        ttm_df = ttm_df[[cn_year, cn_month, cn_effort]]
+        ttm_df = ttm_df[[TTCN.YEAR, TTCN.MONTH, TTCN.EFFORT]]
 
-        condition : Series = (sessions_df[cn_year] == year)
+        condition : Series = (sessions_df[TTCN.YEAR] == year)
         ttm_df = ttm_df.loc[condition]
 
-        ttm_df[cn_effort] = ttm_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        ttm_df[str(year)] = ttm_df[cn_effort]
+        ttm_df[TTCN.EFFORT] = ttm_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        ttm_df[str(year)] = ttm_df[TTCN.EFFORT]
         cn_effort = str(year)    
 
-        ttm_df = ttm_df.groupby([cn_month])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        ttm_df = ttm_df.sort_values(by = cn_month).reset_index(drop = True)
+        ttm_df = ttm_df.groupby([TTCN.MONTH])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+        ttm_df = ttm_df.sort_values(by = TTCN.MONTH).reset_index(drop = True)
 
         ttm_df = self.__try_complete_raw_ttm(ttm_df = ttm_df, year = year)
         ttm_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = ttm_df)
