@@ -371,9 +371,293 @@ class SoftwareProjectNameProvider():
         ]
 
         return software_project_names_by_spv
-class TimeTrackingManager():
 
-    '''Collects all the logic related to the management of "Time Tracking.xlsx".'''
+class TTDataFrameHelper():
+
+    '''Collects helper functions for TTDataFrameFactory.'''
+
+    def convert_string_to_timedelta(self, td_str : str) -> timedelta:
+
+        '''"5h 30m" => 5:30:00'''
+
+        td : timedelta = pd.Timedelta(value = td_str).to_pytimedelta()
+
+        return td
+    def get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> Optional[YearlyTarget]:
+
+        '''Retrieves the YearlyTarget object for the provided "year" or None.'''
+
+        for yearly_target in yearly_targets:
+            if yearly_target.year == year:
+                return yearly_target
+            
+        return None
+    def is_yearly_target_met(self, effort : timedelta, yearly_target : timedelta) -> bool:
+
+        if effort >= yearly_target:
+            return True
+
+        return False
+    def format_timedelta(self, td : timedelta, add_plus_sign : bool) -> str:
+
+        '''
+            4 days 19:15:00	=> "115h 15m" (or +115h 15m)
+            -9 days +22:30:00 => "-194h 30m"
+        '''
+
+        total_seconds : float = td.total_seconds()
+        hours : int = int(total_seconds // 3600)
+        minutes : int = int((total_seconds % 3600) // 60)
+
+        hours_str : str = str(hours).zfill(2)
+        minutes_str : str = str(minutes ).zfill(2)    
+        formatted : str = f"{hours_str}h {minutes_str}m"
+
+        if (add_plus_sign == True and td.days >= 0):
+            formatted = f"+{formatted}"
+
+        return formatted
+    def extract_software_project_name(self, descriptor : str) -> str:
+
+        '''
+            "NW.AutoProffLibrary v1.0.0"    => "NW.AutoProffLibrary"
+            "nwreadinglistmanager v1.5.0"   => "nwreadinglistmanager"
+
+            Returns "ERROR" is parsing goes wrong.
+        '''
+
+        pattern : str = r"\b[a-zA-Z\.]{2,}(?=[ v]{2}[0-9]{1}[\.]{1}[0-9]{1}[\.]{1}[0-9]{1})"
+        matches : list = re.findall(pattern = pattern, string = descriptor, flags = re.MULTILINE)
+
+        if len(matches) == 1:
+            return matches[0]
+
+        return "ERROR"
+    def extract_software_project_version(self, descriptor : str) -> str: 
+
+        '''
+            "NW.AutoProffLibrary v1.0.0"    => "1.0.0"
+            "nwreadinglistmanager v1.5.0"   => "1.5.0"
+
+            Returns "ERROR" is parsing goes wrong.
+        '''
+
+        pattern : str = r"(?<=v)[0-9\.]{5}$"
+        matches : list = re.findall(pattern = pattern, string = descriptor, flags = re.MULTILINE)
+
+        if len(matches) == 1:
+            return matches[0]
+
+        return "ERROR"
+    def calculate_percentage(self, part : float, whole : float, rounding_digits : int = 2) -> float:
+
+        '''Calculates a percentage.'''
+
+        prct : Optional[float] = None
+
+        if part == 0:
+            prct = 0
+        elif whole == 0:
+            prct = 0
+        else:
+            prct = (100 * part) / whole
+
+        prct = round(number = prct, ndigits = rounding_digits)
+
+        return prct
+    def get_trend_by_timedelta(self, td_1 : timedelta, td_2 : timedelta) -> str:
+
+        '''
+            0h 30m, 1h 00m => "↑"
+            1h 00m, 0h 30m => "↓"
+            0, 0 => "="
+        '''
+        trend : Optional[str] = None
+
+        if td_1 < td_2:
+            trend = "↑"
+        elif td_1 > td_2:
+            trend = "↓"
+        else:
+            trend = "="
+
+        return trend
+    def try_consolidate_trend_column_name(self, column_name : str) -> str:
+
+        '''
+            "2016"  => "2016"
+            "↕1"    => "↕"
+        '''
+
+        if column_name.startswith(TTCN.TREND):
+            return TTCN.TREND
+        
+        return column_name
+    def create_effort_status_for_none_values(self, idx : int, effort_str : str) -> EffortStatus:
+
+        '''Creates effort status for None values.'''
+
+        actual_str : str = effort_str
+        actual_td : timedelta = self.convert_string_to_timedelta(td_str = effort_str)
+        is_correct : bool = True
+
+        effort_status : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = None,
+            start_time_dt = None,
+            end_time_str = None,
+            end_time_dt = None,
+            actual_str = actual_str,
+            actual_td = actual_td,
+            expected_td = None,
+            expected_str = None,
+            is_correct = is_correct,
+            message = _MessageCollection.starttime_endtime_are_empty()
+            )    
+
+        return effort_status
+    def create_time_object(self, time : str) -> datetime:
+
+        '''It creates a datetime object suitable for timedelta calculation out of the provided time.'''
+
+        day_1_times : list[str] = [
+            "07:00", "07:15", "07:30", "07:45", 
+            "08:00", "08:15", "08:30", "08:45",
+            "09:00", "09:15", "09:30", "09:45",
+            "10:00", "10:15", "10:30", "10:45",
+            "11:00", "11:15", "11:30", "11:45",
+            "12:00", "12:15", "12:30", "12:45",
+            "13:00", "13:15", "13:30", "13:45",
+            "14:00", "14:15", "14:30", "14:45",
+            "15:00", "15:15", "15:30", "15:45",
+            "16:00", "16:15", "16:30", "16:45",
+            "17:00", "17:15", "17:30", "17:45",
+            "18:00", "18:15", "18:30", "18:45",
+            "19:00", "19:15", "19:30", "19:45",
+            "20:00", "20:15", "20:30", "20:45",
+            "21:00", "21:15", "21:30", "21:45",
+            "22:00", "22:15", "22:30", "22:45",
+            "23:00", "23:15", "23:30", "23:45"
+        ]
+        day_2_times : list[str] = [
+            "00:00", "00:15", "00:30", "00:45", 
+            "01:00", "01:15", "01:30", "01:45",
+            "02:00", "02:15", "02:30", "02:45",
+            "03:00", "03:15", "03:30", "03:45",
+            "04:00", "04:15", "04:30", "04:45",
+            "05:00", "05:15", "05:30", "05:45",
+            "06:00", "06:15", "06:30", "06:45"
+        ]
+
+        strp_format : str = "%Y-%m-%d %H:%M"
+
+        dt_str : Optional[str] = None
+        if time in day_1_times:
+            dt_str = f"1900-01-01 {time}"
+        elif time in day_2_times:
+            dt_str = f"1900-01-02 {time}"
+        else: 
+            raise ValueError(_MessageCollection.effort_status_not_among_expected_time_values(time = time))
+                
+        dt : datetime =  datetime.strptime(dt_str, strp_format)
+
+        return dt
+    def create_effort_status(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> EffortStatus:
+
+        '''
+            start_time_str, end_time_str:
+                - Expects time values in the "%H:%M" format - for ex. 20:00.
+
+            is_correct:
+                start_time_str = "20:00", end_time_str = "00:00", effort_str = "4h 00m" => True
+                start_time_str = "20:00", end_time_str = "00:00", effort_str = "5h 00m" => False
+        '''
+
+        try:
+
+            if len(start_time_str) == 0 or len(end_time_str) == 0:
+                return self.create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
+
+            start_time_dt : datetime = self.create_time_object(time = start_time_str)
+            end_time_dt : datetime = self.create_time_object(time = end_time_str)
+
+            actual_str : str = effort_str
+            actual_td : timedelta = self.convert_string_to_timedelta(td_str = effort_str)
+
+            expected_td : timedelta = (end_time_dt - start_time_dt)
+            expected_str : str = self.format_timedelta(td = expected_td, add_plus_sign = False)
+            
+            is_correct : bool = True
+            if actual_td != expected_td:
+                is_correct = False
+            
+            message : str = _MessageCollection.effort_is_correct()
+
+            if actual_td != expected_td:
+                message = _MessageCollection.effort_status_mismatching_effort(
+                    idx = idx, 
+                    start_time_str = start_time_str, 
+                    end_time_str = end_time_str, 
+                    actual_str = actual_str, 
+                    expected_str = expected_str
+                )
+            
+            effort_status : EffortStatus = EffortStatus(
+                idx = idx,
+                start_time_str = start_time_str,
+                start_time_dt = start_time_dt,
+                end_time_str = end_time_str,
+                end_time_dt = end_time_dt,
+                actual_str = actual_str,
+                actual_td = actual_td,
+                expected_td = expected_td,
+                expected_str = expected_str,
+                is_correct = is_correct,
+                message = message
+                )
+
+            return effort_status
+        
+        except:
+
+            error : str = _MessageCollection.effort_status_not_possible_to_create(
+                idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
+
+            raise ValueError(error)
+    def create_effort_status_and_cast_to_any(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> Any:
+
+        '''
+            Wrapper method created to overcome the following error raised by df.apply():
+
+                Argument of type "(x: Unknown) -> EffortStatus" cannot be assigned to parameter "f" of type "(...) -> Series[Any]" in function "apply"
+                Type "(x: Unknown) -> EffortStatus" is not assignable to type "(...) -> Series[Any]"
+                    Function return type "EffortStatus" is incompatible with type "Series[Any]"
+                    "EffortStatus" is not assignable to "Series[Any]"            
+        '''
+
+        return cast(Any, self.create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str))    
+    def create_time_range_id(self, start_time : str, end_time : str, unknown_id : str) -> str:
+            
+            '''
+                Creates a unique time range identifier out of the provided parameters.
+                If parameters are empty, it returns unknown_id.
+            '''
+
+            time_range_id : str = f"{start_time}-{end_time}"
+
+            if len(start_time) == 0 or len(end_time) == 0:
+                time_range_id = unknown_id
+
+            return time_range_id
+class TTDataFrameFactory():
+
+    '''Collects all the logic related to dataframe creation out of "Time Tracking.xlsx".'''
+
+    __tt_helper : TTDataFrameHelper
+
+    def __init__(self, df_helper : TTDataFrameHelper) -> None:
+
+        self.__tt_helper = df_helper
 
     def __enforce_dataframe_definition_for_tt_df(self, tt_df : DataFrame) -> DataFrame:
 
@@ -419,95 +703,6 @@ class TimeTrackingManager():
         # can't enforce the year column as "timedelta"
 
         return df 
-    def __convert_string_to_timedelta(self, td_str : str) -> timedelta:
-
-        '''"5h 30m" => 5:30:00'''
-
-        td : timedelta = pd.Timedelta(value = td_str).to_pytimedelta()
-
-        return td
-    def __get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> Optional[YearlyTarget]:
-
-        '''Retrieves the YearlyTarget object for the provided "year" or None.'''
-
-        for yearly_target in yearly_targets:
-            if yearly_target.year == year:
-                return yearly_target
-            
-        return None
-    def __is_yearly_target_met(self, effort : timedelta, yearly_target : timedelta) -> bool:
-
-        if effort >= yearly_target:
-            return True
-
-        return False
-    def __format_timedelta(self, td : timedelta, add_plus_sign : bool) -> str:
-
-        '''
-            4 days 19:15:00	=> "115h 15m" (or +115h 15m)
-            -9 days +22:30:00 => "-194h 30m"
-        '''
-
-        total_seconds : float = td.total_seconds()
-        hours : int = int(total_seconds // 3600)
-        minutes : int = int((total_seconds % 3600) // 60)
-
-        hours_str : str = str(hours).zfill(2)
-        minutes_str : str = str(minutes ).zfill(2)    
-        formatted : str = f"{hours_str}h {minutes_str}m"
-
-        if (add_plus_sign == True and td.days >= 0):
-            formatted = f"+{formatted}"
-
-        return formatted
-    def __extract_software_project_name(self, descriptor : str) -> str:
-
-        '''
-            "NW.AutoProffLibrary v1.0.0"    => "NW.AutoProffLibrary"
-            "nwreadinglistmanager v1.5.0"   => "nwreadinglistmanager"
-
-            Returns "ERROR" is parsing goes wrong.
-        '''
-
-        pattern : str = r"\b[a-zA-Z\.]{2,}(?=[ v]{2}[0-9]{1}[\.]{1}[0-9]{1}[\.]{1}[0-9]{1})"
-        matches : list = re.findall(pattern = pattern, string = descriptor, flags = re.MULTILINE)
-
-        if len(matches) == 1:
-            return matches[0]
-
-        return "ERROR"
-    def __extract_software_project_version(self, descriptor : str) -> str: 
-
-        '''
-            "NW.AutoProffLibrary v1.0.0"    => "1.0.0"
-            "nwreadinglistmanager v1.5.0"   => "1.5.0"
-
-            Returns "ERROR" is parsing goes wrong.
-        '''
-
-        pattern : str = r"(?<=v)[0-9\.]{5}$"
-        matches : list = re.findall(pattern = pattern, string = descriptor, flags = re.MULTILINE)
-
-        if len(matches) == 1:
-            return matches[0]
-
-        return "ERROR"
-    def __calculate_percentage(self, part : float, whole : float, rounding_digits : int = 2) -> float:
-
-        '''Calculates a percentage.'''
-
-        prct : Optional[float] = None
-
-        if part == 0:
-            prct = 0
-        elif whole == 0:
-            prct = 0
-        else:
-            prct = (100 * part) / whole
-
-        prct = round(number = prct, ndigits = rounding_digits)
-
-        return prct
     def __get_raw_tt_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
         
         '''
@@ -523,10 +718,10 @@ class TimeTrackingManager():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_version(descriptor = x))
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
     
@@ -551,10 +746,10 @@ class TimeTrackingManager():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_version(descriptor = x))
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.DME}, inplace = True)
@@ -576,7 +771,7 @@ class TimeTrackingManager():
         condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
         tts_df = tts_df.loc[condition]
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.TME}, inplace = True)
@@ -597,10 +792,10 @@ class TimeTrackingManager():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_version(descriptor = x))
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
     
@@ -626,10 +821,10 @@ class TimeTrackingManager():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_version(descriptor = x))
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.YEAR]).reset_index(drop = True)
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.DYE}, inplace = True)
@@ -651,7 +846,7 @@ class TimeTrackingManager():
         condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
         tts_df = tts_df.loc[condition]
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.YEAR]).reset_index(drop = True)
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.TYE}, inplace = True)
@@ -674,8 +869,8 @@ class TimeTrackingManager():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.PROJECTNAME, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME]).reset_index(drop = True)
 
@@ -696,7 +891,7 @@ class TimeTrackingManager():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         summarized : timedelta = tts_df[TTCN.EFFORT].sum()
 
         return summarized
@@ -713,7 +908,7 @@ class TimeTrackingManager():
             condition_two : Series = (tt_df[TTCN.HASHTAG] != "#untagged")
             tts_df = tts_df.loc[condition_two]
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         summarized : timedelta = tts_df[TTCN.EFFORT].sum()
 
         return summarized    
@@ -733,10 +928,10 @@ class TimeTrackingManager():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.extract_software_project_version(descriptor = x))
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
 
@@ -755,7 +950,7 @@ class TimeTrackingManager():
                 ...
         '''
 
-        td : timedelta = self.__convert_string_to_timedelta(td_str = "0h 00m")
+        td : timedelta = self.convert_string_to_timedelta(td_str = "0h 00m")
 
         default_df : DataFrame = pd.DataFrame(
             {
@@ -855,7 +1050,7 @@ class TimeTrackingManager():
         condition : Series = (tt_df[TTCN.YEAR] == year)
         ttm_df = ttm_df.loc[condition]
 
-        ttm_df[TTCN.EFFORT] = ttm_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        ttm_df[TTCN.EFFORT] = ttm_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         ttm_df[str(year)] = ttm_df[TTCN.EFFORT]
         cn_effort = str(year)    
 
@@ -866,23 +1061,6 @@ class TimeTrackingManager():
         ttm_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = ttm_df)
 
         return ttm_df
-    def __get_trend_by_timedelta(self, td_1 : timedelta, td_2 : timedelta) -> str:
-
-        '''
-            0h 30m, 1h 00m => "↑"
-            1h 00m, 0h 30m => "↓"
-            0, 0 => "="
-        '''
-        trend : Optional[str] = None
-
-        if td_1 < td_2:
-            trend = "↑"
-        elif td_1 > td_2:
-            trend = "↓"
-        else:
-            trend = "="
-
-        return trend
     def __expand_raw_ttm_by_year(self, tt_df : DataFrame, years : list, tts_by_month_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
 
         '''    
@@ -947,7 +1125,7 @@ class TimeTrackingManager():
             cn_trend_1 : str = str(years[i-1])   # for ex. "2016"
             cn_trend_2 : str = str(years[i])     # for ex. "2017"
             
-            expansion_df[cn_trend] = expansion_df.apply(lambda x : self.__get_trend_by_timedelta(td_1 = x[cn_trend_1], td_2 = x[cn_trend_2]), axis = 1) 
+            expansion_df[cn_trend] = expansion_df.apply(lambda x : self.get_trend_by_timedelta(td_1 = x[cn_trend_1], td_2 = x[cn_trend_2]), axis = 1) 
 
             new_column_names : list = [TTCN.MONTH, cn_trend_1, cn_trend, cn_trend_2]   # for ex. ["Month", "2016", "↕", "2017"]
             expansion_df = expansion_df.reindex(columns = new_column_names)
@@ -964,173 +1142,6 @@ class TimeTrackingManager():
             actual_df = expansion_df
 
         return actual_df
-    def __try_consolidate_trend_column_name(self, column_name : str) -> str:
-
-        '''
-            "2016"  => "2016"
-            "↕1"    => "↕"
-        '''
-
-        if column_name.startswith(TTCN.TREND):
-            return TTCN.TREND
-        
-        return column_name
-    def __create_effort_status_for_none_values(self, idx : int, effort_str : str) -> EffortStatus:
-
-        '''Creates effort status for None values.'''
-
-        actual_str : str = effort_str
-        actual_td : timedelta = self.__convert_string_to_timedelta(td_str = effort_str)
-        is_correct : bool = True
-
-        effort_status : EffortStatus = EffortStatus(
-            idx = idx,
-            start_time_str = None,
-            start_time_dt = None,
-            end_time_str = None,
-            end_time_dt = None,
-            actual_str = actual_str,
-            actual_td = actual_td,
-            expected_td = None,
-            expected_str = None,
-            is_correct = is_correct,
-            message = _MessageCollection.starttime_endtime_are_empty()
-            )    
-
-        return effort_status
-    def __create_time_object(self, time : str) -> datetime:
-
-        '''It creates a datetime object suitable for timedelta calculation out of the provided time.'''
-
-        day_1_times : list[str] = [
-            "07:00", "07:15", "07:30", "07:45", 
-            "08:00", "08:15", "08:30", "08:45",
-            "09:00", "09:15", "09:30", "09:45",
-            "10:00", "10:15", "10:30", "10:45",
-            "11:00", "11:15", "11:30", "11:45",
-            "12:00", "12:15", "12:30", "12:45",
-            "13:00", "13:15", "13:30", "13:45",
-            "14:00", "14:15", "14:30", "14:45",
-            "15:00", "15:15", "15:30", "15:45",
-            "16:00", "16:15", "16:30", "16:45",
-            "17:00", "17:15", "17:30", "17:45",
-            "18:00", "18:15", "18:30", "18:45",
-            "19:00", "19:15", "19:30", "19:45",
-            "20:00", "20:15", "20:30", "20:45",
-            "21:00", "21:15", "21:30", "21:45",
-            "22:00", "22:15", "22:30", "22:45",
-            "23:00", "23:15", "23:30", "23:45"
-        ]
-        day_2_times : list[str] = [
-            "00:00", "00:15", "00:30", "00:45", 
-            "01:00", "01:15", "01:30", "01:45",
-            "02:00", "02:15", "02:30", "02:45",
-            "03:00", "03:15", "03:30", "03:45",
-            "04:00", "04:15", "04:30", "04:45",
-            "05:00", "05:15", "05:30", "05:45",
-            "06:00", "06:15", "06:30", "06:45"
-        ]
-
-        strp_format : str = "%Y-%m-%d %H:%M"
-
-        dt_str : Optional[str] = None
-        if time in day_1_times:
-            dt_str = f"1900-01-01 {time}"
-        elif time in day_2_times:
-            dt_str = f"1900-01-02 {time}"
-        else: 
-            raise ValueError(_MessageCollection.effort_status_not_among_expected_time_values(time = time))
-                
-        dt : datetime =  datetime.strptime(dt_str, strp_format)
-
-        return dt
-    def __create_effort_status(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> EffortStatus:
-
-        '''
-            start_time_str, end_time_str:
-                - Expects time values in the "%H:%M" format - for ex. 20:00.
-
-            is_correct:
-                start_time_str = "20:00", end_time_str = "00:00", effort_str = "4h 00m" => True
-                start_time_str = "20:00", end_time_str = "00:00", effort_str = "5h 00m" => False
-        '''
-
-        try:
-
-            if len(start_time_str) == 0 or len(end_time_str) == 0:
-                return self.__create_effort_status_for_none_values(idx = idx, effort_str = effort_str)
-
-            start_time_dt : datetime = self.__create_time_object(time = start_time_str)
-            end_time_dt : datetime = self.__create_time_object(time = end_time_str)
-
-            actual_str : str = effort_str
-            actual_td : timedelta = self.__convert_string_to_timedelta(td_str = effort_str)
-
-            expected_td : timedelta = (end_time_dt - start_time_dt)
-            expected_str : str = self.__format_timedelta(td = expected_td, add_plus_sign = False)
-            
-            is_correct : bool = True
-            if actual_td != expected_td:
-                is_correct = False
-            
-            message : str = _MessageCollection.effort_is_correct()
-
-            if actual_td != expected_td:
-                message = _MessageCollection.effort_status_mismatching_effort(
-                    idx = idx, 
-                    start_time_str = start_time_str, 
-                    end_time_str = end_time_str, 
-                    actual_str = actual_str, 
-                    expected_str = expected_str
-                )
-            
-            effort_status : EffortStatus = EffortStatus(
-                idx = idx,
-                start_time_str = start_time_str,
-                start_time_dt = start_time_dt,
-                end_time_str = end_time_str,
-                end_time_dt = end_time_dt,
-                actual_str = actual_str,
-                actual_td = actual_td,
-                expected_td = expected_td,
-                expected_str = expected_str,
-                is_correct = is_correct,
-                message = message
-                )
-
-            return effort_status
-        
-        except:
-
-            error : str = _MessageCollection.effort_status_not_possible_to_create(
-                idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
-
-            raise ValueError(error)
-    def __create_effort_status_and_cast_to_any(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> Any:
-
-        '''
-            Wrapper method created to overcome the following error raised by df.apply():
-
-                Argument of type "(x: Unknown) -> EffortStatus" cannot be assigned to parameter "f" of type "(...) -> Series[Any]" in function "apply"
-                Type "(x: Unknown) -> EffortStatus" is not assignable to type "(...) -> Series[Any]"
-                    Function return type "EffortStatus" is incompatible with type "Series[Any]"
-                    "EffortStatus" is not assignable to "Series[Any]"            
-        '''
-
-        return cast(Any, self.__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str))    
-    def __create_time_range_id(self, start_time : str, end_time : str, unknown_id : str) -> str:
-            
-            '''
-                Creates a unique time range identifier out of the provided parameters.
-                If parameters are empty, it returns unknown_id.
-            '''
-
-            time_range_id : str = f"{start_time}-{end_time}"
-
-            if len(start_time) == 0 or len(end_time) == 0:
-                time_range_id = unknown_id
-
-            return time_range_id
     def __get_raw_tt_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
 
         '''
@@ -1146,7 +1157,7 @@ class TimeTrackingManager():
         condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
         tts_df = tts_df.loc[condition]
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.HASHTAG, TTCN.YEAR]).reset_index(drop = True)
 
@@ -1163,11 +1174,11 @@ class TimeTrackingManager():
 
         tts_df : DataFrame = tt_df.copy(deep = True)
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
 
         summarized : float = tts_df[TTCN.EFFORT].sum()
-        tts_df[TTCN.EFFORTPRC] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
+        tts_df[TTCN.EFFORTPRC] = tts_df.apply(lambda x : self.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
 
         return tts_df
 
@@ -1211,9 +1222,9 @@ class TimeTrackingManager():
                     add_trend = True)
                 
         for year in years:
-            tts_df[str(year)] = tts_df[str(year)].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+            tts_df[str(year)] = tts_df[str(year)].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
 
-        tts_df.rename(columns = (lambda x : self.__try_consolidate_trend_column_name(column_name = x)), inplace = True)
+        tts_df.rename(columns = (lambda x : self.try_consolidate_trend_column_name(column_name = x)), inplace = True)
 
         return tts_df
     def get_tts_by_year(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
@@ -1247,19 +1258,19 @@ class TimeTrackingManager():
         condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
         tts_df = tts_df.loc[condition]
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby([TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = TTCN.YEAR).reset_index(drop = True)
 
         tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEAR].apply(
-            lambda x : cast(YearlyTarget, self.__get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
+            lambda x : cast(YearlyTarget, self.get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
         tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.EFFORT] - tts_df[TTCN.YEARLYTARGET]
         tts_df[TTCN.ISTARGETMET] = tts_df.apply(
-            lambda x : self.__is_yearly_target_met(effort = x[TTCN.EFFORT], yearly_target = x[TTCN.YEARLYTARGET]), axis = 1)    
+            lambda x : self.is_yearly_target_met(effort = x[TTCN.EFFORT], yearly_target = x[TTCN.YEARLYTARGET]), axis = 1)    
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEARLYTARGET].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.TARGETDIFF].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = True))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEARLYTARGET].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.TARGETDIFF].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = True))
 
         return tts_df
     def get_tts_by_year_month(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
@@ -1307,21 +1318,21 @@ class TimeTrackingManager():
         condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
         tts_df = tts_df.loc[condition]
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.convert_string_to_timedelta(td_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
         tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
 
         tts_df[TTCN.YEARLYTOTAL] = tts_df[TTCN.EFFORT].groupby(by = tts_df[TTCN.YEAR]).cumsum()
 
         tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEAR].apply(
-            lambda x : cast(YearlyTarget, self.__get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
+            lambda x : cast(YearlyTarget, self.get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
 
         tts_df[TTCN.TOTARGET] = tts_df[TTCN.YEARLYTOTAL] - tts_df[TTCN.YEARLYTARGET]    
         tts_df.drop(columns = [TTCN.YEARLYTARGET], axis = 1, inplace = True)
         
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tts_df[TTCN.YEARLYTOTAL] = tts_df[TTCN.YEARLYTOTAL].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tts_df[TTCN.TOTARGET] = tts_df[TTCN.TOTARGET].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = True))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.YEARLYTOTAL] = tts_df[TTCN.YEARLYTOTAL].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TOTARGET] = tts_df[TTCN.TOTARGET].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = True))
 
         return tts_df
     def get_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
@@ -1348,7 +1359,7 @@ class TimeTrackingManager():
             right_on = [TTCN.YEAR, TTCN.MONTH]
             )
         
-        tts_df[TTCN.PERCDME] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DME]), axis = 1)        
+        tts_df[TTCN.PERCDME] = tts_df.apply(lambda x : self.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DME]), axis = 1)        
 
         tts_df = pd.merge(
             left = tts_df, 
@@ -1358,10 +1369,10 @@ class TimeTrackingManager():
             right_on = [TTCN.YEAR, TTCN.MONTH]
             )   
     
-        tts_df[TTCN.PERCTME] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TME]), axis = 1)    
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tts_df[TTCN.DME] = tts_df[TTCN.DME].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tts_df[TTCN.TME] = tts_df[TTCN.TME].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.PERCTME] = tts_df.apply(lambda x : self.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TME]), axis = 1)    
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.DME] = tts_df[TTCN.DME].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TME] = tts_df[TTCN.TME].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
 
         return tts_df
     def get_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
@@ -1388,7 +1399,7 @@ class TimeTrackingManager():
             right_on = [TTCN.YEAR]
             )
         
-        tts_df[TTCN.PERCDYE] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DYE]), axis = 1)        
+        tts_df[TTCN.PERCDYE] = tts_df.apply(lambda x : self.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DYE]), axis = 1)        
 
         tts_df = pd.merge(
             left = tts_df, 
@@ -1398,10 +1409,10 @@ class TimeTrackingManager():
             right_on = [TTCN.YEAR]
             )   
     
-        tts_df[TTCN.PERCTYE] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TYE]), axis = 1)    
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tts_df[TTCN.DYE] = tts_df[TTCN.DYE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tts_df[TTCN.TYE] = tts_df[TTCN.TYE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.PERCTYE] = tts_df.apply(lambda x : self.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TYE]), axis = 1)    
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.DYE] = tts_df[TTCN.DYE].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TYE] = tts_df[TTCN.TYE].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
 
         return tts_df
     def get_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
@@ -1425,14 +1436,14 @@ class TimeTrackingManager():
         te : timedelta = self.__get_raw_te(tt_df = tt_df, years = years, remove_untagged = remove_untagged)    
 
         tts_df[TTCN.DE] = de
-        tts_df[TTCN.PERCDE] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DE]), axis = 1)      
+        tts_df[TTCN.PERCDE] = tts_df.apply(lambda x : self.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DE]), axis = 1)      
 
         tts_df[TTCN.TE] = te
-        tts_df[TTCN.PERCTE] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TE]), axis = 1)     
+        tts_df[TTCN.PERCTE] = tts_df.apply(lambda x : self.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TE]), axis = 1)     
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tts_df[TTCN.DE] = tts_df[TTCN.DE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tts_df[TTCN.TE] = tts_df[TTCN.TE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.DE] = tts_df[TTCN.DE].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TE] = tts_df[TTCN.TE].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))
 
         return tts_df
     def get_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
@@ -1446,7 +1457,7 @@ class TimeTrackingManager():
         '''
 
         tts_df : DataFrame = self.__get_raw_tt_by_spn_spv(tt_df = tt_df, years = years, software_project_names = software_project_names)
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
     def get_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
@@ -1460,7 +1471,7 @@ class TimeTrackingManager():
         '''
     
         tts_df : DataFrame = self.__get_raw_tt_by_year_hashtag(tt_df = tt_df, years = years)
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
     def get_tts_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
@@ -1474,7 +1485,7 @@ class TimeTrackingManager():
         '''
     
         tts_df : DataFrame = self.__get_raw_tt_by_hashtag(tt_df = tt_df)
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
     def get_tts_by_time_ranges(self, tt_df : DataFrame, unknown_id : str) -> DataFrame:
@@ -1491,7 +1502,7 @@ class TimeTrackingManager():
 
             tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
             tts_df[TTCN.TIMERANGEID] = tts_df.apply(
-                lambda x : self.__create_time_range_id(
+                lambda x : self.create_time_range_id(
                     start_time = x[TTCN.STARTTIME], 
                     end_time = x[TTCN.ENDTIME], 
                     unknown_id = unknown_id), axis = 1)
@@ -1513,7 +1524,7 @@ class TimeTrackingManager():
         tts_df : DataFrame = tt_df.copy(deep = True)
         
         tts_df[TTCN.EFFORTSTATUS] = tts_df.apply(
-            lambda x : self.__create_effort_status_and_cast_to_any(
+            lambda x : self.create_effort_status_and_cast_to_any(
                     idx = x.name, 
                     start_time_str = x[TTCN.STARTTIME],
                     end_time_str = x[TTCN.ENDTIME],

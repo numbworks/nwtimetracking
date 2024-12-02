@@ -17,7 +17,7 @@ from unittest.mock import Mock, call, patch
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetracking import ComponentBag, MarkdownProcessor, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
-from nwtimetracking import DefaultPathProvider, YearProvider, TimeTrackingManager
+from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager
 
 # SUPPORT METHODS
@@ -591,7 +591,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
 
         # Act
-        actual_td : str = TimeTrackingManager()._TimeTrackingManager__convert_string_to_timedelta(td_str = td_str) # type: ignore
+        actual_td : str = TTDataFrameFactory()._TimeTrackingManager__convert_string_to_timedelta(td_str = td_str) # type: ignore
 
         # Assert
         self.assertEqual(expected_td, actual_td)
@@ -603,7 +603,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_hours : timedelta = timedelta(hours = 250)
 
         # Act
-        actual_hours : timedelta = TimeTrackingManager()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year).hours # type: ignore
+        actual_hours : timedelta = TTDataFrameFactory()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year).hours # type: ignore
 
         # Assert
         self.assertEqual(expected_hours, actual_hours)
@@ -614,7 +614,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         year : int = 2010
 
         # Act
-        yearly_target : YearlyTarget = TimeTrackingManager()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year) # type: ignore
+        yearly_target : YearlyTarget = TTDataFrameFactory()._TimeTrackingManager__get_yearly_target(yearly_targets = yearly_targets, year = year) # type: ignore
 
         # Assert
         self.assertIsNone(yearly_target)
@@ -625,7 +625,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = TimeTrackingManager()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target) # type: ignore
+        actual : bool = TTDataFrameFactory()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target) # type: ignore
         
         # Assert
         self.assertTrue(actual)
@@ -636,7 +636,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = TimeTrackingManager()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target) # type: ignore
+        actual : bool = TTDataFrameFactory()._TimeTrackingManager__is_yearly_target_met(effort = effort, yearly_target = yearly_target) # type: ignore
 
         # Assert
         self.assertFalse(actual)
@@ -647,7 +647,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "255h 30m"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = False) # type: ignore
+        actual : str = TTDataFrameFactory()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = False) # type: ignore
         
         # Assert
         self.assertEqual(expected, actual)
@@ -658,7 +658,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "+255h 30m"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = True) # type: ignore
+        actual : str = TTDataFrameFactory()._TimeTrackingManager__format_timedelta(td = td, add_plus_sign = True) # type: ignore
         
         # Assert
         self.assertEqual(expected, actual)
@@ -669,7 +669,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "NW.AutoProffLibrary"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor) # type: ignore
+        actual : str = TTDataFrameFactory()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -680,7 +680,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "ERROR"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor) # type: ignore
+        actual : str = TTDataFrameFactory()._TimeTrackingManager__extract_software_project_name(descriptor = descriptor) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)   
@@ -691,7 +691,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "1.0.0"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor) # type: ignore
+        actual : str = TTDataFrameFactory()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -702,7 +702,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : str = "ERROR"
 
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor) # type: ignore
+        actual : str = TTDataFrameFactory()._TimeTrackingManager__extract_software_project_version(descriptor = descriptor) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)  
@@ -715,7 +715,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 0.00
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
+        actual : float = TTDataFrameFactory()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -728,7 +728,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 0.00
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
+        actual : float = TTDataFrameFactory()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -741,7 +741,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 25.00
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
+        actual : float = TTDataFrameFactory()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -754,7 +754,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 100.00
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
+        actual : float = TTDataFrameFactory()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)        
@@ -767,7 +767,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : float = 33.3333
         
         # Act
-        actual : float = TimeTrackingManager()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
+        actual : float = TTDataFrameFactory()._TimeTrackingManager__calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -804,7 +804,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             )
 
         # Act
-        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str,end_time_str = end_time_str,effort_str = effort_str) # type: ignore
+        actual : EffortStatus = TTDataFrameFactory()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str,end_time_str = end_time_str,effort_str = effort_str) # type: ignore
 
         # Assert
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
@@ -849,7 +849,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             )
 
         # Act
-        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str) # type: ignore
+        actual : EffortStatus = TTDataFrameFactory()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str) # type: ignore
 
         # Assert
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
@@ -881,7 +881,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             ) 
 
         # Act
-        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status_for_none_values(idx = idx, effort_str = effort_str) # type: ignore
+        actual : EffortStatus = TTDataFrameFactory()._TimeTrackingManager__create_effort_status_for_none_values(idx = idx, effort_str = effort_str) # type: ignore
 
         # Assert
         comparison : bool = SupportMethodProvider().are_effort_statuses_equal(ef1 = expected, ef2 = actual)
@@ -913,7 +913,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : datetime = datetime.strptime(dt_str, strp_format)
 
         # Act
-        actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time) # type: ignore
+        actual : datetime = TTDataFrameFactory()._TimeTrackingManager__create_time_object(time = time) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -934,7 +934,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected : datetime = datetime.strptime(dt_str, strp_format)
 
         # Act
-        actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time) # type: ignore
+        actual : datetime = TTDataFrameFactory()._TimeTrackingManager__create_time_object(time = time) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -950,7 +950,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         
         # Act
         with self.assertRaises(ValueError) as context:
-            actual : datetime = TimeTrackingManager()._TimeTrackingManager__create_time_object(time = time) # type: ignore
+            actual : datetime = TTDataFrameFactory()._TimeTrackingManager__create_time_object(time = time) # type: ignore
 
         # Assert
         self.assertTrue(expected_message in str(context.exception))
@@ -966,7 +966,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             effort_str : str):
 
         # Arrange
-        actual_td : timedelta = TimeTrackingManager()._TimeTrackingManager__convert_string_to_timedelta(td_str = effort_str) # type: ignore
+        actual_td : timedelta = TTDataFrameFactory()._TimeTrackingManager__convert_string_to_timedelta(td_str = effort_str) # type: ignore
         expected : EffortStatus = EffortStatus(
             idx = idx,
             start_time_str = None,
@@ -982,7 +982,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
             ) 
                 
         # Act
-        actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(
+        actual : EffortStatus = TTDataFrameFactory()._TimeTrackingManager__create_effort_status(
             idx = idx, 
             start_time_str = start_time_str,
             end_time_str = end_time_str,
@@ -1009,7 +1009,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         
         # Act
         with self.assertRaises(ValueError) as context:
-            actual : EffortStatus = TimeTrackingManager()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)  # type: ignore
+            actual : EffortStatus = TTDataFrameFactory()._TimeTrackingManager__create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)  # type: ignore
 
         # Assert
         self.assertTrue(expected_message in str(context.exception)) 
@@ -1027,7 +1027,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Arrange
         # Act
-        actual : str = TimeTrackingManager()._TimeTrackingManager__create_time_range_id(start_time = start_time, end_time = end_time, unknown_id = unknown_id) # type: ignore
+        actual : str = TTDataFrameFactory()._TimeTrackingManager__create_time_range_id(start_time = start_time, end_time = end_time, unknown_id = unknown_id) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
@@ -1043,7 +1043,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Act
         with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
-            actual : DataFrame = TimeTrackingManager().get_tt(setting_bag = setting_bag)
+            actual : DataFrame = TTDataFrameFactory().get_tt(setting_bag = setting_bag)
 
         # Assert
         self.assertEqual(expected_column_names, actual.columns.tolist())
@@ -1060,7 +1060,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_year(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1073,7 +1073,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_month_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_year_month(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year_month(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1086,7 +1086,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_month_spnv_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_year_month_spnv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year_month_spnv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1099,7 +1099,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_spnv_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_year_spnv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year_spnv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)      
@@ -1112,7 +1112,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_spn_spv_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_spn_spv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_spn_spv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 
@@ -1124,7 +1124,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tts_by_month_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_month(tt_df = sessions_df, years = years)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_month(tt_df = sessions_df, years = years)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)
@@ -1136,7 +1136,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tts_by_month_upd_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().update_future_months_to_empty(tts_by_month_df = tts_by_month_df, now = now)
+        actual_df : DataFrame  = TTDataFrameFactory().update_future_months_to_empty(tts_by_month_df = tts_by_month_df, now = now)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)
@@ -1150,7 +1150,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df.reset_index(drop = True, inplace = True)
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_time_ranges(tt_df = sessions_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_time_ranges(tt_df = sessions_df, unknown_id = unknown_id)
         actual_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
         actual_df.reset_index(drop = True, inplace = True)
 
@@ -1165,7 +1165,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         time_ranges_df.loc[len(time_ranges_df.index)] = [unknown_id, 3]
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().remove_unknown_id(tts_by_time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().remove_unknown_id(tts_by_time_ranges_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
@@ -1177,7 +1177,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         time_ranges_df : DataFrame = ObjectMother().create_time_ranges_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().remove_unknown_id(tts_by_time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().remove_unknown_id(tts_by_time_ranges_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
@@ -1189,7 +1189,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_hashtag_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_year_hashtag(tt_df = sessions_df, years = years)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year_hashtag(tt_df = sessions_df, years = years)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
@@ -1200,7 +1200,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_hashtag_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_hashtag(tt_df = sessions_df)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_hashtag(tt_df = sessions_df)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1218,7 +1218,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_spn_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_spn(tt_df = sessions_df, years = years, software_project_names = software_project_names, remove_untagged = remove_untagged)
+        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_spn(tt_df = sessions_df, years = years, software_project_names = software_project_names, remove_untagged = remove_untagged)
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 
