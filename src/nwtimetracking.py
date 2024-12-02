@@ -71,6 +71,7 @@ class TTCN(StrEnum):
     PROJECTVERSION = "ProjectVersion"
     DME = "DME"
     TME = "TME"
+    DYE = "DYE"
 
 # DTOs
 @dataclass(frozen=True)
@@ -591,25 +592,17 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_year : str = "Year"
-        cn_is_software_project : str = "IsSoftwareProject"
-        condition_one : Series = (sessions_df[cn_year].isin(values = years))
-        condition_two : Series = (sessions_df[cn_is_software_project] == True)
+        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
         tt_df = tt_df.loc[condition_one & condition_two]
 
-        cn_descriptor : str = "Descriptor"
-        cn_project_name : str = "ProjectName"
-        cn_project_version : str = "ProjectVersion"
-        tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tt_df[TTCN.PROJECTVERSION] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
 
-        cn_effort : str = "Effort"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [cn_year])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        tt_df = tt_df.sort_values(by = [cn_year]).reset_index(drop = True)
-    
-        cn_dye : str = "DYE"
-        tt_df.rename(columns = {cn_effort : cn_dye}, inplace = True)
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tt_df = tt_df.groupby(by = [TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tt_df = tt_df.sort_values(by = [TTCN.YEAR]).reset_index(drop = True)
+        tt_df.rename(columns = {TTCN.EFFORT : TTCN.DYE}, inplace = True)
 
         return tt_df
     def __get_raw_tye(self, sessions_df : DataFrame, years : list[int]) -> DataFrame:
