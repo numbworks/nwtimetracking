@@ -1043,7 +1043,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
 
         # Act
         with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
-            actual : DataFrame = TTDataFrameFactory().get_tt(setting_bag = setting_bag)
+            actual : DataFrame = TTDataFrameFactory().create_tt(setting_bag = setting_bag)
 
         # Assert
         self.assertEqual(expected_column_names, actual.columns.tolist())
@@ -1060,7 +1060,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_year(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1073,7 +1073,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_month_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year_month(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_year_month(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1086,7 +1086,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_month_spnv_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year_month_spnv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_year_month_spnv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1099,7 +1099,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_spnv_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year_spnv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_year_spnv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)      
@@ -1112,7 +1112,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_spn_spv_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_spn_spv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_spn_spv(tt_df = sessions_df, years = years, software_project_names = software_project_names)
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 
@@ -1124,7 +1124,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tts_by_month_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_month(tt_df = sessions_df, years = years)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_month(tt_df = sessions_df, years = years)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)
@@ -1150,7 +1150,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df.reset_index(drop = True, inplace = True)
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_time_ranges(tt_df = sessions_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_time_ranges(tt_df = sessions_df, unknown_id = unknown_id)
         actual_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
         actual_df.reset_index(drop = True, inplace = True)
 
@@ -1189,7 +1189,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_year_hashtag_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_year_hashtag(tt_df = sessions_df, years = years)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_year_hashtag(tt_df = sessions_df, years = years)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
@@ -1200,7 +1200,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_hashtag_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_hashtag(tt_df = sessions_df)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_hashtag(tt_df = sessions_df)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1218,7 +1218,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().create_tt_by_spn_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().get_tts_by_spn(tt_df = sessions_df, years = years, software_project_names = software_project_names, remove_untagged = remove_untagged)
+        actual_df : DataFrame  = TTDataFrameFactory().create_tts_by_spn(tt_df = sessions_df, years = years, software_project_names = software_project_names, remove_untagged = remove_untagged)
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 

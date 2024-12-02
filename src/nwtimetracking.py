@@ -703,7 +703,7 @@ class TTDataFrameFactory():
         # can't enforce the year column as "timedelta"
 
         return df 
-    def __get_raw_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def __create_raw_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
         
         '''
                 Year	Month	ProjectName	        ProjectVersion	Effort
@@ -729,7 +729,7 @@ class TTDataFrameFactory():
         tts_df = tts_df.loc[condition_three]
 
         return tts_df
-    def __get_raw_tts_by_dme(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def __create_raw_tts_by_dme(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
         
         '''
                 Year	Month	DME
@@ -755,7 +755,7 @@ class TTDataFrameFactory():
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.DME}, inplace = True)
 
         return tts_df
-    def __get_raw_tts_by_tme(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def __create_raw_tts_by_tme(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
         
         '''
                 Year	Month	TME
@@ -777,7 +777,7 @@ class TTDataFrameFactory():
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.TME}, inplace = True)
 
         return tts_df
-    def __get_raw_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def __create_raw_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
         
         '''
                 Year	ProjectName	        ProjectVersion	Effort
@@ -804,7 +804,7 @@ class TTDataFrameFactory():
         tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
 
         return tts_df
-    def __get_raw_tts_by_dye(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def __create_raw_tts_by_dye(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
         
         '''
                 Year	DYE
@@ -830,7 +830,7 @@ class TTDataFrameFactory():
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.DYE}, inplace = True)
 
         return tts_df
-    def __get_raw_tts_by_tye(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def __create_raw_tts_by_tye(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
         
         '''
                 Year	TYE
@@ -852,7 +852,7 @@ class TTDataFrameFactory():
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.TYE}, inplace = True)
 
         return tts_df
-    def __get_raw_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame: 
+    def __create_raw_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame: 
         
         '''
                 Hashtag	ProjectName	            Effort
@@ -881,7 +881,7 @@ class TTDataFrameFactory():
         tts_df = tts_df[[TTCN.HASHTAG, TTCN.PROJECTNAME, TTCN.EFFORT]]
 
         return tts_df
-    def __get_raw_de(self, tt_df : DataFrame, years : list[int]) -> timedelta:
+    def __create_raw_de(self, tt_df : DataFrame, years : list[int]) -> timedelta:
         
         '''3 days 21:15:00'''
 
@@ -895,7 +895,7 @@ class TTDataFrameFactory():
         summarized : timedelta = tts_df[TTCN.EFFORT].sum()
 
         return summarized
-    def __get_raw_te(self, tt_df : DataFrame, years : list[int], remove_untagged : bool) -> timedelta:
+    def __create_raw_te(self, tt_df : DataFrame, years : list[int], remove_untagged : bool) -> timedelta:
 
         '''186 days 11:15:00'''
 
@@ -912,7 +912,7 @@ class TTDataFrameFactory():
         summarized : timedelta = tts_df[TTCN.EFFORT].sum()
 
         return summarized    
-    def __get_raw_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def __create_raw_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
                 ProjectName	                ProjectVersion	Effort
@@ -940,7 +940,7 @@ class TTDataFrameFactory():
         tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
 
         return tts_df
-    def __get_default_raw_ttm(self, year : int) -> DataFrame:
+    def __create_default_raw_ttm(self, year : int) -> DataFrame:
 
         '''
             default_df:
@@ -963,6 +963,89 @@ class TTDataFrameFactory():
         default_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = default_df)
 
         return default_df
+    def __create_raw_ttm(self, tt_df : DataFrame, year : int) -> DataFrame:
+        
+        '''
+            ttm_df:
+
+                Year	    Month	Effort
+                0	2015	10	    8h 00m
+                1	2015	11	    10h 00m
+                2	2015	12	    0h 00m
+
+            ttm_df:
+
+                Year	    Month	2015	        
+                0	2015	10	    0 days 08:00:00
+                1	2015	11	    0 days 10:00:00
+                2	2015	12	    0 days 00:00:00            
+
+            ttm_df:
+
+                    Month	2015
+                0	1	    0 days 00:00:00
+                ...
+                9	10	    0 days 08:00:00
+                10	11	    0 days 10:00:00
+                11	12	    0 days 00:00:00
+        '''
+
+        ttm_df : DataFrame = tt_df.copy(deep=True)
+        ttm_df = ttm_df[[TTCN.YEAR, TTCN.MONTH, TTCN.EFFORT]]
+
+        condition : Series = (tt_df[TTCN.YEAR] == year)
+        ttm_df = ttm_df.loc[condition]
+
+        ttm_df[TTCN.EFFORT] = ttm_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.convert_string_to_timedelta(td_str = x))
+        ttm_df[str(year)] = ttm_df[TTCN.EFFORT]
+        cn_effort = str(year)    
+
+        ttm_df = ttm_df.groupby([TTCN.MONTH])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+        ttm_df = ttm_df.sort_values(by = TTCN.MONTH).reset_index(drop = True)
+
+        ttm_df = self.__try_complete_raw_ttm(ttm_df = ttm_df, year = year)
+        ttm_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = ttm_df)
+
+        return ttm_df
+    def __create_raw_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+
+        '''
+                Year	Hashtag	        Effort
+            0   2023	#csharp	        0 days 15:15:00
+            1   2023	#maintenance	0 days 02:30:00
+            2   2023	#powershell	    3 days 02:15:00
+            ...   
+        '''
+
+        tts_df : DataFrame = tt_df.copy(deep = True)
+
+        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        tts_df = tts_df.loc[condition]
+
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.HASHTAG, TTCN.YEAR]).reset_index(drop = True)
+
+        return tts_df
+    def __create_raw_tts_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
+
+        '''
+                Hashtag	        Effort          Effort%
+            0   #csharp	        0 days 15:15:00 56.49
+            1   #maintenance	0 days 02:30:00 23.97
+            2   #powershell	    3 days 02:15:00 6.43
+            ...   
+        '''
+
+        tts_df : DataFrame = tt_df.copy(deep = True)
+
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+
+        summarized : float = tts_df[TTCN.EFFORT].sum()
+        tts_df[TTCN.EFFORTPRC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
+
+        return tts_df
     def __try_complete_raw_ttm(self, ttm_df : DataFrame, year : int) -> DataFrame:
 
         '''
@@ -1007,7 +1090,7 @@ class TTDataFrameFactory():
 
         if ttm_df[TTCN.MONTH].count() != 12:
 
-            default_df : DataFrame = self.__get_default_raw_ttm(year = year)
+            default_df : DataFrame = self.__create_default_raw_ttm(year = year)
             missing_df : DataFrame = default_df.loc[~default_df[TTCN.MONTH].astype(str).isin(ttm_df[TTCN.MONTH].astype(str))]
 
             completed_df : DataFrame = pd.concat([ttm_df, missing_df], ignore_index = True)
@@ -1015,50 +1098,6 @@ class TTDataFrameFactory():
             completed_df = completed_df.reset_index(drop = True)
 
             return completed_df
-
-        return ttm_df
-    def __get_raw_ttm(self, tt_df : DataFrame, year : int) -> DataFrame:
-        
-        '''
-            ttm_df:
-
-                Year	    Month	Effort
-                0	2015	10	    8h 00m
-                1	2015	11	    10h 00m
-                2	2015	12	    0h 00m
-
-            ttm_df:
-
-                Year	    Month	2015	        
-                0	2015	10	    0 days 08:00:00
-                1	2015	11	    0 days 10:00:00
-                2	2015	12	    0 days 00:00:00            
-
-            ttm_df:
-
-                    Month	2015
-                0	1	    0 days 00:00:00
-                ...
-                9	10	    0 days 08:00:00
-                10	11	    0 days 10:00:00
-                11	12	    0 days 00:00:00
-        '''
-
-        ttm_df : DataFrame = tt_df.copy(deep=True)
-        ttm_df = ttm_df[[TTCN.YEAR, TTCN.MONTH, TTCN.EFFORT]]
-
-        condition : Series = (tt_df[TTCN.YEAR] == year)
-        ttm_df = ttm_df.loc[condition]
-
-        ttm_df[TTCN.EFFORT] = ttm_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.convert_string_to_timedelta(td_str = x))
-        ttm_df[str(year)] = ttm_df[TTCN.EFFORT]
-        cn_effort = str(year)    
-
-        ttm_df = ttm_df.groupby([TTCN.MONTH])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        ttm_df = ttm_df.sort_values(by = TTCN.MONTH).reset_index(drop = True)
-
-        ttm_df = self.__try_complete_raw_ttm(ttm_df = ttm_df, year = year)
-        ttm_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = ttm_df)
 
         return ttm_df
     def __expand_raw_ttm_by_year(self, tt_df : DataFrame, years : list, tts_by_month_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
@@ -1110,7 +1149,7 @@ class TTDataFrameFactory():
         '''
         
         actual_df : DataFrame = tts_by_month_df.copy(deep = True)
-        ttm_df : DataFrame = self.__get_raw_ttm(tt_df = tt_df, year = years[i])
+        ttm_df : DataFrame = self.__create_raw_ttm(tt_df = tt_df, year = years[i])
 
         expansion_df = pd.merge(
             left = actual_df, 
@@ -1142,47 +1181,8 @@ class TTDataFrameFactory():
             actual_df = expansion_df
 
         return actual_df
-    def __get_raw_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
 
-        '''
-                Year	Hashtag	        Effort
-            0   2023	#csharp	        0 days 15:15:00
-            1   2023	#maintenance	0 days 02:30:00
-            2   2023	#powershell	    3 days 02:15:00
-            ...   
-        '''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-
-        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
-        tts_df = tts_df.loc[condition]
-
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.convert_string_to_timedelta(td_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tts_df = tts_df.sort_values(by = [TTCN.HASHTAG, TTCN.YEAR]).reset_index(drop = True)
-
-        return tts_df
-    def __get_raw_tts_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
-
-        '''
-                Hashtag	        Effort          Effort%
-            0   #csharp	        0 days 15:15:00 56.49
-            1   #maintenance	0 days 02:30:00 23.97
-            2   #powershell	    3 days 02:15:00 6.43
-            ...   
-        '''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.convert_string_to_timedelta(td_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-
-        summarized : float = tts_df[TTCN.EFFORT].sum()
-        tts_df[TTCN.EFFORTPRC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
-
-        return tts_df
-
-    def get_tt(self, setting_bag : SettingBag) -> DataFrame:
+    def create_tt(self, setting_bag : SettingBag) -> DataFrame:
         
         '''
             Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
@@ -1198,7 +1198,7 @@ class TTDataFrameFactory():
         tt_df = self.__enforce_dataframe_definition_for_tt_df(tt_df = tt_df)
 
         return tt_df
-    def get_tts_by_month(self, tt_df : DataFrame, years : list) -> DataFrame:
+    def create_tts_by_month(self, tt_df : DataFrame, years : list) -> DataFrame:
 
         '''
                 Month	2016	↕   2017	    ↕	2018    ...
@@ -1212,7 +1212,7 @@ class TTDataFrameFactory():
         for i in range(len(years)):
 
             if i == 0:
-                tts_df = self.__get_raw_ttm(tt_df = tt_df, year = years[i])
+                tts_df = self.__create_raw_ttm(tt_df = tt_df, year = years[i])
             else:
                 tts_df = self.__expand_raw_ttm_by_year(
                     tt_df = tt_df, 
@@ -1227,7 +1227,7 @@ class TTDataFrameFactory():
         tts_df.rename(columns = (lambda x : self.__df_helper.try_consolidate_trend_column_name(column_name = x)), inplace = True)
 
         return tts_df
-    def get_tts_by_year(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+    def create_tts_by_year(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
 
         '''
             [0]
@@ -1273,7 +1273,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.TARGETDIFF].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = True))
 
         return tts_df
-    def get_tts_by_year_month(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+    def create_tts_by_year_month(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
 
         '''
             [0]
@@ -1335,7 +1335,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.TOTARGET] = tts_df[TTCN.TOTARGET].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = True))
 
         return tts_df
-    def get_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def create_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
             [0] ...
@@ -1347,9 +1347,9 @@ class TTDataFrameFactory():
                 ...
         '''
 
-        spnv_df : DataFrame = self.__get_raw_tts_by_year_month_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
-        dme_df : DataFrame = self.__get_raw_tts_by_dme(tt_df = tt_df, years = years)
-        tme_df : DataFrame = self.__get_raw_tts_by_tme(tt_df = tt_df, years = years)
+        spnv_df : DataFrame = self.__create_raw_tts_by_year_month_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        dme_df : DataFrame = self.__create_raw_tts_by_dme(tt_df = tt_df, years = years)
+        tme_df : DataFrame = self.__create_raw_tts_by_tme(tt_df = tt_df, years = years)
 
         tts_df : DataFrame = pd.merge(
             left = spnv_df, 
@@ -1375,7 +1375,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.TME] = tts_df[TTCN.TME].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
 
         return tts_df
-    def get_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def create_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
             [0] ...
@@ -1387,9 +1387,9 @@ class TTDataFrameFactory():
                 ...
         '''
 
-        spnv_df : DataFrame = self.__get_raw_tts_by_year_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
-        dye_df : DataFrame = self.__get_raw_tts_by_dye(tt_df = tt_df, years = years)
-        tye_df : DataFrame = self.__get_raw_tts_by_tye(tt_df = tt_df, years = years)
+        spnv_df : DataFrame = self.__create_raw_tts_by_year_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        dye_df : DataFrame = self.__create_raw_tts_by_dye(tt_df = tt_df, years = years)
+        tye_df : DataFrame = self.__create_raw_tts_by_tye(tt_df = tt_df, years = years)
 
         tts_df : DataFrame = pd.merge(
             left = spnv_df, 
@@ -1415,7 +1415,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.TYE] = tts_df[TTCN.TYE].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
 
         return tts_df
-    def get_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
+    def create_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
 
         '''
                 Hashtag     ProjectName	            Effort	    DE	%_DE	TE	        %_TE
@@ -1431,9 +1431,9 @@ class TTDataFrameFactory():
             ...
         '''
 
-        tts_df : DataFrame = self.__get_raw_tts_by_spn(tt_df = tt_df, years = years, software_project_names = software_project_names)
-        de : timedelta = self.__get_raw_de(tt_df = tt_df, years = years)
-        te : timedelta = self.__get_raw_te(tt_df = tt_df, years = years, remove_untagged = remove_untagged)    
+        tts_df : DataFrame = self.__create_raw_tts_by_spn(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        de : timedelta = self.__create_raw_de(tt_df = tt_df, years = years)
+        te : timedelta = self.__create_raw_te(tt_df = tt_df, years = years, remove_untagged = remove_untagged)    
 
         tts_df[TTCN.DE] = de
         tts_df[TTCN.PERCDE] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DE]), axis = 1)      
@@ -1446,7 +1446,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.TE] = tts_df[TTCN.TE].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
 
         return tts_df
-    def get_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def create_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
                 ProjectName	                ProjectVersion	Effort
@@ -1456,11 +1456,11 @@ class TTDataFrameFactory():
             ...    
         '''
 
-        tts_df : DataFrame = self.__get_raw_tts_by_spn_spv(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        tts_df : DataFrame = self.__create_raw_tts_by_spn_spv(tt_df = tt_df, years = years, software_project_names = software_project_names)
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
-    def get_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def create_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
 
         '''
                 Year	Hashtag	        Effort
@@ -1470,11 +1470,11 @@ class TTDataFrameFactory():
             ...    
         '''
     
-        tts_df : DataFrame = self.__get_raw_tts_by_year_hashtag(tt_df = tt_df, years = years)
+        tts_df : DataFrame = self.__create_raw_tts_by_year_hashtag(tt_df = tt_df, years = years)
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
-    def get_tts_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
+    def create_tts_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
 
         '''
                 Hashtag	        Effort  Effort%
@@ -1484,11 +1484,11 @@ class TTDataFrameFactory():
             ...    
         '''
     
-        tts_df : DataFrame = self.__get_raw_tts_by_hashtag(tt_df = tt_df)
+        tts_df : DataFrame = self.__create_raw_tts_by_hashtag(tt_df = tt_df)
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
-    def get_tts_by_time_ranges(self, tt_df : DataFrame, unknown_id : str) -> DataFrame:
+    def create_tts_by_time_ranges(self, tt_df : DataFrame, unknown_id : str) -> DataFrame:
 
             '''
                     TimeRangeId	Occurrences
@@ -1513,7 +1513,7 @@ class TTDataFrameFactory():
             tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = False).reset_index(drop = True)
             
             return tts_df
-    def get_tts_by_effort_status(self, tt_df : DataFrame) -> DataFrame:
+    def create_tts_by_effort_status(self, tt_df : DataFrame) -> DataFrame:
 
         '''
             StartTime	EndTime	Effort	ES_IsCorrect	ES_Expected	ES_Message
