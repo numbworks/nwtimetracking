@@ -1588,9 +1588,7 @@ class TimeTrackingManager():
 
         '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
 
-        cn_time_range_id : str = "TimeRangeId"
-
-        condition : Series = (time_ranges_df[cn_time_range_id] != unknown_id)
+        condition : Series = (time_ranges_df[TTCN.TIMERANGEID] != unknown_id)
         time_ranges_df = time_ranges_df.loc[condition]	
         time_ranges_df.reset_index(drop = True, inplace = True)
 
