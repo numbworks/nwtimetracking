@@ -73,6 +73,7 @@ class TTCN(StrEnum):
     TME = "TME"
     DYE = "DYE"
     TYE = "TYE"
+    TREND = "↕"
 
 # DTOs
 @dataclass(frozen=True)
@@ -942,10 +943,8 @@ class TimeTrackingManager():
             "↕1"    => "↕"
         '''
 
-        cn_trend : str = "↕"
-
-        if column_name.startswith(cn_trend):
-            return cn_trend
+        if column_name.startswith(TTCN.TREND):
+            return TTCN.TREND
         
         return column_name
     def __create_effort_status_for_none_values(self, idx : int, effort_str : str) -> EffortStatus:
