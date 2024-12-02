@@ -1597,9 +1597,7 @@ class TimeTrackingManager():
 
         '''Returns only the top n rows by "Occurrences" of the provided DataFrame.'''
 
-        cn_occurrences : str = "Occurrences"
-
-        time_ranges_df.sort_values(by = cn_occurrences, ascending = [ascending], inplace = True)
+        time_ranges_df.sort_values(by = TTCN.OCCURRENCES, ascending = [ascending], inplace = True)
         time_ranges_df = time_ranges_df.iloc[0:n]
         time_ranges_df.reset_index(drop = True, inplace = True)
 
