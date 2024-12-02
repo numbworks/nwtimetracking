@@ -1652,6 +1652,18 @@ class TTMarkdownFactory():
         md_content += "\n"
 
         return md_content
+class TimeTrackingProcessor():
+
+    '''Collects all the logic related to the processing of "Time Tracking.xlsx".'''
+
+    __component_bag : ComponentBag
+    __setting_bag : SettingBag
+    __rl_summary : TTSummary
+
+    def __init__(self, component_bag : ComponentBag, setting_bag : SettingBag) -> None:
+
+        self.__component_bag = component_bag
+        self.__setting_bag = setting_bag
 
 # MAIN
 if __name__ == "__main__":
