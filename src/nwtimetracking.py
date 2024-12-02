@@ -99,6 +99,8 @@ class TTCN(StrEnum):
     ESISCORRECT = "ES_IsCorrect"
     ESEXPECTED = "ES_Expected"
     ESMESSAGE = "ES_Message"
+    TIMERANGEID = "TimeRangeId"
+    OCCURRENCES = "Occurrences"
 
 # DTOs
 @dataclass(frozen=True)
@@ -1568,24 +1570,18 @@ class TimeTrackingManager():
             '''
 
             time_ranges_df : DataFrame = sessions_df.copy(deep = True)
-            
-            cn_start_time : str = "StartTime"
-            cn_end_time : str = "EndTime"
-            cn_time_range_id : str = "TimeRangeId"
 
-            time_ranges_df = time_ranges_df[[cn_start_time, cn_end_time]]
-            time_ranges_df[cn_time_range_id] = time_ranges_df.apply(
+            time_ranges_df = time_ranges_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
+            time_ranges_df[TTCN.TIMERANGEID] = time_ranges_df.apply(
                 lambda x : self.__create_time_range_id(
-                    start_time = x[cn_start_time], 
-                    end_time = x[cn_end_time], 
+                    start_time = x[TTCN.STARTTIME], 
+                    end_time = x[TTCN.ENDTIME], 
                     unknown_id = unknown_id), axis = 1)
 
-            cn_occurrences : str = "Occurrences"
-
-            time_ranges_df = time_ranges_df[[cn_time_range_id]].groupby(by = [cn_time_range_id], as_index=False).agg(
-                    count = pd.NamedAgg(column = cn_time_range_id, aggfunc = "count"))
-            time_ranges_df.rename(columns={"count" : cn_occurrences}, inplace = True)
-            time_ranges_df = time_ranges_df.sort_values(by = [cn_occurrences], ascending = False).reset_index(drop = True)
+            time_ranges_df = time_ranges_df[[TTCN.TIMERANGEID]].groupby(by = [TTCN.TIMERANGEID], as_index=False).agg(
+                    count = pd.NamedAgg(column = TTCN.TIMERANGEID, aggfunc = "count"))
+            time_ranges_df.rename(columns={"count" : TTCN.OCCURRENCES}, inplace = True)
+            time_ranges_df = time_ranges_df.sort_values(by = [TTCN.OCCURRENCES], ascending = False).reset_index(drop = True)
             
             return time_ranges_df
     def remove_unknown_id(self, time_ranges_df : DataFrame, unknown_id : str) -> DataFrame:
