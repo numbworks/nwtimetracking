@@ -91,6 +91,10 @@ class TTCN(StrEnum):
     PERCTME = "%_TME"
     PERCDYE = "%_DYE"
     PERCTYE = "%_TYE"
+    DE = "DE"
+    TE = "TE"
+    PERCDE = "%_DE"
+    PERCTE = "%_TE"
 
 # DTOs
 @dataclass(frozen=True)
@@ -1384,22 +1388,15 @@ class TimeTrackingManager():
         de : timedelta = self.__get_raw_de(sessions_df = sessions_df, years = years)
         te : timedelta = self.__get_raw_te(sessions_df = sessions_df, years = years, remove_untagged = remove_untagged)    
 
-        cn_de : str = "DE"
-        tt_df[cn_de] = de
+        tt_df[TTCN.DE] = de
+        tt_df[TTCN.PERCDE] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DE]), axis = 1)      
 
-        cn_effort : str = "Effort"
-        cn_percentage_de : str = "%_DE"
-        tt_df[cn_percentage_de] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = x[cn_de]), axis = 1)      
+        tt_df[TTCN.TE] = te
+        tt_df[TTCN.PERCTE] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TE]), axis = 1)     
 
-        cn_te : str = "TE"
-        tt_df[cn_te] = te
-
-        cn_percentage_te : str = "%_TE"
-        tt_df[cn_percentage_te] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = x[cn_te]), axis = 1)     
-
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tt_df[cn_de] = tt_df[cn_de].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[cn_te] = tt_df[cn_te].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tt_df[TTCN.DE] = tt_df[TTCN.DE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tt_df[TTCN.TE] = tt_df[TTCN.TE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
 
         return tt_df
     def get_tt_by_spn_spv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
