@@ -781,15 +781,13 @@ class TimeTrackingManager():
                     11	12	    0h 00m  
         '''
 
-        cn_month : str = "Month"
-
-        if ttm_df[cn_month].count() != 12:
+        if ttm_df[TTCN.MONTH].count() != 12:
 
             default_df : DataFrame = self.__get_default_raw_ttm(year = year)
-            missing_df : DataFrame = default_df.loc[~default_df[cn_month].astype(str).isin(ttm_df[cn_month].astype(str))]
+            missing_df : DataFrame = default_df.loc[~default_df[TTCN.MONTH].astype(str).isin(ttm_df[TTCN.MONTH].astype(str))]
 
             completed_df : DataFrame = pd.concat([ttm_df, missing_df], ignore_index = True)
-            completed_df = completed_df.sort_values(by = cn_month, ascending = [True])
+            completed_df = completed_df.sort_values(by = TTCN.MONTH, ascending = [True])
             completed_df = completed_df.reset_index(drop = True)
 
             return completed_df
