@@ -641,27 +641,20 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_year : str = "Year"
-        cn_is_software_project : str = "IsSoftwareProject"
-        condition_one : Series = (sessions_df[cn_year].isin(values = years))
-        condition_two : Series = (sessions_df[cn_is_software_project] == True)
+        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
         tt_df = tt_df.loc[condition_one & condition_two]
 
-        cn_descriptor : str = "Descriptor"
-        cn_project_name : str = "ProjectName"
-        tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tt_df = tt_df.groupby(by = [TTCN.PROJECTNAME, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tt_df = tt_df.sort_values(by = [TTCN.PROJECTNAME]).reset_index(drop = True)
 
-        cn_effort : str = "Effort"
-        cn_hashtag : str = "Hashtag"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [cn_project_name, cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        tt_df = tt_df.sort_values(by = [cn_project_name]).reset_index(drop = True)
-
-        condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
+        condition_three : Series = (tt_df[TTCN.PROJECTNAME].isin(values = software_project_names))
         tt_df = tt_df.loc[condition_three] 
-        tt_df = tt_df.sort_values(by = [cn_hashtag, cn_effort], ascending = [False, False]).reset_index(drop = True)
+        tt_df = tt_df.sort_values(by = [TTCN.HASHTAG, TTCN.EFFORT], ascending = [False, False]).reset_index(drop = True)
 
-        tt_df = tt_df[[cn_hashtag, cn_project_name, cn_effort]]
+        tt_df = tt_df[[TTCN.HASHTAG, TTCN.PROJECTNAME, TTCN.EFFORT]]
 
         return tt_df
     def __get_raw_de(self, sessions_df : DataFrame, years : list[int]) -> timedelta:
