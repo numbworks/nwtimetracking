@@ -53,6 +53,10 @@ class _MessageCollection():
     @staticmethod
     def effort_status_not_among_expected_time_values(time : str) -> str:
         return f"The provided time ('{time}') is not among the expected time values."
+    
+    @staticmethod
+    def starttime_endtime_are_empty() -> str:
+        return "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
 class TTCN(StrEnum):
     
     '''Collects all the column names used by ...'''
@@ -949,10 +953,11 @@ class TimeTrackingManager():
         return column_name
     def __create_effort_status_for_none_values(self, idx : int, effort_str : str) -> EffortStatus:
 
+        '''Creates effort status for None values.'''
+
         actual_str : str = effort_str
         actual_td : timedelta = self.__convert_string_to_timedelta(td_str = effort_str)
         is_correct : bool = True
-        message : str = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
 
         effort_status : EffortStatus = EffortStatus(
             idx = idx,
@@ -965,7 +970,7 @@ class TimeTrackingManager():
             expected_td = None,
             expected_str = None,
             is_correct = is_correct,
-            message = message
+            message = _MessageCollection.starttime_endtime_are_empty()
             )    
 
         return effort_status
