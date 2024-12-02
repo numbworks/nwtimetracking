@@ -67,6 +67,8 @@ class TTCN(StrEnum):
     ISRELEASEDAY = "IsReleaseDay"
     YEAR = "Year"
     MONTH = "Month"
+    PROJECTNAME = "ProjectName"
+    PROJECTVERSION = "ProjectVersion"
 
 # DTOs
 @dataclass(frozen=True)
@@ -380,9 +382,7 @@ class TimeTrackingManager():
 
         '''Ensures that the columns of the provided dataframe have the expected data types.'''
 
-        cn_month : str = "Month" 
-
-        df = df.astype({cn_month: int})
+        df = df.astype({TTCN.MONTH: int})
         # can't enforce the year column as "timedelta"
 
         return df 
@@ -486,25 +486,18 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_year : str = "Year"
-        cn_is_software_project : str = "IsSoftwareProject"
-        condition_one : Series = (sessions_df[cn_year].isin(values = years))
-        condition_two : Series = (sessions_df[cn_is_software_project] == True)
+        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
         tt_df = tt_df.loc[condition_one & condition_two]
 
-        cn_descriptor : str = "Descriptor"
-        cn_project_name : str = "ProjectName"
-        cn_project_version : str = "ProjectVersion"
-        tt_df[cn_project_name] = tt_df[cn_descriptor].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tt_df[cn_project_version] = tt_df[cn_descriptor].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tt_df[TTCN.PROJECTVERSION] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
 
-        cn_month : str = "Month"
-        cn_effort : str = "Effort"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [cn_year, cn_month, cn_project_name, cn_project_version])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        tt_df = tt_df.sort_values(by = [cn_year, cn_month, cn_project_name, cn_project_version]).reset_index(drop = True)
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
     
-        condition_three : Series = (tt_df[cn_project_name].isin(values = software_project_names))
+        condition_three : Series = (tt_df[TTCN.PROJECTNAME].isin(values = software_project_names))
         tt_df = tt_df.loc[condition_three]
 
         return tt_df
