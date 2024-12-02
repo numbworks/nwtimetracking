@@ -375,7 +375,7 @@ class TimeTrackingManager():
 
     '''Collects all the logic related to the management of "Time Tracking.xlsx".'''
 
-    def __enforce_dataframe_definition_for_sessions_df(self, sessions_df : DataFrame) -> DataFrame:
+    def __enforce_dataframe_definition_for_tt_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''Enforces definition for the provided dataframe.'''
 
@@ -391,26 +391,26 @@ class TimeTrackingManager():
         column_names.append(TTCN.YEAR)              # [8], int
         column_names.append(TTCN.MONTH)             # [9], int
 
-        sessions_df = sessions_df[column_names]
+        tt_df = tt_df[column_names]
     
-        sessions_df[column_names[0]] = pd.to_datetime(sessions_df[column_names[0]], format="%Y-%m-%d") 
-        sessions_df[column_names[0]] = sessions_df[column_names[0]].apply(lambda x: x.date())
+        tt_df[column_names[0]] = pd.to_datetime(tt_df[column_names[0]], format="%Y-%m-%d") 
+        tt_df[column_names[0]] = tt_df[column_names[0]].apply(lambda x: x.date())
 
-        sessions_df = sessions_df.astype({column_names[1]: str})
-        sessions_df = sessions_df.astype({column_names[2]: str})
-        sessions_df = sessions_df.astype({column_names[3]: str})
-        sessions_df = sessions_df.astype({column_names[4]: str})
-        sessions_df = sessions_df.astype({column_names[5]: str})
-        sessions_df = sessions_df.astype({column_names[6]: bool})
-        sessions_df = sessions_df.astype({column_names[7]: bool})
-        sessions_df = sessions_df.astype({column_names[8]: int})
-        sessions_df = sessions_df.astype({column_names[9]: int})
+        tt_df = tt_df.astype({column_names[1]: str})
+        tt_df = tt_df.astype({column_names[2]: str})
+        tt_df = tt_df.astype({column_names[3]: str})
+        tt_df = tt_df.astype({column_names[4]: str})
+        tt_df = tt_df.astype({column_names[5]: str})
+        tt_df = tt_df.astype({column_names[6]: bool})
+        tt_df = tt_df.astype({column_names[7]: bool})
+        tt_df = tt_df.astype({column_names[8]: int})
+        tt_df = tt_df.astype({column_names[9]: int})
 
-        sessions_df[column_names[1]] = sessions_df[column_names[1]].replace('nan', '')
-        sessions_df[column_names[2]] = sessions_df[column_names[2]].replace('nan', '')
-        sessions_df[column_names[5]] = sessions_df[column_names[5]].replace('nan', '')
+        tt_df[column_names[1]] = tt_df[column_names[1]].replace('nan', '')
+        tt_df[column_names[2]] = tt_df[column_names[2]].replace('nan', '')
+        tt_df[column_names[5]] = tt_df[column_names[5]].replace('nan', '')
 
-        return sessions_df    
+        return tt_df    
     def __enforce_dataframe_definition_for_raw_ttm_df(self, df : DataFrame) -> DataFrame:
 
         '''Ensures that the columns of the provided dataframe have the expected data types.'''
@@ -508,7 +508,7 @@ class TimeTrackingManager():
         prct = round(number = prct, ndigits = rounding_digits)
 
         return prct
-    def __get_raw_tt_by_year_month_spnv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def __get_raw_tt_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
         
         '''
                 Year	Month	ProjectName	        ProjectVersion	Effort
@@ -517,24 +517,24 @@ class TimeTrackingManager():
             ...
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tt_df = tt_df.loc[condition_one & condition_two]
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
 
-        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tt_df[TTCN.PROJECTVERSION] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
     
-        condition_three : Series = (tt_df[TTCN.PROJECTNAME].isin(values = software_project_names))
-        tt_df = tt_df.loc[condition_three]
+        condition_three : Series = (tts_df[TTCN.PROJECTNAME].isin(values = software_project_names))
+        tts_df = tts_df.loc[condition_three]
 
-        return tt_df
-    def __get_raw_dme(self, sessions_df : DataFrame, years : list[int]) -> DataFrame:
+        return tts_df
+    def __get_raw_dme(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
         
         '''
                 Year	Month	DME
@@ -545,22 +545,22 @@ class TimeTrackingManager():
             DME = DevelopmentMonthlyEffort
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tt_df = tt_df.loc[condition_one & condition_two]
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
 
-        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tt_df[TTCN.PROJECTVERSION] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
-        tt_df.rename(columns = {TTCN.EFFORT : TTCN.DME}, inplace = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
+        tts_df.rename(columns = {TTCN.EFFORT : TTCN.DME}, inplace = True)
 
-        return tt_df
-    def __get_raw_tme(self, sessions_df : DataFrame, years : list[int]) -> DataFrame:
+        return tts_df
+    def __get_raw_tme(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
         
         '''
                 Year	Month	TME
@@ -571,18 +571,18 @@ class TimeTrackingManager():
             TME = TotalMonthlyEffort
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        tt_df = tt_df.loc[condition]
+        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        tts_df = tts_df.loc[condition]
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
-        tt_df.rename(columns = {TTCN.EFFORT : TTCN.TME}, inplace = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
+        tts_df.rename(columns = {TTCN.EFFORT : TTCN.TME}, inplace = True)
 
-        return tt_df
-    def __get_raw_tt_by_year_spnv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+        return tts_df
+    def __get_raw_tt_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
         
         '''
                 Year	ProjectName	        ProjectVersion	Effort
@@ -591,25 +591,25 @@ class TimeTrackingManager():
             ...
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tt_df = tt_df.loc[condition_one & condition_two]
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
 
-        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tt_df[TTCN.PROJECTVERSION] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
     
-        condition_three : Series = (tt_df[TTCN.PROJECTNAME].isin(values = software_project_names))
-        tt_df = tt_df.loc[condition_three]
-        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        condition_three : Series = (tts_df[TTCN.PROJECTNAME].isin(values = software_project_names))
+        tts_df = tts_df.loc[condition_three]
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
 
-        return tt_df
-    def __get_raw_dye(self, sessions_df : DataFrame, years : list[int]) -> DataFrame:
+        return tts_df
+    def __get_raw_dye(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
         
         '''
                 Year	DYE
@@ -620,22 +620,22 @@ class TimeTrackingManager():
             DYE = DevelopmentYearlyEffort
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tt_df = tt_df.loc[condition_one & condition_two]
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
 
-        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tt_df[TTCN.PROJECTVERSION] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.YEAR]).reset_index(drop = True)
-        tt_df.rename(columns = {TTCN.EFFORT : TTCN.DYE}, inplace = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR]).reset_index(drop = True)
+        tts_df.rename(columns = {TTCN.EFFORT : TTCN.DYE}, inplace = True)
 
-        return tt_df
-    def __get_raw_tye(self, sessions_df : DataFrame, years : list[int]) -> DataFrame:
+        return tts_df
+    def __get_raw_tye(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
         
         '''
                 Year	TYE
@@ -646,18 +646,18 @@ class TimeTrackingManager():
             TYE = TotalYearlyEffort
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        tt_df = tt_df.loc[condition]
+        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        tts_df = tts_df.loc[condition]
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.YEAR]).reset_index(drop = True)
-        tt_df.rename(columns = {TTCN.EFFORT : TTCN.TYE}, inplace = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR]).reset_index(drop = True)
+        tts_df.rename(columns = {TTCN.EFFORT : TTCN.TYE}, inplace = True)
 
-        return tt_df
-    def __get_raw_tt_by_spn(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame: 
+        return tts_df
+    def __get_raw_tt_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame: 
         
         '''
                 Hashtag	ProjectName	            Effort
@@ -668,56 +668,56 @@ class TimeTrackingManager():
             ...
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tt_df = tt_df.loc[condition_one & condition_two]
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
 
-        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.PROJECTNAME, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.PROJECTNAME]).reset_index(drop = True)
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.PROJECTNAME, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME]).reset_index(drop = True)
 
-        condition_three : Series = (tt_df[TTCN.PROJECTNAME].isin(values = software_project_names))
-        tt_df = tt_df.loc[condition_three] 
-        tt_df = tt_df.sort_values(by = [TTCN.HASHTAG, TTCN.EFFORT], ascending = [False, False]).reset_index(drop = True)
+        condition_three : Series = (tts_df[TTCN.PROJECTNAME].isin(values = software_project_names))
+        tts_df = tts_df.loc[condition_three] 
+        tts_df = tts_df.sort_values(by = [TTCN.HASHTAG, TTCN.EFFORT], ascending = [False, False]).reset_index(drop = True)
 
-        tt_df = tt_df[[TTCN.HASHTAG, TTCN.PROJECTNAME, TTCN.EFFORT]]
+        tts_df = tts_df[[TTCN.HASHTAG, TTCN.PROJECTNAME, TTCN.EFFORT]]
 
-        return tt_df
-    def __get_raw_de(self, sessions_df : DataFrame, years : list[int]) -> timedelta:
+        return tts_df
+    def __get_raw_de(self, tt_df : DataFrame, years : list[int]) -> timedelta:
         
         '''3 days 21:15:00'''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tt_df = tt_df.loc[condition_one & condition_two]
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        summarized : timedelta = tt_df[TTCN.EFFORT].sum()
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        summarized : timedelta = tts_df[TTCN.EFFORT].sum()
 
         return summarized
-    def __get_raw_te(self, sessions_df : DataFrame, years : list[int], remove_untagged : bool) -> timedelta:
+    def __get_raw_te(self, tt_df : DataFrame, years : list[int], remove_untagged : bool) -> timedelta:
 
         '''186 days 11:15:00'''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        tt_df = tt_df.loc[condition_one]
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        tts_df = tts_df.loc[condition_one]
 
         if remove_untagged:
-            condition_two : Series = (sessions_df[TTCN.HASHTAG] != "#untagged")
-            tt_df = tt_df.loc[condition_two]
+            condition_two : Series = (tt_df[TTCN.HASHTAG] != "#untagged")
+            tts_df = tts_df.loc[condition_two]
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        summarized : timedelta = tt_df[TTCN.EFFORT].sum()
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        summarized : timedelta = tts_df[TTCN.EFFORT].sum()
 
         return summarized    
-    def __get_raw_tt_by_spn_spv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def __get_raw_tt_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
                 ProjectName	                ProjectVersion	Effort
@@ -727,24 +727,24 @@ class TimeTrackingManager():
             ...
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tt_df = tt_df.loc[condition_one & condition_two]
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
 
-        tt_df[TTCN.PROJECTNAME] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
-        tt_df[TTCN.PROJECTVERSION] = tt_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
+        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_name(descriptor = x))
+        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__extract_software_project_version(descriptor = x))
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
 
-        condition_three : Series = (tt_df[TTCN.PROJECTNAME].isin(values = software_project_names))
-        tt_df = tt_df.loc[condition_three]
-        tt_df = tt_df.sort_values(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        condition_three : Series = (tts_df[TTCN.PROJECTNAME].isin(values = software_project_names))
+        tts_df = tts_df.loc[condition_three]
+        tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
 
-        return tt_df
+        return tts_df
     def __get_default_raw_ttm(self, year : int) -> DataFrame:
 
         '''
@@ -822,7 +822,7 @@ class TimeTrackingManager():
             return completed_df
 
         return ttm_df
-    def __get_raw_ttm(self, sessions_df : DataFrame, year : int) -> DataFrame:
+    def __get_raw_ttm(self, tt_df : DataFrame, year : int) -> DataFrame:
         
         '''
             ttm_df:
@@ -849,10 +849,10 @@ class TimeTrackingManager():
                 11	12	    0 days 00:00:00
         '''
 
-        ttm_df : DataFrame = sessions_df.copy(deep=True)
+        ttm_df : DataFrame = tt_df.copy(deep=True)
         ttm_df = ttm_df[[TTCN.YEAR, TTCN.MONTH, TTCN.EFFORT]]
 
-        condition : Series = (sessions_df[TTCN.YEAR] == year)
+        condition : Series = (tt_df[TTCN.YEAR] == year)
         ttm_df = ttm_df.loc[condition]
 
         ttm_df[TTCN.EFFORT] = ttm_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
@@ -883,7 +883,7 @@ class TimeTrackingManager():
             trend = "="
 
         return trend
-    def __expand_raw_ttm_by_year(self, sessions_df : DataFrame, years : list, tts_by_month_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
+    def __expand_raw_ttm_by_year(self, tt_df : DataFrame, years : list, tts_by_month_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
 
         '''    
             actual_df:
@@ -932,7 +932,7 @@ class TimeTrackingManager():
         '''
         
         actual_df : DataFrame = tts_by_month_df.copy(deep = True)
-        ttm_df : DataFrame = self.__get_raw_ttm(sessions_df = sessions_df, year = years[i])
+        ttm_df : DataFrame = self.__get_raw_ttm(tt_df = tt_df, year = years[i])
 
         expansion_df = pd.merge(
             left = actual_df, 
@@ -1131,7 +1131,7 @@ class TimeTrackingManager():
                 time_range_id = unknown_id
 
             return time_range_id
-    def __get_raw_tt_by_year_hashtag(self, sessions_df : DataFrame, years : list[int]) -> DataFrame:
+    def __get_raw_tt_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
 
         '''
                 Year	Hashtag	        Effort
@@ -1141,17 +1141,17 @@ class TimeTrackingManager():
             ...   
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        tt_df = tt_df.loc[condition]
+        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        tts_df = tts_df.loc[condition]
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.HASHTAG, TTCN.YEAR]).reset_index(drop = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.HASHTAG, TTCN.YEAR]).reset_index(drop = True)
 
-        return tt_df
-    def __get_raw_tt_by_hashtag(self, sessions_df : DataFrame) -> DataFrame:
+        return tts_df
+    def __get_raw_tt_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
 
         '''
                 Hashtag	        Effort          Effort%
@@ -1161,33 +1161,62 @@ class TimeTrackingManager():
             ...   
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
 
-        summarized : float = tt_df[TTCN.EFFORT].sum()
-        tt_df[TTCN.EFFORTPRC] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
+        summarized : float = tts_df[TTCN.EFFORT].sum()
+        tts_df[TTCN.EFFORTPRC] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
 
-        return tt_df
+        return tts_df
 
-    def get_sessions_dataset(self, setting_bag : SettingBag) -> DataFrame:
+    def get_tt(self, setting_bag : SettingBag) -> DataFrame:
         
         '''
             Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
         '''
 
-        sessions_df : DataFrame = pd.read_excel(
+        tt_df : DataFrame = pd.read_excel(
             io = setting_bag.excel_path, 	
             skiprows = setting_bag.excel_books_skiprows,
             nrows = setting_bag.excel_books_nrows,
             sheet_name = setting_bag.excel_books_tabname, 
             engine = 'openpyxl'
             )      
-        sessions_df = self.__enforce_dataframe_definition_for_sessions_df(sessions_df = sessions_df)
+        tt_df = self.__enforce_dataframe_definition_for_tt_df(tt_df = tt_df)
 
-        return sessions_df
-    def get_tt_by_year(self, sessions_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+        return tt_df
+    def get_tts_by_month(self, tt_df : DataFrame, years : list) -> DataFrame:
+
+        '''
+                Month	2016	↕   2017	    ↕	2018    ...
+            0	1	    0h 00m	↑	13h 00m		↓	0h 00m
+            1	2	    0h 00m	↑	1h 00m	    ↓	0h 00m
+            ...
+        '''
+
+        tts_df : DataFrame = pd.DataFrame()
+
+        for i in range(len(years)):
+
+            if i == 0:
+                tts_df = self.__get_raw_ttm(tt_df = tt_df, year = years[i])
+            else:
+                tts_df = self.__expand_raw_ttm_by_year(
+                    tt_df = tt_df, 
+                    years = years, 
+                    tts_by_month_df = tts_df, 
+                    i = i, 
+                    add_trend = True)
+                
+        for year in years:
+            tts_df[str(year)] = tts_df[str(year)].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+
+        tts_df.rename(columns = (lambda x : self.__try_consolidate_trend_column_name(column_name = x)), inplace = True)
+
+        return tts_df
+    def get_tts_by_year(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
 
         '''
             [0]
@@ -1213,27 +1242,27 @@ class TimeTrackingManager():
                 ...
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        tt_df = tt_df.loc[condition]
+        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        tts_df = tts_df.loc[condition]
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby([TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = TTCN.YEAR).reset_index(drop = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby([TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = TTCN.YEAR).reset_index(drop = True)
 
-        tt_df[TTCN.YEARLYTARGET] = tt_df[TTCN.YEAR].apply(
+        tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEAR].apply(
             lambda x : cast(YearlyTarget, self.__get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
-        tt_df[TTCN.TARGETDIFF] = tt_df[TTCN.EFFORT] - tt_df[TTCN.YEARLYTARGET]
-        tt_df[TTCN.ISTARGETMET] = tt_df.apply(
+        tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.EFFORT] - tts_df[TTCN.YEARLYTARGET]
+        tts_df[TTCN.ISTARGETMET] = tts_df.apply(
             lambda x : self.__is_yearly_target_met(effort = x[TTCN.EFFORT], yearly_target = x[TTCN.YEARLYTARGET]), axis = 1)    
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[TTCN.YEARLYTARGET] = tt_df[TTCN.YEARLYTARGET].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[TTCN.TARGETDIFF] = tt_df[TTCN.TARGETDIFF].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = True))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEARLYTARGET].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.TARGETDIFF].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = True))
 
-        return tt_df
-    def get_tt_by_year_month(self, sessions_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+        return tts_df
+    def get_tts_by_year_month(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
 
         '''
             [0]
@@ -1273,29 +1302,29 @@ class TimeTrackingManager():
                 ...
         '''
 
-        tt_df : DataFrame = sessions_df.copy(deep = True)
+        tts_df : DataFrame = tt_df.copy(deep = True)
 
-        condition : Series = (sessions_df[TTCN.YEAR].isin(values = years))
-        tt_df = tt_df.loc[condition]
+        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        tts_df = tts_df.loc[condition]
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
 
-        tt_df[TTCN.YEARLYTOTAL] = tt_df[TTCN.EFFORT].groupby(by = tt_df[TTCN.YEAR]).cumsum()
+        tts_df[TTCN.YEARLYTOTAL] = tts_df[TTCN.EFFORT].groupby(by = tts_df[TTCN.YEAR]).cumsum()
 
-        tt_df[TTCN.YEARLYTARGET] = tt_df[TTCN.YEAR].apply(
+        tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEAR].apply(
             lambda x : cast(YearlyTarget, self.__get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
 
-        tt_df[TTCN.TOTARGET] = tt_df[TTCN.YEARLYTOTAL] - tt_df[TTCN.YEARLYTARGET]    
-        tt_df.drop(columns = [TTCN.YEARLYTARGET], axis = 1, inplace = True)
+        tts_df[TTCN.TOTARGET] = tts_df[TTCN.YEARLYTOTAL] - tts_df[TTCN.YEARLYTARGET]    
+        tts_df.drop(columns = [TTCN.YEARLYTARGET], axis = 1, inplace = True)
         
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tt_df[TTCN.YEARLYTOTAL] = tt_df[TTCN.YEARLYTOTAL].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[TTCN.TOTARGET] = tt_df[TTCN.TOTARGET].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = True))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.YEARLYTOTAL] = tts_df[TTCN.YEARLYTOTAL].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TOTARGET] = tts_df[TTCN.TOTARGET].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = True))
 
-        return tt_df
-    def get_tt_by_year_month_spnv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+        return tts_df
+    def get_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
             [0] ...
@@ -1307,11 +1336,11 @@ class TimeTrackingManager():
                 ...
         '''
 
-        spnv_df : DataFrame = self.__get_raw_tt_by_year_month_spnv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-        dme_df : DataFrame = self.__get_raw_dme(sessions_df = sessions_df, years = years)
-        tme_df : DataFrame = self.__get_raw_tme(sessions_df = sessions_df, years = years)
+        spnv_df : DataFrame = self.__get_raw_tt_by_year_month_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        dme_df : DataFrame = self.__get_raw_dme(tt_df = tt_df, years = years)
+        tme_df : DataFrame = self.__get_raw_tme(tt_df = tt_df, years = years)
 
-        tt_df : DataFrame = pd.merge(
+        tts_df : DataFrame = pd.merge(
             left = spnv_df, 
             right = dme_df, 
             how = "inner", 
@@ -1319,23 +1348,23 @@ class TimeTrackingManager():
             right_on = [TTCN.YEAR, TTCN.MONTH]
             )
         
-        tt_df[TTCN.PERCDME] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DME]), axis = 1)        
+        tts_df[TTCN.PERCDME] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DME]), axis = 1)        
 
-        tt_df = pd.merge(
-            left = tt_df, 
+        tts_df = pd.merge(
+            left = tts_df, 
             right = tme_df, 
             how = "inner", 
             left_on = [TTCN.YEAR, TTCN.MONTH], 
             right_on = [TTCN.YEAR, TTCN.MONTH]
             )   
     
-        tt_df[TTCN.PERCTME] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TME]), axis = 1)    
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tt_df[TTCN.DME] = tt_df[TTCN.DME].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[TTCN.TME] = tt_df[TTCN.TME].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.PERCTME] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TME]), axis = 1)    
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.DME] = tts_df[TTCN.DME].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TME] = tts_df[TTCN.TME].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
 
-        return tt_df
-    def get_tt_by_year_spnv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+        return tts_df
+    def get_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
             [0] ...
@@ -1347,11 +1376,11 @@ class TimeTrackingManager():
                 ...
         '''
 
-        spnv_df : DataFrame = self.__get_raw_tt_by_year_spnv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-        dye_df : DataFrame = self.__get_raw_dye(sessions_df = sessions_df, years = years)
-        tye_df : DataFrame = self.__get_raw_tye(sessions_df = sessions_df, years = years)
+        spnv_df : DataFrame = self.__get_raw_tt_by_year_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        dye_df : DataFrame = self.__get_raw_dye(tt_df = tt_df, years = years)
+        tye_df : DataFrame = self.__get_raw_tye(tt_df = tt_df, years = years)
 
-        tt_df : DataFrame = pd.merge(
+        tts_df : DataFrame = pd.merge(
             left = spnv_df, 
             right = dye_df, 
             how = "inner", 
@@ -1359,23 +1388,23 @@ class TimeTrackingManager():
             right_on = [TTCN.YEAR]
             )
         
-        tt_df[TTCN.PERCDYE] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DYE]), axis = 1)        
+        tts_df[TTCN.PERCDYE] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DYE]), axis = 1)        
 
-        tt_df = pd.merge(
-            left = tt_df, 
+        tts_df = pd.merge(
+            left = tts_df, 
             right = tye_df, 
             how = "inner", 
             left_on = [TTCN.YEAR], 
             right_on = [TTCN.YEAR]
             )   
     
-        tt_df[TTCN.PERCTYE] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TYE]), axis = 1)    
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tt_df[TTCN.DYE] = tt_df[TTCN.DYE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[TTCN.TYE] = tt_df[TTCN.TYE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.PERCTYE] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TYE]), axis = 1)    
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.DYE] = tts_df[TTCN.DYE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TYE] = tts_df[TTCN.TYE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
 
-        return tt_df
-    def get_tt_by_spn(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
+        return tts_df
+    def get_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
 
         '''
                 Hashtag     ProjectName	            Effort	    DE	%_DE	TE	        %_TE
@@ -1391,22 +1420,22 @@ class TimeTrackingManager():
             ...
         '''
 
-        tt_df : DataFrame = self.__get_raw_tt_by_spn(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-        de : timedelta = self.__get_raw_de(sessions_df = sessions_df, years = years)
-        te : timedelta = self.__get_raw_te(sessions_df = sessions_df, years = years, remove_untagged = remove_untagged)    
+        tts_df : DataFrame = self.__get_raw_tt_by_spn(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        de : timedelta = self.__get_raw_de(tt_df = tt_df, years = years)
+        te : timedelta = self.__get_raw_te(tt_df = tt_df, years = years, remove_untagged = remove_untagged)    
 
-        tt_df[TTCN.DE] = de
-        tt_df[TTCN.PERCDE] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DE]), axis = 1)      
+        tts_df[TTCN.DE] = de
+        tts_df[TTCN.PERCDE] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DE]), axis = 1)      
 
-        tt_df[TTCN.TE] = te
-        tt_df[TTCN.PERCTE] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TE]), axis = 1)     
+        tts_df[TTCN.TE] = te
+        tts_df[TTCN.PERCTE] = tts_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TE]), axis = 1)     
 
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tt_df[TTCN.DE] = tt_df[TTCN.DE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[TTCN.TE] = tt_df[TTCN.TE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df[TTCN.DE] = tts_df[TTCN.DE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tts_df[TTCN.TE] = tts_df[TTCN.TE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
 
-        return tt_df
-    def get_tt_by_spn_spv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+        return tts_df
+    def get_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
                 ProjectName	                ProjectVersion	Effort
@@ -1416,40 +1445,11 @@ class TimeTrackingManager():
             ...    
         '''
 
-        tt_df : DataFrame = self.__get_raw_tt_by_spn_spv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df : DataFrame = self.__get_raw_tt_by_spn_spv(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
 
-        return tt_df
-    def get_tts_by_month(self, sessions_df : DataFrame, years : list) -> DataFrame:
-
-        '''
-                Month	2016	↕   2017	    ↕	2018    ...
-            0	1	    0h 00m	↑	13h 00m		↓	0h 00m
-            1	2	    0h 00m	↑	1h 00m	    ↓	0h 00m
-            ...
-        '''
-
-        tts_by_month_df : DataFrame = pd.DataFrame()
-
-        for i in range(len(years)):
-
-            if i == 0:
-                tts_by_month_df = self.__get_raw_ttm(sessions_df = sessions_df, year = years[i])
-            else:
-                tts_by_month_df = self.__expand_raw_ttm_by_year(
-                    sessions_df = sessions_df, 
-                    years = years, 
-                    tts_by_month_df = tts_by_month_df, 
-                    i = i, 
-                    add_trend = True)
-                
-        for year in years:
-            tts_by_month_df[str(year)] = tts_by_month_df[str(year)].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-
-        tts_by_month_df.rename(columns = (lambda x : self.__try_consolidate_trend_column_name(column_name = x)), inplace = True)
-
-        return tts_by_month_df
-    def get_tt_by_year_hashtag(self, sessions_df : DataFrame, years : list[int]) -> DataFrame:
+        return tts_df
+    def get_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
 
         '''
                 Year	Hashtag	        Effort
@@ -1459,11 +1459,11 @@ class TimeTrackingManager():
             ...    
         '''
     
-        tt_df : DataFrame = self.__get_raw_tt_by_year_hashtag(sessions_df = sessions_df, years = years)
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df : DataFrame = self.__get_raw_tt_by_year_hashtag(tt_df = tt_df, years = years)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
 
-        return tt_df
-    def get_tt_by_hashtag(self, sessions_df : DataFrame) -> DataFrame:
+        return tts_df
+    def get_tts_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
 
         '''
                 Hashtag	        Effort  Effort%
@@ -1473,10 +1473,10 @@ class TimeTrackingManager():
             ...    
         '''
     
-        tt_df : DataFrame = self.__get_raw_tt_by_hashtag(sessions_df = sessions_df)
-        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tts_df : DataFrame = self.__get_raw_tt_by_hashtag(tt_df = tt_df)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
 
-        return tt_df
+        return tts_df
 
     def try_print_definitions(self, df : DataFrame, definitions : dict[str, str]) -> None:
         
