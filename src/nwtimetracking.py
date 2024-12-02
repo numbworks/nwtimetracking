@@ -57,6 +57,9 @@ class _MessageCollection():
     @staticmethod
     def starttime_endtime_are_empty() -> str:
         return "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+    @staticmethod
+    def effort_is_correct() -> str:
+        return "The effort is correct."
 class TTCN(StrEnum):
     
     '''Collects all the column names used by ...'''
@@ -1049,7 +1052,8 @@ class TimeTrackingManager():
             if actual_td != expected_td:
                 is_correct = False
             
-            message : str = "The effort is correct."
+            message : str = _MessageCollection.effort_is_correct()
+            
             if actual_td != expected_td:
                 message = _MessageCollection.effort_status_mismatching_effort(
                     idx = idx, 
