@@ -1228,6 +1228,24 @@ class TTDataFrameFactory():
         filtered_df = tts_by_efs_df.loc[condition]
 
         return filtered_df
+    def __remove_unknown_id(self, tts_by_tr_df : DataFrame, unknown_id : str) -> DataFrame:
+
+        '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
+
+        condition : Series = (tts_by_tr_df[TTCN.TIMERANGEID] != unknown_id)
+        tts_by_tr_df = tts_by_tr_df.loc[condition]	
+        tts_by_tr_df.reset_index(drop = True, inplace = True)
+
+        return tts_by_tr_df
+    def __filter_by_top_n_occurrences(self, tts_by_tr_df : DataFrame, n : int, ascending : bool = False) -> DataFrame:
+
+        '''Returns only the top n rows by "Occurrences" of the provided DataFrame.'''
+
+        tts_by_tr_df.sort_values(by = TTCN.OCCURRENCES, ascending = [ascending], inplace = True)
+        tts_by_tr_df = tts_by_tr_df.iloc[0:n]
+        tts_by_tr_df.reset_index(drop = True, inplace = True)
+
+        return tts_by_tr_df
 
     def create_tt(self, setting_bag : SettingBag) -> DataFrame:
         
@@ -1591,54 +1609,23 @@ class TTDataFrameFactory():
             tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = False).reset_index(drop = True)
             
             return tts_df
+class TTMarkdownFactory():
 
-    def try_print_definitions(self, df : DataFrame, definitions : dict[str, str]) -> None:
-        
-        '''
-            "DE"    => print("DE: Development Effort")
-            "Year"  => do nothing
-        '''
-        
-        for column_name in df.columns:
-            if definitions.get(column_name) != None:
-                print(f"{column_name}: {definitions[column_name]}")
-    def remove_unknown_id(self, tts_by_time_ranges_df : DataFrame, unknown_id : str) -> DataFrame:
+    '''Collects all the logic related to Markdown creation out of Time Tracking dataframes.'''
 
-        '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
+    __markdown_helper : MarkdownHelper
 
-        condition : Series = (tts_by_time_ranges_df[TTCN.TIMERANGEID] != unknown_id)
-        tts_by_time_ranges_df = tts_by_time_ranges_df.loc[condition]	
-        tts_by_time_ranges_df.reset_index(drop = True, inplace = True)
+    def __init__(self, markdown_helper : MarkdownHelper) -> None:
 
-        return tts_by_time_ranges_df
-    def filter_by_top_n_occurrences(self, tts_by_time_ranges_df : DataFrame, n : int, ascending : bool = False) -> DataFrame:
+        self.__markdown_helper = markdown_helper
 
-        '''Returns only the top n rows by "Occurrences" of the provided DataFrame.'''
-
-        tts_by_time_ranges_df.sort_values(by = TTCN.OCCURRENCES, ascending = [ascending], inplace = True)
-        tts_by_time_ranges_df = tts_by_time_ranges_df.iloc[0:n]
-        tts_by_time_ranges_df.reset_index(drop = True, inplace = True)
-
-        return tts_by_time_ranges_df
-class MarkdownProcessor():
-
-    '''Collects all the logic related to the processing of Markdown content.'''
-
-    __component_bag : ComponentBag
-    __setting_bag : SettingBag    
-
-    def __init__(self, component_bag : ComponentBag, setting_bag : SettingBag) -> None:
-
-        self.__component_bag = component_bag
-        self.__setting_bag = setting_bag
-
-    def __get_tts_by_month_md(self, last_update : datetime, tts_by_month_upd_df : DataFrame) -> str:
+    def create_tts_by_month_md(self, last_update : datetime, tts_by_month_upd_df : DataFrame) -> str:
 
         '''Creates the Markdown content for a "Time Tracking By Month" file out of the provided dataframe.'''
 
         md_paragraph_title : str = "Time Tracking By Month"
 
-        markdown_header : str = self.__component_bag.markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = md_paragraph_title)
+        markdown_header : str = self.__markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = md_paragraph_title)
         tts_by_month_upd_md : str = tts_by_month_upd_df.to_markdown(index = False)
 
         md_content : str = markdown_header
@@ -1648,25 +1635,6 @@ class MarkdownProcessor():
 
         return md_content
 
-    def process_tts_by_month_md(self, tts_by_month_upd_df : DataFrame) -> None:
-
-        '''Performs all the tasks related to the "Time Tracking By Month" file.'''
-
-        content : str = self.__get_tts_by_month_md(       
-            last_update = self.__setting_bag.last_update, 
-            tts_by_month_upd_df = tts_by_month_upd_df)
-
-        if self.__setting_bag.show_tts_by_month_md:
-            file_name_content : str = self.__component_bag.markdown_helper.format_file_name_as_content(file_name = self.__setting_bag.tts_by_month_file_name)
-            self.__component_bag.logging_function(file_name_content)
-            self.__component_bag.logging_function(content)
-
-        if self.__setting_bag.save_tts_by_month_md:            
-            file_path : str = self.__component_bag.file_path_manager.create_file_path(
-                folder_path = self.__setting_bag.working_folder_path,
-                file_name = self.__setting_bag.tts_by_month_file_name)
-            
-            self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
 
 # MAIN
 if __name__ == "__main__":

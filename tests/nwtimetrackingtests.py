@@ -16,7 +16,7 @@ from unittest.mock import Mock, call, patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import ComponentBag, MarkdownProcessor, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
+from nwtimetracking import ComponentBag, TTMarkdownFactory, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
 from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager
 
@@ -452,7 +452,7 @@ class ObjectMother():
 
         return (df, expected)
     @staticmethod
-    def create_service_objects_for_ttsbymonthmd() -> Tuple[ComponentBag, SettingBag, MarkdownProcessor]:
+    def create_service_objects_for_ttsbymonthmd() -> Tuple[ComponentBag, SettingBag, TTMarkdownFactory]:
 
         component_bag : Mock = Mock()
         component_bag.logging_function = Mock()
@@ -467,7 +467,7 @@ class ObjectMother():
         setting_bag.show_tts_by_month_md = True
         setting_bag.save_tts_by_month_md = True
 
-        markdown_processor : MarkdownProcessor = MarkdownProcessor(
+        markdown_processor : TTMarkdownFactory = TTMarkdownFactory(
 			component_bag = component_bag, 
 			setting_bag = setting_bag
 			)        
@@ -1165,7 +1165,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         time_ranges_df.loc[len(time_ranges_df.index)] = [unknown_id, 3]
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().remove_unknown_id(tts_by_time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().__remove_unknown_id(tts_by_tr_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
@@ -1177,7 +1177,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         time_ranges_df : DataFrame = ObjectMother().create_time_ranges_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().remove_unknown_id(tts_by_time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().__remove_unknown_id(tts_by_tr_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
