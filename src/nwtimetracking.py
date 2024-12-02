@@ -1508,10 +1508,9 @@ class TimeTrackingManager():
         now_year : int = now.year
         now_month : int = now.month	
         cn_year : str = str(now_year)
-        cn_month : str = "Month"
         new_value : str = ""
 
-        condition : Series = (tts_by_month_upd_df[cn_month] > now_month)
+        condition : Series = (tts_by_month_upd_df[TTCN.MONTH] > now_month)
         tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
             
         idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
