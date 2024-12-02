@@ -663,15 +663,12 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_year : str = "Year"
-        cn_is_software_project : str = "IsSoftwareProject"
-        condition_one : Series = (sessions_df[cn_year].isin(values = years))
-        condition_two : Series = (sessions_df[cn_is_software_project] == True)
+        condition_one : Series = (sessions_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (sessions_df[TTCN.ISSOFTWAREPROJECT] == True)
         tt_df = tt_df.loc[condition_one & condition_two]
 
-        cn_effort : str = "Effort"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        summarized : timedelta = tt_df[cn_effort].sum()
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        summarized : timedelta = tt_df[TTCN.EFFORT].sum()
 
         return summarized
     def __get_raw_te(self, sessions_df : DataFrame, years : list[int], remove_untagged : bool) -> timedelta:
