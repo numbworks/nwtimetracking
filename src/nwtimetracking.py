@@ -1477,6 +1477,56 @@ class TimeTrackingManager():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
+    def get_tts_by_time_ranges(self, tt_df : DataFrame, unknown_id : str) -> DataFrame:
+
+            '''
+                    TimeRangeId	Occurrences
+                0	Unknown		44
+                1	18:00-20:00	19
+                2	08:00-08:30	16
+                ...
+            '''
+
+            tts_df : DataFrame = tt_df.copy(deep = True)
+
+            tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
+            tts_df[TTCN.TIMERANGEID] = tts_df.apply(
+                lambda x : self.__create_time_range_id(
+                    start_time = x[TTCN.STARTTIME], 
+                    end_time = x[TTCN.ENDTIME], 
+                    unknown_id = unknown_id), axis = 1)
+
+            tts_df = tts_df[[TTCN.TIMERANGEID]].groupby(by = [TTCN.TIMERANGEID], as_index=False).agg(
+                    count = pd.NamedAgg(column = TTCN.TIMERANGEID, aggfunc = "count"))
+            tts_df.rename(columns={"count" : TTCN.OCCURRENCES}, inplace = True)
+            tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = False).reset_index(drop = True)
+            
+            return tts_df
+    def get_tts_by_effort_status(self, tt_df : DataFrame) -> DataFrame:
+
+        '''
+            StartTime	EndTime	Effort	ES_IsCorrect	ES_Expected	ES_Message
+            21:00       23:00   1h 00m  False           2h 00m      ...
+            ...        
+        '''
+
+        tts_df : DataFrame = tt_df.copy(deep = True)
+        
+        tts_df[TTCN.EFFORTSTATUS] = tts_df.apply(
+            lambda x : self.__create_effort_status_and_cast_to_any(
+                    idx = x.name, 
+                    start_time_str = x[TTCN.STARTTIME],
+                    end_time_str = x[TTCN.ENDTIME],
+                    effort_str = x[TTCN.EFFORT]),
+            axis = 1)
+        
+        tts_df[TTCN.ESISCORRECT] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
+        tts_df[TTCN.ESEXPECTED] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.expected_str)
+        tts_df[TTCN.ESMESSAGE] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.message)
+
+        tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME, TTCN.EFFORT, TTCN.ESISCORRECT, TTCN.ESEXPECTED, TTCN.ESMESSAGE]]
+
+        return tts_df
 
     def try_print_definitions(self, df : DataFrame, definitions : dict[str, str]) -> None:
         
@@ -1525,84 +1575,34 @@ class TimeTrackingManager():
         tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
 
         return tts_by_month_upd_df
-    def add_effort_status(self, sessions_df : DataFrame) -> DataFrame:
-
-        '''
-            StartTime	EndTime	Effort	ES_IsCorrect	ES_Expected	ES_Message
-            21:00       23:00   1h 00m  False           2h 00m      ...
-            ...        
-        '''
-
-        es_df : DataFrame = sessions_df.copy(deep = True)
-        
-        es_df[TTCN.EFFORTSTATUS] = es_df.apply(
-            lambda x : self.__create_effort_status_and_cast_to_any(
-                    idx = x.name, 
-                    start_time_str = x[TTCN.STARTTIME],
-                    end_time_str = x[TTCN.ENDTIME],
-                    effort_str = x[TTCN.EFFORT]),
-            axis = 1)
-        
-        es_df[TTCN.ESISCORRECT] = es_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
-        es_df[TTCN.ESEXPECTED] = es_df[TTCN.EFFORTSTATUS].apply(lambda x : x.expected_str)
-        es_df[TTCN.ESMESSAGE] = es_df[TTCN.EFFORTSTATUS].apply(lambda x : x.message)
-
-        es_df = es_df[[TTCN.STARTTIME, TTCN.ENDTIME, TTCN.EFFORT, TTCN.ESISCORRECT, TTCN.ESEXPECTED, TTCN.ESMESSAGE]]
-
-        return es_df
-    def filter_by_is_correct(self, es_df : DataFrame, is_correct : bool) -> DataFrame:
+    def filter_by_is_correct(self, tts_by_effort_status_df : DataFrame, is_correct : bool) -> DataFrame:
 
         '''Returns a DataFrame that contains only rows that match the provided is_correct.'''
 
-        filtered_df : DataFrame = es_df.copy(deep = True)
+        filtered_df : DataFrame = tts_by_effort_status_df.copy(deep = True)
 
         condition : Series = (filtered_df[TTCN.ESISCORRECT] == is_correct)
-        filtered_df = es_df.loc[condition]
+        filtered_df = tts_by_effort_status_df.loc[condition]
 
         return filtered_df
-    def create_time_ranges_df(self, sessions_df : DataFrame, unknown_id : str) -> DataFrame:
-
-            '''
-                    TimeRangeId	Occurrences
-                0	Unknown		44
-                1	18:00-20:00	19
-                2	08:00-08:30	16
-                ...
-            '''
-
-            time_ranges_df : DataFrame = sessions_df.copy(deep = True)
-
-            time_ranges_df = time_ranges_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
-            time_ranges_df[TTCN.TIMERANGEID] = time_ranges_df.apply(
-                lambda x : self.__create_time_range_id(
-                    start_time = x[TTCN.STARTTIME], 
-                    end_time = x[TTCN.ENDTIME], 
-                    unknown_id = unknown_id), axis = 1)
-
-            time_ranges_df = time_ranges_df[[TTCN.TIMERANGEID]].groupby(by = [TTCN.TIMERANGEID], as_index=False).agg(
-                    count = pd.NamedAgg(column = TTCN.TIMERANGEID, aggfunc = "count"))
-            time_ranges_df.rename(columns={"count" : TTCN.OCCURRENCES}, inplace = True)
-            time_ranges_df = time_ranges_df.sort_values(by = [TTCN.OCCURRENCES], ascending = False).reset_index(drop = True)
-            
-            return time_ranges_df
-    def remove_unknown_id(self, time_ranges_df : DataFrame, unknown_id : str) -> DataFrame:
+    def remove_unknown_id(self, tts_by_time_ranges_df : DataFrame, unknown_id : str) -> DataFrame:
 
         '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
 
-        condition : Series = (time_ranges_df[TTCN.TIMERANGEID] != unknown_id)
-        time_ranges_df = time_ranges_df.loc[condition]	
-        time_ranges_df.reset_index(drop = True, inplace = True)
+        condition : Series = (tts_by_time_ranges_df[TTCN.TIMERANGEID] != unknown_id)
+        tts_by_time_ranges_df = tts_by_time_ranges_df.loc[condition]	
+        tts_by_time_ranges_df.reset_index(drop = True, inplace = True)
 
-        return time_ranges_df
-    def filter_by_top_n_occurrences(self, time_ranges_df : DataFrame, n : int, ascending : bool = False) -> DataFrame:
+        return tts_by_time_ranges_df
+    def filter_by_top_n_occurrences(self, tts_by_time_ranges_df : DataFrame, n : int, ascending : bool = False) -> DataFrame:
 
         '''Returns only the top n rows by "Occurrences" of the provided DataFrame.'''
 
-        time_ranges_df.sort_values(by = TTCN.OCCURRENCES, ascending = [ascending], inplace = True)
-        time_ranges_df = time_ranges_df.iloc[0:n]
-        time_ranges_df.reset_index(drop = True, inplace = True)
+        tts_by_time_ranges_df.sort_values(by = TTCN.OCCURRENCES, ascending = [ascending], inplace = True)
+        tts_by_time_ranges_df = tts_by_time_ranges_df.iloc[0:n]
+        tts_by_time_ranges_df.reset_index(drop = True, inplace = True)
 
-        return time_ranges_df
+        return tts_by_time_ranges_df
 class MarkdownProcessor():
 
     '''Collects all the logic related to the processing of Markdown content.'''

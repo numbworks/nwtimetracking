@@ -1150,7 +1150,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         expected_df.reset_index(drop = True, inplace = True)
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().create_time_ranges_df(sessions_df = sessions_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TimeTrackingManager().get_tts_by_time_ranges(tt_df = sessions_df, unknown_id = unknown_id)
         actual_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
         actual_df.reset_index(drop = True, inplace = True)
 
@@ -1165,7 +1165,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         time_ranges_df.loc[len(time_ranges_df.index)] = [unknown_id, 3]
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().remove_unknown_id(time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TimeTrackingManager().remove_unknown_id(tts_by_time_ranges_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
@@ -1177,7 +1177,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         time_ranges_df : DataFrame = ObjectMother().create_time_ranges_df()
 
         # Act
-        actual_df : DataFrame  = TimeTrackingManager().remove_unknown_id(time_ranges_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TimeTrackingManager().remove_unknown_id(tts_by_time_ranges_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
