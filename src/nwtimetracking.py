@@ -1053,7 +1053,7 @@ class TimeTrackingManager():
                 is_correct = False
             
             message : str = _MessageCollection.effort_is_correct()
-            
+
             if actual_td != expected_td:
                 message = _MessageCollection.effort_status_mismatching_effort(
                     idx = idx, 
@@ -1122,15 +1122,12 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_year : str = "Year"
-        condition : Series = (sessions_df[cn_year].isin(values = years))
+        condition : Series = (sessions_df[TTCN.YEAR].isin(values = years))
         tt_df = tt_df.loc[condition]
 
-        cn_hashtag: str = "Hashtag"
-        cn_effort : str = "Effort"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [cn_year, cn_hashtag])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        tt_df = tt_df.sort_values(by = [cn_hashtag, cn_year]).reset_index(drop = True)
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tt_df = tt_df.sort_values(by = [TTCN.HASHTAG, TTCN.YEAR]).reset_index(drop = True)
 
         return tt_df
     def __get_raw_tt_by_hashtag(self, sessions_df : DataFrame) -> DataFrame:
