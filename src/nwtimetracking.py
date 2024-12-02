@@ -89,6 +89,8 @@ class TTCN(StrEnum):
     TOTARGET = "ToTarget"
     PERCDME = "%_DME"
     PERCTME = "%_TME"
+    PERCDYE = "%_DYE"
+    PERCTYE = "%_TYE"
 
 # DTOs
 @dataclass(frozen=True)
@@ -1338,36 +1340,28 @@ class TimeTrackingManager():
         dye_df : DataFrame = self.__get_raw_dye(sessions_df = sessions_df, years = years)
         tye_df : DataFrame = self.__get_raw_tye(sessions_df = sessions_df, years = years)
 
-        cn_year : str = "Year"
-
         tt_df : DataFrame = pd.merge(
             left = spnv_df, 
             right = dye_df, 
             how = "inner", 
-            left_on = [cn_year], 
-            right_on = [cn_year]
+            left_on = [TTCN.YEAR], 
+            right_on = [TTCN.YEAR]
             )
         
-        cn_effort : str = "Effort"
-        cn_dye : str = "DYE"
-        cn_percentage_dye : str = "%_DYE"
-        tt_df[cn_percentage_dye] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = x[cn_dye]), axis = 1)        
+        tt_df[TTCN.PERCDYE] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DYE]), axis = 1)        
 
         tt_df = pd.merge(
             left = tt_df, 
             right = tye_df, 
             how = "inner", 
-            left_on = [cn_year], 
-            right_on = [cn_year]
+            left_on = [TTCN.YEAR], 
+            right_on = [TTCN.YEAR]
             )   
     
-        cn_tye : str = "TYE"
-        cn_percentage_tye : str = "%_TYE"
-        tt_df[cn_percentage_tye] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[cn_effort], whole = x[cn_tye]), axis = 1)    
-
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tt_df[cn_dye] = tt_df[cn_dye].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[cn_tye] = tt_df[cn_tye].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tt_df[TTCN.PERCTYE] = tt_df.apply(lambda x : self.__calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TYE]), axis = 1)    
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tt_df[TTCN.DYE] = tt_df[TTCN.DYE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tt_df[TTCN.TYE] = tt_df[TTCN.TYE].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
 
         return tt_df
     def get_tt_by_spn(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
