@@ -1410,9 +1410,7 @@ class TimeTrackingManager():
         '''
 
         tt_df : DataFrame = self.__get_raw_tt_by_spn_spv(sessions_df = sessions_df, years = years, software_project_names = software_project_names)
-
-        cn_effort : str = "Effort"
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
 
         return tt_df
     def get_tts_by_month(self, sessions_df : DataFrame, years : list) -> DataFrame:
