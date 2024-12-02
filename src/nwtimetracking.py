@@ -85,6 +85,8 @@ class TTCN(StrEnum):
     YEARLYTARGET = "YearlyTarget"
     TARGETDIFF = "TargetDiff"
     ISTARGETMET = "IsTargetMet"
+    YEARLYTOTAL = "YearlyTotal"
+    TOTARGET = "ToTarget"
 
 # DTOs
 @dataclass(frozen=True)
@@ -1258,31 +1260,24 @@ class TimeTrackingManager():
 
         tt_df : DataFrame = sessions_df.copy(deep = True)
 
-        cn_year : str = "Year"
-        condition : Series = (sessions_df[cn_year].isin(values = years))
+        condition : Series = (sessions_df[TTCN.YEAR].isin(values = years))
         tt_df = tt_df.loc[condition]
 
-        cn_month : str = "Month"
-        cn_effort : str = "Effort"   
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
-        tt_df = tt_df.groupby(by = [cn_year, cn_month])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        tt_df = tt_df.sort_values(by = [cn_year, cn_month]).reset_index(drop = True)
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__convert_string_to_timedelta(td_str = x))
+        tt_df = tt_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tt_df = tt_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH]).reset_index(drop = True)
 
-        cn_yearly_total : str = "YearlyTotal"
-        tt_df[cn_yearly_total] = tt_df[cn_effort].groupby(by = tt_df[cn_year]).cumsum()
+        tt_df[TTCN.YEARLYTOTAL] = tt_df[TTCN.EFFORT].groupby(by = tt_df[TTCN.YEAR]).cumsum()
 
-        cn_yearly_target : str = "YearlyTarget"
-        tt_df[cn_yearly_target] = tt_df[cn_year].apply(
+        tt_df[TTCN.YEARLYTARGET] = tt_df[TTCN.YEAR].apply(
             lambda x : cast(YearlyTarget, self.__get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
 
-        cn_to_target : str  = "ToTarget"
-        tt_df[cn_to_target] = tt_df[cn_yearly_total] - tt_df[cn_yearly_target]    
-
-        tt_df.drop(columns = [cn_yearly_target], axis = 1, inplace = True)
+        tt_df[TTCN.TOTARGET] = tt_df[TTCN.YEARLYTOTAL] - tt_df[TTCN.YEARLYTARGET]    
+        tt_df.drop(columns = [TTCN.YEARLYTARGET], axis = 1, inplace = True)
         
-        tt_df[cn_effort] = tt_df[cn_effort].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
-        tt_df[cn_yearly_total] = tt_df[cn_yearly_total].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
-        tt_df[cn_to_target] = tt_df[cn_to_target].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = True))
+        tt_df[TTCN.EFFORT] = tt_df[TTCN.EFFORT].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))   
+        tt_df[TTCN.YEARLYTOTAL] = tt_df[TTCN.YEARLYTOTAL].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = False))
+        tt_df[TTCN.TOTARGET] = tt_df[TTCN.TOTARGET].apply(lambda x : self.__format_timedelta(td = x, add_plus_sign = True))
 
         return tt_df
     def get_tt_by_year_month_spnv(self, sessions_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
