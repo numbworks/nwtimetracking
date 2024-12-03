@@ -13,7 +13,8 @@ import openpyxl
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum
-from pandas import DataFrame, Series
+from numpy import uint
+from pandas import DataFrame, Series, NamedAgg
 from typing import Any, Callable, Optional, Tuple, cast
 
 # LOCAL MODULES
@@ -256,6 +257,9 @@ class SettingBag():
     tts_by_efs_is_correct : bool = field(default = False)
     tts_by_efs_n : int = field(default = 25)
     tts_by_tr_unknown_id : str = field(default = "Unknown")
+    tts_by_tr_remove_unknown_occurrences : bool = field(default = True)
+    tts_by_tr_filter_by_top_n : Optional[uint] = field(default = uint(5))
+
 
 
     tt_by_year_hashtag_years : list[int]
@@ -275,9 +279,6 @@ class SettingBag():
     n_by_month : int
     definitions : dict[str, str]
     tts_by_month_update_future_values_to_empty : bool
-    time_ranges_top_n : int
-    time_ranges_remove_unknown_id : bool
-    time_ranges_filter_by_top_n : bool
     working_folder_path : str
     last_update : datetime
     tts_by_month_file_name : str
@@ -1141,7 +1142,7 @@ class TTDataFrameFactory():
         filtered_df = tts_by_efs_df.loc[condition]
 
         return filtered_df
-    def __remove_unknown_id(self, tts_by_tr_df : DataFrame, unknown_id : str) -> DataFrame:
+    def __remove_unknown_occurrences(self, tts_by_tr_df : DataFrame, unknown_id : str) -> DataFrame:
 
         '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
 
@@ -1150,11 +1151,11 @@ class TTDataFrameFactory():
         tts_by_tr_df.reset_index(drop = True, inplace = True)
 
         return tts_by_tr_df
-    def __filter_by_top_n_occurrences(self, tts_by_tr_df : DataFrame, n : int, ascending : bool = False) -> DataFrame:
+    def __filter_by_top_n_occurrences(self, tts_by_tr_df : DataFrame, n : uint) -> DataFrame:
 
         '''Returns only the top n rows by "Occurrences" of the provided DataFrame.'''
 
-        tts_by_tr_df.sort_values(by = TTCN.OCCURRENCES, ascending = [ascending], inplace = True)
+        tts_by_tr_df.sort_values(by = TTCN.OCCURRENCES, ascending = [True], inplace = True)
         tts_by_tr_df = tts_by_tr_df.iloc[0:n]
         tts_by_tr_df.reset_index(drop = True, inplace = True)
 
@@ -1497,7 +1498,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_is_correct(tts_by_efs_df = tts_df, is_correct = is_correct)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_tr(self, tt_df : DataFrame, unknown_id : str) -> DataFrame:
+    def create_tts_by_tr(self, tt_df : DataFrame, unknown_id : str, remove_unknown_occurrences : bool, filter_by_top_n : Optional[uint]) -> DataFrame:
 
             '''
                     TimeRangeId	Occurrences
@@ -1516,10 +1517,16 @@ class TTDataFrameFactory():
                     end_time = x[TTCN.ENDTIME], 
                     unknown_id = unknown_id), axis = 1)
 
-            tts_df = tts_df[[TTCN.TIMERANGEID]].groupby(by = [TTCN.TIMERANGEID], as_index=False).agg(
-                    count = pd.NamedAgg(column = TTCN.TIMERANGEID, aggfunc = "count"))
+            count : NamedAgg = pd.NamedAgg(column = TTCN.TIMERANGEID, aggfunc = "count")
+            tts_df = tts_df[[TTCN.TIMERANGEID]].groupby(by = [TTCN.TIMERANGEID], as_index=False).agg(count = count)
             tts_df.rename(columns={"count" : TTCN.OCCURRENCES}, inplace = True)
             tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = False).reset_index(drop = True)
+
+            if remove_unknown_occurrences:
+                tts_df = self.__remove_unknown_occurrences(tts_by_tr_df = tts_df, unknown_id = unknown_id)
+
+            if filter_by_top_n is not None:
+                tts_df = self.__filter_by_top_n_occurrences(tts_by_tr_df = tts_df, n = filter_by_top_n)
             
             return tts_df
 class TTMarkdownFactory():
@@ -1715,7 +1722,9 @@ class TimeTrackingProcessor():
 
         tts_by_tr_df : DataFrame = self.__component_bag.df_factory.create_tts_by_tr(
             tt_df = tt_df,
-            unknown_id = self.__setting_bag.tts_by_tr_unknown_id
+            unknown_id = self.__setting_bag.tts_by_tr_unknown_id,
+            remove_unknown_occurrences = self.__setting_bag.tts_by_tr_remove_unknown_occurrences,
+            filter_by_top_n = self.__setting_bag.tts_by_tr_filter_by_top_n
         )
 
         return tts_by_tr_df

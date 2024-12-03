@@ -1165,7 +1165,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         time_ranges_df.loc[len(time_ranges_df.index)] = [unknown_id, 3]
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().__remove_unknown_id(tts_by_tr_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().__remove_unknown_occurrences(tts_by_tr_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
@@ -1177,7 +1177,7 @@ class TimeTrackingManagerTestCase(unittest.TestCase):
         time_ranges_df : DataFrame = ObjectMother().create_time_ranges_df()
 
         # Act
-        actual_df : DataFrame  = TTDataFrameFactory().__remove_unknown_id(tts_by_tr_df = time_ranges_df, unknown_id = unknown_id)
+        actual_df : DataFrame  = TTDataFrameFactory().__remove_unknown_occurrences(tts_by_tr_df = time_ranges_df, unknown_id = unknown_id)
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
