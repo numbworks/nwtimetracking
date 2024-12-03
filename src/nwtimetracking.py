@@ -301,7 +301,7 @@ class SettingBag():
     options_tts_by_tr : list[Literal["display"]]
     options_definitions : list[Literal["display"]]    
     excel_nrows : int
-    tts_by_year_month_spnv_display_only : Optional[str]    
+    tts_by_year_month_spnv_display_only_spn : Optional[str]    
 
     # With Defaults
     working_folder_path : str = field(default = "/home/nwtimetracking/")
@@ -1764,7 +1764,7 @@ class TimeTrackingProcessor():
             tt_df = tt_df,
             years = self.__setting_bag.years,
             software_project_names = self.__setting_bag.software_project_names,
-            software_project_name = self.__setting_bag.tts_by_year_month_spnv_display_only
+            software_project_name = self.__setting_bag.tts_by_year_month_spnv_display_only_spn
         )
 
         return tts_by_year_month_spnv_tpl
@@ -1880,10 +1880,10 @@ class TimeTrackingProcessor():
         '''
             tts_by_year_month_spnv_tpl is made of (tts_by_year_month_spnv_df, tts_by_year_month_spnv_flt_df).
 
-            This method decides which one of the two DataFrame is to be displayed according to __setting_bag.tts_by_year_month_spnv_display_only.
+            This method decides which one of the two DataFrame is to be displayed according to __setting_bag.tts_by_year_month_spnv_display_only_spn.
         '''
 
-        if self.__setting_bag.tts_by_year_month_spnv_display_only is None:
+        if self.__setting_bag.tts_by_year_month_spnv_display_only_spn is None:
             return tts_by_year_month_spnv_tpl[0]
 
         return tts_by_year_month_spnv_tpl[1]
