@@ -301,6 +301,7 @@ class SettingBag():
     options_tts_by_tr : list[Literal["display"]]
     options_definitions : list[Literal["display"]]    
     excel_nrows : int
+    tts_by_year_month_spnv_display_only : Optional[str]    
 
     # With Defaults
     working_folder_path : str = field(default = "/home/nwtimetracking/")
@@ -316,6 +317,7 @@ class SettingBag():
     tt_display_head_n_with_tail : bool = field(default = True)
     tt_hide_index : bool = field(default = True)
     tts_by_year_month_display_only_years : Optional[list[int]] = field(default_factory = lambda : YearProvider().get_most_recent_x_years(x = uint(1)))
+    tts_by_year_month_spnv_formatters : dict = field(default_factory = lambda : { "%_DME" : "{:.2f}", "%_TME" : "{:.2f}" })
     tts_by_spn_remove_untagged : bool = field(default = True)
     tts_by_efs_is_correct : bool = field(default = False)
     tts_by_efs_n : uint = field(default = uint(25))
@@ -1970,7 +1972,7 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__tt_summary.tts_by_year_month_spnv_df
 
         if "display" in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_year_month_spnv_formatters)
     def process_tts_by_spn(self) -> None:
 
         '''
