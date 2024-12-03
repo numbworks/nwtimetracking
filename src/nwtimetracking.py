@@ -10,7 +10,7 @@ import os
 import pandas as pd
 import re
 import openpyxl
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum
 from pandas import DataFrame, Series
@@ -151,139 +151,6 @@ class TTSummary():
     tts_by_month_md : str
 
 # CLASSES
-class SettingBag():
-
-    '''Represents a collection of settings.'''
-
-    years : list[int]
-    yearly_targets : list[YearlyTarget]
-    excel_path : str
-    excel_nrows : int
-    software_project_names : list[str]
-    software_project_names_by_spv : list[str]
-    tt_by_year_hashtag_years : list[int]
-
-    show_sessions_df : bool
-    show_tt_by_year_df : bool
-    show_tt_by_year_month_df : bool
-    show_tt_by_year_month_spnv_df : bool
-    show_tt_by_year_spnv_df : bool
-    show_tt_by_spn_df : bool
-    show_tt_by_spn_spv_df : bool
-    show_tt_by_year_hashtag : bool
-    show_tt_by_hashtag : bool
-    show_tts_by_month_df : bool
-    show_effort_status_df : bool
-    show_time_ranges_df : bool
-    excel_skiprows : int
-    excel_tabname : str
-    n_generic : int
-    n_by_month : int
-    now : datetime
-    remove_untagged_from_de : bool
-    definitions : dict[str, str]
-    effort_status_n : int
-    effort_status_is_correct : bool
-    tts_by_month_update_future_values_to_empty : bool
-    time_ranges_unknown_id : str
-    time_ranges_top_n : int
-    time_ranges_remove_unknown_id : bool
-    time_ranges_filter_by_top_n : bool
-    working_folder_path : str
-    last_update : datetime
-    tts_by_month_file_name : str
-    show_tts_by_month_md : bool
-    save_tts_by_month_md : bool
-
-    def __init__(
-        self, 
-        years : list[int],
-        yearly_targets : list[YearlyTarget],
-        excel_path : str,
-        excel_books_nrows : int,
-        software_project_names : list[str],
-        software_project_names_by_spv : list[str],
-        tt_by_year_hashtag_years : list[int],
-
-        show_sessions_df : bool = False,
-        show_tt_by_year_df : bool = True,
-        show_tt_by_year_month_df : bool = True,
-        show_tt_by_year_month_spnv_df : bool = False,
-        show_tt_by_year_spnv_df : bool = False,
-        show_tt_by_spn_df : bool = True,
-        show_tt_by_spn_spv_df : bool = True,
-        show_tt_by_year_hashtag : bool = True,
-        show_tt_by_hashtag : bool = True,
-        show_tts_by_month_df : bool = True,
-        show_effort_status_df : bool = True,
-        show_time_ranges_df : bool = True,
-        excel_skiprows : int = 0,
-        excel_tabname : str = "Sessions",
-        n_generic : int = 5,
-        n_by_month : int = 12,
-        now : datetime = datetime.now(),
-        remove_untagged_from_de : bool = True,
-        definitions : dict[str, str] = { 
-            "DME": "Development Monthly Effort",
-            "TME": "Total Monthly Effort",
-            "DYE": "Development Yearly Effort",
-            "TYE": "Total Yearly Effort",
-            "DE": "Development Effort",
-            "TE": "Total Effort"
-        },
-        effort_status_n : int = 25,
-        effort_status_is_correct : bool = False,
-        tts_by_month_update_future_values_to_empty : bool = True,
-        time_ranges_unknown_id : str = "Unknown",
-        time_ranges_top_n : int = 5,
-        time_ranges_remove_unknown_id : bool = True,
-        time_ranges_filter_by_top_n : bool  = True,
-        working_folder_path : str = "/home/nwtimetracking/",
-        last_update : datetime = datetime.now(),
-        tts_by_month_file_name : str = "TIMETRACKINGBYMONTH.md",
-        show_tts_by_month_md : bool = False,
-        save_tts_by_month_md : bool = False
-        ) -> None:
-        
-        self.years = years
-        self.yearly_targets = yearly_targets
-        self.excel_path = excel_path
-        self.excel_nrows = excel_books_nrows
-        self.software_project_names = software_project_names
-        self.software_project_names_by_spv = software_project_names_by_spv
-        self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
-
-        self.show_sessions_df = show_sessions_df
-        self.show_tt_by_year_df = show_tt_by_year_df
-        self.show_tt_by_year_month_df = show_tt_by_year_month_df
-        self.show_tt_by_year_month_spnv_df = show_tt_by_year_month_spnv_df
-        self.show_tt_by_year_spnv_df = show_tt_by_year_spnv_df
-        self.show_tt_by_spn_df = show_tt_by_spn_df
-        self.show_tt_by_spn_spv_df = show_tt_by_spn_spv_df
-        self.show_tt_by_year_hashtag = show_tt_by_year_hashtag
-        self.show_tt_by_hashtag = show_tt_by_hashtag
-        self.show_tts_by_month_df = show_tts_by_month_df
-        self.show_effort_status_df = show_effort_status_df
-        self.show_time_ranges_df = show_time_ranges_df
-        self.excel_skiprows = excel_skiprows
-        self.excel_tabname = excel_tabname
-        self.n_generic = n_generic
-        self.n_by_month = n_by_month
-        self.now = now
-        self.remove_untagged_from_de = remove_untagged_from_de
-        self.definitions = definitions
-        self.effort_status_n = effort_status_n
-        self.effort_status_is_correct = effort_status_is_correct
-        self.tts_by_month_update_future_values_to_empty = tts_by_month_update_future_values_to_empty
-        self.time_ranges_unknown_id = time_ranges_unknown_id
-        self.time_ranges_top_n = time_ranges_top_n
-        self.time_ranges_remove_unknown_id = time_ranges_remove_unknown_id
-        self.time_ranges_filter_by_top_n = time_ranges_filter_by_top_n
-        self.working_folder_path = working_folder_path
-        self.last_update = last_update
-        self.tts_by_month_file_name = tts_by_month_file_name
-        self.show_tts_by_month_md = show_tts_by_month_md
-        self.save_tts_by_month_md = save_tts_by_month_md
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -369,6 +236,56 @@ class SoftwareProjectNameProvider():
         ]
 
         return software_project_names_by_spv
+class SettingBag():
+
+    '''Represents a collection of settings.'''
+
+    # Non-Defaults
+    excel_nrows : int
+    software_project_names : list[str]
+    software_project_names_by_spv : list[str]
+    tt_by_year_hashtag_years : list[int]
+
+    # Defaults
+    excel_path : str = field(default = DefaultPathProvider().get_default_time_tracking_path())
+    excel_skiprows : int = field(default = 0)
+    excel_tabname : str = field(default = "Sessions")
+    years : list[int] = field(default = YearProvider().get_all_years())
+    yearly_targets : list[YearlyTarget] = field(default = YearProvider().get_all_yearly_targets())
+    now : datetime = field(default = datetime.now())
+
+
+
+    show_sessions_df : bool
+    show_tt_by_year_df : bool
+    show_tt_by_year_month_df : bool
+    show_tt_by_year_month_spnv_df : bool
+    show_tt_by_year_spnv_df : bool
+    show_tt_by_spn_df : bool
+    show_tt_by_spn_spv_df : bool
+    show_tt_by_year_hashtag : bool
+    show_tt_by_hashtag : bool
+    show_tts_by_month_df : bool
+    show_effort_status_df : bool
+    show_time_ranges_df : bool
+
+    n_generic : int
+    n_by_month : int
+    remove_untagged_from_de : bool
+    definitions : dict[str, str]
+    effort_status_n : int
+    effort_status_is_correct : bool
+    tts_by_month_update_future_values_to_empty : bool
+    time_ranges_unknown_id : str
+    time_ranges_top_n : int
+    time_ranges_remove_unknown_id : bool
+    time_ranges_filter_by_top_n : bool
+    working_folder_path : str
+    last_update : datetime
+    tts_by_month_file_name : str
+    show_tts_by_month_md : bool
+    save_tts_by_month_md : bool
+
 
 class TTDataFrameHelper():
 
@@ -1687,6 +1604,33 @@ class TimeTrackingProcessor():
             )
 
         return tt_df
+    def __create_tts_by_month_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_month(
+            tt_df = tt_df,
+            years = self.__setting_bag.years,
+            now = self.__setting_bag.now
+        )
+
+        return tts_by_month_tpl
+    def __create_tts_by_year_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_year_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year(
+            tt_df = tt_df,
+            years = self.__setting_bag.years,
+            yearly_targets = self.__setting_bag.yearly_targets,
+        )
+
+        return tts_by_year_df
+
+
+
+
+
 
 # MAIN
 if __name__ == "__main__":
