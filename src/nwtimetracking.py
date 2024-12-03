@@ -162,8 +162,8 @@ class TTSummary():
     tts_by_month_tpl : Tuple[DataFrame, DataFrame]
     tts_by_year_df : DataFrame
     tts_by_year_month_tpl : Tuple[DataFrame, DataFrame]
-    tts_by_year_month_spnv_df : Tuple[DataFrame, DataFrame]
-    tts_by_year_spnv_df : DataFrame
+    tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame]
     tts_by_spn_df : DataFrame
     tts_by_spn_spv_df : DataFrame
     tts_by_hashtag_df : DataFrame
@@ -293,6 +293,7 @@ class SettingBag():
     options_tts_by_year : list[Literal["display"]]
     options_tts_by_year_month : list[Literal["display"]]
     options_tts_by_year_month_spnv : list[Literal["display"]]
+    options_tts_by_year_spnv : list[Literal["display"]]    
     options_tts_by_spn : list[Literal["display"]]
     options_tts_by_spn_spv : list[Literal["display"]]
     options_tts_by_hashtag : list[Literal["display"]]
@@ -301,7 +302,8 @@ class SettingBag():
     options_tts_by_tr : list[Literal["display"]]
     options_definitions : list[Literal["display"]]    
     excel_nrows : int
-    tts_by_year_month_spnv_display_only_spn : Optional[str]    
+    tts_by_year_month_spnv_display_only_spn : Optional[str]
+    tts_by_year_spnv_display_only_spn : Optional[str]
 
     # With Defaults
     working_folder_path : str = field(default = "/home/nwtimetracking/")
@@ -318,6 +320,7 @@ class SettingBag():
     tt_hide_index : bool = field(default = True)
     tts_by_year_month_display_only_years : Optional[list[int]] = field(default_factory = lambda : YearProvider().get_most_recent_x_years(x = uint(1)))
     tts_by_year_month_spnv_formatters : dict = field(default_factory = lambda : { "%_DME" : "{:.2f}", "%_TME" : "{:.2f}" })
+    tts_by_year_spnv_formatters : dict = field(default_factory = lambda : { "%_DYE" : "{:.2f}", "%_TYE" : "{:.2f}" })
     tts_by_spn_remove_untagged : bool = field(default = True)
     tts_by_efs_is_correct : bool = field(default = False)
     tts_by_efs_n : uint = field(default = uint(25))
@@ -1436,7 +1439,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_software_project_name(df = tts_df, software_project_name = software_project_name)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def create_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], software_project_name : Optional[str]) -> Tuple[DataFrame, DataFrame]:
 
         '''
             [0] ...
@@ -1446,6 +1449,8 @@ class TTDataFrameFactory():
                 0	2023	nwtraderaanalytics	    2.0.0	        09h 15m	09h 15m	100.00	19h 00m	48.68
                 1	2023	nwreadinglistmanager	1.0.0	        06h 45m	06h 45m	100.00	24h 45m	27.27
                 ...
+
+            Returns (tts_by_year_spnv_df, tts_by_year_spnv_flt_df).
         '''
 
         spnv_df : DataFrame = self.__create_raw_tts_by_year_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
@@ -1475,7 +1480,9 @@ class TTDataFrameFactory():
         tts_df[TTCN.DYE] = tts_df[TTCN.DYE].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
         tts_df[TTCN.TYE] = tts_df[TTCN.TYE].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
 
-        return tts_df
+        tts_flt_df : DataFrame = self.__filter_by_software_project_name(df = tts_df, software_project_name = software_project_name)
+
+        return (tts_df, tts_flt_df)
     def create_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
 
         '''
@@ -1768,17 +1775,18 @@ class TimeTrackingProcessor():
         )
 
         return tts_by_year_month_spnv_tpl
-    def __create_tts_by_year_spnv_df(self, tt_df : DataFrame) -> DataFrame:
+    def __create_tts_by_year_spnv_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframe using tt_df and __setting_bag.'''
 
-        tts_by_year_spnv_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year_spnv(
+        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_year_spnv(
             tt_df = tt_df,
             years = self.__setting_bag.years,
             software_project_names = self.__setting_bag.software_project_names,
+            software_project_name = self.__setting_bag.tts_by_year_spnv_display_only_spn
         )
 
-        return tts_by_year_spnv_df
+        return tts_by_year_spnv_tpl
     def __create_tts_by_spn_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''Creates the expected dataframe using tt_df and __setting_bag.'''
@@ -1887,17 +1895,29 @@ class TimeTrackingProcessor():
             return tts_by_year_month_spnv_tpl[0]
 
         return tts_by_year_month_spnv_tpl[1]
+    def __optimize_tts_by_year_spnv_for_display(self, tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame]) -> DataFrame:
+
+        '''
+            tts_by_year_spnv_tpl is made of (tts_by_year_spnv_df, tts_by_year_spnv_flt_df).
+
+            This method decides which one of the two DataFrame is to be displayed according to __setting_bag.tts_by_year_spnv_display_only_spn.
+        '''
+
+        if self.__setting_bag.tts_by_year_spnv_display_only_spn is None:
+            return tts_by_year_spnv_tpl[0]
+
+        return tts_by_year_spnv_tpl[1]
 
     def initialize(self) -> None:
 
-        '''Creates a RLSummary object and assign it to __rl_summary.'''
+        '''Creates a TTSummary object and assign it to __tt_summary.'''
 
         tt_df : DataFrame = self.__create_tt_df()
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_month_tpl(tt_df = tt_df)
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
         tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_month_df(tt_df = tt_df)
         tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_month_spnv_tpl(tt_df = tt_df)
-        tts_by_year_spnv_df : DataFrame = self.__create_tts_by_year_spnv_df(tt_df = tt_df)
+        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_spnv_tpl(tt_df = tt_df)
         tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df)
         tts_by_spn_spv_df : DataFrame = self.__create_tts_by_spn_spv_df(tt_df = tt_df)
         tts_by_year_hashtag_df : DataFrame = self.__create_tts_by_year_hashtag_df(tt_df = tt_df)
@@ -1913,8 +1933,8 @@ class TimeTrackingProcessor():
             tts_by_month_tpl = tts_by_month_tpl,
             tts_by_year_df = tts_by_year_df,
             tts_by_year_month_tpl = tts_by_year_month_tpl,
-            tts_by_year_month_spnv_df = tts_by_year_month_spnv_tpl,
-            tts_by_year_spnv_df = tts_by_year_spnv_df,
+            tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl,
+            tts_by_year_spnv_tpl = tts_by_year_spnv_tpl,
             tts_by_spn_df = tts_by_spn_df,
             tts_by_spn_spv_df = tts_by_spn_spv_df,
             tts_by_hashtag_year_df = tts_by_year_hashtag_df,
@@ -2001,10 +2021,25 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_month_spnv
-        df : DataFrame = self.__optimize_tts_by_year_month_spnv_for_display(tts_by_year_month_spnv_tpl = self.__tt_summary.tts_by_year_month_spnv_df)
+        df : DataFrame = self.__optimize_tts_by_year_month_spnv_for_display(tts_by_year_month_spnv_tpl = self.__tt_summary.tts_by_year_month_spnv_tpl)
 
         if "display" in options:
             self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_year_month_spnv_formatters)
+    def process_tts_by_year_spnv(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_year_spnv.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_year_spnv
+        df : DataFrame = self.__optimize_tts_by_year_spnv_for_display(tts_by_year_spnv_tpl = self.__tt_summary.tts_by_year_spnv_tpl)
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_year_spnv_formatters)
     def process_tts_by_spn(self) -> None:
 
         '''
