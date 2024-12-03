@@ -253,6 +253,9 @@ class SettingBag():
     software_project_names : list[str] = field(default = SoftwareProjectNameProvider().get_all_software_project_names())
     software_project_names_by_spv : list[str] = field(default = SoftwareProjectNameProvider().get_all_software_project_names_by_spv())
     tts_by_spn_remove_untagged : bool = field(default = True)
+    tts_by_efs_is_correct : bool = field(default = False)
+    tts_by_efs_n : int = field(default = 25)
+    tts_by_tr_unknown_id : str = field(default = "Unknown")
 
 
     tt_by_year_hashtag_years : list[int]
@@ -268,15 +271,10 @@ class SettingBag():
     show_tts_by_month_df : bool
     show_effort_status_df : bool
     show_time_ranges_df : bool
-
     n_generic : int
     n_by_month : int
-
     definitions : dict[str, str]
-    effort_status_n : int
-    effort_status_is_correct : bool
     tts_by_month_update_future_values_to_empty : bool
-    time_ranges_unknown_id : str
     time_ranges_top_n : int
     time_ranges_remove_unknown_id : bool
     time_ranges_filter_by_top_n : bool
@@ -1682,8 +1680,45 @@ class TimeTrackingProcessor():
         )
 
         return tts_by_spn_spv_df
+    def __create_tts_by_year_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
 
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
 
+        tts_by_year_hashtag_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year_hashtag(
+            tt_df = tt_df,
+            years = self.__setting_bag.years
+        )
+
+        return tts_by_year_hashtag_df
+    def __create_tts_by_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_hashtag_df : DataFrame = self.__component_bag.df_factory.create_tts_by_hashtag(
+            tt_df = tt_df
+        )
+
+        return tts_by_hashtag_df
+    def __create_tts_by_efs_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_efs(
+            tt_df = tt_df,
+            is_correct = self.__setting_bag.tts_by_efs_is_correct
+        )
+
+        return tts_by_efs_tpl
+    def __create_tts_by_tr_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_tr_df : DataFrame = self.__component_bag.df_factory.create_tts_by_tr(
+            tt_df = tt_df,
+            unknown_id = self.__setting_bag.tts_by_tr_unknown_id
+        )
+
+        return tts_by_tr_df
 
 # MAIN
 if __name__ == "__main__":
