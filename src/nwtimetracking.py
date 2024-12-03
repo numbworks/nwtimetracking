@@ -23,7 +23,7 @@ from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, Ma
 # CONSTANTS
 class TTCN(StrEnum):
     
-    '''Collects all the column names used by ...'''
+    '''Collects all the column names used by TTDataFrameFactory.'''
 
     DATE = "Date"
     STARTTIME = "StartTime"
@@ -62,6 +62,11 @@ class TTCN(StrEnum):
     ESMESSAGE = "ES_Message"
     TIMERANGEID = "TimeRangeId"
     OCCURRENCES = "Occurrences"
+class TTID(StrEnum):
+    
+    '''Collects all the ids that identify the dataframes created by TTDataFrameFactory.'''
+
+    TTSBYMONTH = "tts_by_month"
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -137,6 +142,7 @@ class TTSummary():
 
     '''Collects all the dataframes and markdowns.'''
 
+    # Dataframes
     tt_df : DataFrame
     tts_by_month_tpl : Tuple[DataFrame, DataFrame]
     tts_by_year_df : DataFrame
@@ -149,6 +155,9 @@ class TTSummary():
     tts_by_hashtag_df : DataFrame
     tts_by_efs_tpl : Tuple[DataFrame, DataFrame]
     tts_by_tr_df : DataFrame
+    definitions_df : DataFrame
+
+    # Markdowns
     tts_by_month_md : str
 
 # CLASSES
@@ -237,14 +246,17 @@ class SoftwareProjectNameProvider():
         ]
 
         return software_project_names_by_spv
+
+@dataclass(frozen=True)
 class SettingBag():
 
     '''Represents a collection of settings.'''
 
-    # Non-Defaults
-    excel_nrows : int   
+    # Without Defaults
+    excel_nrows : int
 
-    # Defaults
+    # With Defaults
+    working_folder_path : str = field(default = "/home/nwtimetracking/")
     excel_path : str = field(default = DefaultPathProvider().get_default_time_tracking_path())
     excel_skiprows : int = field(default = 0)
     excel_tabname : str = field(default = "Sessions")
@@ -259,32 +271,6 @@ class SettingBag():
     tts_by_tr_unknown_id : str = field(default = "Unknown")
     tts_by_tr_remove_unknown_occurrences : bool = field(default = True)
     tts_by_tr_filter_by_top_n : Optional[uint] = field(default = uint(5))
-
-
-
-    tt_by_year_hashtag_years : list[int]
-    show_sessions_df : bool
-    show_tt_by_year_df : bool
-    show_tt_by_year_month_df : bool
-    show_tt_by_year_month_spnv_df : bool
-    show_tt_by_year_spnv_df : bool
-    show_tt_by_spn_df : bool
-    show_tt_by_spn_spv_df : bool
-    show_tt_by_year_hashtag : bool
-    show_tt_by_hashtag : bool
-    show_tts_by_month_df : bool
-    show_effort_status_df : bool
-    show_time_ranges_df : bool
-    n_generic : int
-    n_by_month : int
-    definitions : dict[str, str]
-    tts_by_month_update_future_values_to_empty : bool
-    working_folder_path : str
-    last_update : datetime
-    tts_by_month_file_name : str
-    show_tts_by_month_md : bool
-    save_tts_by_month_md : bool
-
 
 class TTDataFrameHelper():
 
@@ -1529,6 +1515,27 @@ class TTDataFrameFactory():
                 tts_df = self.__filter_by_top_n_occurrences(tts_by_tr_df = tts_df, n = filter_by_top_n)
             
             return tts_df
+    def create_definitions(self) -> DataFrame:
+
+        '''Creates a dataframe containing all the definitions in use in this application.'''
+
+        columns : list[str] = ["Term", "Definition"]
+
+        definitions : dict[str, str] = { 
+            "DME": "Development Monthly Effort",
+            "TME": "Total Monthly Effort",
+            "DYE": "Development Yearly Effort",
+            "TYE": "Total Yearly Effort",
+            "DE": "Development Effort",
+            "TE": "Total Effort"
+        }
+        
+        definitions_df : DataFrame = DataFrame(
+            data = definitions.items(), 
+            columns = columns
+        )
+
+        return definitions_df
 class TTMarkdownFactory():
 
     '''Collects all the logic related to Markdown creation out of Time Tracking dataframes.'''
@@ -1539,13 +1546,11 @@ class TTMarkdownFactory():
 
         self.__markdown_helper = markdown_helper
 
-    def create_tts_by_month_md(self, last_update : datetime, tts_by_month_upd_df : DataFrame) -> str:
+    def create_tts_by_month_md(self, paragraph_title : str, last_update : datetime, tts_by_month_upd_df : DataFrame) -> str:
 
-        '''Creates the Markdown content for a "Time Tracking By Month" file out of the provided dataframe.'''
+        '''Creates the expected Markdown content for the provided arguments.'''
 
-        md_paragraph_title : str = "Time Tracking By Month"
-
-        markdown_header : str = self.__markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = md_paragraph_title)
+        markdown_header : str = self.__markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = paragraph_title)
         tts_by_month_upd_md : str = tts_by_month_upd_df.to_markdown(index = False)
 
         md_content : str = markdown_header
@@ -1554,6 +1559,8 @@ class TTMarkdownFactory():
         md_content += "\n"
 
         return md_content
+
+
 class ComponentBag():
 
     '''Represents a collection of components.'''
@@ -1563,7 +1570,6 @@ class ComponentBag():
     df_factory : TTDataFrameFactory
     md_factory : TTMarkdownFactory
     logging_function : Callable[[str], None]
-    markdown_helper : MarkdownHelper
 
     def __init__(
             self, 
@@ -1596,6 +1602,16 @@ class TimeTrackingProcessor():
 
         self.__component_bag = component_bag
         self.__setting_bag = setting_bag
+
+    def __extract_file_name_and_paragraph_title(self, id : RLID) -> Tuple[str, str]: 
+    
+        '''Returns (file_name, paragraph_title) for the provided id or raise an Exception.'''
+
+        for md_info in self.__setting_bag.md_infos:
+            if md_info.id == id: 
+                return (md_info.file_name, md_info.paragraph_title)
+
+        raise Exception(_MessageCollection.no_mdinfo_found(id = id))
 
     def __create_tt_df(self) -> DataFrame:
 
@@ -1728,6 +1744,18 @@ class TimeTrackingProcessor():
         )
 
         return tts_by_tr_df
+    def __create_tts_by_month_md(self, tts_by_month_tpl : Tuple[DataFrame, DataFrame]) -> str:
+
+        '''Creates the expected Markdown content using __setting_bag and the provided arguments.'''
+
+        tts_by_month_md : str = self.__component_bag.md_factory.create_tts_by_month_md(
+            paragraph_title = self.__extract_file_name_and_paragraph_title(id = RLID.RL)[1],
+            last_update = self.__setting_bag.md_last_update,
+            tts_by_month_upd_df = tts_by_month_tpl[1]
+        )
+
+        return tts_by_month_md
+
 
 # MAIN
 if __name__ == "__main__":
