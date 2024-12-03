@@ -304,6 +304,7 @@ class SettingBag():
     excel_nrows : int
     tts_by_year_month_spnv_display_only_spn : Optional[str]
     tts_by_year_spnv_display_only_spn : Optional[str]
+    tts_by_spn_spv_display_only_spn : Optional[str]
 
     # With Defaults
     working_folder_path : str = field(default = "/home/nwtimetracking/")
@@ -323,6 +324,7 @@ class SettingBag():
     tts_by_year_spnv_formatters : dict = field(default_factory = lambda : { "%_DYE" : "{:.2f}", "%_TYE" : "{:.2f}" })
     tts_by_spn_formatters : dict = field(default_factory = lambda : { "%_DE" : "{:.2f}", "%_TE" : "{:.2f}" })
     tts_by_spn_remove_untagged : bool = field(default = True)
+    tts_by_hashtag_formatters : dict = field(default_factory = lambda : { "Effort%" : "{:.2f}" })
     tts_by_efs_is_correct : bool = field(default = False)
     tts_by_efs_n : uint = field(default = uint(25))
     tts_by_tr_unknown_id : str = field(default = "Unknown")
@@ -2085,7 +2087,7 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__tt_summary.tts_by_hashtag_df
 
         if "display" in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_hashtag_formatters)
     def process_tts_by_hashtag_year(self) -> None:
 
         '''
