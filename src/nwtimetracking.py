@@ -158,7 +158,7 @@ class SettingBag():
     years : list[int]
     yearly_targets : list[YearlyTarget]
     excel_path : str
-    excel_books_nrows : int
+    excel_nrows : int
     software_project_names : list[str]
     software_project_names_by_spv : list[str]
     tt_by_year_hashtag_years : list[int]
@@ -175,8 +175,8 @@ class SettingBag():
     show_tts_by_month_df : bool
     show_effort_status_df : bool
     show_time_ranges_df : bool
-    excel_books_skiprows : int
-    excel_books_tabname : str
+    excel_skiprows : int
+    excel_tabname : str
     n_generic : int
     n_by_month : int
     now : datetime
@@ -217,8 +217,8 @@ class SettingBag():
         show_tts_by_month_df : bool = True,
         show_effort_status_df : bool = True,
         show_time_ranges_df : bool = True,
-        excel_books_skiprows : int = 0,
-        excel_books_tabname : str = "Sessions",
+        excel_skiprows : int = 0,
+        excel_tabname : str = "Sessions",
         n_generic : int = 5,
         n_by_month : int = 12,
         now : datetime = datetime.now(),
@@ -248,7 +248,7 @@ class SettingBag():
         self.years = years
         self.yearly_targets = yearly_targets
         self.excel_path = excel_path
-        self.excel_books_nrows = excel_books_nrows
+        self.excel_nrows = excel_books_nrows
         self.software_project_names = software_project_names
         self.software_project_names_by_spv = software_project_names_by_spv
         self.tt_by_year_hashtag_years = tt_by_year_hashtag_years
@@ -265,8 +265,8 @@ class SettingBag():
         self.show_tts_by_month_df = show_tts_by_month_df
         self.show_effort_status_df = show_effort_status_df
         self.show_time_ranges_df = show_time_ranges_df
-        self.excel_books_skiprows = excel_books_skiprows
-        self.excel_books_tabname = excel_books_tabname
+        self.excel_skiprows = excel_skiprows
+        self.excel_tabname = excel_tabname
         self.n_generic = n_generic
         self.n_by_month = n_by_month
         self.now = now
@@ -284,26 +284,6 @@ class SettingBag():
         self.tts_by_month_file_name = tts_by_month_file_name
         self.show_tts_by_month_md = show_tts_by_month_md
         self.save_tts_by_month_md = save_tts_by_month_md
-class ComponentBag():
-
-    '''Represents a collection of components.'''
-
-    file_path_manager : FilePathManager
-    file_manager : FileManager
-    logging_function : Callable[[str], None]
-    markdown_helper : MarkdownHelper
-
-    def __init__(
-            self, 
-            file_path_manager : FilePathManager = FilePathManager(),
-            file_manager : FileManager = FileManager(file_path_manager = FilePathManager()),
-            logging_function : Callable[[str], None] = LambdaProvider().get_default_logging_function(),
-            markdown_helper : MarkdownHelper = MarkdownHelper(formatter = Formatter())) -> None:
-
-        self.file_path_manager = file_path_manager
-        self.file_manager = file_manager
-        self.logging_function = logging_function
-        self.markdown_helper = markdown_helper
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -1265,17 +1245,17 @@ class TTDataFrameFactory():
 
         return tts_by_tr_df
 
-    def create_tt(self, setting_bag : SettingBag) -> DataFrame:
+    def create_tt(self, excel_path : str, excel_skiprows : int, excel_nrows : int, excel_tabname : str) -> DataFrame:
         
         '''
             Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
         '''
 
         tt_df : DataFrame = pd.read_excel(
-            io = setting_bag.excel_path, 	
-            skiprows = setting_bag.excel_books_skiprows,
-            nrows = setting_bag.excel_books_nrows,
-            sheet_name = setting_bag.excel_books_tabname, 
+            io = excel_path, 	
+            skiprows = excel_skiprows,
+            nrows = excel_nrows,
+            sheet_name = excel_tabname, 
             engine = 'openpyxl'
             )      
         tt_df = self.__enforce_dataframe_definition_for_tt_df(tt_df = tt_df)
@@ -1652,18 +1632,61 @@ class TTMarkdownFactory():
         md_content += "\n"
 
         return md_content
+class ComponentBag():
+
+    '''Represents a collection of components.'''
+
+    file_path_manager : FilePathManager
+    file_manager : FileManager
+    df_factory : TTDataFrameFactory
+    md_factory : TTMarkdownFactory
+    logging_function : Callable[[str], None]
+    markdown_helper : MarkdownHelper
+
+    def __init__(
+            self, 
+            file_path_manager : FilePathManager = FilePathManager(),
+            file_manager : FileManager = FileManager(
+                file_path_manager = FilePathManager()),
+            df_factory : TTDataFrameFactory = TTDataFrameFactory(
+                df_helper = TTDataFrameHelper()),
+            md_factory : TTMarkdownFactory = TTMarkdownFactory(
+                markdown_helper = MarkdownHelper(
+                    formatter = Formatter())
+            ),
+            logging_function : Callable[[str], None] = LambdaProvider().get_default_logging_function()) -> None:
+
+        self.file_path_manager = file_path_manager
+        self.file_manager = file_manager
+        self.df_factory = df_factory
+        self.md_factory = md_factory
+        self.logging_function = logging_function
+
 class TimeTrackingProcessor():
 
     '''Collects all the logic related to the processing of "Time Tracking.xlsx".'''
 
     __component_bag : ComponentBag
     __setting_bag : SettingBag
-    __rl_summary : TTSummary
+    __tt_summary : TTSummary
 
     def __init__(self, component_bag : ComponentBag, setting_bag : SettingBag) -> None:
 
         self.__component_bag = component_bag
         self.__setting_bag = setting_bag
+
+    def __create_tt_df(self) -> DataFrame:
+
+        '''Creates the expected dataframe using __setting_bag.'''
+
+        tt_df : DataFrame = self.__component_bag.df_factory.create_tt(
+            excel_path = self.__setting_bag.excel_path,
+            excel_skiprows = self.__setting_bag.excel_skiprows,
+            excel_nrows = self.__setting_bag.excel_nrows,
+            excel_tabname = self.__setting_bag.excel_tabname
+            )
+
+        return tt_df
 
 # MAIN
 if __name__ == "__main__":
