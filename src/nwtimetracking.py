@@ -83,8 +83,7 @@ class _MessageCollection():
         message : str = "The provided row contains a mismatching effort "
         message += f"(idx: '{idx}', start_time: '{start_time_str}', end_time: '{end_time_str}', actual_effort: '{actual_str}', expected_effort: '{expected_str}')."
 
-        return message
-    
+        return message   
     @staticmethod
     def effort_status_not_possible_to_create(idx : int, start_time_str : str, end_time_str : str, effort_str : str):
 
@@ -96,18 +95,20 @@ class _MessageCollection():
             message : str = "It has not been possible to create an EffortStatus for the provided parameters "
             message += f"(idx: '{idx}', start_time_str: '{start_time_str}', end_time_str: '{end_time_str}', effort_str: '{effort_str}')."
 
-            return message
-    
+            return message   
     @staticmethod
     def effort_status_not_among_expected_time_values(time : str) -> str:
-        return f"The provided time ('{time}') is not among the expected time values."
-    
+        return f"The provided time ('{time}') is not among the expected time values."   
     @staticmethod
     def starttime_endtime_are_empty() -> str:
         return "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
     @staticmethod
     def effort_is_correct() -> str:
         return "The effort is correct."
+
+    @staticmethod
+    def no_mdinfo_found(id : TTID) -> str:
+        return f"No MDInfo object found for id='{id}'."
 
 # DTOs
 @dataclass(frozen=True)
@@ -137,6 +138,14 @@ class EffortStatus():
 
     is_correct : bool
     message : str 
+@dataclass(frozen = True)
+class MDInfo():
+
+    '''Represents a collection of information related to a Markdown file.'''
+
+    id : TTID
+    file_name : str
+    paragraph_title : str
 @dataclass(frozen = True)
 class TTSummary():
 
@@ -246,6 +255,19 @@ class SoftwareProjectNameProvider():
         ]
 
         return software_project_names_by_spv
+class MDInfoProvider():
+
+    '''Collects all the logic related to the retrieval of MDInfo objects.'''
+
+    def get_all(self) -> list[MDInfo]:
+
+        '''Returns a list of MDInfo objects.'''
+
+        md_infos : list[MDInfo] = [
+                MDInfo(id = TTID.TTSBYMONTH, file_name = "TIMETRACKINGBYMONTH.md", paragraph_title = "Time Tracking By Month")
+            ]
+        
+        return md_infos
 
 @dataclass(frozen=True)
 class SettingBag():
@@ -271,6 +293,8 @@ class SettingBag():
     tts_by_tr_unknown_id : str = field(default = "Unknown")
     tts_by_tr_remove_unknown_occurrences : bool = field(default = True)
     tts_by_tr_filter_by_top_n : Optional[uint] = field(default = uint(5))
+    md_infos : list[MDInfo] = field(default = MDInfoProvider().get_all())
+    md_last_update : datetime = field(default = datetime.now())
 
 class TTDataFrameHelper():
 
@@ -1560,35 +1584,16 @@ class TTMarkdownFactory():
 
         return md_content
 
-
+@dataclass(frozen=True)
 class ComponentBag():
 
     '''Represents a collection of components.'''
 
-    file_path_manager : FilePathManager
-    file_manager : FileManager
-    df_factory : TTDataFrameFactory
-    md_factory : TTMarkdownFactory
-    logging_function : Callable[[str], None]
-
-    def __init__(
-            self, 
-            file_path_manager : FilePathManager = FilePathManager(),
-            file_manager : FileManager = FileManager(
-                file_path_manager = FilePathManager()),
-            df_factory : TTDataFrameFactory = TTDataFrameFactory(
-                df_helper = TTDataFrameHelper()),
-            md_factory : TTMarkdownFactory = TTMarkdownFactory(
-                markdown_helper = MarkdownHelper(
-                    formatter = Formatter())
-            ),
-            logging_function : Callable[[str], None] = LambdaProvider().get_default_logging_function()) -> None:
-
-        self.file_path_manager = file_path_manager
-        self.file_manager = file_manager
-        self.df_factory = df_factory
-        self.md_factory = md_factory
-        self.logging_function = logging_function
+    file_path_manager : FilePathManager = field(default = FilePathManager())
+    file_manager : FileManager = field(default = FileManager(file_path_manager = FilePathManager()))
+    df_factory : TTDataFrameFactory = field(default = TTDataFrameFactory(df_helper = TTDataFrameHelper()))
+    md_factory : TTMarkdownFactory = field(default = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())))
+    logging_function : Callable[[str], None] = field(default = LambdaProvider().get_default_logging_function())
 
 class TimeTrackingProcessor():
 
@@ -1603,7 +1608,7 @@ class TimeTrackingProcessor():
         self.__component_bag = component_bag
         self.__setting_bag = setting_bag
 
-    def __extract_file_name_and_paragraph_title(self, id : RLID) -> Tuple[str, str]: 
+    def __extract_file_name_and_paragraph_title(self, id : TTID) -> Tuple[str, str]: 
     
         '''Returns (file_name, paragraph_title) for the provided id or raise an Exception.'''
 
@@ -1713,15 +1718,6 @@ class TimeTrackingProcessor():
         )
 
         return tts_by_year_hashtag_df
-    def __create_tts_by_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_hashtag_df : DataFrame = self.__component_bag.df_factory.create_tts_by_hashtag(
-            tt_df = tt_df
-        )
-
-        return tts_by_hashtag_df
     def __create_tts_by_efs_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframe using tt_df and __setting_bag.'''
@@ -1749,12 +1745,49 @@ class TimeTrackingProcessor():
         '''Creates the expected Markdown content using __setting_bag and the provided arguments.'''
 
         tts_by_month_md : str = self.__component_bag.md_factory.create_tts_by_month_md(
-            paragraph_title = self.__extract_file_name_and_paragraph_title(id = RLID.RL)[1],
+            paragraph_title = self.__extract_file_name_and_paragraph_title(id = TTID.TTSBYMONTH)[1],
             last_update = self.__setting_bag.md_last_update,
             tts_by_month_upd_df = tts_by_month_tpl[1]
         )
 
         return tts_by_month_md
+
+    def initialize(self) -> None:
+
+        '''Creates a RLSummary object and assign it to __rl_summary.'''
+
+        tt_df : DataFrame = self.__create_tt_df()
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_month_tpl(tt_df = tt_df)
+        tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
+        tts_by_year_month_df : DataFrame = self.__create_tts_by_year_month_df(tt_df = tt_df)
+        tts_by_year_month_spnv_df : DataFrame = self.__create_tts_by_year_month_spnv_df(tt_df = tt_df)
+        tts_by_year_spnv_df : DataFrame = self.__create_tts_by_year_spnv_df(tt_df = tt_df)
+        tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df)
+        tts_by_spn_spv_df : DataFrame = self.__create_tts_by_spn_spv_df(tt_df = tt_df)
+        tts_by_year_hashtag_df : DataFrame = self.__create_tts_by_year_hashtag_df(tt_df = tt_df)
+        tts_by_hashtag_df : DataFrame = self.__component_bag.df_factory.create_tts_by_hashtag(tt_df = tt_df)
+        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_efs_tpl(tt_df = tt_df)
+        tts_by_tr_df : DataFrame = self.__create_tts_by_tr_df(tt_df = tt_df)
+        definitions_df : DataFrame = self.__component_bag.df_factory.create_definitions()
+
+        tts_by_month_md : str = self.__create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl)
+
+        self.__tt_summary = TTSummary(
+            tt_df = tt_df,
+            tts_by_month_tpl = tts_by_month_tpl,
+            tts_by_year_df = tts_by_year_df,
+            tts_by_year_month_df = tts_by_year_month_df,
+            tts_by_year_month_spnv_df = tts_by_year_month_spnv_df,
+            tts_by_year_spnv_df = tts_by_year_spnv_df,
+            tts_by_spn_df = tts_by_spn_df,
+            tts_by_spn_spv_df = tts_by_spn_spv_df,
+            tts_by_year_hashtag_df = tts_by_year_hashtag_df,
+            tts_by_hashtag_df = tts_by_hashtag_df,
+            tts_by_efs_tpl = tts_by_efs_tpl,
+            tts_by_tr_df = tts_by_tr_df,
+            definitions_df = definitions_df,
+            tts_by_month_md = tts_by_month_md
+        )
 
 
 # MAIN
