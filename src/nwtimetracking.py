@@ -15,10 +15,10 @@ from datetime import datetime, timedelta
 from enum import StrEnum
 from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
-from typing import Any, Callable, Optional, Tuple, cast
+from typing import Any, Callable, Literal, Optional, Tuple, cast
 
 # LOCAL MODULES
-from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper
+from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
 
 # CONSTANTS
 class TTCN(StrEnum):
@@ -109,6 +109,12 @@ class _MessageCollection():
     @staticmethod
     def no_mdinfo_found(id : TTID) -> str:
         return f"No MDInfo object found for id='{id}'."
+    @staticmethod
+    def please_run_initialize_first() -> str:
+        return "Please run the 'initialize' method first."
+    @staticmethod
+    def this_content_successfully_saved_as(id : TTID, file_path : str) -> str:
+        return f"This content (id: '{id}') has been successfully saved as '{file_path}'."
 
 # DTOs
 @dataclass(frozen=True)
@@ -160,8 +166,8 @@ class TTSummary():
     tts_by_year_spnv_df : DataFrame
     tts_by_spn_df : DataFrame
     tts_by_spn_spv_df : DataFrame
-    tts_by_year_hashtag_df : DataFrame
     tts_by_hashtag_df : DataFrame
+    tts_by_hashtag_year_df : DataFrame
     tts_by_efs_tpl : Tuple[DataFrame, DataFrame]
     tts_by_tr_df : DataFrame
     definitions_df : DataFrame
@@ -275,6 +281,18 @@ class SettingBag():
     '''Represents a collection of settings.'''
 
     # Without Defaults
+    options_tt : list[Literal["display"]]
+    options_tts_by_month : list[Literal["display", "save"]]
+    options_tts_by_year : list[Literal["display"]]
+    options_tts_by_year_month : list[Literal["display"]]
+    options_tts_by_year_month_spnv : list[Literal["display"]]
+    options_tts_by_spn : list[Literal["display"]]
+    options_tts_by_spn_spv : list[Literal["display"]]
+    options_tts_by_hashtag : list[Literal["display"]]
+    options_tts_by_hashtag_year : list[Literal["display"]]
+    options_tts_by_efs : list[Literal["display"]]
+    options_tts_by_tr : list[Literal["display"]]
+    options_definitions : list[Literal["display"]]    
     excel_nrows : int
 
     # With Defaults
@@ -1594,6 +1612,7 @@ class ComponentBag():
     df_factory : TTDataFrameFactory = field(default = TTDataFrameFactory(df_helper = TTDataFrameHelper()))
     md_factory : TTMarkdownFactory = field(default = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())))
     logging_function : Callable[[str], None] = field(default = LambdaProvider().get_default_logging_function())
+    displayer : Displayer = field(default = Displayer())
 
 class TimeTrackingProcessor():
 
@@ -1617,6 +1636,25 @@ class TimeTrackingProcessor():
                 return (md_info.file_name, md_info.paragraph_title)
 
         raise Exception(_MessageCollection.no_mdinfo_found(id = id))
+    def __validate_summary(self) -> None:
+        
+        '''Raises an exception if __tt_summary is None.'''
+
+        if not hasattr(self, '_TimeTrackingProcessor__tt_summary'):
+            raise Exception(_MessageCollection.please_run_initialize_first())
+    def __save_and_log(self, id : TTID, content : str) -> None:
+
+        '''Creates the provided Markdown content using __setting_bag.'''
+
+        file_path : str = self.__component_bag.file_path_manager.create_file_path(
+            folder_path = self.__setting_bag.working_folder_path,
+            file_name = self.__extract_file_name_and_paragraph_title(id = id)[0]
+        )
+        
+        self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
+
+        message : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
+        self.__component_bag.logging_function(message)
 
     def __create_tt_df(self) -> DataFrame:
 
@@ -1781,14 +1819,198 @@ class TimeTrackingProcessor():
             tts_by_year_spnv_df = tts_by_year_spnv_df,
             tts_by_spn_df = tts_by_spn_df,
             tts_by_spn_spv_df = tts_by_spn_spv_df,
-            tts_by_year_hashtag_df = tts_by_year_hashtag_df,
+            tts_by_hashtag_year_df = tts_by_year_hashtag_df,
             tts_by_hashtag_df = tts_by_hashtag_df,
             tts_by_efs_tpl = tts_by_efs_tpl,
             tts_by_tr_df = tts_by_tr_df,
             definitions_df = definitions_df,
             tts_by_month_md = tts_by_month_md
         )
+    def process_tt(self) -> None:
 
+        '''
+            Performs all the actions listed in __setting_bag.options_tt.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tt
+        df : DataFrame = self.__tt_summary.tt_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_month(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_month.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_month
+        df : DataFrame = self.__tt_summary.tts_by_month_tpl[1]
+        content : str = self.__tt_summary.tts_by_month_md
+        id : TTID = TTID.TTSBYMONTH
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+
+        if "save" in options:
+            self.__save_and_log(id = id, content = content)
+    def process_tts_by_year(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_year.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_year
+        df : DataFrame = self.__tt_summary.tts_by_year_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_year_month(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_year_month.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_year_month
+        df : DataFrame = self.__tt_summary.tts_by_year_month_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_year_month_spnv(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_year_month_spnv.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_year_month_spnv
+        df : DataFrame = self.__tt_summary.tts_by_year_month_spnv_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_spn(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_spn.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_spn
+        df : DataFrame = self.__tt_summary.tts_by_spn_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_spn_spv(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_spn_spv.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_spn_spv
+        df : DataFrame = self.__tt_summary.tts_by_spn_spv_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_hashtag(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_hashtag.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_hashtag
+        df : DataFrame = self.__tt_summary.tts_by_hashtag_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_hashtag_year(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_hashtag_year.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_hashtag_year
+        df : DataFrame = self.__tt_summary.tts_by_hashtag_year_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_efs(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_efs.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_efs
+        df : DataFrame = self.__tt_summary.tts_by_efs_tpl[1]
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_tts_by_tr(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_tr.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_tr
+        df : DataFrame = self.__tt_summary.tts_by_tr_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
+    def process_definitions(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_definitions.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_definitions
+        df : DataFrame = self.__tt_summary.definitions_df
+
+        if "display" in options:
+            self.__component_bag.displayer.display(df = df)
 
 # MAIN
 if __name__ == "__main__":
