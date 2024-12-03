@@ -162,7 +162,7 @@ class TTSummary():
     tts_by_month_tpl : Tuple[DataFrame, DataFrame]
     tts_by_year_df : DataFrame
     tts_by_year_month_tpl : Tuple[DataFrame, DataFrame]
-    tts_by_year_month_spnv_df : DataFrame
+    tts_by_year_month_spnv_df : Tuple[DataFrame, DataFrame]
     tts_by_year_spnv_df : DataFrame
     tts_by_spn_df : DataFrame
     tts_by_spn_spv_df : DataFrame
@@ -1197,6 +1197,21 @@ class TTDataFrameFactory():
             filtered_df = df.loc[condition]
 
         return filtered_df
+    def __filter_by_software_project_name(self, df : DataFrame, software_project_name : Optional[str]) -> DataFrame:
+
+        '''
+            Returns a DataFrame that in the "TTCN.PROJECTNAME" column has only values that are equal to software_project_name.
+            
+            Returns df if software_project_name is None.   
+        '''
+
+        filtered_df : DataFrame = df.copy(deep = True)
+
+        if software_project_name is not None:
+            condition : Series = (filtered_df[TTCN.PROJECTNAME] == software_project_name)
+            filtered_df = df.loc[condition]
+
+        return filtered_df
     def __filter_by_is_correct(self, tts_by_efs_df : DataFrame, is_correct : bool) -> DataFrame:
 
         '''Returns a DataFrame that contains only rows that match the provided is_correct.'''
@@ -1377,7 +1392,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_year(df = tts_df, years = display_only_years)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def create_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], software_project_name : Optional[str]) -> Tuple[DataFrame, DataFrame]:
 
         '''
             [0] ...
@@ -1387,6 +1402,8 @@ class TTDataFrameFactory():
                 0	2023	4	    nwtraderaanalytics	    2.0.0	        09h 15m	09h 15m	100.00	19h 00m	48.68
                 1	2023	6	    nwreadinglistmanager	1.0.0	        06h 45m	06h 45m	100.00	24h 45m	27.27
                 ...
+
+            Returns (tts_by_year_month_spnv_df, tts_by_year_month_spnv_flt_df).
         '''
 
         spnv_df : DataFrame = self.__create_raw_tts_by_year_month_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
@@ -1416,7 +1433,9 @@ class TTDataFrameFactory():
         tts_df[TTCN.DME] = tts_df[TTCN.DME].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
         tts_df[TTCN.TME] = tts_df[TTCN.TME].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
 
-        return tts_df
+        tts_flt_df : DataFrame = self.__filter_by_software_project_name(df = tts_df, software_project_name = software_project_name)
+
+        return (tts_df, tts_flt_df)
     def create_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
@@ -1737,17 +1756,18 @@ class TimeTrackingProcessor():
         )
 
         return tts_by_year_month_df
-    def __create_tts_by_year_month_spnv_df(self, tt_df : DataFrame) -> DataFrame:
+    def __create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframe using tt_df and __setting_bag.'''
 
-        tts_by_year_month_spnv_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year_month_spnv(
+        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_year_month_spnv(
             tt_df = tt_df,
             years = self.__setting_bag.years,
             software_project_names = self.__setting_bag.software_project_names,
+            software_project_name = self.__setting_bag.tts_by_year_month_spnv_display_only
         )
 
-        return tts_by_year_month_spnv_df
+        return tts_by_year_month_spnv_tpl
     def __create_tts_by_year_spnv_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''Creates the expected dataframe using tt_df and __setting_bag.'''
@@ -1855,6 +1875,18 @@ class TimeTrackingProcessor():
             return tts_by_year_month_tpl[0]
 
         return tts_by_year_month_tpl[1]
+    def __optimize_tts_by_year_month_spnv_for_display(self, tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame]) -> DataFrame:
+
+        '''
+            tts_by_year_month_spnv_tpl is made of (tts_by_year_month_spnv_df, tts_by_year_month_spnv_flt_df).
+
+            This method decides which one of the two DataFrame is to be displayed according to __setting_bag.tts_by_year_month_spnv_display_only.
+        '''
+
+        if self.__setting_bag.tts_by_year_month_spnv_display_only is None:
+            return tts_by_year_month_spnv_tpl[0]
+
+        return tts_by_year_month_spnv_tpl[1]
 
     def initialize(self) -> None:
 
@@ -1863,8 +1895,8 @@ class TimeTrackingProcessor():
         tt_df : DataFrame = self.__create_tt_df()
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_month_tpl(tt_df = tt_df)
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
-        tts_by_year_month_df : DataFrame = self.__create_tts_by_year_month_df(tt_df = tt_df)
-        tts_by_year_month_spnv_df : DataFrame = self.__create_tts_by_year_month_spnv_df(tt_df = tt_df)
+        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_month_df(tt_df = tt_df)
+        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_month_spnv_tpl(tt_df = tt_df)
         tts_by_year_spnv_df : DataFrame = self.__create_tts_by_year_spnv_df(tt_df = tt_df)
         tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df)
         tts_by_spn_spv_df : DataFrame = self.__create_tts_by_spn_spv_df(tt_df = tt_df)
@@ -1880,8 +1912,8 @@ class TimeTrackingProcessor():
             tt_df = tt_df,
             tts_by_month_tpl = tts_by_month_tpl,
             tts_by_year_df = tts_by_year_df,
-            tts_by_year_month_tpl = tts_by_year_month_df,
-            tts_by_year_month_spnv_df = tts_by_year_month_spnv_df,
+            tts_by_year_month_tpl = tts_by_year_month_tpl,
+            tts_by_year_month_spnv_df = tts_by_year_month_spnv_tpl,
             tts_by_year_spnv_df = tts_by_year_spnv_df,
             tts_by_spn_df = tts_by_spn_df,
             tts_by_spn_spv_df = tts_by_spn_spv_df,
@@ -1969,7 +2001,7 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_month_spnv
-        df : DataFrame = self.__tt_summary.tts_by_year_month_spnv_df
+        df : DataFrame = self.__optimize_tts_by_year_month_spnv_for_display(tts_by_year_month_spnv_tpl = self.__tt_summary.tts_by_year_month_spnv_df)
 
         if "display" in options:
             self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_year_month_spnv_formatters)
