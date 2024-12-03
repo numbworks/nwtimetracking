@@ -241,10 +241,7 @@ class SettingBag():
     '''Represents a collection of settings.'''
 
     # Non-Defaults
-    excel_nrows : int
-    software_project_names : list[str]
-    software_project_names_by_spv : list[str]
-    tt_by_year_hashtag_years : list[int]
+    excel_nrows : int   
 
     # Defaults
     excel_path : str = field(default = DefaultPathProvider().get_default_time_tracking_path())
@@ -253,9 +250,12 @@ class SettingBag():
     years : list[int] = field(default = YearProvider().get_all_years())
     yearly_targets : list[YearlyTarget] = field(default = YearProvider().get_all_yearly_targets())
     now : datetime = field(default = datetime.now())
+    software_project_names : list[str] = field(default = SoftwareProjectNameProvider().get_all_software_project_names())
+    software_project_names_by_spv : list[str] = field(default = SoftwareProjectNameProvider().get_all_software_project_names_by_spv())
+    tts_by_spn_remove_untagged : bool = field(default = True)
 
 
-
+    tt_by_year_hashtag_years : list[int]
     show_sessions_df : bool
     show_tt_by_year_df : bool
     show_tt_by_year_month_df : bool
@@ -271,7 +271,7 @@ class SettingBag():
 
     n_generic : int
     n_by_month : int
-    remove_untagged_from_de : bool
+
     definitions : dict[str, str]
     effort_status_n : int
     effort_status_is_correct : bool
@@ -1626,9 +1626,62 @@ class TimeTrackingProcessor():
         )
 
         return tts_by_year_df
+    def __create_tts_by_year_month_df(self, tt_df : DataFrame) -> DataFrame:
 
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
 
+        tts_by_year_month_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year_month(
+            tt_df = tt_df,
+            years = self.__setting_bag.years,
+            yearly_targets = self.__setting_bag.yearly_targets,
+        )
 
+        return tts_by_year_month_df
+    def __create_tts_by_year_month_spnv_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_year_month_spnv_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year_month_spnv(
+            tt_df = tt_df,
+            years = self.__setting_bag.years,
+            software_project_names = self.__setting_bag.software_project_names,
+        )
+
+        return tts_by_year_month_spnv_df
+    def __create_tts_by_year_spnv_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_year_spnv_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year_spnv(
+            tt_df = tt_df,
+            years = self.__setting_bag.years,
+            software_project_names = self.__setting_bag.software_project_names,
+        )
+
+        return tts_by_year_spnv_df
+    def __create_tts_by_spn_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_spn_df : DataFrame = self.__component_bag.df_factory.create_tts_by_spn(
+            tt_df = tt_df,
+            years = self.__setting_bag.years,
+            software_project_names = self.__setting_bag.software_project_names,
+            remove_untagged = self.__setting_bag.tts_by_spn_remove_untagged
+        )
+
+        return tts_by_spn_df
+    def __create_tts_by_spn_spv_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe using tt_df and __setting_bag.'''
+
+        tts_by_spn_spv_df : DataFrame = self.__component_bag.df_factory.create_tts_by_spn_spv(
+            tt_df = tt_df,
+            years = self.__setting_bag.years,
+            software_project_names = self.__setting_bag.software_project_names
+        )
+
+        return tts_by_spn_spv_df
 
 
 
