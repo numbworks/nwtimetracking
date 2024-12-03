@@ -300,18 +300,21 @@ class SettingBag():
     excel_path : str = field(default = DefaultPathProvider().get_default_time_tracking_path())
     excel_skiprows : int = field(default = 0)
     excel_tabname : str = field(default = "Sessions")
-    years : list[int] = field(default = YearProvider().get_all_years())
-    yearly_targets : list[YearlyTarget] = field(default = YearProvider().get_all_yearly_targets())
+    years : list[int] = field(default_factory = lambda : YearProvider().get_all_years())
+    yearly_targets : list[YearlyTarget] = field(default_factory = lambda : YearProvider().get_all_yearly_targets())
     now : datetime = field(default = datetime.now())
-    software_project_names : list[str] = field(default = SoftwareProjectNameProvider().get_all_software_project_names())
-    software_project_names_by_spv : list[str] = field(default = SoftwareProjectNameProvider().get_all_software_project_names_by_spv())
+    software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all_software_project_names())
+    software_project_names_by_spv : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all_software_project_names_by_spv())
+    tt_head_n : Optional[uint] = field(default = uint(5))
+    tt_display_head_n_with_tail : bool = field(default = True)
+    tt_hide_index : bool = field(default = True)
     tts_by_spn_remove_untagged : bool = field(default = True)
     tts_by_efs_is_correct : bool = field(default = False)
-    tts_by_efs_n : int = field(default = 25)
+    tts_by_efs_n : uint = field(default = uint(25))
     tts_by_tr_unknown_id : str = field(default = "Unknown")
     tts_by_tr_remove_unknown_occurrences : bool = field(default = True)
     tts_by_tr_filter_by_top_n : Optional[uint] = field(default = uint(5))
-    md_infos : list[MDInfo] = field(default = MDInfoProvider().get_all())
+    md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
 
 class TTDataFrameHelper():
@@ -1790,6 +1793,24 @@ class TimeTrackingProcessor():
 
         return tts_by_month_md
 
+    def __optimize_for_display(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
+
+        '''Prepares df for display().'''
+
+        if head_n is None:
+            return df
+        elif head_n is not None and display_head_n_with_tail == True:
+            return df.tail(n = int(head_n))
+        else:
+            return df.head(n = int(head_n))
+    def __optimize_tt_for_display(self, tt_df : DataFrame) -> DataFrame:
+
+        return self.__optimize_for_display(
+            df = tt_df, 
+            head_n = self.__setting_bag.tt_head_n, 
+            display_head_n_with_tail = self.__setting_bag.tt_display_head_n_with_tail
+        )
+
     def initialize(self) -> None:
 
         '''Creates a RLSummary object and assign it to __rl_summary.'''
@@ -1837,10 +1858,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tt
-        df : DataFrame = self.__tt_summary.tt_df
+        df : DataFrame = self.__optimize_tt_for_display(tt_df = self.__tt_summary.tt_df)
+        hide_index : bool = self.__setting_bag.tt_hide_index
 
         if "display" in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(df = df, hide_index = hide_index)
     def process_tts_by_month(self) -> None:
 
         '''
