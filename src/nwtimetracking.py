@@ -161,7 +161,7 @@ class TTSummary():
     tt_df : DataFrame
     tts_by_month_tpl : Tuple[DataFrame, DataFrame]
     tts_by_year_df : DataFrame
-    tts_by_year_month_df : DataFrame
+    tts_by_year_month_tpl : Tuple[DataFrame, DataFrame]
     tts_by_year_month_spnv_df : DataFrame
     tts_by_year_spnv_df : DataFrame
     tts_by_spn_df : DataFrame
@@ -201,6 +201,14 @@ class YearProvider():
         years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
 
         return years
+    def get_most_recent_x_years(self, x : uint) -> list[int]:
+
+        '''Returns a list of years.'''
+
+        years : list[int] = self.get_all_years()
+        years = years[(len(years) - int(x)):]
+
+        return years    
     def get_all_yearly_targets(self) -> list[YearlyTarget]:
 
         '''Returns a list of years.'''
@@ -274,7 +282,6 @@ class MDInfoProvider():
             ]
         
         return md_infos
-
 @dataclass(frozen=True)
 class SettingBag():
 
@@ -308,6 +315,7 @@ class SettingBag():
     tt_head_n : Optional[uint] = field(default = uint(5))
     tt_display_head_n_with_tail : bool = field(default = True)
     tt_hide_index : bool = field(default = True)
+    tts_by_year_month_display_only_years : Optional[list[int]] = field(default_factory = lambda : YearProvider().get_most_recent_x_years(x = uint(1)))
     tts_by_spn_remove_untagged : bool = field(default = True)
     tts_by_efs_is_correct : bool = field(default = False)
     tts_by_efs_n : uint = field(default = uint(25))
@@ -316,7 +324,6 @@ class SettingBag():
     tts_by_tr_filter_by_top_n : Optional[uint] = field(default = uint(5))
     md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
-
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -991,6 +998,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORTPRC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
 
         return tts_df
+
     def __try_complete_raw_ttm(self, ttm_df : DataFrame, year : int) -> DataFrame:
 
         '''
@@ -1163,6 +1171,30 @@ class TTDataFrameFactory():
         tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
 
         return tts_by_month_upd_df
+    def __remove_unknown_occurrences(self, tts_by_tr_df : DataFrame, unknown_id : str) -> DataFrame:
+
+        '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
+
+        condition : Series = (tts_by_tr_df[TTCN.TIMERANGEID] != unknown_id)
+        tts_by_tr_df = tts_by_tr_df.loc[condition]	
+        tts_by_tr_df.reset_index(drop = True, inplace = True)
+
+        return tts_by_tr_df
+    def __filter_by_year(self, df : DataFrame, years : list[int]) -> DataFrame:
+
+        '''
+            Returns a DataFrame that in the "TTCN.YEAR" column has only values contained in "years".
+
+            Returns df if years is an empty list.    
+        '''
+
+        filtered_df : DataFrame = df.copy(deep = True)
+
+        if len(years) > 0:
+            condition : Series = filtered_df[TTCN.YEAR].isin(years)
+            filtered_df = df.loc[condition]
+
+        return filtered_df
     def __filter_by_is_correct(self, tts_by_efs_df : DataFrame, is_correct : bool) -> DataFrame:
 
         '''Returns a DataFrame that contains only rows that match the provided is_correct.'''
@@ -1173,15 +1205,6 @@ class TTDataFrameFactory():
         filtered_df = tts_by_efs_df.loc[condition]
 
         return filtered_df
-    def __remove_unknown_occurrences(self, tts_by_tr_df : DataFrame, unknown_id : str) -> DataFrame:
-
-        '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
-
-        condition : Series = (tts_by_tr_df[TTCN.TIMERANGEID] != unknown_id)
-        tts_by_tr_df = tts_by_tr_df.loc[condition]	
-        tts_by_tr_df.reset_index(drop = True, inplace = True)
-
-        return tts_by_tr_df
     def __filter_by_top_n_occurrences(self, tts_by_tr_df : DataFrame, n : uint) -> DataFrame:
 
         '''Returns only the top n rows by "Occurrences" of the provided DataFrame.'''
@@ -1286,7 +1309,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.TARGETDIFF].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = True))
 
         return tts_df
-    def create_tts_by_year_month(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+    def create_tts_by_year_month(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget], display_only_years : list[int]) -> Tuple[DataFrame, DataFrame]:
 
         '''
             [0]
@@ -1324,6 +1347,8 @@ class TTDataFrameFactory():
                 88	2023	2	    23h 00m	    29h 00m	    -371h 00m
                 89	2023	3	    50h 15m	    79h 15m	    -321h 15m   
                 ...
+
+            Returns (tts_by_year_month_df, tts_by_year_month_flt_df).
         '''
 
         tts_df : DataFrame = tt_df.copy(deep = True)
@@ -1347,7 +1372,9 @@ class TTDataFrameFactory():
         tts_df[TTCN.YEARLYTOTAL] = tts_df[TTCN.YEARLYTOTAL].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
         tts_df[TTCN.TOTARGET] = tts_df[TTCN.TOTARGET].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = True))
 
-        return tts_df
+        tts_flt_df : DataFrame = self.__filter_by_year(df = tts_df, years = display_only_years)
+
+        return (tts_df, tts_flt_df)
     def create_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
@@ -1604,7 +1631,6 @@ class TTMarkdownFactory():
         md_content += "\n"
 
         return md_content
-
 @dataclass(frozen=True)
 class ComponentBag():
 
@@ -1616,7 +1642,6 @@ class ComponentBag():
     md_factory : TTMarkdownFactory = field(default = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())))
     logging_function : Callable[[str], None] = field(default = LambdaProvider().get_default_logging_function())
     displayer : Displayer = field(default = Displayer())
-
 class TimeTrackingProcessor():
 
     '''Collects all the logic related to the processing of "Time Tracking.xlsx".'''
@@ -1693,14 +1718,20 @@ class TimeTrackingProcessor():
         )
 
         return tts_by_year_df
-    def __create_tts_by_year_month_df(self, tt_df : DataFrame) -> DataFrame:
+    def __create_tts_by_year_month_df(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframe using tt_df and __setting_bag.'''
 
-        tts_by_year_month_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year_month(
+        display_only_years : list[int] = []
+        
+        if display_only_years is not None:
+            display_only_years = cast(list[int], self.__setting_bag.tts_by_year_month_display_only_years)
+
+        tts_by_year_month_df : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_year_month(
             tt_df = tt_df,
             years = self.__setting_bag.years,
             yearly_targets = self.__setting_bag.yearly_targets,
+            display_only_years = display_only_years
         )
 
         return tts_by_year_month_df
@@ -1810,6 +1841,18 @@ class TimeTrackingProcessor():
             head_n = self.__setting_bag.tt_head_n, 
             display_head_n_with_tail = self.__setting_bag.tt_display_head_n_with_tail
         )
+    def __optimize_tts_by_year_month_for_display(self, tts_by_year_month_tpl : Tuple[DataFrame, DataFrame]) -> DataFrame:
+
+        '''
+            tts_by_year_month_tpl is made of (tts_by_year_month_df, tts_by_year_month_flt_df).
+
+            This method decides which one of the two DataFrame is to be displayed according to __setting_bag.tts_by_year_month_display_only_years.
+        '''
+
+        if self.__setting_bag.tts_by_year_month_display_only_years is None:
+            return tts_by_year_month_tpl[0]
+
+        return tts_by_year_month_tpl[1]
 
     def initialize(self) -> None:
 
@@ -1835,7 +1878,7 @@ class TimeTrackingProcessor():
             tt_df = tt_df,
             tts_by_month_tpl = tts_by_month_tpl,
             tts_by_year_df = tts_by_year_df,
-            tts_by_year_month_df = tts_by_year_month_df,
+            tts_by_year_month_tpl = tts_by_year_month_df,
             tts_by_year_month_spnv_df = tts_by_year_month_spnv_df,
             tts_by_year_spnv_df = tts_by_year_spnv_df,
             tts_by_spn_df = tts_by_spn_df,
@@ -1909,7 +1952,7 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_month
-        df : DataFrame = self.__tt_summary.tts_by_year_month_df
+        df : DataFrame = self.__optimize_tts_by_year_month_for_display(tts_by_year_month_tpl = self.__tt_summary.tts_by_year_month_tpl)
 
         if "display" in options:
             self.__component_bag.displayer.display(df = df)
