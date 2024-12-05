@@ -972,7 +972,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         
         # Act
         with self.assertRaises(ValueError) as context:
-            actual : datetime = self.df_helper.create_time_object(time = time)
+            self.df_helper.create_time_object(time = time)
 
         # Assert
         self.assertTrue(expected_message in str(context.exception))
@@ -989,7 +989,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
             effort_str : str):
 
         # Arrange
-        actual_td : timedelta = TTDataFrameFactory()._TimeTrackingManager__convert_string_to_timedelta(td_str = effort_str) # type: ignore
+        actual_td : timedelta = self.df_helper.convert_string_to_timedelta(td_str = effort_str)
         expected : EffortStatus = EffortStatus(
             idx = idx,
             start_time_str = None,
