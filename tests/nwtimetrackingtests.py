@@ -10,14 +10,14 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
-from typing import Tuple
+from typing import Optional, Tuple, cast
 from unittest.mock import Mock, call, patch
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetracking import ComponentBag, MDInfo, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
-from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory, TTID, MDInfoProvider
+from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory, TTID, MDInfoProvider, TTDataFrameHelper
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
 
 # SUPPORT METHODS
@@ -67,7 +67,6 @@ class SupportMethodProvider():
         '''
 
         return (yt1.hours == yt2.hours and yt1.year == yt2.year)
-    
     @staticmethod
     def are_lists_of_yearly_targets_equal(list1 : list[YearlyTarget], list2 : list[YearlyTarget]) -> bool:
 
@@ -588,7 +587,78 @@ class MDInfoProviderTestCase(unittest.TestCase):
         self.assertEqual(expected[0].id, actual[0].id)
         self.assertEqual(expected[0].file_name, actual[0].file_name)
         self.assertEqual(expected[0].paragraph_title, actual[0].paragraph_title)
+class TTDataFrameHelperTestCase(unittest.TestCase):
 
+    def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
+
+        # Arrange
+        td_str : str = "5h 30m"
+        expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
+
+        # Act
+        actual_td : timedelta = TTDataFrameHelper().convert_string_to_timedelta(td_str = td_str)
+
+        # Assert
+        self.assertEqual(expected_td, actual_td)
+    def test_getyearlytarget_shouldreturnexpectedhours_whenyearinlist(self):
+
+        # Arrange
+        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
+        year : int = 2024
+        expected_hours : timedelta = timedelta(hours = 250)
+
+        # Act
+        actual_hours : timedelta = cast(YearlyTarget, TTDataFrameHelper().get_yearly_target(yearly_targets = yearly_targets, year = year)).hours
+
+        # Assert
+        self.assertEqual(expected_hours, actual_hours)
+    def test_getyearlytarget_shouldreturnnone_whenyearnotinlist(self):
+
+        # Arrange
+        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
+        year : int = 2010
+
+        # Act
+        yearly_target : Optional[YearlyTarget] = TTDataFrameHelper().get_yearly_target(yearly_targets = yearly_targets, year = year)
+
+        # Assert
+        self.assertIsNone(yearly_target)
+    def test_isyearlytargetmet_shouldreturntrue_whenyearlytargetismet(self):
+
+        # Arrange
+        effort : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        yearly_target : timedelta = pd.Timedelta(hours = 250)
+
+        # Act
+        actual : bool = TTDataFrameHelper().is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        
+        # Assert
+        self.assertTrue(actual)
+    def test_isyearlytargetmet_shouldreturnfalse_whenyearlytargetisnotmet(self):
+
+        # Arrange
+        effort : timedelta = pd.Timedelta(hours = 249)
+        yearly_target : timedelta = pd.Timedelta(hours = 250)
+
+        # Act
+        actual : bool = TTDataFrameHelper().is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+
+        # Assert
+        self.assertFalse(actual)
+    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
+
+        # Arrange
+        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "255h 30m"
+
+        # Act
+        actual : str = TTDataFrameHelper().format_timedelta(td = td, add_plus_sign = False)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+
+
+        
 # MAIN
 if __name__ == "__main__":
     result = unittest.main(argv=[''], verbosity=3, exit=False)
