@@ -67,6 +67,12 @@ class TTID(StrEnum):
     '''Collects all the ids that identify the dataframes created by TTDataFrameFactory.'''
 
     TTSBYMONTH = "tts_by_month"
+class DEFINITIONSCN(StrEnum):
+    
+    '''Collects all the column names used by definitions.'''
+
+    TERM = "Term"
+    DEFINITION = "Definition"
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -294,8 +300,8 @@ class SettingBag():
     options_tts_by_year_month : list[Literal["display"]]
     options_tts_by_year_month_spnv : list[Literal["display"]]
     options_tts_by_year_spnv : list[Literal["display"]]    
-    options_tts_by_spn : list[Literal["display"]]
-    options_tts_by_spn_spv : list[Literal["display"]]
+    options_tts_by_spn : list[Literal["display", "log"]]
+    options_tts_by_spn_spv : list[Literal["display", "log"]]
     options_tts_by_hashtag : list[Literal["display"]]
     options_tts_by_hashtag_year : list[Literal["display"]]
     options_tts_by_efs : list[Literal["display"]]
@@ -1614,7 +1620,7 @@ class TTDataFrameFactory():
 
         '''Creates a dataframe containing all the definitions in use in this application.'''
 
-        columns : list[str] = ["Term", "Definition"]
+        columns : list[str] = [DEFINITIONSCN.TERM, DEFINITIONSCN.DEFINITION]
 
         definitions : dict[str, str] = { 
             "DME": "Development Monthly Effort",
@@ -1706,6 +1712,15 @@ class TimeTrackingProcessor():
 
         message : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
         self.__component_bag.logging_function(message)
+    def __try_log_definitions(self, df : DataFrame, definitions : DataFrame) -> None:
+        
+        """Logs the definitions for matching column names in the DataFrame."""
+
+        definitions_dict : dict = definitions.set_index(DEFINITIONSCN.TERM)[DEFINITIONSCN.DEFINITION].to_dict()
+        
+        for column_name in df.columns:
+            if column_name in definitions_dict:
+                print(f"{column_name}: {definitions_dict[column_name]}")
 
     def __create_tt_df(self) -> DataFrame:
 
@@ -2023,9 +2038,10 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_year_month_spnv
         df : DataFrame = self.__optimize_tts_by_year_month_spnv_for_display(tts_by_year_month_spnv_tpl = self.__tt_summary.tts_by_year_month_spnv_tpl)
+        formatters : dict = self.__setting_bag.tts_by_year_month_spnv_formatters
 
         if "display" in options:
-            self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_year_month_spnv_formatters)
+            self.__component_bag.displayer.display(df = df, formatters = formatters)
     def process_tts_by_year_spnv(self) -> None:
 
         '''
@@ -2038,9 +2054,10 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_year_spnv
         df : DataFrame = self.__optimize_tts_by_year_spnv_for_display(tts_by_year_spnv_tpl = self.__tt_summary.tts_by_year_spnv_tpl)
+        formatters : dict = self.__setting_bag.tts_by_year_spnv_formatters
 
         if "display" in options:
-            self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_year_spnv_formatters)
+            self.__component_bag.displayer.display(df = df, formatters = formatters)
     def process_tts_by_spn(self) -> None:
 
         '''
@@ -2053,9 +2070,14 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_spn
         df : DataFrame = self.__tt_summary.tts_by_spn_df
+        formatters : dict = self.__setting_bag.tts_by_spn_formatters
+        definitions_df : DataFrame = self.__tt_summary.definitions_df
 
         if "display" in options:
-            self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_spn_formatters)
+            self.__component_bag.displayer.display(df = df, formatters = formatters)
+
+        if "log" in options:
+            self.__try_log_definitions(df = df, definitions = definitions_df)
     def process_tts_by_spn_spv(self) -> None:
 
         '''
@@ -2068,9 +2090,13 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_spn_spv
         df : DataFrame = self.__tt_summary.tts_by_spn_spv_df
+        definitions_df : DataFrame = self.__tt_summary.definitions_df        
 
         if "display" in options:
             self.__component_bag.displayer.display(df = df)
+
+        if "log" in options:
+            self.__try_log_definitions(df = df, definitions = definitions_df)
     def process_tts_by_hashtag(self) -> None:
 
         '''
@@ -2083,9 +2109,10 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_hashtag
         df : DataFrame = self.__tt_summary.tts_by_hashtag_df
+        formatters : dict = self.__setting_bag.tts_by_hashtag_formatters    
 
         if "display" in options:
-            self.__component_bag.displayer.display(df = df, formatters = self.__setting_bag.tts_by_hashtag_formatters)
+            self.__component_bag.displayer.display(df = df, formatters = formatters)
     def process_tts_by_hashtag_year(self) -> None:
 
         '''
