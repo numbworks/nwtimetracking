@@ -9,7 +9,6 @@ import numpy as np
 import os
 import pandas as pd
 import re
-import openpyxl
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum
@@ -1237,7 +1236,7 @@ class TTDataFrameFactory():
 
         return filtered_df
 
-    def create_tt(self, excel_path : str, excel_skiprows : int, excel_nrows : int, excel_tabname : str) -> DataFrame:
+    def create_tt_df(self, excel_path : str, excel_skiprows : int, excel_nrows : int, excel_tabname : str) -> DataFrame:
         
         '''
             Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
@@ -1253,7 +1252,7 @@ class TTDataFrameFactory():
         tt_df = self.__enforce_dataframe_definition_for_tt_df(tt_df = tt_df)
 
         return tt_df
-    def create_tts_by_month(self, tt_df : DataFrame, years : list, now : datetime) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_month_tpl(self, tt_df : DataFrame, years : list, now : datetime) -> Tuple[DataFrame, DataFrame]:
 
         '''
                 Month	2016	↕   2017	    ↕	2018    ...
@@ -1285,7 +1284,7 @@ class TTDataFrameFactory():
         tts_upd_df : DataFrame = self.__update_future_months_to_empty(tts_by_month_df = tts_df, now = now)
 
         return (tts_df, tts_upd_df)
-    def create_tts_by_year(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+    def create_tts_by_year_df(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
 
         '''
             [0]
@@ -1331,7 +1330,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.TARGETDIFF].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = True))
 
         return tts_df
-    def create_tts_by_year_month(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget], display_only_years : list[int]) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_year_month_tpl(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget], display_only_years : list[int]) -> Tuple[DataFrame, DataFrame]:
 
         '''
             [0]
@@ -1397,7 +1396,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_year(df = tts_df, years = display_only_years)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_year_month_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], software_project_name : Optional[str]) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], software_project_name : Optional[str]) -> Tuple[DataFrame, DataFrame]:
 
         '''
             [0] ...
@@ -1441,7 +1440,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_software_project_name(df = tts_df, software_project_name = software_project_name)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_year_spnv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], software_project_name : Optional[str]) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_year_spnv_tpl(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], software_project_name : Optional[str]) -> Tuple[DataFrame, DataFrame]:
 
         '''
             [0] ...
@@ -1485,7 +1484,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_software_project_name(df = tts_df, software_project_name = software_project_name)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
+    def create_tts_by_spn_df(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
 
         '''
                 Hashtag     ProjectName	            Effort	    DE	%_DE	TE	        %_TE
@@ -1516,7 +1515,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.TE] = tts_df[TTCN.TE].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))
 
         return tts_df
-    def create_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
+    def create_tts_by_spn_spv_df(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
                 ProjectName	                ProjectVersion	Effort
@@ -1530,7 +1529,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
-    def create_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def create_tts_by_year_hashtag_df(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
 
         '''
                 Year	Hashtag	        Effort
@@ -1544,7 +1543,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
-    def create_tts_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
+    def create_tts_by_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''
                 Hashtag	        Effort  Effort%
@@ -1558,7 +1557,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
-    def create_tts_by_efs(self, tt_df : DataFrame, is_correct : bool) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_efs_tpl(self, tt_df : DataFrame, is_correct : bool) -> Tuple[DataFrame, DataFrame]:
 
         '''
             StartTime	EndTime	Effort	ES_IsCorrect	ES_Expected	ES_Message
@@ -1586,7 +1585,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_is_correct(tts_by_efs_df = tts_df, is_correct = is_correct)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_tr(self, tt_df : DataFrame, unknown_id : str, remove_unknown_occurrences : bool) -> DataFrame:
+    def create_tts_by_tr_df(self, tt_df : DataFrame, unknown_id : str, remove_unknown_occurrences : bool) -> DataFrame:
 
             '''
                     TimeRangeId	Occurrences
@@ -1616,7 +1615,7 @@ class TTDataFrameFactory():
                 tts_df = self.__remove_unknown_occurrences(tts_by_tr_df = tts_df, unknown_id = unknown_id)
 
             return tts_df
-    def create_definitions(self) -> DataFrame:
+    def create_definitions_df(self) -> DataFrame:
 
         '''Creates a dataframe containing all the definitions in use in this application.'''
 
@@ -1685,7 +1684,7 @@ class TTAdapter():
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
-        tt_df : DataFrame = self.__df_factory.create_tt(
+        tt_df : DataFrame = self.__df_factory.create_tt_df(
             excel_path = setting_bag.excel_path,
             excel_skiprows = setting_bag.excel_skiprows,
             excel_nrows = setting_bag.excel_nrows,
@@ -1697,7 +1696,7 @@ class TTAdapter():
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_month(
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_month_tpl(
             tt_df = tt_df,
             years = setting_bag.years,
             now = setting_bag.now
@@ -1708,7 +1707,7 @@ class TTAdapter():
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
-        tts_by_year_df : DataFrame = self.__df_factory.create_tts_by_year(
+        tts_by_year_df : DataFrame = self.__df_factory.create_tts_by_year_df(
             tt_df = tt_df,
             years = setting_bag.years,
             yearly_targets = setting_bag.yearly_targets,
@@ -1724,7 +1723,7 @@ class TTAdapter():
         if display_only_years is not None:
             display_only_years = cast(list[int], setting_bag.tts_by_year_month_display_only_years)
 
-        tts_by_year_month_df : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_month(
+        tts_by_year_month_df : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_month_tpl(
             tt_df = tt_df,
             years = setting_bag.years,
             yearly_targets = setting_bag.yearly_targets,
@@ -1736,7 +1735,7 @@ class TTAdapter():
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
-        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_month_spnv(
+        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_month_spnv_tpl(
             tt_df = tt_df,
             years = setting_bag.years,
             software_project_names = setting_bag.software_project_names,
@@ -1748,7 +1747,7 @@ class TTAdapter():
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
-        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_spnv(
+        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_spnv_tpl(
             tt_df = tt_df,
             years = setting_bag.years,
             software_project_names = setting_bag.software_project_names,
@@ -1760,7 +1759,7 @@ class TTAdapter():
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
-        tts_by_spn_df : DataFrame = self.__df_factory.create_tts_by_spn(
+        tts_by_spn_df : DataFrame = self.__df_factory.create_tts_by_spn_df(
             tt_df = tt_df,
             years = setting_bag.years,
             software_project_names = setting_bag.software_project_names,
@@ -1772,7 +1771,7 @@ class TTAdapter():
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
-        tts_by_spn_spv_df : DataFrame = self.__df_factory.create_tts_by_spn_spv(
+        tts_by_spn_spv_df : DataFrame = self.__df_factory.create_tts_by_spn_spv_df(
             tt_df = tt_df,
             years = setting_bag.years,
             software_project_names = setting_bag.software_project_names
@@ -1783,7 +1782,7 @@ class TTAdapter():
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
-        tts_by_year_hashtag_df : DataFrame = self.__df_factory.create_tts_by_year_hashtag(
+        tts_by_year_hashtag_df : DataFrame = self.__df_factory.create_tts_by_year_hashtag_df(
             tt_df = tt_df,
             years = setting_bag.years
         )
@@ -1793,7 +1792,7 @@ class TTAdapter():
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
-        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_efs(
+        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_efs_tpl(
             tt_df = tt_df,
             is_correct = setting_bag.tts_by_efs_is_correct
         )
@@ -1803,7 +1802,7 @@ class TTAdapter():
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
-        tts_by_tr_df : DataFrame = self.__df_factory.create_tts_by_tr(
+        tts_by_tr_df : DataFrame = self.__df_factory.create_tts_by_tr_df(
             tt_df = tt_df,
             unknown_id = setting_bag.tts_by_tr_unknown_id,
             remove_unknown_occurrences = setting_bag.tts_by_tr_remove_unknown_occurrences
@@ -1835,10 +1834,10 @@ class TTAdapter():
         tts_by_spn_df : DataFrame = self.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spn_spv_df : DataFrame = self.create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_year_hashtag_df : DataFrame = self.create_tts_by_year_hashtag_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag(tt_df = tt_df)
+        tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
-        definitions_df : DataFrame = self.__df_factory.create_definitions()
+        definitions_df : DataFrame = self.__df_factory.create_definitions_df()
         tts_by_month_md : str = self.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
 
         tt_summary : TTSummary = TTSummary(
