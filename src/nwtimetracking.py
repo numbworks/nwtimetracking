@@ -330,6 +330,8 @@ class SettingBag():
     tts_by_tr_unknown_id : str = field(default = "Unknown")
     tts_by_tr_remove_unknown_occurrences : bool = field(default = True)
     tts_by_tr_filter_by_top_n : Optional[uint] = field(default = uint(5))
+    tts_by_tr_head_n : Optional[uint] = field(default = uint(10))
+    tts_by_tr_display_head_n_with_tail : bool = field(default = False)
     md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
 class TTDataFrameHelper():
@@ -1228,15 +1230,6 @@ class TTDataFrameFactory():
         filtered_df = tts_by_efs_df.loc[condition]
 
         return filtered_df
-    def __filter_by_top_n_occurrences(self, tts_by_tr_df : DataFrame, n : uint) -> DataFrame:
-
-        '''Returns only the top n rows by "Occurrences" of the provided DataFrame.'''
-
-        tts_by_tr_df.sort_values(by = TTCN.OCCURRENCES, ascending = [True], inplace = True)
-        tts_by_tr_df = tts_by_tr_df.iloc[0:n]
-        tts_by_tr_df.reset_index(drop = True, inplace = True)
-
-        return tts_by_tr_df
 
     def create_tt(self, excel_path : str, excel_skiprows : int, excel_nrows : int, excel_tabname : str) -> DataFrame:
         
@@ -1587,7 +1580,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_is_correct(tts_by_efs_df = tts_df, is_correct = is_correct)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_tr(self, tt_df : DataFrame, unknown_id : str, remove_unknown_occurrences : bool, filter_by_top_n : Optional[uint]) -> DataFrame:
+    def create_tts_by_tr(self, tt_df : DataFrame, unknown_id : str, remove_unknown_occurrences : bool) -> DataFrame:
 
             '''
                     TimeRangeId	Occurrences
@@ -1598,8 +1591,8 @@ class TTDataFrameFactory():
             '''
 
             tts_df : DataFrame = tt_df.copy(deep = True)
-
             tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
+
             tts_df[TTCN.TIMERANGEID] = tts_df.apply(
                 lambda x : self.__df_helper.create_time_range_id(
                     start_time = x[TTCN.STARTTIME], 
@@ -1609,14 +1602,13 @@ class TTDataFrameFactory():
             count : NamedAgg = pd.NamedAgg(column = TTCN.TIMERANGEID, aggfunc = "count")
             tts_df = tts_df[[TTCN.TIMERANGEID]].groupby(by = [TTCN.TIMERANGEID], as_index=False).agg(count = count)
             tts_df.rename(columns={"count" : TTCN.OCCURRENCES}, inplace = True)
-            tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = False).reset_index(drop = True)
+
+            ascending : bool = False
+            tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = ascending).reset_index(drop = True)
 
             if remove_unknown_occurrences:
                 tts_df = self.__remove_unknown_occurrences(tts_by_tr_df = tts_df, unknown_id = unknown_id)
 
-            if filter_by_top_n is not None:
-                tts_df = self.__filter_by_top_n_occurrences(tts_by_tr_df = tts_df, n = filter_by_top_n)
-            
             return tts_df
     def create_definitions(self) -> DataFrame:
 
@@ -1840,8 +1832,7 @@ class TimeTrackingProcessor():
         tts_by_tr_df : DataFrame = self.__component_bag.df_factory.create_tts_by_tr(
             tt_df = tt_df,
             unknown_id = self.__setting_bag.tts_by_tr_unknown_id,
-            remove_unknown_occurrences = self.__setting_bag.tts_by_tr_remove_unknown_occurrences,
-            filter_by_top_n = self.__setting_bag.tts_by_tr_filter_by_top_n
+            remove_unknown_occurrences = self.__setting_bag.tts_by_tr_remove_unknown_occurrences
         )
 
         return tts_by_tr_df
@@ -1857,7 +1848,7 @@ class TimeTrackingProcessor():
 
         return tts_by_month_md
 
-    def __optimize_for_display(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
+    def __orchestrate_head_n(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
 
         '''Prepares df for display().'''
 
@@ -1869,7 +1860,7 @@ class TimeTrackingProcessor():
             return df.head(n = int(head_n))
     def __optimize_tt_for_display(self, tt_df : DataFrame) -> DataFrame:
 
-        return self.__optimize_for_display(
+        return self.__orchestrate_head_n(
             df = tt_df, 
             head_n = self.__setting_bag.tt_head_n, 
             display_head_n_with_tail = self.__setting_bag.tt_display_head_n_with_tail
@@ -1910,6 +1901,13 @@ class TimeTrackingProcessor():
             return tts_by_year_spnv_tpl[0]
 
         return tts_by_year_spnv_tpl[1]
+    def __optimize_tts_by_tr_for_display(self, tts_by_tr_df : DataFrame) -> DataFrame:
+
+        return self.__orchestrate_head_n(
+            df = tts_by_tr_df, 
+            head_n = self.__setting_bag.tts_by_tr_head_n, 
+            display_head_n_with_tail = self.__setting_bag.tts_by_tr_display_head_n_with_tail
+        )
 
     def initialize(self) -> None:
 
@@ -2129,7 +2127,7 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_tr
-        df : DataFrame = self.__tt_summary.tts_by_tr_df
+        df : DataFrame = self.__optimize_tts_by_tr_for_display(tts_by_tr_df = self.__tt_summary.tts_by_tr_df)
 
         if "display" in options:
             self.__component_bag.displayer.display(df = df)
