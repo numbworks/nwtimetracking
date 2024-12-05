@@ -589,6 +589,9 @@ class MDInfoProviderTestCase(unittest.TestCase):
         self.assertEqual(expected[0].paragraph_title, actual[0].paragraph_title)
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
+    def setUp(self):
+
+        self.df_helper = TTDataFrameHelper()
     def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
 
         # Arrange
@@ -596,7 +599,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
 
         # Act
-        actual_td : timedelta = TTDataFrameHelper().convert_string_to_timedelta(td_str = td_str)
+        actual_td : timedelta = self.df_helper.convert_string_to_timedelta(td_str = td_str)
 
         # Assert
         self.assertEqual(expected_td, actual_td)
@@ -608,7 +611,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         expected_hours : timedelta = timedelta(hours = 250)
 
         # Act
-        actual_hours : timedelta = cast(YearlyTarget, TTDataFrameHelper().get_yearly_target(yearly_targets = yearly_targets, year = year)).hours
+        actual_hours : timedelta = cast(YearlyTarget, self.df_helper.get_yearly_target(yearly_targets = yearly_targets, year = year)).hours
 
         # Assert
         self.assertEqual(expected_hours, actual_hours)
@@ -619,7 +622,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         year : int = 2010
 
         # Act
-        yearly_target : Optional[YearlyTarget] = TTDataFrameHelper().get_yearly_target(yearly_targets = yearly_targets, year = year)
+        yearly_target : Optional[YearlyTarget] = self.df_helper.get_yearly_target(yearly_targets = yearly_targets, year = year)
 
         # Assert
         self.assertIsNone(yearly_target)
@@ -630,7 +633,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = TTDataFrameHelper().is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        actual : bool = self.df_helper.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
         
         # Assert
         self.assertTrue(actual)
@@ -641,7 +644,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         yearly_target : timedelta = pd.Timedelta(hours = 250)
 
         # Act
-        actual : bool = TTDataFrameHelper().is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        actual : bool = self.df_helper.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
 
         # Assert
         self.assertFalse(actual)
@@ -652,13 +655,133 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         expected : str = "255h 30m"
 
         # Act
-        actual : str = TTDataFrameHelper().format_timedelta(td = td, add_plus_sign = False)
+        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = False)
         
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussigntrue(self):    
+
+        # Arrange
+        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "+255h 30m"
+
+        # Act
+        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = True)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectname_shouldreturnexpectedstring_whenproperstring(self):
+
+        # Arrange
+        descriptor : str = "NW.AutoProffLibrary v1.0.0"
+        expected : str = "NW.AutoProffLibrary"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectname_shouldreturnerrorstring_whenunproperstring(self):
+
+        # Arrange
+        descriptor : str = "Some gibberish"
+        expected : str = "ERROR"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)   
+    def test_extractsoftwareprojectversion_shouldreturnexpectedstring_whenproperstring(self):
+
+        # Arrange
+        descriptor : str = "NW.AutoProffLibrary v1.0.0"
+        expected : str = "1.0.0"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectversion_shouldreturnerrorstring_whenunproperstring(self):
+
+        # Arrange
+        descriptor : str = "Some gibberish"
+        expected : str = "ERROR"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_calculatepercentage_shouldreturnexpectedfloat_when0and16(self):
+
+        # Arrange
+        part : float = 0
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 0.00
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_calculatepercentage_shouldreturnexpectedfloat_when4and0(self):
+
+        # Arrange
+        part : float = 4
+        whole : float = 0
+        rounding_digits : int = 2
+        expected : float = 0.00
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)        
+    def test_calculatepercentage_shouldreturnexpectedfloat_when4and16(self):
+
+        # Arrange
+        part : float = 4
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 25.00
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_calculatepercentage_shouldreturnexpectedfloat_when16and16(self):
+
+        # Arrange
+        part : float = 16
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 100.00
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)        
+    def test_calculatepercentage_shouldreturnexpectedfloat_when3and9and4(self):
+
+        # Arrange
+        part : float = 3
+        whole : float = 9
+        rounding_digits : int = 4
+        expected : float = 33.3333
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
         # Assert
         self.assertEqual(expected, actual)
 
 
-        
+
 # MAIN
 if __name__ == "__main__":
     result = unittest.main(argv=[''], verbosity=3, exit=False)
