@@ -1660,6 +1660,205 @@ class TTMarkdownFactory():
         md_content += "\n"
 
         return md_content
+class TTAdapter():
+
+    '''Adapts SettingBag properties for use in TT*Factory methods.'''
+
+    __df_factory : TTDataFrameFactory
+    __md_factory : TTMarkdownFactory
+
+    def __init__(self, df_factory : TTDataFrameFactory, md_factory : TTMarkdownFactory) -> None:
+        
+        self.__df_factory = df_factory
+        self.__md_factory = md_factory
+
+    def extract_file_name_and_paragraph_title(self, id : TTID, setting_bag : SettingBag) -> Tuple[str, str]: 
+    
+        '''Returns (file_name, paragraph_title) for the provided id or raise an Exception.'''
+
+        for md_info in setting_bag.md_infos:
+            if md_info.id == id: 
+                return (md_info.file_name, md_info.paragraph_title)
+
+        raise Exception(_MessageCollection.no_mdinfo_found(id = id))
+    def create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tt_df : DataFrame = self.__df_factory.create_tt(
+            excel_path = setting_bag.excel_path,
+            excel_skiprows = setting_bag.excel_skiprows,
+            excel_nrows = setting_bag.excel_nrows,
+            excel_tabname = setting_bag.excel_tabname
+            )
+
+        return tt_df
+    def create_tts_by_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+
+        '''Creates the expected dataframes out of the provided arguments.'''
+
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_month(
+            tt_df = tt_df,
+            years = setting_bag.years,
+            now = setting_bag.now
+        )
+
+        return tts_by_month_tpl
+    def create_tts_by_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_year_df : DataFrame = self.__df_factory.create_tts_by_year(
+            tt_df = tt_df,
+            years = setting_bag.years,
+            yearly_targets = setting_bag.yearly_targets,
+        )
+
+        return tts_by_year_df
+    def create_tts_by_year_month_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+
+        '''Creates the expected dataframes out of the provided arguments.'''
+
+        display_only_years : list[int] = []
+        
+        if display_only_years is not None:
+            display_only_years = cast(list[int], setting_bag.tts_by_year_month_display_only_years)
+
+        tts_by_year_month_df : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_month(
+            tt_df = tt_df,
+            years = setting_bag.years,
+            yearly_targets = setting_bag.yearly_targets,
+            display_only_years = display_only_years
+        )
+
+        return tts_by_year_month_df
+    def create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+
+        '''Creates the expected dataframes out of the provided arguments.'''
+
+        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_month_spnv(
+            tt_df = tt_df,
+            years = setting_bag.years,
+            software_project_names = setting_bag.software_project_names,
+            software_project_name = setting_bag.tts_by_year_month_spnv_display_only_spn
+        )
+
+        return tts_by_year_month_spnv_tpl
+    def create_tts_by_year_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+
+        '''Creates the expected dataframes out of the provided arguments.'''
+
+        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_year_spnv(
+            tt_df = tt_df,
+            years = setting_bag.years,
+            software_project_names = setting_bag.software_project_names,
+            software_project_name = setting_bag.tts_by_year_spnv_display_only_spn
+        )
+
+        return tts_by_year_spnv_tpl
+    def create_tts_by_spn_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_spn_df : DataFrame = self.__df_factory.create_tts_by_spn(
+            tt_df = tt_df,
+            years = setting_bag.years,
+            software_project_names = setting_bag.software_project_names,
+            remove_untagged = setting_bag.tts_by_spn_remove_untagged
+        )
+
+        return tts_by_spn_df
+    def create_tts_by_spn_spv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_spn_spv_df : DataFrame = self.__df_factory.create_tts_by_spn_spv(
+            tt_df = tt_df,
+            years = setting_bag.years,
+            software_project_names = setting_bag.software_project_names
+        )
+
+        return tts_by_spn_spv_df
+    def create_tts_by_year_hashtag_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_year_hashtag_df : DataFrame = self.__df_factory.create_tts_by_year_hashtag(
+            tt_df = tt_df,
+            years = setting_bag.years
+        )
+
+        return tts_by_year_hashtag_df
+    def create_tts_by_efs_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+
+        '''Creates the expected dataframes out of the provided arguments.'''
+
+        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_efs(
+            tt_df = tt_df,
+            is_correct = setting_bag.tts_by_efs_is_correct
+        )
+
+        return tts_by_efs_tpl
+    def create_tts_by_tr_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_tr_df : DataFrame = self.__df_factory.create_tts_by_tr(
+            tt_df = tt_df,
+            unknown_id = setting_bag.tts_by_tr_unknown_id,
+            remove_unknown_occurrences = setting_bag.tts_by_tr_remove_unknown_occurrences
+        )
+
+        return tts_by_tr_df
+    def create_tts_by_month_md(self, tts_by_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> str:
+
+        '''Creates the expected Markdown content out of the provided arguments.'''
+
+        tts_by_month_md : str = self.__md_factory.create_tts_by_month_md(
+            paragraph_title = self.extract_file_name_and_paragraph_title(id = TTID.TTSBYMONTH, setting_bag = setting_bag)[1],
+            last_update = setting_bag.md_last_update,
+            tts_by_month_upd_df = tts_by_month_tpl[1]
+        )
+
+        return tts_by_month_md
+    
+    def create_summary(self, setting_bag : SettingBag) -> TTSummary:
+
+        '''Creates a TTSummary object out of setting_bag.'''
+
+        tt_df : DataFrame = self.create_tt_df(setting_bag = setting_bag)
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_df : DataFrame = self.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_spn_df : DataFrame = self.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_spn_spv_df : DataFrame = self.create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_hashtag_df : DataFrame = self.create_tts_by_year_hashtag_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag(tt_df = tt_df)
+        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
+        definitions_df : DataFrame = self.__df_factory.create_definitions()
+        tts_by_month_md : str = self.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
+
+        tt_summary : TTSummary = TTSummary(
+            tt_df = tt_df,
+            tts_by_month_tpl = tts_by_month_tpl,
+            tts_by_year_df = tts_by_year_df,
+            tts_by_year_month_tpl = tts_by_year_month_tpl,
+            tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl,
+            tts_by_year_spnv_tpl = tts_by_year_spnv_tpl,
+            tts_by_spn_df = tts_by_spn_df,
+            tts_by_spn_spv_df = tts_by_spn_spv_df,
+            tts_by_hashtag_year_df = tts_by_year_hashtag_df,
+            tts_by_hashtag_df = tts_by_hashtag_df,
+            tts_by_efs_tpl = tts_by_efs_tpl,
+            tts_by_tr_df = tts_by_tr_df,
+            definitions_df = definitions_df,
+            tts_by_month_md = tts_by_month_md
+        )
+
+        return tt_summary
 @dataclass(frozen=True)
 class ComponentBag():
 
@@ -1667,8 +1866,12 @@ class ComponentBag():
 
     file_path_manager : FilePathManager = field(default = FilePathManager())
     file_manager : FileManager = field(default = FileManager(file_path_manager = FilePathManager()))
-    df_factory : TTDataFrameFactory = field(default = TTDataFrameFactory(df_helper = TTDataFrameHelper()))
-    md_factory : TTMarkdownFactory = field(default = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())))
+
+    tt_adapter : TTAdapter = field(default = TTAdapter(
+        df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
+        md_factory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())
+        )))
+
     logging_function : Callable[[str], None] = field(default = LambdaProvider().get_default_logging_function())
     displayer : Displayer = field(default = Displayer())
 class TimeTrackingProcessor():
@@ -1684,15 +1887,6 @@ class TimeTrackingProcessor():
         self.__component_bag = component_bag
         self.__setting_bag = setting_bag
 
-    def __extract_file_name_and_paragraph_title(self, id : TTID) -> Tuple[str, str]: 
-    
-        '''Returns (file_name, paragraph_title) for the provided id or raise an Exception.'''
-
-        for md_info in self.__setting_bag.md_infos:
-            if md_info.id == id: 
-                return (md_info.file_name, md_info.paragraph_title)
-
-        raise Exception(_MessageCollection.no_mdinfo_found(id = id))
     def __validate_summary(self) -> None:
         
         '''Raises an exception if __tt_summary is None.'''
@@ -1705,7 +1899,7 @@ class TimeTrackingProcessor():
 
         file_path : str = self.__component_bag.file_path_manager.create_file_path(
             folder_path = self.__setting_bag.working_folder_path,
-            file_name = self.__extract_file_name_and_paragraph_title(id = id)[0]
+            file_name = self.__component_bag.tt_adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = self.__setting_bag)[0]
         )
         
         self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
@@ -1721,147 +1915,6 @@ class TimeTrackingProcessor():
         for column_name in df.columns:
             if column_name in definitions_dict:
                 print(f"{column_name}: {definitions_dict[column_name]}")
-
-    def __create_tt_df(self) -> DataFrame:
-
-        '''Creates the expected dataframe using __setting_bag.'''
-
-        tt_df : DataFrame = self.__component_bag.df_factory.create_tt(
-            excel_path = self.__setting_bag.excel_path,
-            excel_skiprows = self.__setting_bag.excel_skiprows,
-            excel_nrows = self.__setting_bag.excel_nrows,
-            excel_tabname = self.__setting_bag.excel_tabname
-            )
-
-        return tt_df
-    def __create_tts_by_month_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_month(
-            tt_df = tt_df,
-            years = self.__setting_bag.years,
-            now = self.__setting_bag.now
-        )
-
-        return tts_by_month_tpl
-    def __create_tts_by_year_df(self, tt_df : DataFrame) -> DataFrame:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_year_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year(
-            tt_df = tt_df,
-            years = self.__setting_bag.years,
-            yearly_targets = self.__setting_bag.yearly_targets,
-        )
-
-        return tts_by_year_df
-    def __create_tts_by_year_month_df(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        display_only_years : list[int] = []
-        
-        if display_only_years is not None:
-            display_only_years = cast(list[int], self.__setting_bag.tts_by_year_month_display_only_years)
-
-        tts_by_year_month_df : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_year_month(
-            tt_df = tt_df,
-            years = self.__setting_bag.years,
-            yearly_targets = self.__setting_bag.yearly_targets,
-            display_only_years = display_only_years
-        )
-
-        return tts_by_year_month_df
-    def __create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_year_month_spnv(
-            tt_df = tt_df,
-            years = self.__setting_bag.years,
-            software_project_names = self.__setting_bag.software_project_names,
-            software_project_name = self.__setting_bag.tts_by_year_month_spnv_display_only_spn
-        )
-
-        return tts_by_year_month_spnv_tpl
-    def __create_tts_by_year_spnv_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_year_spnv(
-            tt_df = tt_df,
-            years = self.__setting_bag.years,
-            software_project_names = self.__setting_bag.software_project_names,
-            software_project_name = self.__setting_bag.tts_by_year_spnv_display_only_spn
-        )
-
-        return tts_by_year_spnv_tpl
-    def __create_tts_by_spn_df(self, tt_df : DataFrame) -> DataFrame:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_spn_df : DataFrame = self.__component_bag.df_factory.create_tts_by_spn(
-            tt_df = tt_df,
-            years = self.__setting_bag.years,
-            software_project_names = self.__setting_bag.software_project_names,
-            remove_untagged = self.__setting_bag.tts_by_spn_remove_untagged
-        )
-
-        return tts_by_spn_df
-    def __create_tts_by_spn_spv_df(self, tt_df : DataFrame) -> DataFrame:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_spn_spv_df : DataFrame = self.__component_bag.df_factory.create_tts_by_spn_spv(
-            tt_df = tt_df,
-            years = self.__setting_bag.years,
-            software_project_names = self.__setting_bag.software_project_names
-        )
-
-        return tts_by_spn_spv_df
-    def __create_tts_by_year_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_year_hashtag_df : DataFrame = self.__component_bag.df_factory.create_tts_by_year_hashtag(
-            tt_df = tt_df,
-            years = self.__setting_bag.years
-        )
-
-        return tts_by_year_hashtag_df
-    def __create_tts_by_efs_tpl(self, tt_df : DataFrame) -> Tuple[DataFrame, DataFrame]:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.__component_bag.df_factory.create_tts_by_efs(
-            tt_df = tt_df,
-            is_correct = self.__setting_bag.tts_by_efs_is_correct
-        )
-
-        return tts_by_efs_tpl
-    def __create_tts_by_tr_df(self, tt_df : DataFrame) -> DataFrame:
-
-        '''Creates the expected dataframe using tt_df and __setting_bag.'''
-
-        tts_by_tr_df : DataFrame = self.__component_bag.df_factory.create_tts_by_tr(
-            tt_df = tt_df,
-            unknown_id = self.__setting_bag.tts_by_tr_unknown_id,
-            remove_unknown_occurrences = self.__setting_bag.tts_by_tr_remove_unknown_occurrences
-        )
-
-        return tts_by_tr_df
-    def __create_tts_by_month_md(self, tts_by_month_tpl : Tuple[DataFrame, DataFrame]) -> str:
-
-        '''Creates the expected Markdown content using __setting_bag and the provided arguments.'''
-
-        tts_by_month_md : str = self.__component_bag.md_factory.create_tts_by_month_md(
-            paragraph_title = self.__extract_file_name_and_paragraph_title(id = TTID.TTSBYMONTH)[1],
-            last_update = self.__setting_bag.md_last_update,
-            tts_by_month_upd_df = tts_by_month_tpl[1]
-        )
-
-        return tts_by_month_md
 
     def __orchestrate_head_n(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
 
@@ -1928,38 +1981,7 @@ class TimeTrackingProcessor():
 
         '''Creates a TTSummary object and assign it to __tt_summary.'''
 
-        tt_df : DataFrame = self.__create_tt_df()
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_month_tpl(tt_df = tt_df)
-        tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
-        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_month_df(tt_df = tt_df)
-        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_month_spnv_tpl(tt_df = tt_df)
-        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_spnv_tpl(tt_df = tt_df)
-        tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df)
-        tts_by_spn_spv_df : DataFrame = self.__create_tts_by_spn_spv_df(tt_df = tt_df)
-        tts_by_year_hashtag_df : DataFrame = self.__create_tts_by_year_hashtag_df(tt_df = tt_df)
-        tts_by_hashtag_df : DataFrame = self.__component_bag.df_factory.create_tts_by_hashtag(tt_df = tt_df)
-        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_efs_tpl(tt_df = tt_df)
-        tts_by_tr_df : DataFrame = self.__create_tts_by_tr_df(tt_df = tt_df)
-        definitions_df : DataFrame = self.__component_bag.df_factory.create_definitions()
-
-        tts_by_month_md : str = self.__create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl)
-
-        self.__tt_summary = TTSummary(
-            tt_df = tt_df,
-            tts_by_month_tpl = tts_by_month_tpl,
-            tts_by_year_df = tts_by_year_df,
-            tts_by_year_month_tpl = tts_by_year_month_tpl,
-            tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl,
-            tts_by_year_spnv_tpl = tts_by_year_spnv_tpl,
-            tts_by_spn_df = tts_by_spn_df,
-            tts_by_spn_spv_df = tts_by_spn_spv_df,
-            tts_by_hashtag_year_df = tts_by_year_hashtag_df,
-            tts_by_hashtag_df = tts_by_hashtag_df,
-            tts_by_efs_tpl = tts_by_efs_tpl,
-            tts_by_tr_df = tts_by_tr_df,
-            definitions_df = definitions_df,
-            tts_by_month_md = tts_by_month_md
-        )
+        self.__tt_summary = self.__component_bag.tt_adapter.create_summary(setting_bag = self.__setting_bag)
     def process_tt(self) -> None:
 
         '''
