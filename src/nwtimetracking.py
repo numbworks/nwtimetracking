@@ -206,14 +206,6 @@ class YearProvider():
         years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
 
         return years
-    def get_most_recent_x_years(self, x : uint) -> list[int]:
-
-        '''Returns a list of years.'''
-
-        years : list[int] = self.get_all_years()
-        years = years[(len(years) - int(x)):]
-
-        return years    
     def get_all_yearly_targets(self) -> list[YearlyTarget]:
 
         '''Returns a list of years.'''
@@ -232,6 +224,16 @@ class YearProvider():
         ]
 
         return yearly_targets    
+    def get_most_recent_x_years(self, x : uint) -> list[int]:
+
+        '''Returns a list of years.'''
+
+        years : list[int] = self.get_all_years()
+
+        if x <= len(years):
+            years = years[(len(years) - int(x)):]
+
+        return years
 class SoftwareProjectNameProvider():
 
     '''Collects all the logic related to the retrieval of software project names.'''

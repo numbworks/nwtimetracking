@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import datetime
 from datetime import date
 from datetime import timedelta
-from numpy import int64
+from numpy import int64, uint
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
@@ -16,9 +16,9 @@ from unittest.mock import Mock, call, patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import ComponentBag, TTMarkdownFactory, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
+from nwtimetracking import ComponentBag, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
 from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory
-from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager
+from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -96,54 +96,27 @@ class ObjectMother():
     @staticmethod
     def create_setting_bag() -> SettingBag:
 
-         return SettingBag(
-            years = [2015],
-            yearly_targets = [
-                YearlyTarget(year = 2015, hours = timedelta(hours = 0))
-            ],
-            excel_path = DefaultPathProvider().get_default_time_tracking_path(),
-            excel_skiprows = 0,
-            excel_books_nrows = 920,
-            excel_tabname = "Sessions",
-            n_generic = 5,
-            n_by_month = 12,
-            now = datetime.now(),
-            software_project_names = [ 
-                "NW.MarkdownTables" 
-                ],
-            software_project_names_by_spv = [ 
-                "nwreadinglistmanager" 
-                ],    
-            remove_untagged_from_de = True,
-            definitions = { 
-                "DME": "Development Monthly Effort",
-                "TME": "Total Monthly Effort",
-                "DYE": "Development Yearly Effort",
-                "TYE": "Total Yearly Effort",
-                "DE": "Development Effort",
-                "TE": "Total Effort"
-            },    
-            tt_by_year_hashtag_years = [2023],
-            tts_by_month_update_future_values_to_empty = True,     
-            effort_status_n = 25,
-            effort_status_is_correct = False,
-            time_ranges_unknown_id = "Unknown",
-            time_ranges_top_n = 5,
-            time_ranges_remove_unknown_id = True,
-            time_ranges_filter_by_top_n = True,
-            show_sessions_df = False, 
-            show_tt_by_year_df = True,
-            show_tt_by_year_month_df = True,
-            show_tt_by_year_month_spnv_df = False,
-            show_tt_by_year_spnv_df = False, 
-            show_tt_by_spn_df = True,
-            show_tt_by_spn_spv_df = True,
-            show_tt_by_year_hashtag = True,
-            show_tt_by_hashtag = True,
-            show_tts_by_month_df = True,
-            show_effort_status_df = True,
-            show_time_ranges_df = True
+        setting_bag : SettingBag = SettingBag(
+            options_tt = ["display"],
+            options_tts_by_month = ["display", "save"],
+            options_tts_by_year = ["display"],
+            options_tts_by_year_month = ["display"],
+            options_tts_by_year_month_spnv = ["display"],
+            options_tts_by_year_spnv = ["display"],
+            options_tts_by_spn = ["display", "log"],
+            options_tts_by_spn_spv = [],
+            options_tts_by_hashtag = ["display"],
+            options_tts_by_hashtag_year = ["display"],
+            options_tts_by_efs = ["display"],
+            options_tts_by_tr = ["display"],
+            options_definitions = ["display"],
+            excel_nrows = 1301,
+            tts_by_year_month_spnv_display_only_spn = "nwtimetracking",
+            tts_by_year_spnv_display_only_spn = "nwtimetracking",
+            tts_by_spn_spv_display_only_spn = "nwtimetracking"
         )
+
+        return setting_bag
     @staticmethod
     def create_excel_data() -> DataFrame:
 
@@ -451,28 +424,6 @@ class ObjectMother():
         expected : str = "\n".join(lines) + "\n"
 
         return (df, expected)
-    @staticmethod
-    def create_service_objects_for_ttsbymonthmd() -> Tuple[ComponentBag, SettingBag, TTMarkdownFactory]:
-
-        component_bag : Mock = Mock()
-        component_bag.logging_function = Mock()
-        component_bag.file_manager.save_content = Mock()
-        component_bag.markdown_helper = MarkdownHelper(formatter = Formatter())
-        component_bag.file_path_manager = FilePathManager()        
-        
-        setting_bag : Mock = Mock()
-        setting_bag.last_update = datetime(2024, 10, 1)
-        setting_bag.tts_by_month_file_name = "TIMETRACKINGBYMONTH.md"
-        setting_bag.working_folder_path = "/home/nwtimetracking/"
-        setting_bag.show_tts_by_month_md = True
-        setting_bag.save_tts_by_month_md = True
-
-        markdown_processor : TTMarkdownFactory = TTMarkdownFactory(
-			component_bag = component_bag, 
-			setting_bag = setting_bag
-			)        
-
-        return (component_bag, setting_bag, markdown_processor) 
 
 # TEST CLASSES
 class ComponentBagTestCase(unittest.TestCase):
@@ -486,8 +437,9 @@ class ComponentBagTestCase(unittest.TestCase):
         # Assert
         self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
         self.assertIsInstance(component_bag.file_manager, FileManager)
+        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
         self.assertIsInstance(component_bag.logging_function, FunctionType)
-        self.assertIsInstance(component_bag.markdown_helper, MarkdownHelper)
+        self.assertIsInstance(component_bag.displayer, Displayer)
 class DefaultPathProviderTestCase(unittest.TestCase):
 
     def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
@@ -536,6 +488,39 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(SupportMethodProvider.are_lists_of_yearly_targets_equal(list1 = expected, list2 = actual))
+    def test_getmostrecentxyears_shouldreturnlastxyears_whenxlessthantotalyears(self):
+
+        # Arrange
+        x : uint = uint(5)
+        expected : list[int] = [2020, 2021, 2022, 2023, 2024]
+        
+        # Act
+        actual : list[int] = YearProvider().get_most_recent_x_years(x)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_getmostrecentxyears_shouldreturnallyears_whenxgreaterthantotalyears(self):
+
+        # Arrange
+        x : uint = uint(15)
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        
+        # Act
+        actual : list[int] = YearProvider().get_most_recent_x_years(x)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_getmostrecentxyears_shouldreturnemptylist_whenxiszero(self):
+
+        # Arrange
+        x : uint = uint(0)
+        expected : list[int] = []
+        
+        # Act
+        actual : list[int] = YearProvider().get_most_recent_x_years(x)
+
+        # Assert
+        self.assertEqual(expected, actual)
 class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
     def test_getallsoftwareprojectnames_shouldreturnexpectedlist_wheninvoked(self):
