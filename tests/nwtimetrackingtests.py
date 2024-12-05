@@ -592,6 +592,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
     def setUp(self):
 
         self.df_helper = TTDataFrameHelper()
+        self.sm_provider = SupportMethodProvider()
     def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
 
         # Arrange
@@ -779,7 +780,131 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+    def test_createeffortstatus_shouldreturnexpectobject_wheneffortiscorrect(self):
 
+        # Arrange
+        idx : int = 1
+        start_time_str : str = "07:00" 
+        end_time_str : str = "08:00"
+        effort_str : str = "01h 00m"
+
+        strp_format : str = "%Y-%m-%d %H:%M"
+
+        start_time_dt : datetime = datetime.strptime(f"1900-01-01 {start_time_str}", strp_format)
+        end_time_dt : datetime = datetime.strptime(f"1900-01-01 {end_time_str}", strp_format)
+        actual_str = effort_str
+        actual_td : timedelta = pd.Timedelta(value = actual_str).to_pytimedelta()
+        expected_str : str = actual_str
+        expected_td : timedelta = actual_td
+        is_correct : bool = True
+        message : str = "The effort is correct."
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = start_time_str,
+            start_time_dt = start_time_dt,
+            end_time_str = end_time_str,
+            end_time_dt = end_time_dt,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = expected_td,
+            expected_str = expected_str,
+            is_correct = is_correct,
+            message = message
+            )
+
+        # Act
+        actual : EffortStatus = self.df_helper.create_effort_status(
+            idx = idx, 
+            start_time_str = start_time_str,
+            end_time_str = end_time_str,
+            effort_str = effort_str
+        )
+
+        # Assert
+        comparison : bool = self.sm_provider.are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison) 
+    def test_createeffortstatus_shouldreturnexpectobject_wheneffortisnotcorrect(self):
+
+        # Arrange
+        idx : int = 1
+        start_time_str : str = "07:00" 
+        end_time_str : str = "08:00"
+        effort_str : str = "02h 00m"
+
+        strp_format : str = "%Y-%m-%d %H:%M"
+
+        start_time_dt : datetime = datetime.strptime(f"1900-01-01 {start_time_str}", strp_format)
+        end_time_dt : datetime = datetime.strptime(f"1900-01-01 {end_time_str}", strp_format)
+        actual_str = effort_str
+        actual_td : timedelta = pd.Timedelta(value = actual_str).to_pytimedelta()
+        expected_str : str = "01h 00m"
+        expected_td : timedelta = pd.Timedelta(value = expected_str).to_pytimedelta()
+        is_correct : bool = False 
+        message : str = _MessageCollection.effort_status_mismatching_effort(
+                            idx = idx, 
+                            start_time_str = start_time_str, 
+                            end_time_str = end_time_str, 
+                            actual_str = actual_str, 
+                            expected_str = expected_str
+                    )
+
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = start_time_str,
+            start_time_dt = start_time_dt,
+            end_time_str = end_time_str,
+            end_time_dt = end_time_dt,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = expected_td,
+            expected_str = expected_str,
+            is_correct = is_correct,
+            message = message
+            )
+
+        # Act
+        actual : EffortStatus = self.df_helper.create_effort_status(
+            idx = idx, 
+            start_time_str = start_time_str, 
+            end_time_str = end_time_str, 
+            effort_str = effort_str
+        )
+
+        # Assert
+        comparison : bool = self.sm_provider.are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison) 
+
+    @parameterized.expand([
+        [1, "5h 30m", timedelta(hours = 5, minutes = 30)],
+        [2, "2h 00m", timedelta(hours = 2, minutes = 00)]
+    ])
+    def test_createeffortstatusfornonevalues_shouldreturnexpectedobject_wheninvoked(
+        self, 
+        idx : int, 
+        effort_str : str, 
+        actual_td : timedelta):
+
+        # Arrange
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = None,
+            start_time_dt = None,
+            end_time_str = None,
+            end_time_dt = None,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = None,
+            expected_str = None,
+            is_correct = True,
+            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+            ) 
+
+        # Act
+        actual : EffortStatus = self.df_helper.create_effort_status_for_none_values(idx = idx, effort_str = effort_str) # type: ignore
+
+        # Assert
+        comparison : bool = self.sm_provider.are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison)
 
 
 # MAIN
