@@ -887,7 +887,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
         tts_by_spn_spv_display_only_spn : Optional[str] = "SPN3"
         working_folder_path : str = "/home/nwtimetracking/"
-        excel_path : str = "/mock/path/"
+        excel_path : str = "/workspaces/nwtimetracking/"
         excel_skiprows : int = 0
         excel_tabname : str = "Sessions"
         years : list[int] = [2020, 2021, 2022]
@@ -1007,22 +1007,6 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_tr_display_head_n_with_tail, tts_by_tr_display_head_n_with_tail)
         self.assertEqual(actual.md_infos, md_infos)
         self.assertEqual(actual.md_last_update, md_last_update)
-
-
-class ComponentBagTestCase(unittest.TestCase):
-
-    def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
-
-        # Arrange
-        # Act
-        component_bag : ComponentBag = ComponentBag()
-
-        # Assert
-        self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
-        self.assertIsInstance(component_bag.file_manager, FileManager)
-        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
-        self.assertIsInstance(component_bag.logging_function, FunctionType)
-        self.assertIsInstance(component_bag.displayer, Displayer)
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1555,6 +1539,86 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(TTCN.EFFORTSTATUS in df.columns)
+class TTDataFrameFactoryTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
+    def test_createttdf_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        excel_path : str = "/workspaces/nwtimetracking/"
+        excel_skiprows : int = 0
+        excel_nrows : int = 100
+        excel_tabname : str = "Sessions"        
+        excel_data_df : DataFrame = ObjectMother().create_excel_data()
+        expected_column_names : list[str] = ObjectMother().create_sessions_df_column_names()
+        expected_dtype_names : list[str] = ObjectMother().create_sessions_df_dtype_names()
+        expected_nan : str = ""
+
+        # Act
+        with patch.object(pd, 'read_excel', return_value = excel_data_df) as mocked_context:
+            actual : DataFrame = self.df_factory.create_tt_df(
+                excel_path = excel_path,
+                excel_skiprows = excel_skiprows,
+                excel_nrows = excel_nrows,
+                excel_tabname = excel_tabname
+            )
+
+        # Assert
+        self.assertEqual(expected_column_names, actual.columns.tolist())
+        self.assertEqual(expected_dtype_names, SupportMethodProvider().get_dtype_names(df = actual))
+        self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
+        self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
+        self.assertEqual(expected_nan, actual[expected_column_names[5]][0])
+    def test_createttsbyyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_year_df()
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_year_df(tt_df = sessions_df, years = years, yearly_targets = yearly_targets)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
+    def test_createttsbyyearmonthtpl_shouldreturnexpectedtuple_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
+        sessions_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().create_tt_by_year_month_df()
+        expected_tpl : Tuple[DataFrame, DataFrame] = (expected_df, expected_df)
+
+        # Act
+        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_year_month_tpl(
+            tt_df = sessions_df, 
+            years = years, 
+            yearly_targets = yearly_targets,
+            display_only_years = years
+        )
+
+        # Assert
+        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
+        assert_frame_equal(expected_tpl[1] , actual_tpl[1])
+
+
+class ComponentBagTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
+
+        # Arrange
+        # Act
+        component_bag : ComponentBag = ComponentBag()
+
+        # Assert
+        self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
+        self.assertIsInstance(component_bag.file_manager, FileManager)
+        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
+        self.assertIsInstance(component_bag.logging_function, FunctionType)
+        self.assertIsInstance(component_bag.displayer, Displayer)
 
 
 # MAIN
