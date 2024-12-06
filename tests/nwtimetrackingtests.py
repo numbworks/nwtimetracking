@@ -654,6 +654,26 @@ class EffortStatusTestCase(unittest.TestCase):
         self.assertIsNone(actual.expected_str)
         self.assertEqual(actual.is_correct, is_correct)
         self.assertEqual(actual.message, message)
+class MDInfoTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+        
+        # Arrange
+        id : TTID = TTID.TTSBYMONTH
+        file_name : str = "TIMETRACKINGBYMONTH.md"
+        paragraph_title : str = "Time Tracking By Month"
+
+        # Act
+        actual : MDInfo = MDInfo(id = id, file_name = file_name, paragraph_title = paragraph_title)
+
+        # Assert
+        self.assertEqual(actual.id, id)
+        self.assertEqual(actual.file_name, file_name)
+        self.assertEqual(actual.paragraph_title, paragraph_title)
+        self.assertIsInstance(actual.id, TTID)
+        self.assertIsInstance(actual.file_name, str)
+        self.assertIsInstance(actual.paragraph_title, str)
+
 
 
 class ComponentBagTestCase(unittest.TestCase):
