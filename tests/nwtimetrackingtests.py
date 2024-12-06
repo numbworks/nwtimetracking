@@ -366,7 +366,23 @@ class ObjectMother():
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
             
         return (df1, df2)
-    
+    @staticmethod
+    def get_tts_by_tr_df() -> DataFrame:
+
+        '''
+                TimeRangeId	Occurrences
+            0	08:00-08:30	1
+            1	08:15-12:45	1
+            2	08:45-12:15	1
+            3	10:15-13:00	1
+            4	11:00-12:30	1
+            ...        
+        '''
+
+        return pd.DataFrame({
+                'TimeRangeId': np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
+                'Occurrences': np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
+            }, index=pd.RangeIndex(start=0, stop=21, step=1))    
     
     @staticmethod
     def create_tt_by_spn_df() -> DataFrame:
@@ -388,9 +404,8 @@ class ObjectMother():
                 'TE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
                 '%_TE': np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-
     @staticmethod
-    def create_tt_by_year_hashtag_df() -> DataFrame:
+    def get_tts_by_hashtag_year_df() -> DataFrame:
 
         '''
                 Year	Hashtag	        Effort
@@ -406,7 +421,7 @@ class ObjectMother():
                 'Effort': np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
-    def create_tt_by_hashtag_df() -> DataFrame:
+    def get_tts_by_hashtag_df() -> DataFrame:
 
         '''
                 Hashtag	        Effort	Effort%
@@ -435,23 +450,6 @@ class ObjectMother():
                 'Month': np.array(['1', '2', '', '', '', '', '', '', '', '', '', ''], dtype=object),
                 '2024': np.array(['00h 00m', '36h 00m', '', '', '', '', '', '', '', '', '', ''], dtype=object)
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
-    @staticmethod
-    def create_time_ranges_df() -> DataFrame:
-
-        '''
-                TimeRangeId	Occurrences
-            0	08:00-08:30	1
-            1	08:15-12:45	1
-            2	08:45-12:15	1
-            3	10:15-13:00	1
-            4	11:00-12:30	1
-            ...        
-        '''
-
-        return pd.DataFrame({
-                'TimeRangeId': np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
-                'Occurrences': np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
-            }, index=pd.RangeIndex(start=0, stop=21, step=1))
 
     @staticmethod
     def create_dtos_for_ttsbymonthmd() -> Tuple[DataFrame, str]:
@@ -1713,7 +1711,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-    def test_createttsbymonthtpl_shouldreturnexpecteddataframe_wheninvoked(self):
+    def test_createttsbymonthtpl_shouldreturnexpectedtuple_wheninvoked(self):
 
         # Arrange
         years : list[int] = [2024]
@@ -1731,8 +1729,50 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Assert
         assert_frame_equal(expected_tpl[0] , actual_tpl[0])
         assert_frame_equal(expected_tpl[1] , actual_tpl[1])  
+    def test_createttsbytrdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
+        # Arrange
+        unknown_id : str = "Unknown"
+        remove_unknown_occurrences : bool = True
+        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().get_tts_by_tr_df()
+        expected_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
+        expected_df.reset_index(drop = True, inplace = True)
 
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_tr_df(
+            tt_df = tt_df, 
+            unknown_id = unknown_id, 
+            remove_unknown_occurrences = remove_unknown_occurrences
+        )
+        actual_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
+        actual_df.reset_index(drop = True, inplace = True)
+
+        # Assert
+        assert_frame_equal(expected_df, actual_df)  
+    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_year_df()
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(tt_df = tt_df, years = years)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)  
+    def test_getttbyhashtag_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_df()
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
 
 class ComponentBagTestCase(unittest.TestCase):
 

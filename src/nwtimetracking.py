@@ -1531,7 +1531,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.format_timedelta(td = x, add_plus_sign = False))   
 
         return tts_df
-    def create_tts_by_year_hashtag_df(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
 
         '''
                 Year	Hashtag	        Effort
@@ -1780,11 +1780,11 @@ class TTAdapter():
         )
 
         return tts_by_spn_spv_df
-    def create_tts_by_year_hashtag_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
-        tts_by_year_hashtag_df : DataFrame = self.__df_factory.create_tts_by_year_hashtag_df(
+        tts_by_year_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_year_df(
             tt_df = tt_df,
             years = setting_bag.years
         )
@@ -1835,7 +1835,7 @@ class TTAdapter():
         tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spn_df : DataFrame = self.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spn_spv_df : DataFrame = self.create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_year_hashtag_df : DataFrame = self.create_tts_by_year_hashtag_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_hashtag_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
