@@ -557,6 +557,104 @@ class YearlyTargetTestCase(unittest.TestCase):
         self.assertEqual(actual.hours, hours)
         self.assertIsInstance(actual.year, int)
         self.assertIsInstance(actual.hours, timedelta)
+class EffortStatusTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        idx : int = 1
+        start_time_str : Optional[str] = "07:00"
+        start_time_dt : Optional[datetime] = datetime.strptime("07:00", "%H:%M")
+        end_time_str : Optional[str] = "08:00"
+        end_time_dt : Optional[datetime] = datetime.strptime("08:00", "%H:%M")
+        actual_str : str = "01h 00m"
+        actual_td : timedelta = timedelta(hours = 1)
+        expected_td : Optional[timedelta] = timedelta(hours = 1)
+        expected_str : Optional[str] = "01h 00m"
+        is_correct : bool = True
+        message : str = "Effort matches expected."
+
+        # Act
+        actual : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = start_time_str,
+            start_time_dt = start_time_dt,
+            end_time_str = end_time_str,
+            end_time_dt = end_time_dt,
+            actual_str = actual_str,
+            actual_td = actual_td,
+            expected_td = expected_td,
+            expected_str = expected_str,
+            is_correct = is_correct,
+            message = message
+        )
+
+        # Assert
+        self.assertEqual(actual.idx, idx)
+        self.assertEqual(actual.start_time_str, start_time_str)
+        self.assertEqual(actual.start_time_dt, start_time_dt)
+        self.assertEqual(actual.end_time_str, end_time_str)
+        self.assertEqual(actual.end_time_dt, end_time_dt)
+        self.assertEqual(actual.actual_str, actual_str)
+        self.assertEqual(actual.actual_td, actual_td)
+        self.assertEqual(actual.expected_td, expected_td)
+        self.assertEqual(actual.expected_str, expected_str)
+        self.assertEqual(actual.is_correct, is_correct)
+        self.assertEqual(actual.message, message)
+        self.assertIsInstance(actual.idx, int)
+        self.assertIsInstance(actual.start_time_str, (str, type(None)))
+        self.assertIsInstance(actual.start_time_dt, (datetime, type(None)))
+        self.assertIsInstance(actual.end_time_str, (str, type(None)))
+        self.assertIsInstance(actual.end_time_dt, (datetime, type(None)))
+        self.assertIsInstance(actual.actual_str, str)
+        self.assertIsInstance(actual.actual_td, timedelta)
+        self.assertIsInstance(actual.expected_td, (timedelta, type(None)))
+        self.assertIsInstance(actual.expected_str, (str, type(None)))
+        self.assertIsInstance(actual.is_correct, bool)
+        self.assertIsInstance(actual.message, str)
+    def test_init_shouldinitializeobjectwithexpectedproperties_whenalloptionalsarenone(self) -> None:
+
+        # Arrange
+        idx : int = 1
+        start_time_str : Optional[str] = None
+        start_time_dt : Optional[datetime] = None
+        end_time_str : Optional[str] = None
+        end_time_dt : Optional[datetime] = None
+        actual_str : str = "01h 00m"
+        actual_td : timedelta = timedelta(hours = 1)
+        expected_td : Optional[timedelta] = None
+        expected_str : Optional[str] = None
+        is_correct : bool = True
+        message : str = "Effort recorded without expectation."
+
+        # Act
+        actual : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = start_time_str,
+            start_time_dt = start_time_dt,
+            end_time_str = end_time_str,
+            end_time_dt = end_time_dt,
+            actual_str = actual_str,
+            actual_td = actual_td,
+            expected_td = expected_td,
+            expected_str = expected_str,
+            is_correct = is_correct,
+            message = message
+        )
+
+        # Assert
+        self.assertEqual(actual.idx, idx)
+        self.assertIsNone(actual.start_time_str)
+        self.assertIsNone(actual.start_time_dt)
+        self.assertIsNone(actual.end_time_str)
+        self.assertIsNone(actual.end_time_dt)
+        self.assertEqual(actual.actual_str, actual_str)
+        self.assertEqual(actual.actual_td, actual_td)
+        self.assertIsNone(actual.expected_td)
+        self.assertIsNone(actual.expected_str)
+        self.assertEqual(actual.is_correct, is_correct)
+        self.assertEqual(actual.message, message)
+
 
 class ComponentBagTestCase(unittest.TestCase):
 
