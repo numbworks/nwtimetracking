@@ -285,7 +285,7 @@ class ObjectMother():
 
         return (df1, df2)
     @staticmethod
-    def create_tt_by_year_spnv_df() -> DataFrame:
+    def get_tts_by_year_spnv_df() -> Tuple[DataFrame, DataFrame]:
 
         '''
                 Year	ProjectName	                ProjectVersion	Effort	DYE	    %_DYE	TYE	        %_TYE
@@ -293,9 +293,12 @@ class ObjectMother():
             1	2024	NW.Shared.Serialization	    1.0.0	        04h 15m	08h 45m	48.57	36h 00m	    11.81
             2	2024	NW.UnivariateForecasting	4.2.0	        00h 45m	08h 45m	8.57	36h 00m	    2.08
             3	2024	nwreadinglistmanager	    2.1.0	        02h 00m	08h 45m	22.86	36h 00m	    5.56
+
+                Year	ProjectName	                ProjectVersion	Effort	DYE	    %_DYE	TYE	        %_TYE
+            0	2024	NW.NGramTextClassification	4.2.0	        01h 15m	08h 45m	14.29	36h 00m	    3.47
         '''
 
-        return pd.DataFrame({
+        df1 : DataFrame = pd.DataFrame({
                 'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
                 'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
                 'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
@@ -305,6 +308,19 @@ class ObjectMother():
                 'TYE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
                 '%_TYE': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
+
+        df2 : DataFrame = pd.DataFrame({
+                'Year': np.array([2024], dtype=int64),
+                'ProjectName': np.array(['NW.NGramTextClassification'], dtype=object),
+                'ProjectVersion': np.array(['4.2.0'], dtype=object),
+                'Effort': np.array(['01h 15m'], dtype=object),
+                'DYE': np.array(['08h 45m'], dtype=object),
+                '%_DYE': np.array([14.29], dtype= np.float64),
+                'TYE': np.array(['36h 00m'], dtype=object),
+                '%_TYE': np.array([3.47], dtype= np.float64),
+            }, index=pd.RangeIndex(start=0, stop=1, step=1))
+
+        return (df1, df2)
     @staticmethod
     def create_tt_by_spn_df() -> DataFrame:
 
@@ -1643,6 +1659,26 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Assert
         assert_frame_equal(expected_tpl[0] , actual_tpl[0])
         assert_frame_equal(expected_tpl[1] , actual_tpl[1])
+    def test_createttsbyyearspnvtpl_shouldreturnexpectedtuple_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_spnv_df()
+
+        # Act
+        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_year_spnv_tpl(
+            tt_df = tt_df, 
+            years = years, 
+            software_project_names = software_project_names,
+            software_project_name = software_project_names[0]
+            )
+
+        # Assert
+        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
+        assert_frame_equal(expected_tpl[1] , actual_tpl[1])    
+
 
 class ComponentBagTestCase(unittest.TestCase):
 
