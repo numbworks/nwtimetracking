@@ -541,6 +541,22 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+class YearlyTargetTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+        
+        # Arrange
+        year : int = 2024
+        hours : timedelta = timedelta(hours = 1200)
+
+        # Act
+        actual : YearlyTarget = YearlyTarget(year = year, hours = hours)
+
+        # Assert
+        self.assertEqual(actual.year, year)
+        self.assertEqual(actual.hours, hours)
+        self.assertIsInstance(actual.year, int)
+        self.assertIsInstance(actual.hours, timedelta)
 
 class ComponentBagTestCase(unittest.TestCase):
 
