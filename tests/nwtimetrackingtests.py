@@ -93,7 +93,7 @@ class ObjectMother():
     '''Collects all the DTOs required by the unit tests.'''
 
     @staticmethod
-    def create_setting_bag() -> SettingBag:
+    def get_setting_bag() -> SettingBag:
 
         setting_bag : SettingBag = SettingBag(
             options_tt = ["display"],
@@ -117,7 +117,7 @@ class ObjectMother():
 
         return setting_bag
     @staticmethod
-    def create_excel_data() -> DataFrame:
+    def get_excel_data() -> DataFrame:
 
         excel_data_dict : dict = {
             "Date": "2015-10-31",
@@ -135,7 +135,7 @@ class ObjectMother():
 
         return excel_data_df
     @staticmethod
-    def create_sessions_df_column_names() -> list[str]:
+    def get_tt_df_column_names() -> list[str]:
 
         column_names : list[str] = []
         column_names.append("Date")                 # [0], date
@@ -151,7 +151,7 @@ class ObjectMother():
 
         return column_names
     @staticmethod
-    def create_sessions_df_dtype_names() -> list[str]:
+    def get_tt_df_dtype_names() -> list[str]:
 
         '''Note: the first one should be "date", but it's rendered by Pandas as "object".'''
 
@@ -170,7 +170,7 @@ class ObjectMother():
 
         return expected_dtype_names
     @staticmethod
-    def create_yearly_targets() -> list[YearlyTarget]:
+    def get_yearly_targets() -> list[YearlyTarget]:
 
         yearly_targets = [
             YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
@@ -186,8 +186,9 @@ class ObjectMother():
         ]
 
         return yearly_targets
+    
     @staticmethod
-    def create_sessions_df() -> DataFrame:
+    def get_tt_df() -> DataFrame:
 
         '''
                 Date	    StartTime	EndTime	Effort	Hashtag	        Descriptor	                    IsSoftwareProject	IsReleaseDay	Year	Month
@@ -209,7 +210,6 @@ class ObjectMother():
                 'Year': np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int64),
                 'Month': np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int64),
             }, index=pd.RangeIndex(start=980, stop=1001, step=1))
-
     @staticmethod
     def get_tts_by_year_df() -> DataFrame:
 
@@ -383,9 +383,8 @@ class ObjectMother():
                 'TimeRangeId': np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
                 'Occurrences': np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
             }, index=pd.RangeIndex(start=0, stop=21, step=1))    
-    
     @staticmethod
-    def create_tt_by_spn_df() -> DataFrame:
+    def get_tts_by_spn_df() -> DataFrame:
 
         '''
                 Hashtag	ProjectName	                Effort	DE	    %_DE	TE	    %_TE
@@ -436,23 +435,9 @@ class ObjectMother():
                 'Effort': np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
                 'Effort%': np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-    @staticmethod
-    def create_tts_by_month_upd_df() -> DataFrame:
-
-        '''
-				Month	2024
-			0	1		00h 00m
-			1	2		36h 00m
-			...
-        '''
-
-        return pd.DataFrame({
-                'Month': np.array(['1', '2', '', '', '', '', '', '', '', '', '', ''], dtype=object),
-                '2024': np.array(['00h 00m', '36h 00m', '', '', '', '', '', '', '', '', '', ''], dtype=object)
-            }, index=pd.RangeIndex(start=0, stop=12, step=1))
 
     @staticmethod
-    def create_dtos_for_ttsbymonthmd() -> Tuple[DataFrame, str]:
+    def get_dtos_for_ttsbymonthmd() -> Tuple[DataFrame, str]:
 
         data : list = [
             [1, "00h 00m", "↑", "18h 00m", "↑", "88h 30m", "↓", "80h 15m", "↓", "60h 00m", "↓", "29h 15m", "↑", "53h 00m", "↓", "00h 00m", "↑", "06h 00m", "↑", "45h 45m"]
@@ -1205,7 +1190,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
     def test_getyearlytarget_shouldreturnexpectedhours_whenyearinlist(self):
 
         # Arrange
-        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
+        yearly_targets : list[YearlyTarget] = ObjectMother.get_yearly_targets()
         year : int = 2024
         expected_hours : timedelta = timedelta(hours = 250)
 
@@ -1217,7 +1202,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
     def test_getyearlytarget_shouldreturnnone_whenyearnotinlist(self):
 
         # Arrange
-        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
+        yearly_targets : list[YearlyTarget] = ObjectMother.get_yearly_targets()
         year : int = 2010
 
         # Act
@@ -1604,9 +1589,9 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         excel_skiprows : int = 0
         excel_nrows : int = 100
         excel_tabname : str = "Sessions"        
-        excel_data_df : DataFrame = ObjectMother().create_excel_data()
-        expected_column_names : list[str] = ObjectMother().create_sessions_df_column_names()
-        expected_dtype_names : list[str] = ObjectMother().create_sessions_df_dtype_names()
+        excel_data_df : DataFrame = ObjectMother().get_excel_data()
+        expected_column_names : list[str] = ObjectMother().get_tt_df_column_names()
+        expected_dtype_names : list[str] = ObjectMother().get_tt_df_dtype_names()
         expected_nan : str = ""
 
         # Act
@@ -1629,7 +1614,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Arrange
         years : list[int] = [2024]
         yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_df : DataFrame = ObjectMother().get_tts_by_year_df()
 
         # Act
@@ -1642,7 +1627,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Arrange
         years : list[int] = [2024]
         yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_month_tpl()
 
         # Act
@@ -1661,7 +1646,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Arrange
         years : list[int] = [2024]
         software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_month_spnv_tpl()
 
         # Act
@@ -1680,7 +1665,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Arrange
         years : list[int] = [2024]
         software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_spnv_df()
 
         # Act
@@ -1699,7 +1684,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Arrange
         years : list[int] = [2024]
         software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_df : DataFrame = ObjectMother().get_tts_by_spn_spv_df()
 
         # Act
@@ -1716,7 +1701,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Arrange
         years : list[int] = [2024]
         now : datetime = datetime(2024, 11, 30) 
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_month_tpl()
 
         # Act
@@ -1734,7 +1719,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Arrange
         unknown_id : str = "Unknown"
         remove_unknown_occurrences : bool = True
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_df : DataFrame = ObjectMother().get_tts_by_tr_df()
         expected_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
         expected_df.reset_index(drop = True, inplace = True)
@@ -1754,7 +1739,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Arrange
         years : list[int] = [2024]
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_year_df()
 
         # Act
@@ -1762,10 +1747,10 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
-    def test_getttbyhashtag_shouldreturnexpecteddataframe_wheninvoked(self):
+    def test_createttsbyhashtagdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_df()
 
         # Act
@@ -1773,6 +1758,30 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
+
+    @parameterized.expand([
+        [True],
+        [False]
+    ])
+    def test_createttsbyspndf_shouldreturnexpecteddataframe_wheninvoked(self, remove_untagged : bool):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+        expected_df : DataFrame = ObjectMother().get_tts_by_spn_df()
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_spn_df(
+            tt_df = tt_df, 
+            years = years, 
+            software_project_names = software_project_names, 
+            remove_untagged = remove_untagged
+        )
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df) 
+
 
 class ComponentBagTestCase(unittest.TestCase):
 
