@@ -1093,6 +1093,31 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected, actual)
 
+    def test_createeffortstatusandcasttoany_shouldwork_withdfapply(self):
+
+        # Arrange
+        data : list[dict] = [
+            {"idx": 1, "start_time_str": "07:00", "end_time_str": "08:00", "effort_str": "01h 00m"}
+        ]
+        df : DataFrame = pd.DataFrame(data)
+
+        # Act
+        try:
+
+            df[TTCN.EFFORTSTATUS] = df.apply(
+                lambda x : self.df_helper.create_effort_status_and_cast_to_any(
+                    idx = x["idx"],
+                    start_time_str = x["start_time_str"],
+                    end_time_str = x["end_time_str"],
+                    effort_str = x["effort_str"]
+            ), axis=1)
+
+        except Exception as e:
+            self.fail(str(e))
+
+        # Assert
+        self.assertTrue(TTCN.EFFORTSTATUS in df.columns)
+
 
 # MAIN
 if __name__ == "__main__":
