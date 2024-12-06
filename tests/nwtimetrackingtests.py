@@ -16,7 +16,7 @@ from unittest.mock import Mock, call, patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import ComponentBag, MDInfo, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
+from nwtimetracking import TTCN, ComponentBag, MDInfo, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
 from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory, TTID, MDInfoProvider, TTDataFrameHelper
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
 
@@ -1057,7 +1057,41 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected, actual)
 
+    @parameterized.expand([
+        [timedelta(minutes=30), timedelta(hours=1), "↑"],
+        [timedelta(hours=1), timedelta(minutes=30), "↓"],
+        [timedelta(minutes=30), timedelta(minutes=30), "="],
+    ])
+    def test_gettrendbytimedelta_shouldreturnexpectedtrend_wheninvoked(
+        self, 
+        td_1 : timedelta, 
+        td_2 : timedelta, 
+        expected : str
+    ):
+        
+        # Arrange
+        # Act
+        actual : str = self.df_helper.get_trend_by_timedelta(td_1 = td_1, td_2 = td_2)
 
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ["↕1", TTCN.TREND],
+        ["2016", "2016"],
+    ])
+    def test_tryconsolidatetrendcolumnname_shouldreturnexpectedcolumnname_wheninvoked(
+        self, 
+        column_name: str, 
+        expected: str
+    ):
+
+        # Arrange
+        # Act
+        actual : str = self.df_helper.try_consolidate_trend_column_name(column_name)
+
+        # Assert
+        self.assertEqual(expected, actual)
 
 
 # MAIN
