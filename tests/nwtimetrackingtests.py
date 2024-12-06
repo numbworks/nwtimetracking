@@ -322,6 +322,53 @@ class ObjectMother():
 
         return (df1, df2)
     @staticmethod
+    def get_tts_by_spn_spv_df() -> DataFrame:
+
+        '''
+                ProjectName	                ProjectVersion	Effort
+            0	NW.NGramTextClassification	4.2.0	        01h 15m
+            1	NW.Shared.Serialization	    1.0.0	        04h 15m
+            2	NW.UnivariateForecasting	4.2.0	        00h 45m
+            3	nwreadinglistmanager	    2.1.0	        02h 00m
+        '''
+
+        return pd.DataFrame({
+                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))    
+    @staticmethod
+    def get_tts_by_month_tpl() -> Tuple[DataFrame, DataFrame]:
+
+        '''
+				Month	2024
+			0	1		00h 00m
+			1	2		36h 00m
+			...
+            10	11		00h 00m
+            11  12      00h 00m
+
+				Month	2024
+            ...
+			10	11		00h 00m
+
+            now = 2024-11-30     
+        '''
+
+        df1 : DataFrame = pd.DataFrame({
+                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
+                '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)				
+            }, index=pd.RangeIndex(start=0, stop=12, step=1))
+
+        df2 : DataFrame = pd.DataFrame({
+                'Month': np.array(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', ''], dtype=object),
+                '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', ''], dtype=object)				
+            }, index=pd.RangeIndex(start=0, stop=12, step=1))
+            
+        return (df1, df2)
+    
+    
+    @staticmethod
     def create_tt_by_spn_df() -> DataFrame:
 
         '''
@@ -341,22 +388,7 @@ class ObjectMother():
                 'TE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
                 '%_TE': np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-    @staticmethod
-    def create_tt_by_spn_spv_df() -> DataFrame:
 
-        '''
-                ProjectName	                ProjectVersion	Effort
-            0	NW.NGramTextClassification	4.2.0	        01h 15m
-            1	NW.Shared.Serialization	    1.0.0	        04h 15m
-            2	NW.UnivariateForecasting	4.2.0	        00h 45m
-            3	nwreadinglistmanager	    2.1.0	        02h 00m
-        '''
-
-        return pd.DataFrame({
-                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
-            }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def create_tt_by_year_hashtag_df() -> DataFrame:
 
@@ -389,20 +421,6 @@ class ObjectMother():
                 'Effort': np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
                 'Effort%': np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-    @staticmethod
-    def create_tts_by_month_df() -> DataFrame:
-
-        '''
-				Month	2024
-			0	1		00h 00m
-			1	2		36h 00m
-			...
-        '''
-
-        return pd.DataFrame({
-                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
-                '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)				
-            }, index=pd.RangeIndex(start=0, stop=12, step=1))
     @staticmethod
     def create_tts_by_month_upd_df() -> DataFrame:
 
@@ -1678,6 +1696,42 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         # Assert
         assert_frame_equal(expected_tpl[0] , actual_tpl[0])
         assert_frame_equal(expected_tpl[1] , actual_tpl[1])    
+    def test_createttsbyspnspvdf_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_df : DataFrame = ObjectMother().get_tts_by_spn_spv_df()
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_spn_spv_df(
+            tt_df = tt_df, 
+            years = years, 
+            software_project_names = software_project_names
+        )
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
+    def test_createttsbymonthtpl_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        now : datetime = datetime(2024, 11, 30) 
+        tt_df : DataFrame = ObjectMother().create_sessions_df()
+        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_month_tpl()
+
+        # Act
+        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_month_tpl(
+            tt_df = tt_df, 
+            years = years,
+            now = now
+        )
+
+        # Assert
+        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
+        assert_frame_equal(expected_tpl[1] , actual_tpl[1])  
+
 
 
 class ComponentBagTestCase(unittest.TestCase):
