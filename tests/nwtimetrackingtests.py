@@ -16,7 +16,7 @@ from unittest.mock import Mock, call, patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import TTCN, ComponentBag, MDInfo, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
+from nwtimetracking import TTCN, ComponentBag, MDInfo, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, TTSummary, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
 from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory, TTID, MDInfoProvider, TTDataFrameHelper
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
 
@@ -673,7 +673,49 @@ class MDInfoTestCase(unittest.TestCase):
         self.assertIsInstance(actual.id, TTID)
         self.assertIsInstance(actual.file_name, str)
         self.assertIsInstance(actual.paragraph_title, str)
+class TTSummaryTestCase(unittest.TestCase):
+    
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+        
+        # Arrange
+        empty_df : DataFrame = DataFrame()
+        empty_tuple : Tuple[DataFrame, DataFrame] = (empty_df, empty_df)
+        markdown : str = ""
 
+        # Act
+        actual  =  TTSummary(
+            tt_df = empty_df,
+            tts_by_month_tpl = empty_tuple,
+            tts_by_year_df = empty_df,
+            tts_by_year_month_tpl = empty_tuple,
+            tts_by_year_month_spnv_tpl = empty_tuple,
+            tts_by_year_spnv_tpl = empty_tuple,
+            tts_by_spn_df = empty_df,
+            tts_by_spn_spv_df = empty_df,
+            tts_by_hashtag_df = empty_df,
+            tts_by_hashtag_year_df = empty_df,
+            tts_by_efs_tpl = empty_tuple,
+            tts_by_tr_df = empty_df,
+            definitions_df = empty_df,
+            tts_by_month_md = markdown,
+        )
+
+        # Assert
+        self.assertEqual(actual.tt_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_month_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_year_month_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_year_month_spnv_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_year_spnv_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_spn_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_spn_spv_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_hashtag_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_hashtag_year_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_efs_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_tr_df.shape, empty_df.shape)
+        self.assertEqual(actual.definitions_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_month_md, markdown)
+        self.assertIsInstance(actual.tts_by_month_md, str)
 
 
 class ComponentBagTestCase(unittest.TestCase):
