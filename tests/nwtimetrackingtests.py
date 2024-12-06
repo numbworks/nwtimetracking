@@ -425,6 +425,123 @@ class ObjectMother():
         return (df, expected)
 
 # TEST CLASSES
+class MessageCollectionTestCase(unittest.TestCase):
+
+    def test_effortstatusmismatchingeffort_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        idx : int = 4
+        start_time_str : str = "20:00"
+        end_time_str : str = "00:00"
+        actual_str : str = "3h 00m"
+        expected_str : str = "4h 00m"
+        
+        expected_message : str = (
+            "The provided row contains a mismatching effort "
+            "(idx: '4', start_time: '20:00', end_time: '00:00', actual_effort: '3h 00m', expected_effort: '4h 00m')."
+        )
+
+        # Act
+        actual_message : str = _MessageCollection.effort_status_mismatching_effort(
+            idx = idx, 
+            start_time_str = start_time_str, 
+            end_time_str = end_time_str,
+            actual_str = actual_str,
+            expected_str = expected_str
+        )
+
+        # Assert
+        self.assertEqual(expected_message, actual_message)
+    def test_effortstatusnotpossibletocreate_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        idx : int = 770
+        start_time_str : str = "22:00"
+        end_time_str : str = "00:00"
+        effort_str : str = "2h 00m"
+        
+        expected_message : str = (
+            "It has not been possible to create an EffortStatus for the provided parameters "
+            "(idx: '770', start_time_str: '22:00', end_time_str: '00:00', effort_str: '2h 00m')."
+        )
+
+        # Act
+        actual_message : str = _MessageCollection.effort_status_not_possible_to_create(
+            idx = idx, 
+            start_time_str = start_time_str, 
+            end_time_str = end_time_str, 
+            effort_str = effort_str
+        )
+
+        # Assert
+        self.assertEqual(expected_message, actual_message)
+    def test_effortstatusnotamongexpectedtimevalues_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        time : str = "25:00"
+        expected_message : str = "The provided time ('25:00') is not among the expected time values."
+
+        # Act
+        actual_message : str = _MessageCollection.effort_status_not_among_expected_time_values(time = time)
+
+        # Assert
+        self.assertEqual(expected_message, actual_message)
+    def test_starttimeendtimeareempty_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        expected : str = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+
+        # Act
+        actual : str = _MessageCollection.starttime_endtime_are_empty()
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_effortiscorrect_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        expected : str = "The effort is correct."
+
+        # Act
+        actual : str = _MessageCollection.effort_is_correct()
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_nomdinfofound_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        id : TTID = TTID.TTSBYMONTH
+        expected : str = "No MDInfo object found for id='tts_by_month'."
+
+        # Act
+        actual : str = _MessageCollection.no_mdinfo_found(id = id)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_pleaseruninitializefirst_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        expected : str = "Please run the 'initialize' method first."
+
+        # Act
+        actual : str = _MessageCollection.please_run_initialize_first()
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_thiscontentsuccessfullysavedas_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        id : TTID = TTID.TTSBYMONTH
+        file_path : str = "/path/to/file.csv"
+        expected : str = (
+            "This content (id: 'tts_by_month') has been successfully saved as '/path/to/file.csv'."
+        )
+
+        # Act
+        actual : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
