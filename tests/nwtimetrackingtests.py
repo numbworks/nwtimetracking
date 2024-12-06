@@ -10,7 +10,7 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
-from typing import Optional, Tuple, cast
+from typing import Literal, Optional, Tuple, cast
 from unittest.mock import Mock, call, patch
 
 # LOCAL MODULES
@@ -716,22 +716,6 @@ class TTSummaryTestCase(unittest.TestCase):
         self.assertEqual(actual.definitions_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_month_md, markdown)
         self.assertIsInstance(actual.tts_by_month_md, str)
-
-
-class ComponentBagTestCase(unittest.TestCase):
-
-    def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
-
-        # Arrange
-        # Act
-        component_bag : ComponentBag = ComponentBag()
-
-        # Assert
-        self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
-        self.assertIsInstance(component_bag.file_manager, FileManager)
-        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
-        self.assertIsInstance(component_bag.logging_function, FunctionType)
-        self.assertIsInstance(component_bag.displayer, Displayer)
 class DefaultPathProviderTestCase(unittest.TestCase):
 
     def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
@@ -880,6 +864,165 @@ class MDInfoProviderTestCase(unittest.TestCase):
         self.assertEqual(expected[0].id, actual[0].id)
         self.assertEqual(expected[0].file_name, actual[0].file_name)
         self.assertEqual(expected[0].paragraph_title, actual[0].paragraph_title)
+class SettingBagTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        options_tt : list[Literal["display"]] = ["display"]
+        options_tts_by_month : list[Literal["display", "save"]] = ["display", "save"]
+        options_tts_by_year : list[Literal["display"]] = ["display"]
+        options_tts_by_year_month : list[Literal["display"]] = ["display"]
+        options_tts_by_year_month_spnv : list[Literal["display"]] = ["display"]
+        options_tts_by_year_spnv : list[Literal["display"]] = ["display"]
+        options_tts_by_spn : list[Literal["display", "log"]] = ["display", "log"]
+        options_tts_by_spn_spv : list[Literal["display", "log"]] = ["display", "log"]
+        options_tts_by_hashtag : list[Literal["display"]] = ["display"]
+        options_tts_by_hashtag_year : list[Literal["display"]] = ["display"]
+        options_tts_by_efs : list[Literal["display"]] = ["display"]
+        options_tts_by_tr : list[Literal["display"]] = ["display"]
+        options_definitions : list[Literal["display"]] = ["display"]
+        excel_nrows : int = 100
+        tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
+        tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
+        tts_by_spn_spv_display_only_spn : Optional[str] = "SPN3"
+        working_folder_path : str = "/home/nwtimetracking/"
+        excel_path : str = "/mock/path/"
+        excel_skiprows : int = 0
+        excel_tabname : str = "Sessions"
+        years : list[int] = [2020, 2021, 2022]
+        yearly_targets : list = []
+        now : datetime = datetime.now()
+        software_project_names : list[str] = ["ProjectA", "ProjectB"]
+        software_project_names_by_spv : list[str] = ["ProjectC"]
+        tt_head_n : uint = uint(5)
+        tt_display_head_n_with_tail : bool = True
+        tt_hide_index : bool = True
+        tts_by_year_month_display_only_years : Optional[list[int]] = [2022]
+        tts_by_year_month_spnv_formatters : dict[str, str] = {"%_DME" : "{:.2f}", "%_TME" : "{:.2f}"}
+        tts_by_year_spnv_formatters : dict[str, str] = {"%_DYE" : "{:.2f}", "%_TYE" : "{:.2f}"}
+        tts_by_spn_formatters : dict[str, str] = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
+        tts_by_spn_remove_untagged : bool = True
+        tts_by_hashtag_formatters : dict[str, str] = {"Effort%" : "{:.2f}"}
+        tts_by_efs_is_correct : bool = False
+        tts_by_efs_n : uint = uint(25)
+        tts_by_tr_unknown_id : str = "Unknown"
+        tts_by_tr_remove_unknown_occurrences : bool = True
+        tts_by_tr_filter_by_top_n : uint = uint(5)
+        tts_by_tr_head_n : uint = uint(10)
+        tts_by_tr_display_head_n_with_tail : bool = False
+        md_infos : list = []
+        md_last_update : datetime = datetime.now()
+
+		# Act
+        actual : SettingBag = SettingBag(
+            options_tt = options_tt,
+            options_tts_by_month = options_tts_by_month,
+            options_tts_by_year = options_tts_by_year,
+            options_tts_by_year_month = options_tts_by_year_month,
+            options_tts_by_year_month_spnv = options_tts_by_year_month_spnv,
+            options_tts_by_year_spnv = options_tts_by_year_spnv,
+            options_tts_by_spn = options_tts_by_spn,
+            options_tts_by_spn_spv = options_tts_by_spn_spv,
+            options_tts_by_hashtag = options_tts_by_hashtag,
+            options_tts_by_hashtag_year = options_tts_by_hashtag_year,
+            options_tts_by_efs = options_tts_by_efs,
+            options_tts_by_tr = options_tts_by_tr,
+            options_definitions = options_definitions,
+            excel_nrows = excel_nrows,
+            tts_by_year_month_spnv_display_only_spn = tts_by_year_month_spnv_display_only_spn,
+            tts_by_year_spnv_display_only_spn = tts_by_year_spnv_display_only_spn,
+            tts_by_spn_spv_display_only_spn = tts_by_spn_spv_display_only_spn,
+            working_folder_path = working_folder_path,
+            excel_path = excel_path,
+            excel_skiprows = excel_skiprows,
+            excel_tabname = excel_tabname,
+            years = years,
+            yearly_targets = yearly_targets,
+            now = now,
+            software_project_names = software_project_names,
+            software_project_names_by_spv = software_project_names_by_spv,
+            tt_head_n = tt_head_n,
+            tt_display_head_n_with_tail = tt_display_head_n_with_tail,
+            tt_hide_index = tt_hide_index,
+            tts_by_year_month_display_only_years = tts_by_year_month_display_only_years,
+            tts_by_year_month_spnv_formatters = tts_by_year_month_spnv_formatters,
+            tts_by_year_spnv_formatters = tts_by_year_spnv_formatters,
+            tts_by_spn_formatters = tts_by_spn_formatters,
+            tts_by_spn_remove_untagged = tts_by_spn_remove_untagged,
+            tts_by_hashtag_formatters = tts_by_hashtag_formatters,
+            tts_by_efs_is_correct = tts_by_efs_is_correct,
+            tts_by_efs_n = tts_by_efs_n,
+            tts_by_tr_unknown_id = tts_by_tr_unknown_id,
+            tts_by_tr_remove_unknown_occurrences = tts_by_tr_remove_unknown_occurrences,
+            tts_by_tr_filter_by_top_n = tts_by_tr_filter_by_top_n,
+            tts_by_tr_head_n = tts_by_tr_head_n,
+            tts_by_tr_display_head_n_with_tail = tts_by_tr_display_head_n_with_tail,
+            md_infos = md_infos,
+            md_last_update = md_last_update
+        )
+
+		# Assert
+        self.assertEqual(actual.options_tt, options_tt)
+        self.assertEqual(actual.options_tts_by_month, options_tts_by_month)
+        self.assertEqual(actual.options_tts_by_year, options_tts_by_year)
+        self.assertEqual(actual.options_tts_by_year_month, options_tts_by_year_month)
+        self.assertEqual(actual.options_tts_by_year_month_spnv, options_tts_by_year_month_spnv)
+        self.assertEqual(actual.options_tts_by_year_spnv, options_tts_by_year_spnv)
+        self.assertEqual(actual.options_tts_by_spn, options_tts_by_spn)
+        self.assertEqual(actual.options_tts_by_spn_spv, options_tts_by_spn_spv)
+        self.assertEqual(actual.options_tts_by_hashtag, options_tts_by_hashtag)
+        self.assertEqual(actual.options_tts_by_hashtag_year, options_tts_by_hashtag_year)
+        self.assertEqual(actual.options_tts_by_efs, options_tts_by_efs)
+        self.assertEqual(actual.options_tts_by_tr, options_tts_by_tr)
+        self.assertEqual(actual.options_definitions, options_definitions)
+        self.assertEqual(actual.excel_nrows, excel_nrows)
+        self.assertEqual(actual.tts_by_year_month_spnv_display_only_spn, tts_by_year_month_spnv_display_only_spn)
+        self.assertEqual(actual.tts_by_year_spnv_display_only_spn, tts_by_year_spnv_display_only_spn)
+        self.assertEqual(actual.tts_by_spn_spv_display_only_spn, tts_by_spn_spv_display_only_spn)
+        self.assertEqual(actual.working_folder_path, working_folder_path)
+        self.assertEqual(actual.excel_path, excel_path)
+        self.assertEqual(actual.excel_skiprows, excel_skiprows)
+        self.assertEqual(actual.excel_tabname, excel_tabname)
+        self.assertEqual(actual.years, years)
+        self.assertEqual(actual.yearly_targets, yearly_targets)
+        self.assertEqual(actual.now, now)
+        self.assertEqual(actual.software_project_names, software_project_names)
+        self.assertEqual(actual.software_project_names_by_spv, software_project_names_by_spv)
+        self.assertEqual(actual.tt_head_n, tt_head_n)
+        self.assertEqual(actual.tt_display_head_n_with_tail, tt_display_head_n_with_tail)
+        self.assertEqual(actual.tt_hide_index, tt_hide_index)
+        self.assertEqual(actual.tts_by_year_month_display_only_years, tts_by_year_month_display_only_years)
+        self.assertEqual(actual.tts_by_year_month_spnv_formatters, tts_by_year_month_spnv_formatters)
+        self.assertEqual(actual.tts_by_year_spnv_formatters, tts_by_year_spnv_formatters)
+        self.assertEqual(actual.tts_by_spn_formatters, tts_by_spn_formatters)
+        self.assertEqual(actual.tts_by_spn_remove_untagged, tts_by_spn_remove_untagged)
+        self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)
+        self.assertEqual(actual.tts_by_efs_is_correct, tts_by_efs_is_correct)
+        self.assertEqual(actual.tts_by_efs_n, tts_by_efs_n)
+        self.assertEqual(actual.tts_by_tr_unknown_id, tts_by_tr_unknown_id)
+        self.assertEqual(actual.tts_by_tr_remove_unknown_occurrences, tts_by_tr_remove_unknown_occurrences)
+        self.assertEqual(actual.tts_by_tr_filter_by_top_n, tts_by_tr_filter_by_top_n)
+        self.assertEqual(actual.tts_by_tr_head_n, tts_by_tr_head_n)
+        self.assertEqual(actual.tts_by_tr_display_head_n_with_tail, tts_by_tr_display_head_n_with_tail)
+        self.assertEqual(actual.md_infos, md_infos)
+        self.assertEqual(actual.md_last_update, md_last_update)
+
+
+class ComponentBagTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
+
+        # Arrange
+        # Act
+        component_bag : ComponentBag = ComponentBag()
+
+        # Assert
+        self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
+        self.assertIsInstance(component_bag.file_manager, FileManager)
+        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
+        self.assertIsInstance(component_bag.logging_function, FunctionType)
+        self.assertIsInstance(component_bag.displayer, Displayer)
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
