@@ -345,6 +345,22 @@ class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
 
+    def calculate_percentage(self, part : float, whole : float, rounding_digits : int = 2) -> float:
+
+        '''Calculates a percentage.'''
+
+        prct : Optional[float] = None
+
+        if part == 0:
+            prct = 0
+        elif whole == 0:
+            prct = 0
+        else:
+            prct = (100 * part) / whole
+
+        prct = round(number = prct, ndigits = rounding_digits)
+
+        return prct
     def convert_string_to_timedelta(self, td_str : str) -> timedelta:
 
         '''"5h 30m" => 5:30:00'''
@@ -352,21 +368,6 @@ class TTDataFrameHelper():
         td : timedelta = pd.Timedelta(value = td_str).to_pytimedelta()
 
         return td
-    def get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> Optional[YearlyTarget]:
-
-        '''Retrieves the YearlyTarget object for the provided "year" or None.'''
-
-        for yearly_target in yearly_targets:
-            if yearly_target.year == year:
-                return yearly_target
-            
-        return None
-    def is_yearly_target_met(self, effort : timedelta, yearly_target : timedelta) -> bool:
-
-        if effort >= yearly_target:
-            return True
-
-        return False
     def format_timedelta(self, td : timedelta, add_plus_sign : bool) -> str:
 
         '''
@@ -386,6 +387,49 @@ class TTDataFrameHelper():
             formatted = f"+{formatted}"
 
         return formatted
+    def get_trend_by_timedelta(self, td_1 : timedelta, td_2 : timedelta) -> str:
+
+        '''
+            0h 30m, 1h 00m => "↑"
+            1h 00m, 0h 30m => "↓"
+            0, 0 => "="
+        '''
+        trend : Optional[str] = None
+
+        if td_1 < td_2:
+            trend = "↑"
+        elif td_1 > td_2:
+            trend = "↓"
+        else:
+            trend = "="
+
+        return trend
+    def try_consolidate_trend_column_name(self, column_name : str) -> str:
+
+        '''
+            "2016"  => "2016"
+            "↕1"    => "↕"
+        '''
+
+        if column_name.startswith(TTCN.TREND):
+            return TTCN.TREND
+        
+        return column_name
+    def get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> Optional[YearlyTarget]:
+
+        '''Retrieves the YearlyTarget object for the provided "year" or None.'''
+
+        for yearly_target in yearly_targets:
+            if yearly_target.year == year:
+                return yearly_target
+            
+        return None
+    def is_yearly_target_met(self, effort : timedelta, yearly_target : timedelta) -> bool:
+
+        if effort >= yearly_target:
+            return True
+
+        return False
     def extract_software_project_name(self, descriptor : str) -> str:
 
         '''
@@ -418,73 +462,6 @@ class TTDataFrameHelper():
             return matches[0]
 
         return "ERROR"
-    def calculate_percentage(self, part : float, whole : float, rounding_digits : int = 2) -> float:
-
-        '''Calculates a percentage.'''
-
-        prct : Optional[float] = None
-
-        if part == 0:
-            prct = 0
-        elif whole == 0:
-            prct = 0
-        else:
-            prct = (100 * part) / whole
-
-        prct = round(number = prct, ndigits = rounding_digits)
-
-        return prct
-    def get_trend_by_timedelta(self, td_1 : timedelta, td_2 : timedelta) -> str:
-
-        '''
-            0h 30m, 1h 00m => "↑"
-            1h 00m, 0h 30m => "↓"
-            0, 0 => "="
-        '''
-        trend : Optional[str] = None
-
-        if td_1 < td_2:
-            trend = "↑"
-        elif td_1 > td_2:
-            trend = "↓"
-        else:
-            trend = "="
-
-        return trend
-    def try_consolidate_trend_column_name(self, column_name : str) -> str:
-
-        '''
-            "2016"  => "2016"
-            "↕1"    => "↕"
-        '''
-
-        if column_name.startswith(TTCN.TREND):
-            return TTCN.TREND
-        
-        return column_name
-    def create_effort_status_for_none_values(self, idx : int, effort_str : str) -> EffortStatus:
-
-        '''Creates effort status for None values.'''
-
-        actual_str : str = effort_str
-        actual_td : timedelta = self.convert_string_to_timedelta(td_str = effort_str)
-        is_correct : bool = True
-
-        effort_status : EffortStatus = EffortStatus(
-            idx = idx,
-            start_time_str = None,
-            start_time_dt = None,
-            end_time_str = None,
-            end_time_dt = None,
-            actual_str = actual_str,
-            actual_td = actual_td,
-            expected_td = None,
-            expected_str = None,
-            is_correct = is_correct,
-            message = _MessageCollection.starttime_endtime_are_empty()
-            )    
-
-        return effort_status
     def create_time_object(self, time : str) -> datetime:
 
         '''It creates a datetime object suitable for timedelta calculation out of the provided time.'''
@@ -531,6 +508,19 @@ class TTDataFrameHelper():
         dt : datetime =  datetime.strptime(dt_str, strp_format)
 
         return dt
+    def create_time_range_id(self, start_time : str, end_time : str, unknown_id : str) -> str:
+            
+        '''
+            Creates a unique time range identifier out of the provided parameters.
+            If parameters are empty, it returns unknown_id.
+        '''
+
+        time_range_id : str = f"{start_time}-{end_time}"
+
+        if len(start_time) == 0 or len(end_time) == 0:
+            time_range_id = unknown_id
+
+        return time_range_id
     def create_effort_status(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> EffortStatus:
 
         '''
@@ -593,6 +583,29 @@ class TTDataFrameHelper():
                 idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str)
 
             raise ValueError(error)
+    def create_effort_status_for_none_values(self, idx : int, effort_str : str) -> EffortStatus:
+
+        '''Creates effort status for None values.'''
+
+        actual_str : str = effort_str
+        actual_td : timedelta = self.convert_string_to_timedelta(td_str = effort_str)
+        is_correct : bool = True
+
+        effort_status : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = None,
+            start_time_dt = None,
+            end_time_str = None,
+            end_time_dt = None,
+            actual_str = actual_str,
+            actual_td = actual_td,
+            expected_td = None,
+            expected_str = None,
+            is_correct = is_correct,
+            message = _MessageCollection.starttime_endtime_are_empty()
+            )    
+
+        return effort_status
     def create_effort_status_and_cast_to_any(self, idx : int, start_time_str : str, end_time_str : str, effort_str : str) -> Any:
 
         '''
@@ -605,19 +618,6 @@ class TTDataFrameHelper():
         '''
 
         return cast(Any, self.create_effort_status(idx = idx, start_time_str = start_time_str, end_time_str = end_time_str, effort_str = effort_str))    
-    def create_time_range_id(self, start_time : str, end_time : str, unknown_id : str) -> str:
-            
-            '''
-                Creates a unique time range identifier out of the provided parameters.
-                If parameters are empty, it returns unknown_id.
-            '''
-
-            time_range_id : str = f"{start_time}-{end_time}"
-
-            if len(start_time) == 0 or len(end_time) == 0:
-                time_range_id = unknown_id
-
-            return time_range_id
 class TTDataFrameFactory():
 
     '''Collects all the logic related to dataframe creation out of "Time Tracking.xlsx".'''

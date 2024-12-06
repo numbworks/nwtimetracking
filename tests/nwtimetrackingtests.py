@@ -593,128 +593,6 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         self.df_helper = TTDataFrameHelper()
         self.sm_provider = SupportMethodProvider()
-    def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
-
-        # Arrange
-        td_str : str = "5h 30m"
-        expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
-
-        # Act
-        actual_td : timedelta = self.df_helper.convert_string_to_timedelta(td_str = td_str)
-
-        # Assert
-        self.assertEqual(expected_td, actual_td)
-    def test_getyearlytarget_shouldreturnexpectedhours_whenyearinlist(self):
-
-        # Arrange
-        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
-        year : int = 2024
-        expected_hours : timedelta = timedelta(hours = 250)
-
-        # Act
-        actual_hours : timedelta = cast(YearlyTarget, self.df_helper.get_yearly_target(yearly_targets = yearly_targets, year = year)).hours
-
-        # Assert
-        self.assertEqual(expected_hours, actual_hours)
-    def test_getyearlytarget_shouldreturnnone_whenyearnotinlist(self):
-
-        # Arrange
-        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
-        year : int = 2010
-
-        # Act
-        yearly_target : Optional[YearlyTarget] = self.df_helper.get_yearly_target(yearly_targets = yearly_targets, year = year)
-
-        # Assert
-        self.assertIsNone(yearly_target)
-    def test_isyearlytargetmet_shouldreturntrue_whenyearlytargetismet(self):
-
-        # Arrange
-        effort : timedelta = pd.Timedelta(hours = 255, minutes = 30)
-        yearly_target : timedelta = pd.Timedelta(hours = 250)
-
-        # Act
-        actual : bool = self.df_helper.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
-        
-        # Assert
-        self.assertTrue(actual)
-    def test_isyearlytargetmet_shouldreturnfalse_whenyearlytargetisnotmet(self):
-
-        # Arrange
-        effort : timedelta = pd.Timedelta(hours = 249)
-        yearly_target : timedelta = pd.Timedelta(hours = 250)
-
-        # Act
-        actual : bool = self.df_helper.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
-
-        # Assert
-        self.assertFalse(actual)
-    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
-
-        # Arrange
-        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
-        expected : str = "255h 30m"
-
-        # Act
-        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = False)
-        
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussigntrue(self):    
-
-        # Arrange
-        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
-        expected : str = "+255h 30m"
-
-        # Act
-        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = True)
-        
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_extractsoftwareprojectname_shouldreturnexpectedstring_whenproperstring(self):
-
-        # Arrange
-        descriptor : str = "NW.AutoProffLibrary v1.0.0"
-        expected : str = "NW.AutoProffLibrary"
-
-        # Act
-        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_extractsoftwareprojectname_shouldreturnerrorstring_whenunproperstring(self):
-
-        # Arrange
-        descriptor : str = "Some gibberish"
-        expected : str = "ERROR"
-
-        # Act
-        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
-
-        # Assert
-        self.assertEqual(expected, actual)   
-    def test_extractsoftwareprojectversion_shouldreturnexpectedstring_whenproperstring(self):
-
-        # Arrange
-        descriptor : str = "NW.AutoProffLibrary v1.0.0"
-        expected : str = "1.0.0"
-
-        # Act
-        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_extractsoftwareprojectversion_shouldreturnerrorstring_whenunproperstring(self):
-
-        # Arrange
-        descriptor : str = "Some gibberish"
-        expected : str = "ERROR"
-
-        # Act
-        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
-
-        # Assert
-        self.assertEqual(expected, actual)
     def test_calculatepercentage_shouldreturnexpectedfloat_when0and16(self):
 
         # Arrange
@@ -780,6 +658,256 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+    def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
+
+        # Arrange
+        td_str : str = "5h 30m"
+        expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
+
+        # Act
+        actual_td : timedelta = self.df_helper.convert_string_to_timedelta(td_str = td_str)
+
+        # Assert
+        self.assertEqual(expected_td, actual_td)
+    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
+
+        # Arrange
+        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "255h 30m"
+
+        # Act
+        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = False)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussigntrue(self):    
+
+        # Arrange
+        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "+255h 30m"
+
+        # Act
+        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = True)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+    
+    @parameterized.expand([
+        [timedelta(minutes=30), timedelta(hours=1), "↑"],
+        [timedelta(hours=1), timedelta(minutes=30), "↓"],
+        [timedelta(minutes=30), timedelta(minutes=30), "="],
+    ])
+    def test_gettrendbytimedelta_shouldreturnexpectedtrend_wheninvoked(
+        self, 
+        td_1 : timedelta, 
+        td_2 : timedelta, 
+        expected : str
+    ):
+        
+        # Arrange
+        # Act
+        actual : str = self.df_helper.get_trend_by_timedelta(td_1 = td_1, td_2 = td_2)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ["↕1", TTCN.TREND],
+        ["2016", "2016"],
+    ])
+    def test_tryconsolidatetrendcolumnname_shouldreturnexpectedcolumnname_wheninvoked(
+        self, 
+        column_name: str, 
+        expected: str
+    ):
+
+        # Arrange
+        # Act
+        actual : str = self.df_helper.try_consolidate_trend_column_name(column_name)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_getyearlytarget_shouldreturnexpectedhours_whenyearinlist(self):
+
+        # Arrange
+        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
+        year : int = 2024
+        expected_hours : timedelta = timedelta(hours = 250)
+
+        # Act
+        actual_hours : timedelta = cast(YearlyTarget, self.df_helper.get_yearly_target(yearly_targets = yearly_targets, year = year)).hours
+
+        # Assert
+        self.assertEqual(expected_hours, actual_hours)
+    def test_getyearlytarget_shouldreturnnone_whenyearnotinlist(self):
+
+        # Arrange
+        yearly_targets : list[YearlyTarget] = ObjectMother.create_yearly_targets()
+        year : int = 2010
+
+        # Act
+        yearly_target : Optional[YearlyTarget] = self.df_helper.get_yearly_target(yearly_targets = yearly_targets, year = year)
+
+        # Assert
+        self.assertIsNone(yearly_target)
+    def test_isyearlytargetmet_shouldreturntrue_whenyearlytargetismet(self):
+
+        # Arrange
+        effort : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        yearly_target : timedelta = pd.Timedelta(hours = 250)
+
+        # Act
+        actual : bool = self.df_helper.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+        
+        # Assert
+        self.assertTrue(actual)
+    def test_isyearlytargetmet_shouldreturnfalse_whenyearlytargetisnotmet(self):
+
+        # Arrange
+        effort : timedelta = pd.Timedelta(hours = 249)
+        yearly_target : timedelta = pd.Timedelta(hours = 250)
+
+        # Act
+        actual : bool = self.df_helper.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
+
+        # Assert
+        self.assertFalse(actual)
+    def test_extractsoftwareprojectname_shouldreturnexpectedstring_whenproperstring(self):
+
+        # Arrange
+        descriptor : str = "NW.AutoProffLibrary v1.0.0"
+        expected : str = "NW.AutoProffLibrary"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectname_shouldreturnerrorstring_whenunproperstring(self):
+
+        # Arrange
+        descriptor : str = "Some gibberish"
+        expected : str = "ERROR"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)   
+    def test_extractsoftwareprojectversion_shouldreturnexpectedstring_whenproperstring(self):
+
+        # Arrange
+        descriptor : str = "NW.AutoProffLibrary v1.0.0"
+        expected : str = "1.0.0"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectversion_shouldreturnerrorstring_whenunproperstring(self):
+
+        # Arrange
+        descriptor : str = "Some gibberish"
+        expected : str = "ERROR"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        "07:00", "07:15", "07:30", "07:45", 
+        "08:00", "08:15", "08:30", "08:45",
+        "09:00", "09:15", "09:30", "09:45",
+        "10:00", "10:15", "10:30", "10:45",
+        "11:00", "11:15", "11:30", "11:45",
+        "12:00", "12:15", "12:30", "12:45",
+        "13:00", "13:15", "13:30", "13:45",
+        "14:00", "14:15", "14:30", "14:45",
+        "15:00", "15:15", "15:30", "15:45",
+        "16:00", "16:15", "16:30", "16:45",
+        "17:00", "17:15", "17:30", "17:45",
+        "18:00", "18:15", "18:30", "18:45",
+        "19:00", "19:15", "19:30", "19:45",
+        "20:00", "20:15", "20:30", "20:45",
+        "21:00", "21:15", "21:30", "21:45",
+        "22:00", "22:15", "22:30", "22:45",
+        "23:00", "23:15", "23:30", "23:45"
+    ])
+    def test_createtimeobject_shouldreturnexpecteddatatime_whenday1time(self, time : str):
+
+        # Arrange
+        strp_format : str = "%Y-%m-%d %H:%M"
+        dt_str = f"1900-01-01 {time}"
+        expected : datetime = datetime.strptime(dt_str, strp_format)
+
+        # Act
+        actual : datetime = self.df_helper.create_time_object(time = time)
+
+        # Assert
+        self.assertEqual(expected, actual)
+		
+    @parameterized.expand([
+        "00:00", "00:15", "00:30", "00:45", 
+        "01:00", "01:15", "01:30", "01:45",
+        "02:00", "02:15", "02:30", "02:45",
+        "03:00", "03:15", "03:30", "03:45",
+        "04:00", "04:15", "04:30", "04:45",
+        "05:00", "05:15", "05:30", "05:45",
+        "06:00", "06:15", "06:30", "06:45"
+    ])
+    def test_createtimeobject_shouldreturnexpecteddatatime_whenday2time(self, time : str):
+
+        # Arrange
+        strp_format : str = "%Y-%m-%d %H:%M"
+        dt_str = f"1900-01-02 {time}"
+        expected : datetime = datetime.strptime(dt_str, strp_format)
+
+        # Act
+        actual : datetime = self.df_helper.create_time_object(time = time)
+
+        # Assert
+        self.assertEqual(expected, actual)
+		
+    @parameterized.expand([
+        "07:04",
+        "00:01",
+        "gibberish text"
+    ])
+    def test_createtimeobject_shouldraisevalueerrorexception_whennotamongtimevalues(self, time : str):
+
+        # Arrange
+        expected_message : str = _MessageCollection.effort_status_not_among_expected_time_values(time = time)
+        
+        # Act
+        with self.assertRaises(ValueError) as context:
+            self.df_helper.create_time_object(time = time)
+
+        # Assert
+        self.assertTrue(expected_message in str(context.exception))
+
+    @parameterized.expand([
+        ["07:00", "08:00", "UNKNOWN", "07:00-08:00"],
+        ["", "08:00", "UNKNOWN", "UNKNOWN"],
+        ["07:00", "", "UNKNOWN", "UNKNOWN"]
+    ])
+    def test_createtimerangeid_shouldreturnexpectedtimerangeid_wheninvoked(
+            self,
+            start_time : str, 
+            end_time : str, 
+            unknown_id : str,
+            expected : str):
+
+        # Arrange
+        # Act
+        actual : str = self.df_helper.create_time_range_id(start_time = start_time, end_time = end_time, unknown_id = unknown_id)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
     def test_createeffortstatus_shouldreturnexpectobject_wheneffortiscorrect(self):
 
         # Arrange
@@ -875,109 +1003,6 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         self.assertTrue(comparison) 
 
     @parameterized.expand([
-        [1, "5h 30m", timedelta(hours = 5, minutes = 30)],
-        [2, "2h 00m", timedelta(hours = 2, minutes = 00)]
-    ])
-    def test_createeffortstatusfornonevalues_shouldreturnexpectedobject_wheninvoked(
-        self, 
-        idx : int, 
-        effort_str : str, 
-        actual_td : timedelta):
-
-        # Arrange
-        expected : EffortStatus = EffortStatus(
-            idx = idx,
-            start_time_str = None,
-            start_time_dt = None,
-            end_time_str = None,
-            end_time_dt = None,
-            actual_str = effort_str,
-            actual_td = actual_td,
-            expected_td = None,
-            expected_str = None,
-            is_correct = True,
-            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
-            ) 
-
-        # Act
-        actual : EffortStatus = self.df_helper.create_effort_status_for_none_values(idx = idx, effort_str = effort_str) # type: ignore
-
-        # Assert
-        comparison : bool = self.sm_provider.are_effort_statuses_equal(ef1 = expected, ef2 = actual)
-        self.assertTrue(comparison)
-
-    @parameterized.expand([
-        "07:00", "07:15", "07:30", "07:45", 
-        "08:00", "08:15", "08:30", "08:45",
-        "09:00", "09:15", "09:30", "09:45",
-        "10:00", "10:15", "10:30", "10:45",
-        "11:00", "11:15", "11:30", "11:45",
-        "12:00", "12:15", "12:30", "12:45",
-        "13:00", "13:15", "13:30", "13:45",
-        "14:00", "14:15", "14:30", "14:45",
-        "15:00", "15:15", "15:30", "15:45",
-        "16:00", "16:15", "16:30", "16:45",
-        "17:00", "17:15", "17:30", "17:45",
-        "18:00", "18:15", "18:30", "18:45",
-        "19:00", "19:15", "19:30", "19:45",
-        "20:00", "20:15", "20:30", "20:45",
-        "21:00", "21:15", "21:30", "21:45",
-        "22:00", "22:15", "22:30", "22:45",
-        "23:00", "23:15", "23:30", "23:45"
-    ])
-    def test_createtimeobject_shouldreturnexpecteddatatime_whenday1time(self, time : str):
-
-        # Arrange
-        strp_format : str = "%Y-%m-%d %H:%M"
-        dt_str = f"1900-01-01 {time}"
-        expected : datetime = datetime.strptime(dt_str, strp_format)
-
-        # Act
-        actual : datetime = self.df_helper.create_time_object(time = time)
-
-        # Assert
-        self.assertEqual(expected, actual)
-		
-    @parameterized.expand([
-        "00:00", "00:15", "00:30", "00:45", 
-        "01:00", "01:15", "01:30", "01:45",
-        "02:00", "02:15", "02:30", "02:45",
-        "03:00", "03:15", "03:30", "03:45",
-        "04:00", "04:15", "04:30", "04:45",
-        "05:00", "05:15", "05:30", "05:45",
-        "06:00", "06:15", "06:30", "06:45"
-    ])
-    def test_createtimeobject_shouldreturnexpecteddatatime_whenday2time(self, time : str):
-
-        # Arrange
-        strp_format : str = "%Y-%m-%d %H:%M"
-        dt_str = f"1900-01-02 {time}"
-        expected : datetime = datetime.strptime(dt_str, strp_format)
-
-        # Act
-        actual : datetime = self.df_helper.create_time_object(time = time)
-
-        # Assert
-        self.assertEqual(expected, actual)
-		
-    @parameterized.expand([
-        "07:04",
-        "00:01",
-        "gibberish text"
-    ])
-    def test_createtimeobject_shouldraisevalueerrorexception_whennotamongtimevalues(self, time : str):
-
-        # Arrange
-        expected_message : str = _MessageCollection.effort_status_not_among_expected_time_values(time = time)
-        
-        # Act
-        with self.assertRaises(ValueError) as context:
-            self.df_helper.create_time_object(time = time)
-
-        # Assert
-        self.assertTrue(expected_message in str(context.exception))
-
-    @parameterized.expand([
         [1, "07:00", "", "5h 30m"],
         [1, "", "07:00", "5h 30m"]
     ])
@@ -1039,59 +1064,36 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         self.assertTrue(expected_message in str(context.exception))
 
     @parameterized.expand([
-        ["07:00", "08:00", "UNKNOWN", "07:00-08:00"],
-        ["", "08:00", "UNKNOWN", "UNKNOWN"],
-        ["07:00", "", "UNKNOWN", "UNKNOWN"]
+        [1, "5h 30m", timedelta(hours = 5, minutes = 30)],
+        [2, "2h 00m", timedelta(hours = 2, minutes = 00)]
     ])
-    def test_createtimerangeid_shouldreturnexpectedtimerangeid_wheninvoked(
-            self,
-            start_time : str, 
-            end_time : str, 
-            unknown_id : str,
-            expected : str):
-
-        # Arrange
-        # Act
-        actual : str = self.df_helper.create_time_range_id(start_time = start_time, end_time = end_time, unknown_id = unknown_id)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [timedelta(minutes=30), timedelta(hours=1), "↑"],
-        [timedelta(hours=1), timedelta(minutes=30), "↓"],
-        [timedelta(minutes=30), timedelta(minutes=30), "="],
-    ])
-    def test_gettrendbytimedelta_shouldreturnexpectedtrend_wheninvoked(
+    def test_createeffortstatusfornonevalues_shouldreturnexpectedobject_wheninvoked(
         self, 
-        td_1 : timedelta, 
-        td_2 : timedelta, 
-        expected : str
-    ):
-        
-        # Arrange
-        # Act
-        actual : str = self.df_helper.get_trend_by_timedelta(td_1 = td_1, td_2 = td_2)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        ["↕1", TTCN.TREND],
-        ["2016", "2016"],
-    ])
-    def test_tryconsolidatetrendcolumnname_shouldreturnexpectedcolumnname_wheninvoked(
-        self, 
-        column_name: str, 
-        expected: str
-    ):
+        idx : int, 
+        effort_str : str, 
+        actual_td : timedelta):
 
         # Arrange
+        expected : EffortStatus = EffortStatus(
+            idx = idx,
+            start_time_str = None,
+            start_time_dt = None,
+            end_time_str = None,
+            end_time_dt = None,
+            actual_str = effort_str,
+            actual_td = actual_td,
+            expected_td = None,
+            expected_str = None,
+            is_correct = True,
+            message = "''start_time' and/or 'end_time' are empty, 'effort' can't be verified. We assume that it's correct."
+            ) 
+
         # Act
-        actual : str = self.df_helper.try_consolidate_trend_column_name(column_name)
+        actual : EffortStatus = self.df_helper.create_effort_status_for_none_values(idx = idx, effort_str = effort_str) # type: ignore
 
         # Assert
-        self.assertEqual(expected, actual)
+        comparison : bool = self.sm_provider.are_effort_statuses_equal(ef1 = expected, ef2 = actual)
+        self.assertTrue(comparison)
 
     def test_createeffortstatusandcasttoany_shouldwork_withdfapply(self):
 
