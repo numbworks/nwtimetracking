@@ -12,7 +12,7 @@ MODULE_VERSION : str = "4.0.0"
 setup(
     name = MODULE_NAME,
     version = MODULE_VERSION,
-    description = "An application to run analyses on 'Time Tracking.xlsx'.",
+    description = "An application designed to run automated data analysis tasks on 'Time Tracking.xlsx'.",
     author = "numbworks",
     url = f"https://github.com/numbworks/{MODULE_NAME}",
     py_modules = [ MODULE_NAME ],

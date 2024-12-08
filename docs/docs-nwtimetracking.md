@@ -19,9 +19,9 @@ Contact: numbworks@gmail.com
 
 ## Introduction
 
-`nwtimetracking` is a `Jupyter Notebook` designed to analyze the Excel file I use to annotate the durations of all my sessions of extra work and continuos learning, so that I can run analyses on them. 
+`nwtimetracking` is an application designed to run automated data analysis tasks on `Time Tracking.xlsx`.
 
-This software is born to overcome the lack of support for durations (timedeltas) in Excel.
+This file is the one I use to annotate the durations of all my sessions of extra work and continuos learning. This application is born to overcome the lack of support for durations (timedeltas) in Excel.
 
 This project may not be useful for many (not generic enough), but I decided to upload it to `Github` anyway, in order to showcase my way of working when I face similar data analysis tasks and I decide to tackle them with `Python` and `Jupyter Notebook`.
 
