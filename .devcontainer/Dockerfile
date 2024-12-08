@@ -8,11 +8,11 @@ RUN pip install pandas==2.2.3
 RUN pip install requests==2.32.3
 RUN pip install tabulate==0.9.0
 RUN pip install 'git+https://github.com/numbworks/nwshared.git@v1.8.0#egg=nwshared&subdirectory=src'
-RUN pip install 'git+https://github.com/numbworks/nwpackageversions.git@v1.8.0#egg=nwpackageversions&subdirectory=src'
 
 # JUPYTER NOTEBOOK
 RUN pip install ipykernel==6.29.5
 RUN pip install jupyter==1.1.0
+RUN pip install 'git+https://github.com/numbworks/nwpackageversions.git@v1.8.0#egg=nwpackageversions&subdirectory=src'
 
 # UNIT TESTING
 RUN pip install coverage==7.6.4

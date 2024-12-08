@@ -25,6 +25,23 @@ coverage-verbose:
 	coverage html --omit=$(MODULE_NAME)tests.py && sed -n '/<table class="index" data-sortable>/,/<\/table>/p' htmlcov/class_index.html | pandoc --from html --to plain; \
 	sleep 3; \
 	rm -rf htmlcov;
+tryinstall-verbose:
+	@clear; \
+	cd /home; \
+	rm -rf build; \
+	rm -rf dist; \
+	rm -rf $(MODULE_NAME).egg-info; \
+	rm -rf venv; \
+	python /workspaces/$(MODULE_NAME)/src/setup.py bdist_wheel; \
+	python3 -m venv venv; \
+	source venv/bin/activate; \
+	pip install dist/$(MODULE_NAME)*.whl; \
+	pip show $(MODULE_NAME) | grep Version; \
+	deactivate; \
+	rm -rf build; \
+	rm -rf dist; \
+	rm -rf $(MODULE_NAME).egg-info; \
+	rm -rf venv;
 
 type-concise:
 	@value=$$(mypy $(ROOT_DIR)/src/$(MODULE_NAME).py --disable-error-code=import-untyped | grep -c "error:"); \
