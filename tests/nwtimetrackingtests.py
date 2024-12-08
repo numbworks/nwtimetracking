@@ -2299,7 +2299,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
     def test_processttsbymonth_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = (Mock, Mock())
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = (Mock(), Mock())
 
         summary : Mock = Mock()
         summary.tts_by_month_tpl = tts_by_month_tpl
