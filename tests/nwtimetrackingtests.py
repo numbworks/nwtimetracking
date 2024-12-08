@@ -469,33 +469,6 @@ class ObjectMother():
 
         return expected
 
-    @staticmethod
-    def get_dtos_for_ttsbymonthmd() -> Tuple[DataFrame, str]:
-
-        data : list = [
-            [1, "00h 00m", "↑", "18h 00m", "↑", "88h 30m", "↓", "80h 15m", "↓", "60h 00m", "↓", "29h 15m", "↑", "53h 00m", "↓", "00h 00m", "↑", "06h 00m", "↑", "45h 45m"]
-        ]
-        columns : list[str] = ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022", "↕", "2023", "↕", "2024"]
-        df : DataFrame = pd.DataFrame(data, columns = columns)
-
-        lines : list[str] = [
-            "## Revision History",
-            "",
-            "|Date|Author|Description|",
-            "|---|---|---|",
-            "|2020-12-22|numbworks|Created.|",
-            "|2024-10-01|numbworks|Last update.|",
-            "",
-            "## Time Tracking By Month",
-            "",
-            "|   Month | 2015    | ↕   | 2016    | ↕   | 2017    | ↕   | 2018    | ↕   | 2019    | ↕   | 2020    | ↕   | 2021    | ↕   | 2022    | ↕   | 2023    | ↕   | 2024    |",
-            "|--------:|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|:----|:--------|",
-            "|       1 | 00h 00m | ↑   | 18h 00m | ↑   | 88h 30m | ↓   | 80h 15m | ↓   | 60h 00m | ↓   | 29h 15m | ↑   | 53h 00m | ↓   | 00h 00m | ↑   | 06h 00m | ↑   | 45h 45m |"
-        ]
-        expected : str = "\n".join(lines) + "\n"
-
-        return (df, expected)
-
 # TEST CLASSES
 class MessageCollectionTestCase(unittest.TestCase):
 
