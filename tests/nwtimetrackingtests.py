@@ -1813,6 +1813,10 @@ class TTAdapterTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
 
+        # Without Defaults
+        self.tts_by_year_spnv_display_only_spn : Optional[str] = "nwshared"
+
+        # With Defaults
         self.excel_path : str = "/home/nwtimetracking/nwtimetrackingmanager/data/Time Tracking.xlsx"
         self.excel_skiprows : int = 0
         self.excel_nrows : int = 100
@@ -1831,6 +1835,8 @@ class TTAdapterTestCase(unittest.TestCase):
             YearlyTarget(year = 2024, hours = timedelta(hours = 500))
         ]
         self.now : datetime = datetime(2023, 12, 1)
+        self.software_project_names : list[str] = [ "nwshared", "nwpackageversions"]
+        self.software_project_names_by_spv : list[str] = [ "nwshared" ]
 
         self.tts_by_year_month_display_only_years : Optional[list[int]] = [2024]
 
@@ -1932,6 +1938,55 @@ class TTAdapterTestCase(unittest.TestCase):
             yearly_targets = self.yearly_targets,
             display_only_years = self.tts_by_year_month_display_only_years
         )
+    def test_createttsbyyearmonthspnvtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.years = self.years
+        setting_bag.software_project_names = self.software_project_names
+        setting_bag.tts_by_year_month_spnv_display_only_spn = self.software_project_names_by_spv
+
+        tt_df : Mock = Mock()
+
+        # Act
+        tt_adapter.create_tts_by_year_month_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        
+        # Assert
+        df_factory.create_tts_by_year_month_spnv_tpl.assert_called_once_with(
+            tt_df = tt_df,
+            years = self.years,
+            software_project_names = self.software_project_names,
+            software_project_name = self.software_project_names_by_spv
+        )
+    def test_createttsbyyearspnvtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.years = self.years
+        setting_bag.software_project_names = self.software_project_names
+        setting_bag.tts_by_year_spnv_display_only_spn = self.tts_by_year_spnv_display_only_spn
+
+        tt_df : Mock = Mock()
+
+        # Act
+        tt_adapter.create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        
+        # Assert
+        df_factory.create_tts_by_year_spnv_tpl.assert_called_once_with(
+            tt_df = tt_df,
+            years = self.years,
+            software_project_names = self.software_project_names,
+            software_project_name = self.tts_by_year_spnv_display_only_spn
+        )
+
 
     # 
 
