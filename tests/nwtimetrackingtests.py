@@ -1837,9 +1837,11 @@ class TTAdapterTestCase(unittest.TestCase):
         self.now : datetime = datetime(2023, 12, 1)
         self.software_project_names : list[str] = [ "nwshared", "nwpackageversions"]
         self.software_project_names_by_spv : list[str] = [ "nwshared" ]
-
         self.tts_by_year_month_display_only_years : Optional[list[int]] = [2024]
-
+        self.tts_by_spn_remove_untagged : bool = True
+        self.tts_by_efs_is_correct : bool = True
+        self.tts_by_tr_unknown_id : str = "Unknown"
+        self.tts_by_tr_remove_unknown_occurrences : bool = True
         self.md_infos : list[MDInfo] = [
                 MDInfo(id = TTID.TTSBYMONTH, file_name = "TIMETRACKINGBYMONTH.md", paragraph_title = "Time Tracking By Month")
             ]
@@ -1986,10 +1988,114 @@ class TTAdapterTestCase(unittest.TestCase):
             software_project_names = self.software_project_names,
             software_project_name = self.tts_by_year_spnv_display_only_spn
         )
+    def test_createttsbyspndf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
 
+        setting_bag : Mock = Mock()
+        setting_bag.years = self.years
+        setting_bag.software_project_names = self.software_project_names
+        setting_bag.tts_by_spn_remove_untagged = self.tts_by_spn_remove_untagged
 
-    # 
+        tt_df : Mock = Mock()
 
+        # Act
+        tt_adapter.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
+        
+        # Assert
+        df_factory.create_tts_by_spn_df.assert_called_once_with(
+            tt_df = tt_df,
+            years = self.years,
+            software_project_names = self.software_project_names,
+            remove_untagged = self.tts_by_spn_remove_untagged
+        )
+    def test_createttsbyspnspvdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.years = self.years
+        setting_bag.software_project_names = self.software_project_names
+
+        tt_df : Mock = Mock()
+
+        # Act
+        tt_adapter.create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
+        
+        # Assert
+        df_factory.create_tts_by_spn_spv_df.assert_called_once_with(
+            tt_df = tt_df,
+            years = self.years,
+            software_project_names = self.software_project_names
+        )
+    def test_createttsbyhashtagyeardf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.years = self.years
+
+        tt_df : Mock = Mock()
+
+        # Act
+        tt_adapter.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        
+        # Assert
+        df_factory.create_tts_by_hashtag_year_df.assert_called_once_with(
+            tt_df = tt_df,
+            years = self.years
+        )
+    def test_createttsbyefstpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.tts_by_efs_is_correct = self.tts_by_efs_is_correct
+
+        tt_df : Mock = Mock()
+
+        # Act
+        tt_adapter.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        
+        # Assert
+        df_factory.create_tts_by_efs_tpl.assert_called_once_with(
+            tt_df = tt_df,
+            is_correct = self.tts_by_efs_is_correct
+        )
+    def test_createttsbytrdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.tts_by_tr_unknown_id = self.tts_by_tr_unknown_id
+        setting_bag.tts_by_tr_remove_unknown_occurrences = self.tts_by_tr_remove_unknown_occurrences
+
+        tt_df : Mock = Mock()
+
+        # Act
+        tt_adapter.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
+        
+        # Assert
+        df_factory.create_tts_by_tr_df.assert_called_once_with(
+            tt_df = tt_df,
+            unknown_id = self.tts_by_tr_unknown_id,
+            remove_unknown_occurrences = self.tts_by_tr_remove_unknown_occurrences
+        )
     def test_createttsbymonthmd_shouldcallmdfactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
