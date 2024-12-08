@@ -1881,6 +1881,41 @@ class TTAdapterTestCase(unittest.TestCase):
 
         # Other
         self.paragraph_title : str = "Time Tracking By Month"
+    def test_extractfilenameandparagraphtitle_shouldreturnexpectedvalues_whenidexists(self) -> None:
+        
+        # Arrange
+        df_factory : TTDataFrameFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        id : TTID = TTID.TTSBYMONTH
+        setting_bag : SettingBag = Mock(md_infos = self.md_infos)
+
+        # Act
+        actual : Tuple[str, str] = tt_adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = setting_bag)
+
+        # Assert
+        self.assertEqual(actual, ("TIMETRACKINGBYMONTH.md", "Time Tracking By Month"))
+    def test_extractfilenameandparagraphtitle_shouldraiseexception_wheniddoesnotexist(self) -> None:
+        
+        # Arrange
+        df_factory : TTDataFrameFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        
+        id : TTID = TTID.TTSBYMONTH
+
+        md_infos : list[MDInfo] = [
+            MDInfo(id = Mock(id = "other_id"), file_name = "OTHERFILE.md", paragraph_title = "Other Title")
+        ]
+        setting_bag : SettingBag = Mock(md_infos = md_infos)
+
+        # Act
+        with self.assertRaises(Exception) as context:
+            adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = setting_bag)
+        
+        # Assert
+        self.assertEqual(str(context.exception), _MessageCollection.no_mdinfo_found(id = id))   
     def test_createttdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
