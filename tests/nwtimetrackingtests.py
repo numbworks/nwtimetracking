@@ -2269,16 +2269,16 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Arrange
         tt_df : DataFrame = Mock()
 
-        mock_summary : Mock = Mock()
-        mock_summary.tt_df = tt_df
+        summary : Mock = Mock()
+        summary.tt_df = tt_df
 
-        mock_displayer : Mock = Mock()
-        mock_tt_adapter : Mock = Mock()
-        mock_tt_adapter.create_summary.return_value = mock_summary
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
 
         component_bag : Mock = Mock()
-        component_bag.displayer = mock_displayer
-        component_bag.tt_adapter = mock_tt_adapter
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
         setting_bag.options_tt = ["display"]
@@ -2286,14 +2286,13 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         setting_bag.tt_display_head_n_with_tail = False
         setting_bag.tt_hide_index = True
 
-        processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag, setting_bag)
-        processor.initialize()
-
         # Act
-        processor.process_tt()
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag, setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tt()
 
         # Assert
-        mock_displayer.display.assert_called_once_with(
+        displayer.display.assert_called_once_with(
             df = tt_df.head(5), 
             hide_index = True
         )
