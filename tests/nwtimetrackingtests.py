@@ -1818,7 +1818,29 @@ class TTAdapterTestCase(unittest.TestCase):
         self.excel_nrows : int = 100
         self.excel_tabname : str = "Sessions"
         self.years : list[int] = [2023, 2024]
+        self.yearly_targets : list[YearlyTarget] = [
+            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
+            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
+            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
+            YearlyTarget(year = 2024, hours = timedelta(hours = 500))
+        ]
         self.now : datetime = datetime(2023, 12, 1)
+
+        self.tts_by_year_month_display_only_years : Optional[list[int]] = [2024]
+
+        self.md_infos : list[MDInfo] = [
+                MDInfo(id = TTID.TTSBYMONTH, file_name = "TIMETRACKINGBYMONTH.md", paragraph_title = "Time Tracking By Month")
+            ]
+        self.md_last_update : datetime = datetime(2023, 11, 25)
+
+        self.paragraph_title : str = "Time Tracking By Month"
+
     def test_createttdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
@@ -1864,6 +1886,78 @@ class TTAdapterTestCase(unittest.TestCase):
             years = self.years,
             now = self.now
         )
+    def test_createttsbyyeardf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.years = self.years
+        setting_bag.yearly_targets = self.yearly_targets
+
+        tt_df : Mock = Mock()
+
+        # Act
+        adapter.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
+
+        # Assert
+        df_factory.create_tts_by_year_df.assert_called_once_with(
+            tt_df = tt_df,
+            years = self.years,
+            yearly_targets = self.yearly_targets
+        )
+    def test_createttsbyyearmonthdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.years = self.years
+        setting_bag.yearly_targets = self.yearly_targets
+        setting_bag.tts_by_year_month_display_only_years = self.tts_by_year_month_display_only_years
+
+        tt_df : Mock = Mock()
+
+        # Act
+        adapter.create_tts_by_year_month_df(tt_df = tt_df, setting_bag = setting_bag)
+
+        # Assert
+        df_factory.create_tts_by_year_month_tpl.assert_called_once_with(
+            tt_df = tt_df,
+            years = self.years,
+            yearly_targets = self.yearly_targets,
+            display_only_years = self.tts_by_year_month_display_only_years
+        )
+
+    # 
+
+    def test_createttsbymonthmd_shouldcallmdfactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.md_infos = self.md_infos
+        setting_bag.md_last_update = self.md_last_update
+
+        tts_by_month_tpl : Tuple[Mock, Mock] = (Mock(), Mock())
+
+        # Act
+        adapter.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
+
+        # Assert
+        md_factory.create_tts_by_month_md.assert_called_once_with(
+            paragraph_title = self.md_infos[0].paragraph_title,
+            last_update = self.md_last_update,
+            tts_by_month_upd_df = tts_by_month_tpl[1]
+        )
+
 
 class ComponentBagTestCase(unittest.TestCase):
 
