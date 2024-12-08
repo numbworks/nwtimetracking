@@ -15,12 +15,13 @@ Contact: numbworks@gmail.com
 | 2024-10-01 | numbworks | Updated to v3.7.0. |
 | 2024-10-28 | numbworks | Updated to v3.8.0. |
 | 2024-12-01 | numbworks | Updated to v3.9.0. |
+| 2024-12-05 | numbworks | Updated to v4.0.0. |
 
 ## Introduction
 
-`nwtimetracking` is a `Jupyter Notebook` designed to analyze the Excel file I use to annotate the durations of all my sessions of extra work and continuos learning, so that I can run analyses on them. 
+`nwtimetracking` is an application designed to run automated data analysis tasks on `Time Tracking.xlsx`.
 
-This software is born to overcome the lack of support for durations (timedeltas) in Excel.
+This file is the one I use to annotate the durations of all my sessions of extra work and continuos learning. This application is born to overcome the lack of support for durations (timedeltas) in Excel.
 
 This project may not be useful for many (not generic enough), but I decided to upload it to `Github` anyway, in order to showcase my way of working when I face similar data analysis tasks and I decide to tackle them with `Python` and `Jupyter Notebook`.
 
@@ -138,21 +139,23 @@ The avalaible target names are:
 |---|---|
 | type-verbose | Runs a type verification task and logs everything. |
 | coverage-verbose | Runs a unit test coverage calculation task and logs the % per class. |
+| tryinstall-verbose | Simulates a "pip install" and logs everything. |
 | all-concise | Runs a batch of verification tasks and logs one summary line for each of them. |
 
 The expected outcome for `all-concise` is:
 
 ```
 MODULE_NAME: nwtimetracking
-MODULE_VERSION: 3.9.0
+MODULE_VERSION: 4.0.0
 COVERAGE_THRESHOLD: 70%
-[WARNING] type-concise: not passed! '1' error(s) found!
-[WARNING] changelog-concise: 'CHANGELOG' not updated to current version!
+[OK] type-concise: passed!
+[OK] changelog-concise: 'CHANGELOG' updated to current version!
 [OK] setup-concise: 'setup.py' updated to current version!
 [OK] coverage-concise: unit test coverage >= 70%.
+[OK] tryinstall-concise: installation process works.
 ```
 
-Considering the old-fashioned syntax adopted by `make`, here a summary of its less intuitive aspects:
+Considering the old-fashioned syntax adopted by both `make` and `bash`, here a summary of its less intuitive aspects:
 
 | Aspect | Description |
 |---|---|
@@ -161,6 +164,7 @@ Considering the old-fashioned syntax adopted by `make`, here a summary of its le
 | `@` | By default, `make` logs all the commands included in the target. The `@` disables this behaviour. |
 | `$$` | Necessary to escape `$`. |
 | `$@` | Variable that stores the target name. |
+| `if [[ ... ]]` | Double square brackets to enable pattern matching. |
 
 ## Known Issues - nwshared
 

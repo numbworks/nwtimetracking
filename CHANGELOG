@@ -1,3 +1,10 @@
+v4.0.0 - BREAKING CHANGES
+- Application:
+	- Feature: re-structured the whole architecture to simplify usage and future expansions.
+	- Maintenance: makefile now supports "*tests.py" in "type*"" targets and "tryinstall-concise" in "all-concise".
+- Documentation:
+	- Feature: updated to v4.0.0.
+
 v3.9.0
 - Library:
 	- Feature: makefile added.
