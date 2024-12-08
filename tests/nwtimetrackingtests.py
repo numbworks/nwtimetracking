@@ -17,7 +17,7 @@ from unittest.mock import Mock, patch
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, _MessageCollection, YearlyTarget, EffortStatus, MDInfo, TTSummary
+from nwtimetracking import TTCN, TTID, DEFINITIONSCN, _MessageCollection, TimeTrackingProcessor, YearlyTarget, EffortStatus, MDInfo, TTSummary
 from nwtimetracking import DefaultPathProvider, YearProvider, SoftwareProjectNameProvider, MDInfoProvider, SettingBag
 from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, ComponentBag
 
@@ -2262,6 +2262,41 @@ class ComponentBagTestCase(unittest.TestCase):
         self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
         self.assertIsInstance(component_bag.logging_function, FunctionType)
         self.assertIsInstance(component_bag.displayer, Displayer)
+class TimeTrackingProcessorTestCase(unittest.TestCase):
+
+    def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tt_df : DataFrame = Mock()
+
+        mock_summary : Mock = Mock()
+        mock_summary.tt_df = tt_df
+
+        mock_displayer : Mock = Mock()
+        mock_tt_adapter : Mock = Mock()
+        mock_tt_adapter.create_summary.return_value = mock_summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = mock_displayer
+        component_bag.tt_adapter = mock_tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tt = ["display"]
+        setting_bag.tt_head_n = 5
+        setting_bag.tt_display_head_n_with_tail = False
+        setting_bag.tt_hide_index = True
+
+        processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag, setting_bag)
+        processor.initialize()
+
+        # Act
+        processor.process_tt()
+
+        # Assert
+        mock_displayer.display.assert_called_once_with(
+            df = tt_df.head(5), 
+            hide_index = True
+        )
 
 # MAIN
 if __name__ == "__main__":
