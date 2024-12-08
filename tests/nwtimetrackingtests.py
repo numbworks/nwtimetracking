@@ -11,14 +11,15 @@ from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
 from typing import Literal, Optional, Tuple, cast
-from unittest.mock import Mock, call, patch
+from unittest.mock import Mock, patch
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import DEFINITIONSCN, TTCN, ComponentBag, MDInfo, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, TTSummary, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
-from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory, TTID, MDInfoProvider, TTDataFrameHelper
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
+from nwtimetracking import TTCN, TTID, DEFINITIONSCN, _MessageCollection, YearlyTarget, EffortStatus, MDInfo, TTSummary
+from nwtimetracking import DefaultPathProvider, YearProvider, SoftwareProjectNameProvider, MDInfoProvider, SettingBag
+from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, ComponentBag
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -2226,7 +2227,6 @@ class ComponentBagTestCase(unittest.TestCase):
         self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
         self.assertIsInstance(component_bag.logging_function, FunctionType)
         self.assertIsInstance(component_bag.displayer, Displayer)
-
 
 # MAIN
 if __name__ == "__main__":
