@@ -2296,6 +2296,63 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             df = tt_df.head(5), 
             hide_index = True
         )
+    def test_processttsbymonth_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = (Mock, Mock())
+
+        summary : Mock = Mock()
+        summary.tts_by_month_tpl = tts_by_month_tpl
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_month = ["display"]
+
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag, setting_bag)
+        tt_processor.initialize()        
+        tt_processor.process_tts_by_month()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_month_tpl[1]
+        )
+    def test_processttsbyyear_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_year_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_year_df = tts_by_year_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_year = ["display"]      
+        
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag, setting_bag)
+        tt_processor.initialize()        
+        tt_processor.process_tts_by_year()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df =tts_by_year_df
+        )
+
 
 # MAIN
 if __name__ == "__main__":
