@@ -1809,7 +1809,61 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+class TTAdapterTestCase(unittest.TestCase):
 
+    def setUp(self) -> None:
+
+        self.excel_path : str = "/home/nwtimetracking/nwtimetrackingmanager/data/Time Tracking.xlsx"
+        self.excel_skiprows : int = 0
+        self.excel_nrows : int = 100
+        self.excel_tabname : str = "Sessions"
+        self.years : list[int] = [2023, 2024]
+        self.now : datetime = datetime(2023, 12, 1)
+    def test_createttdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.excel_path = self.excel_path
+        setting_bag.excel_skiprows = self.excel_skiprows
+        setting_bag.excel_nrows = 100
+        setting_bag.excel_tabname = "Sessions"
+
+        # Act
+        adapter.create_tt_df(setting_bag = setting_bag)
+
+        # Assert
+        df_factory.create_tt_df.assert_called_once_with(
+            excel_path = self.excel_path,
+            excel_skiprows = self.excel_skiprows,
+            excel_nrows = self.excel_nrows,
+            excel_tabname = self.excel_tabname
+        )
+    def test_createttsbymonthtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+        
+        # Arrange
+        df_factory : Mock = Mock()
+        md_factory : Mock = Mock()
+        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : Mock = Mock()
+        setting_bag.years = self.years
+        setting_bag.now = self.now
+
+        tt_df : Mock = Mock()
+
+        # Act
+        adapter.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+
+        # Assert
+        df_factory.create_tts_by_month_tpl.assert_called_once_with(
+            tt_df = tt_df,
+            years = self.years,
+            now = self.now
+        )
 
 class ComponentBagTestCase(unittest.TestCase):
 
