@@ -2287,7 +2287,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         setting_bag.tt_hide_index = True
 
         # Act
-        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag, setting_bag)
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()
         tt_processor.process_tt()
 
@@ -2316,7 +2316,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         setting_bag.options_tts_by_month = ["display"]
 
         # Act
-        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag, setting_bag)
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()        
         tt_processor.process_tts_by_month()
 
@@ -2344,13 +2344,71 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         setting_bag.options_tts_by_year = ["display"]      
         
         # Act
-        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag, setting_bag)
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()        
         tt_processor.process_tts_by_year()
 
         # Assert
         displayer.display.assert_called_once_with(
             df =tts_by_year_df
+        )
+    def test_processttsbyyearmonth_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = (Mock(), Mock())
+
+        summary : Mock = Mock()
+        summary.tts_by_year_month_tpl = tts_by_year_month_tpl
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_year_month = ["display"]
+
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()        
+        tt_processor.process_tts_by_year_month()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_year_month_tpl[1]
+        )
+    def test_processttsbyyearmonthspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = (Mock(), Mock())
+
+        summary : Mock = Mock()
+        summary.tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_year_month_spnv = ["display"]
+        setting_bag.tts_by_year_month_spnv_formatters = {"%_DME": "{:.2f}", "%_TME": "{:.2f}"}
+
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()        
+        tt_processor.process_tts_by_year_month_spnv()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_year_month_spnv_tpl[1],
+            formatters = setting_bag.tts_by_year_month_spnv_formatters
         )
 
 
