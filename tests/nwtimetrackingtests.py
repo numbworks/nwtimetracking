@@ -2410,7 +2410,64 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             df = tts_by_year_month_spnv_tpl[1],
             formatters = setting_bag.tts_by_year_month_spnv_formatters
         )
+    def test_processttsbyyearspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = (Mock(), Mock())
 
+        summary : Mock = Mock()
+        summary.tts_by_year_spnv_tpl = tts_by_year_spnv_tpl
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+        
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_year_spnv = ["display"]
+        setting_bag.tts_by_year_spnv_formatters = {"%_DYE": "{:.2f}", "%_TYE": "{:.2f}"}
+
+        # Act
+        processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        processor.initialize()        
+        processor.process_tts_by_year_spnv()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_year_spnv_tpl[1],
+            formatters = setting_bag.tts_by_year_spnv_formatters
+        )
+    def test_processdefinitions_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        definitions_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.definitions_df = definitions_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_definitions = ["display"]
+
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()        
+        tt_processor.process_definitions()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = definitions_df
+        )
 
 # MAIN
 if __name__ == "__main__":
