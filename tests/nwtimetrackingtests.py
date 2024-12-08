@@ -2440,6 +2440,156 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             df = tts_by_year_spnv_tpl[1],
             formatters = setting_bag.tts_by_year_spnv_formatters
         )
+    def test_processttsbyspn_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_spn_df : DataFrame = Mock()
+        definitions_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_spn_df = tts_by_spn_df
+        summary.definitions_df = definitions_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_spn = ["display"]
+        setting_bag.tts_by_spn_formatters = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_spn()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_spn_df, 
+            formatters = setting_bag.tts_by_spn_formatters
+        )
+    def test_processttsbyspnspv_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_spn_spv_df : DataFrame = Mock()
+        definitions_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_spn_spv_df = tts_by_spn_spv_df
+        summary.definitions_df = definitions_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_spn_spv = ["display"]
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_spn_spv()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_spn_spv_df
+        )
+    def test_processttsbyhashtag_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_hashtag_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_hashtag_df = tts_by_hashtag_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_hashtag = ["display"]
+        setting_bag.tts_by_hashtag_formatters = {"Effort%" : "{:.2f}"}
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_hashtag()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_hashtag_df, 
+            formatters = setting_bag.tts_by_hashtag_formatters
+        )
+    def test_processttsbyefs_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_efs_tpl : tuple = (Mock(), Mock())
+        tts_by_efs_df : DataFrame = tts_by_efs_tpl[1]
+
+        summary : Mock = Mock()
+        summary.tts_by_efs_tpl = tts_by_efs_tpl
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_efs = ["display"]
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_efs()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_efs_df
+        )
+    def test_processttsbytr_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_tr_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_tr_df = tts_by_tr_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_tr = ["display"]
+        setting_bag.tts_by_tr_head_n = uint(10)
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_tr()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_by_tr_df.head(10)
+        )
     def test_processdefinitions_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
