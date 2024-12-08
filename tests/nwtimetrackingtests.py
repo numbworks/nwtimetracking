@@ -16,7 +16,7 @@ from unittest.mock import Mock, call, patch
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import TTCN, ComponentBag, MDInfo, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, TTSummary, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
+from nwtimetracking import DEFINITIONSCN, TTCN, ComponentBag, MDInfo, TTAdapter, TTMarkdownFactory, SoftwareProjectNameProvider, TTSummary, YearlyTarget, SettingBag, EffortStatus, _MessageCollection
 from nwtimetracking import DefaultPathProvider, YearProvider, TTDataFrameFactory, TTID, MDInfoProvider, TTDataFrameHelper
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
 
@@ -285,7 +285,7 @@ class ObjectMother():
 
         return (df1, df2)
     @staticmethod
-    def get_tts_by_year_spnv_df() -> Tuple[DataFrame, DataFrame]:
+    def get_tts_by_year_spnv_tpl() -> Tuple[DataFrame, DataFrame]:
 
         '''
                 Year	ProjectName	                ProjectVersion	Effort	DYE	    %_DYE	TYE	        %_TYE
@@ -435,6 +435,26 @@ class ObjectMother():
                 'Effort': np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
                 'Effort%': np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
+    @staticmethod
+    def get_definitions_df() -> DataFrame:
+
+        columns : list[str] = [DEFINITIONSCN.TERM, DEFINITIONSCN.DEFINITION]
+
+        definitions : dict[str, str] = { 
+            "DME": "Development Monthly Effort",
+            "TME": "Total Monthly Effort",
+            "DYE": "Development Yearly Effort",
+            "TYE": "Total Yearly Effort",
+            "DE": "Development Effort",
+            "TE": "Total Effort"
+        }
+        
+        definitions_df : DataFrame = DataFrame(
+            data = definitions.items(), 
+            columns = columns
+        )
+
+        return definitions_df
 
     @staticmethod
     def get_tts_by_month_md() -> str:
@@ -1672,7 +1692,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         years : list[int] = [2024]
         software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
         tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_spnv_df()
+        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_spnv_tpl()
 
         # Act
         actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_year_spnv_tpl(
@@ -1787,6 +1807,17 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 
+
+    def test_createdefinitionsdf_shouldreturnexpecteddataframe_wheninvoked(self):
+
+        # Arrange
+        expected_df : DataFrame = ObjectMother().get_definitions_df()
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_definitions_df()
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
 class TTMarkdownFactoryTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -1847,8 +1878,8 @@ class TTAdapterTestCase(unittest.TestCase):
             ]
         self.md_last_update : datetime = datetime(2023, 11, 25)
 
+        # Other
         self.paragraph_title : str = "Time Tracking By Month"
-
     def test_createttdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
@@ -1931,7 +1962,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : Mock = Mock()
 
         # Act
-        adapter.create_tts_by_year_month_df(tt_df = tt_df, setting_bag = setting_bag)
+        adapter.create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
 
         # Assert
         df_factory.create_tts_by_year_month_tpl.assert_called_once_with(
@@ -2118,8 +2149,69 @@ class TTAdapterTestCase(unittest.TestCase):
             last_update = self.md_last_update,
             tts_by_month_upd_df = tts_by_month_tpl[1]
         )
+    def test_createsummary_shouldreturnexpectedsummary_wheninvoked(self) -> None:
 
+        # Arrange
+        tt_df : DataFrame = ObjectMother.get_tt_df()
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = ObjectMother.get_tts_by_month_tpl()
+        tts_by_year_df : DataFrame = ObjectMother.get_tts_by_year_df()
+        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = ObjectMother.get_tts_by_year_month_tpl()
+        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = ObjectMother.get_tts_by_year_month_spnv_tpl()
+        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = ObjectMother.get_tts_by_year_spnv_tpl()
+        tts_by_spn_df : DataFrame = ObjectMother.get_tts_by_spn_df()
+        tts_by_spn_spv_df : DataFrame = ObjectMother.get_tts_by_spn_spv_df()
+        tts_by_hashtag_df : DataFrame = ObjectMother.get_tts_by_hashtag_df()
+        tts_by_hashtag_year_df : DataFrame = ObjectMother.get_tts_by_hashtag_year_df()
+        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = Mock()                           # TO UPDATE
+        tts_by_tr_df : DataFrame = ObjectMother.get_tts_by_tr_df()
+        definitions_df : DataFrame = ObjectMother.get_definitions_df()
+        tts_by_month_md : str = ObjectMother.get_tts_by_month_md()
 
+        df_factory : TTDataFrameFactory = Mock()
+        df_factory.create_tt_df.return_value = tt_df
+        df_factory.create_tts_by_month_tpl.return_value = tts_by_month_tpl
+        df_factory.create_tts_by_year_df.return_value = tts_by_year_df
+        df_factory.create_tts_by_year_month_tpl.return_value = tts_by_year_month_tpl
+        df_factory.create_tts_by_year_month_spnv_tpl.return_value = tts_by_year_month_spnv_tpl
+        df_factory.create_tts_by_year_spnv_tpl.return_value = tts_by_year_spnv_tpl
+        df_factory.create_tts_by_spn_df.return_value = tts_by_spn_df
+        df_factory.create_tts_by_spn_spv_df.return_value = tts_by_spn_spv_df
+        df_factory.create_tts_by_hashtag_df.return_value = tts_by_hashtag_df
+        df_factory.create_tts_by_hashtag_year_df.return_value = tts_by_hashtag_year_df
+        df_factory.create_tts_by_efs_tpl.return_value = tts_by_efs_tpl
+        df_factory.create_tts_by_tr_df.return_value = tts_by_tr_df
+        df_factory.create_definitions_df.return_value = definitions_df
+
+        md_factory : TTMarkdownFactory = Mock()
+        md_factory.create_tts_by_month_md.return_value = tts_by_month_md
+
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        setting_bag : SettingBag = ObjectMother.get_setting_bag()
+
+        # Act
+        actual : TTSummary = tt_adapter.create_summary(setting_bag=setting_bag)
+
+        # Assert
+        assert_frame_equal(actual.tt_df, tt_df)
+        assert_frame_equal(actual.tts_by_month_tpl[0], tts_by_month_tpl[0])
+        assert_frame_equal(actual.tts_by_month_tpl[1], tts_by_month_tpl[1])
+        assert_frame_equal(actual.tts_by_year_df, tts_by_year_df)
+        assert_frame_equal(actual.tts_by_year_month_tpl[0], tts_by_year_month_tpl[0])
+        assert_frame_equal(actual.tts_by_year_month_tpl[1], tts_by_year_month_tpl[1])
+        assert_frame_equal(actual.tts_by_year_month_spnv_tpl[0], tts_by_year_month_spnv_tpl[0])
+        assert_frame_equal(actual.tts_by_year_month_spnv_tpl[1], tts_by_year_month_spnv_tpl[1])
+        assert_frame_equal(actual.tts_by_year_spnv_tpl[0], tts_by_year_spnv_tpl[0])
+        assert_frame_equal(actual.tts_by_year_spnv_tpl[1], tts_by_year_spnv_tpl[1])
+        assert_frame_equal(actual.tts_by_spn_df, tts_by_spn_df)
+        assert_frame_equal(actual.tts_by_spn_spv_df, tts_by_spn_spv_df)
+        assert_frame_equal(actual.tts_by_hashtag_df, tts_by_hashtag_df)
+        assert_frame_equal(actual.tts_by_hashtag_year_df, tts_by_hashtag_year_df)
+        # assert_frame_equal(actual.tts_by_efs_tpl[0], tts_by_efs_tpl[0])
+        # assert_frame_equal(actual.tts_by_efs_tpl[1], tts_by_efs_tpl[1])
+        assert_frame_equal(actual.tts_by_tr_df, tts_by_tr_df)
+        assert_frame_equal(actual.definitions_df, definitions_df)
+        self.assertEqual(actual.tts_by_month_md, tts_by_month_md)
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:

@@ -1682,6 +1682,7 @@ class TTAdapter():
                 return (md_info.file_name, md_info.paragraph_title)
 
         raise Exception(_MessageCollection.no_mdinfo_found(id = id))
+    
     def create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -1716,7 +1717,7 @@ class TTAdapter():
         )
 
         return tts_by_year_df
-    def create_tts_by_year_month_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_year_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
@@ -1822,7 +1823,6 @@ class TTAdapter():
         )
 
         return tts_by_month_md
-    
     def create_summary(self, setting_bag : SettingBag) -> TTSummary:
 
         '''Creates a TTSummary object out of setting_bag.'''
@@ -1830,7 +1830,7 @@ class TTAdapter():
         tt_df : DataFrame = self.create_tt_df(setting_bag = setting_bag)
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_year_df : DataFrame = self.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spn_df : DataFrame = self.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
