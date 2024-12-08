@@ -2469,6 +2469,32 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             df = definitions_df
         )
 
+    @parameterized.expand([
+        ["process_tt"],
+        ["process_tts_by_month"],
+        ["process_tts_by_year"],
+        ["process_tts_by_year_month"],
+        ["process_tts_by_year_month_spnv"],
+        ["process_tts_by_year_spnv"],
+        ["process_tts_by_spn"],
+        ["process_tts_by_spn_spv"],
+        ["process_tts_by_hashtag"],
+        ["process_tts_by_hashtag_year"],
+        ["process_tts_by_efs"],
+        ["process_tts_by_tr"],
+        ["process_definitions"]
+    ])
+    def test_processmethod_shouldraiseexception_wheninitializenotrun(self, method_name : str) -> None:
+        
+        # Arrange
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = Mock(), setting_bag = Mock())
+
+        # Act & Assert
+        with self.assertRaises(Exception) as context:
+            getattr(tt_processor, method_name)()
+
+        self.assertEqual(str(context.exception), "Please run the 'initialize' method first.")
+
 # MAIN
 if __name__ == "__main__":
     result = unittest.main(argv=[''], verbosity=3, exit=False)
