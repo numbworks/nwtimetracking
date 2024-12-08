@@ -437,6 +437,39 @@ class ObjectMother():
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
 
     @staticmethod
+    def get_tts_by_month_md() -> str:
+
+        lines: list[str] = [
+            "## Revision History",
+            "",
+            "|Date|Author|Description|",
+            "|---|---|---|",
+            "|2020-12-22|numbworks|Created.|",
+            "|2024-11-30|numbworks|Last update.|",
+            "",
+            "## Time Tracking By Month",
+            "",
+            "|   Month | 2024    |",
+            "|--------:|:--------|",
+            "|       1 | 00h 00m |",
+            "|       2 | 36h 00m |",
+            "|       3 | 00h 00m |",
+            "|       4 | 00h 00m |",
+            "|       5 | 00h 00m |",
+            "|       6 | 00h 00m |",
+            "|       7 | 00h 00m |",
+            "|       8 | 00h 00m |",
+            "|       9 | 00h 00m |",
+            "|      10 | 00h 00m |",
+            "|      11 | 00h 00m |",
+            "|      12 | 00h 00m |",
+        ]
+
+        expected: str = "\n".join(lines) + "\n"
+
+        return expected
+
+    @staticmethod
     def get_dtos_for_ttsbymonthmd() -> Tuple[DataFrame, str]:
 
         data : list = [
@@ -1781,6 +1814,28 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df) 
+class TTMarkdownFactoryTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.md_factory : TTMarkdownFactory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter()))
+    def test_createttsbymonthmd_shouldreturnexpectedstring_wheninvoked(self) -> None:
+
+		# Arrange
+        paragraph_title : str = "Time Tracking By Month"
+        last_update : datetime = datetime(2024, 11, 30)
+        tts_by_month_upd_df : DataFrame = ObjectMother().get_tts_by_month_tpl()[0]
+        expected : str = ObjectMother().get_tts_by_month_md()
+
+        # Act
+        actual : str = self.md_factory.create_tts_by_month_md(
+            paragraph_title = paragraph_title, 
+            last_update = last_update, 
+            tts_by_month_upd_df = tts_by_month_upd_df
+        )
+
+        # Assert
+        self.assertEqual(expected, actual)
 
 
 class ComponentBagTestCase(unittest.TestCase):
