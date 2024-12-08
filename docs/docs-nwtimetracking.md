@@ -139,6 +139,7 @@ The avalaible target names are:
 |---|---|
 | type-verbose | Runs a type verification task and logs everything. |
 | coverage-verbose | Runs a unit test coverage calculation task and logs the % per class. |
+| tryinstall-verbose | Simulates a "pip install" and logs everything. |
 | all-concise | Runs a batch of verification tasks and logs one summary line for each of them. |
 
 The expected outcome for `all-concise` is:
@@ -147,13 +148,14 @@ The expected outcome for `all-concise` is:
 MODULE_NAME: nwtimetracking
 MODULE_VERSION: 4.0.0
 COVERAGE_THRESHOLD: 70%
-[WARNING] type-concise: not passed! '1' error(s) found!
-[WARNING] changelog-concise: 'CHANGELOG' not updated to current version!
+[OK] type-concise: passed!
+[OK] changelog-concise: 'CHANGELOG' updated to current version!
 [OK] setup-concise: 'setup.py' updated to current version!
 [OK] coverage-concise: unit test coverage >= 70%.
+[OK] tryinstall-concise: installation process works.
 ```
 
-Considering the old-fashioned syntax adopted by `make`, here a summary of its less intuitive aspects:
+Considering the old-fashioned syntax adopted by both `make` and `bash`, here a summary of its less intuitive aspects:
 
 | Aspect | Description |
 |---|---|
@@ -162,6 +164,7 @@ Considering the old-fashioned syntax adopted by `make`, here a summary of its le
 | `@` | By default, `make` logs all the commands included in the target. The `@` disables this behaviour. |
 | `$$` | Necessary to escape `$`. |
 | `$@` | Variable that stores the target name. |
+| `if [[ ... ]]` | Double square brackets to enable pattern matching. |
 
 ## Known Issues - nwshared
 

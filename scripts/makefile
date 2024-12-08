@@ -1,5 +1,5 @@
 # SETTINGS
-.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise all-concise 
+.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise all-concise 
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
@@ -59,6 +59,10 @@ coverage-concise:
 	coverage run -m unittest $(MODULE_NAME)tests.py > /dev/null 2>&1; \
 	value=$$(coverage report --omit=$(MODULE_NAME)tests.py | grep -oP 'TOTAL\s+\d+\s+\d+\s+\K\d+(?=%)'); \
 	if [ $$value -ge $(COVERAGE_THRESHOLD) ]; then echo "[OK] $@: unit test coverage >= $(COVERAGE_THRESHOLD)%."; else echo "[WARNING] $@: unit test coverage < $(COVERAGE_THRESHOLD)%."; fi;
+tryinstall-concise:
+	@value=$$(make tryinstall-verbose 2>&1); \
+	last_chars=$$(echo "$$value" | tail -c 100); \
+	if [[ "$$last_chars" == *"Version: $(MODULE_VERSION)"* ]]; then echo "[OK] $@: installation process works."; else echo "[WARNING] $@: installation process fails!"; fi;
 
 # AGGREGATE TARGETS
-all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise
+all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise
