@@ -253,7 +253,8 @@ class SoftwareProjectNameProvider():
             "nwtimetracking",
             "nwtraderaanalytics",
             "nwshared",
-            "nwpackageversions"
+            "nwpackageversions",
+            "nwtraderaanalytics"
         ]
 
         return software_project_names
