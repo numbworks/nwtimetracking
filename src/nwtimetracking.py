@@ -121,6 +121,10 @@ class _MessageCollection():
     def this_content_successfully_saved_as(id : TTID, file_path : str) -> str:
         return f"This content (id: '{id}') has been successfully saved as '{file_path}'."
 
+    @staticmethod
+    def provided_df_invalid_column_list(column_list : list[str]) -> str:
+        return f"The provided df has an invalid column list ('{column_list}')."
+
 # CLASSES
 @dataclass(frozen=True)
 class YearlyTarget():
@@ -1642,8 +1646,6 @@ class BYMDFManager():
     
     '''Encapsulates additional logic related to *_by_month_df dataframes.'''
 
-    __provided_df_invalid_column_list : Callable[[list[str]], str] = lambda column_list : f"The provided df has an invalid column list ('{column_list}')."
-
     def __is_year(self, value : Any) -> bool:
 
         """Returns True if value is a valid year."""
@@ -1801,7 +1803,7 @@ class BYMDFManager():
         column_list : list[str] = df.columns.to_list()
 
         if not self.__is_valid(column_list = column_list):
-            raise Exception(self.__provided_df_invalid_column_list(column_list))
+            raise Exception(_MessageCollection.provided_df_invalid_column_list(column_list))
         
         if len(column_list) == 2:
             return [df]
