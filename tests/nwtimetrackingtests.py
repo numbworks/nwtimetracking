@@ -17,7 +17,7 @@ from unittest.mock import Mock, patch
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, _MessageCollection, TimeTrackingProcessor, YearlyTarget, EffortStatus, MDInfo, TTSummary
+from nwtimetracking import TTCN, TTID, DEFINITIONSCN, _MessageCollection, BYMDFManager, TimeTrackingProcessor, YearlyTarget, EffortStatus, MDInfo, TTSummary
 from nwtimetracking import DefaultPathProvider, YearProvider, SoftwareProjectNameProvider, MDInfoProvider, SettingBag
 from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, ComponentBag
 
@@ -979,6 +979,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_by_tr_display_head_n_with_tail : bool = False
         md_infos : list = []
         md_last_update : datetime = datetime.now()
+        md_enable_github_optimizations : bool = True
 
 		# Act
         actual : SettingBag = SettingBag(
@@ -1025,7 +1026,8 @@ class SettingBagTestCase(unittest.TestCase):
             tts_by_tr_head_n = tts_by_tr_head_n,
             tts_by_tr_display_head_n_with_tail = tts_by_tr_display_head_n_with_tail,
             md_infos = md_infos,
-            md_last_update = md_last_update
+            md_last_update = md_last_update,
+            md_enable_github_optimizations = md_enable_github_optimizations
         )
 
 		# Assert
@@ -1073,6 +1075,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_tr_display_head_n_with_tail, tts_by_tr_display_head_n_with_tail)
         self.assertEqual(actual.md_infos, md_infos)
         self.assertEqual(actual.md_last_update, md_last_update)
+        self.assertEqual(actual.md_enable_github_optimizations, md_enable_github_optimizations)
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1823,7 +1826,10 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
 
-        self.md_factory : TTMarkdownFactory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter()))
+        self.md_factory : TTMarkdownFactory = TTMarkdownFactory(
+            markdown_helper = MarkdownHelper(formatter = Formatter()),
+            bymdf_manager = BYMDFManager()
+        )
     def test_createttsbymonthmd_shouldreturnexpectedstring_wheninvoked(self) -> None:
 
 		# Arrange
@@ -1836,7 +1842,8 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
         actual : str = self.md_factory.create_tts_by_month_md(
             paragraph_title = paragraph_title, 
             last_update = last_update, 
-            tts_by_month_upd_df = tts_by_month_upd_df
+            tts_by_month_upd_df = tts_by_month_upd_df,
+            enable_github_optimizations = False
         )
 
         # Assert

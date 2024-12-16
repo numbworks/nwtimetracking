@@ -340,6 +340,7 @@ class SettingBag():
     tts_by_tr_display_head_n_with_tail : bool = field(default = False)
     md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
+    md_enable_github_optimizations : bool = field(default = False)
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -1831,15 +1832,16 @@ class TTMarkdownFactory():
             smaller_mds.append(smaller_md)
 
         return "\n\n".join(smaller_mds)
-    def create_tts_by_month_md(self, paragraph_title : str, last_update : datetime, tts_by_month_upd_df : DataFrame) -> str:
+    def create_tts_by_month_md(self, paragraph_title : str, last_update : datetime, tts_by_month_upd_df : DataFrame, enable_github_optimizations : bool) -> str:
 
         '''Creates the expected Markdown content for the provided arguments.'''
 
         markdown_header : str = self.__markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = paragraph_title)
-        # tts_by_month_upd_md : str = tts_by_month_upd_df.to_markdown(index = False)
+        tts_by_month_upd_md : str = tts_by_month_upd_df.to_markdown(index = False)
 
-        sub_dfs : list[DataFrame] = self.__bymdf_manager.create_sub_dfs(df = tts_by_month_upd_df)
-        tts_by_month_upd_md = self.__convert_sub_dfs(smaller_dfs = sub_dfs) 
+        if enable_github_optimizations:
+            sub_dfs : list[DataFrame] = self.__bymdf_manager.create_sub_dfs(df = tts_by_month_upd_df)
+            tts_by_month_upd_md = self.__convert_sub_dfs(smaller_dfs = sub_dfs) 
 
         md_content : str = markdown_header
         md_content += "\n"
@@ -2005,7 +2007,8 @@ class TTAdapter():
         tts_by_month_md : str = self.__md_factory.create_tts_by_month_md(
             paragraph_title = self.extract_file_name_and_paragraph_title(id = TTID.TTSBYMONTH, setting_bag = setting_bag)[1],
             last_update = setting_bag.md_last_update,
-            tts_by_month_upd_df = tts_by_month_tpl[1]
+            tts_by_month_upd_df = tts_by_month_tpl[1],
+            enable_github_optimizations = setting_bag.md_enable_github_optimizations
         )
 
         return tts_by_month_md
