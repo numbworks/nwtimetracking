@@ -1822,6 +1822,42 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
+class BYMDFManagerTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.bymdf_manager = BYMDFManager()
+    
+    @parameterized.expand([
+        [["Month", "2015"], True],
+        [["Month", "2015", "↕", "2016"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
+        [[], False],
+        [["Month"], False],
+        [["Month", "2015", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
+        [["Month", "↕"], False],
+        [["Month", "↕", "↕"], False],
+        [["Month", "2015", "2015"], False],
+        [["Month", "2015", "↕", "↕"], False]
+    ])
+    def test_isvalid_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_valid(column_list = column_list) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
 class TTMarkdownFactoryTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
