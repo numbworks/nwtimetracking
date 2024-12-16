@@ -643,6 +643,19 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+    def test_provideddfinvalidcolumnlist_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        column_list : list[str] = ["Month", "2015"]
+        expected : str = (
+            f"The provided df has an invalid column list ('{column_list}')."
+        )
+
+        # Act
+        actual : str = _MessageCollection.provided_df_invalid_column_list(column_list = column_list)
+
+        # Assert
+        self.assertEqual(expected, actual)
 class YearlyTargetTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
