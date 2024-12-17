@@ -120,16 +120,16 @@ class ObjectMother():
     def get_excel_data() -> DataFrame:
 
         excel_data_dict : dict = {
-            "Date": "2015-10-31",
-            "StartTime": "",
-            "EndTime": "",
-            "Effort": "8h 00m",
-            "Hashtag": "#untagged",
-            "Descriptor": "",
-            "IsSoftwareProject": "False",
-            "IsReleaseDay": "False",
-            "Year": "2015",
-            "Month": "10"
+            TTCN.DATE: "2015-10-31",
+            TTCN.STARTTIME: "",
+            TTCN.ENDTIME: "",
+            TTCN.EFFORT: "8h 00m",
+            TTCN.HASHTAG: "#untagged",
+            TTCN.DESCRIPTOR: "",
+            TTCN.ISSOFTWAREPROJECT: "False",
+            TTCN.ISRELEASEDAY: "False",
+            TTCN.YEAR: "2015",
+            TTCN.MONTH: "10"
             }
         excel_data_df : DataFrame = pd.DataFrame(data = excel_data_dict, index=[0])
 
@@ -138,16 +138,16 @@ class ObjectMother():
     def get_tt_df_column_names() -> list[str]:
 
         column_names : list[str] = []
-        column_names.append("Date")                 # [0], date
-        column_names.append("StartTime")            # [1], str
-        column_names.append("EndTime")              # [2], str
-        column_names.append("Effort")               # [3], str
-        column_names.append("Hashtag")              # [4], str
-        column_names.append("Descriptor")           # [5], str
-        column_names.append("IsSoftwareProject")    # [6], bool
-        column_names.append("IsReleaseDay")         # [7], bool
-        column_names.append("Year")                 # [8], int
-        column_names.append("Month")                # [9], int
+        column_names.append(TTCN.DATE)                 # [0], date
+        column_names.append(TTCN.STARTTIME)            # [1], str
+        column_names.append(TTCN.ENDTIME)              # [2], str
+        column_names.append(TTCN.EFFORT)               # [3], str
+        column_names.append(TTCN.HASHTAG)              # [4], str
+        column_names.append(TTCN.DESCRIPTOR)           # [5], str
+        column_names.append(TTCN.ISSOFTWAREPROJECT)    # [6], bool
+        column_names.append(TTCN.ISRELEASEDAY)         # [7], bool
+        column_names.append(TTCN.YEAR)                 # [8], int
+        column_names.append(TTCN.MONTH)                # [9], int
 
         return column_names
     @staticmethod
@@ -199,16 +199,16 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Date': np.array([date(2024, 2, 12), date(2024, 2, 13), date(2024, 2, 13), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 15), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 25), date(2024, 2, 25), date(2024, 2, 26)], dtype=str),
-                'StartTime': np.array(['21:00', '11:00', '14:30', '08:00', '17:15', '20:00', '17:15', '11:00', '13:30', '17:00', '22:00', '23:00', '11:15', '15:30', '20:15', '08:45', '13:30', '15:30', '10:15', '14:00', '08:15'], dtype=str),
-                'EndTime': np.array(['22:00', '13:00', '16:45', '08:30', '18:00', '20:15', '17:45', '12:30', '15:00', '18:00', '23:00', '23:30', '13:00', '18:00', '21:15', '12:15', '14:00', '16:30', '13:00', '19:45', '12:45'], dtype=str),
-                'Effort': np.array(['1h 00m', '2h 00m', '2h 15m', '0h 30m', '0h 45m', '0h 15m', '0h 30m', '1h 30m', '1h 30m', '1h 00m', '1h 00m', '0h 30m', '1h 45m', '2h 30m', '1h 00m', '3h 30m', '0h 30m', '1h 00m', '2h 45m', '5h 45m', '4h 30m'], dtype=str),
-                'Hashtag': np.array(['#maintenance', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#maintenance', '#maintenance', '#python', '#python', '#maintenance', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying'], dtype=str),
-                'Descriptor': np.array(['', 'NW.Shared.Serialization v1.0.0', 'NW.Shared.Serialization v1.0.0', 'NW.NGramTextClassification v4.2.0', 'NW.NGramTextClassification v4.2.0', 'NW.UnivariateForecasting v4.2.0', 'NW.UnivariateForecasting v4.2.0', '', '', 'nwreadinglistmanager v2.1.0', 'nwreadinglistmanager v2.1.0', '', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.'], dtype=str),
-                'IsSoftwareProject': np.array([False, True, True, True, True, True, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
-                'IsReleaseDay': np.array([False, True, True, True, True, False, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
-                'Year': np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int64),
-                'Month': np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int64),
+                TTCN.DATE: np.array([date(2024, 2, 12), date(2024, 2, 13), date(2024, 2, 13), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 15), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 25), date(2024, 2, 25), date(2024, 2, 26)], dtype=str),
+                TTCN.STARTTIME: np.array(['21:00', '11:00', '14:30', '08:00', '17:15', '20:00', '17:15', '11:00', '13:30', '17:00', '22:00', '23:00', '11:15', '15:30', '20:15', '08:45', '13:30', '15:30', '10:15', '14:00', '08:15'], dtype=str),
+                TTCN.ENDTIME: np.array(['22:00', '13:00', '16:45', '08:30', '18:00', '20:15', '17:45', '12:30', '15:00', '18:00', '23:00', '23:30', '13:00', '18:00', '21:15', '12:15', '14:00', '16:30', '13:00', '19:45', '12:45'], dtype=str),
+                TTCN.EFFORT: np.array(['1h 00m', '2h 00m', '2h 15m', '0h 30m', '0h 45m', '0h 15m', '0h 30m', '1h 30m', '1h 30m', '1h 00m', '1h 00m', '0h 30m', '1h 45m', '2h 30m', '1h 00m', '3h 30m', '0h 30m', '1h 00m', '2h 45m', '5h 45m', '4h 30m'], dtype=str),
+                TTCN.HASHTAG: np.array(['#maintenance', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#maintenance', '#maintenance', '#python', '#python', '#maintenance', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying'], dtype=str),
+                TTCN.DESCRIPTOR: np.array(['', 'NW.Shared.Serialization v1.0.0', 'NW.Shared.Serialization v1.0.0', 'NW.NGramTextClassification v4.2.0', 'NW.NGramTextClassification v4.2.0', 'NW.UnivariateForecasting v4.2.0', 'NW.UnivariateForecasting v4.2.0', '', '', 'nwreadinglistmanager v2.1.0', 'nwreadinglistmanager v2.1.0', '', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.'], dtype=str),
+                TTCN.ISSOFTWAREPROJECT: np.array([False, True, True, True, True, True, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
+                TTCN.ISRELEASEDAY: np.array([False, True, True, True, True, False, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.MONTH: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int64),
             }, index=pd.RangeIndex(start=980, stop=1001, step=1))
     @staticmethod
     def get_tts_by_year_df() -> DataFrame:
@@ -219,11 +219,11 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024], dtype=int64),
-                'Effort': np.array(['36h 00m'], dtype=object),
-                'YearlyTarget': np.array(['250h 00m'], dtype=object),
-                'TargetDiff': np.array(['-214h 00m'], dtype=object),
-                'IsTargetMet': np.array([False], dtype=bool),
+                TTCN.YEAR: np.array([2024], dtype=int64),
+                TTCN.EFFORT: np.array(['36h 00m'], dtype=object),
+                TTCN.YEARLYTARGET: np.array(['250h 00m'], dtype=object),
+                TTCN.TARGETDIFF: np.array(['-214h 00m'], dtype=object),
+                TTCN.ISTARGETMET: np.array([False], dtype=bool),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))
     @staticmethod
     def get_tts_by_year_month_tpl() -> Tuple[DataFrame, DataFrame]:
@@ -237,11 +237,11 @@ class ObjectMother():
         '''
 
         df : DataFrame = pd.DataFrame({
-                'Year': np.array([2024], dtype=int64),
-                'Month': np.array([2], dtype=int64),
-                'Effort': np.array(['36h 00m'], dtype=object),
-                'YearlyTotal': np.array(['36h 00m'], dtype=object),
-                'ToTarget': np.array(['-214h 00m'], dtype=object),
+                TTCN.YEAR: np.array([2024], dtype=int64),
+                TTCN.MONTH: np.array([2], dtype=int64),
+                TTCN.EFFORT: np.array(['36h 00m'], dtype=object),
+                TTCN.YEARLYTOTAL: np.array(['36h 00m'], dtype=object),
+                TTCN.TOTARGET: np.array(['-214h 00m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))
         
         return (df, df)
@@ -260,27 +260,27 @@ class ObjectMother():
         '''
 
         df1 : DataFrame = pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
-                'Month': np.array([2, 2, 2, 2], dtype=int64),
-                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
-                'DME': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                '%_DME': np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
-                'TME': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                '%_TME': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.MONTH: np.array([2, 2, 2, 2], dtype=int64),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+                TTCN.DME: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                TTCN.PERCDME: np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
+                TTCN.TME: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                TTCN.PERCTME: np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
         
         df2 : DataFrame = pd.DataFrame({
-                'Year': np.array([2024], dtype=int64),
-                'Month': np.array([2], dtype=int64),
-                'ProjectName': np.array(['NW.NGramTextClassification'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0'], dtype=object),
-                'Effort': np.array(['01h 15m'], dtype=object),
-                'DME': np.array(['08h 45m'], dtype=object),
-                '%_DME': np.array([14.29], dtype= np.float64),
-                'TME': np.array(['36h 00m'], dtype=object),
-                '%_TME': np.array([3.47], dtype= np.float64),
+                TTCN.YEAR: np.array([2024], dtype=int64),
+                TTCN.MONTH: np.array([2], dtype=int64),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m'], dtype=object),
+                TTCN.DME: np.array(['08h 45m'], dtype=object),
+                TTCN.PERCDME: np.array([14.29], dtype= np.float64),
+                TTCN.TME: np.array(['36h 00m'], dtype=object),
+                TTCN.PERCTME: np.array([3.47], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))        
 
         return (df1, df2)
@@ -299,25 +299,25 @@ class ObjectMother():
         '''
 
         df1 : DataFrame = pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
-                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
-                'DYE': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                '%_DYE': np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
-                'TYE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                '%_TYE': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+                TTCN.DYE: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                TTCN.PERCDYE: np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
+                TTCN.TYE: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                TTCN.PERCTYE: np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
 
         df2 : DataFrame = pd.DataFrame({
-                'Year': np.array([2024], dtype=int64),
-                'ProjectName': np.array(['NW.NGramTextClassification'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0'], dtype=object),
-                'Effort': np.array(['01h 15m'], dtype=object),
-                'DYE': np.array(['08h 45m'], dtype=object),
-                '%_DYE': np.array([14.29], dtype= np.float64),
-                'TYE': np.array(['36h 00m'], dtype=object),
-                '%_TYE': np.array([3.47], dtype= np.float64),
+                TTCN.YEAR: np.array([2024], dtype=int64),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m'], dtype=object),
+                TTCN.DYE: np.array(['08h 45m'], dtype=object),
+                TTCN.PERCDYE: np.array([14.29], dtype= np.float64),
+                TTCN.TYE: np.array(['36h 00m'], dtype=object),
+                TTCN.PERCTYE: np.array([3.47], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))
 
         return (df1, df2)
@@ -333,9 +333,9 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))    
     @staticmethod
     def get_tts_by_month_tpl() -> Tuple[DataFrame, DataFrame]:
@@ -356,12 +356,12 @@ class ObjectMother():
         '''
 
         df1 : DataFrame = pd.DataFrame({
-                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
+                TTCN.MONTH: np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
                 '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)				
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
 
         df2 : DataFrame = pd.DataFrame({
-                'Month': np.array(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', ''], dtype=object),
+                TTCN.MONTH: np.array(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', ''], dtype=object),
                 '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', ''], dtype=object)				
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
             
@@ -376,7 +376,7 @@ class ObjectMother():
         '''
 
         df : DataFrame = pd.DataFrame({
-                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
+                TTCN.MONTH: np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
                 '2015': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
                 '↕_2015': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
                 '2016': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
@@ -416,8 +416,8 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'TimeRangeId': np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
-                'Occurrences': np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
+                TTCN.TIMERANGEID: np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
+                TTCN.OCCURRENCES: np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
             }, index=pd.RangeIndex(start=0, stop=21, step=1))    
     @staticmethod
     def get_tts_by_spn_df() -> DataFrame:
@@ -431,13 +431,13 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Hashtag': np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object),
-                'ProjectName': np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
-                'Effort': np.array(['02h 00m', '04h 15m', '01h 15m', '00h 45m'], dtype=object),
-                'DE': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                '%_DE': np.array([22.86, 48.57, 14.29, 8.57], dtype= np.float64),
-                'TE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                '%_TE': np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
+                TTCN.HASHTAG: np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object),
+                TTCN.PROJECTNAME: np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
+                TTCN.EFFORT: np.array(['02h 00m', '04h 15m', '01h 15m', '00h 45m'], dtype=object),
+                TTCN.DE: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                TTCN.PERCDE: np.array([22.86, 48.57, 14.29, 8.57], dtype= np.float64),
+                TTCN.TE: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                TTCN.PERCTE: np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_tts_by_hashtag_year_df() -> DataFrame:
@@ -451,9 +451,9 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
-                'Hashtag': np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
-                'Effort': np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.HASHTAG: np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
+                TTCN.EFFORT: np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_tts_by_hashtag_df() -> DataFrame:
@@ -467,9 +467,9 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Hashtag': np.array(['#studying', '#csharp', '#maintenance', '#python'], dtype=object),
-                'Effort': np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
-                'Effort%': np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
+                TTCN.HASHTAG: np.array(['#studying', '#csharp', '#maintenance', '#python'], dtype=object),
+                TTCN.EFFORT: np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
+                TTCN.EFFORTPERC: np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_definitions_df() -> DataFrame:
@@ -477,12 +477,12 @@ class ObjectMother():
         columns : list[str] = [DEFINITIONSCN.TERM, DEFINITIONSCN.DEFINITION]
 
         definitions : dict[str, str] = { 
-            "DME": "Development Monthly Effort",
-            "TME": "Total Monthly Effort",
-            "DYE": "Development Yearly Effort",
-            "TYE": "Total Yearly Effort",
-            "DE": "Development Effort",
-            "TE": "Total Effort"
+            TTCN.DME: "Development Monthly Effort",
+            TTCN.TME: "Total Monthly Effort",
+            TTCN.DYE: "Development Yearly Effort",
+            TTCN.TYE: "Total Yearly Effort",
+            TTCN.DE: "Development Effort",
+            TTCN.TE: "Total Effort"
         }
         
         definitions_df : DataFrame = DataFrame(

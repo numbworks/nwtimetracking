@@ -40,7 +40,7 @@ class TTCN(StrEnum):
     DYE = "DYE"
     TYE = "TYE"
     TREND = "↕"
-    EFFORTPRC = "Effort%"
+    EFFORTPERC = "Effort%"
     YEARLYTARGET = "YearlyTarget"
     TARGETDIFF = "TargetDiff"
     ISTARGETMET = "IsTargetMet"
@@ -1021,7 +1021,7 @@ class TTDataFrameFactory():
         tts_df = tts_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
 
         summarized : float = tts_df[TTCN.EFFORT].sum()
-        tts_df[TTCN.EFFORTPRC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
+        tts_df[TTCN.EFFORTPERC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
 
         return tts_df
 
