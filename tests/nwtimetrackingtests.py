@@ -1991,6 +1991,40 @@ class BYMDFManagerTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @parameterized.expand([
+        [[0, 1, 2], [0, 2]],
+        [[0, 1, 2, 3, 4], [0, 1, 4]]
+    ])
+    def test_filterbyindexlist_shouldreturnfiltereddf_wheninvoked(self, index_list : list[int], expected_indices : list[int]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.create_tts_by_month_df(index_list = index_list)
+        expected_columns : list[str] = [df.columns[i] for i in expected_indices]
+        
+        # Act
+        filtered_df : DataFrame = self.bymdf_manager._BYMDFManager__filter_by_index_list(df = df, index_list = expected_indices) # type: ignore
+        
+        # Assert
+        self.assertEqual(filtered_df.columns.tolist(), expected_columns)
+
+    @parameterized.expand([
+        [[0, 1, 2, 3, 4], [[0, 1], [2, 3]]],
+        [[0, 1, 2, 3, 4, 5], [[0, 2, 4], [1, 3, 5]]]
+    ])
+    def test_filterbyindexlists_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_indices : list[list[int]]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.create_tts_by_month_df(index_list = index_list)
+        expected_columns : list[list[str]] = [[df.columns[i] for i in index_list] for index_list in expected_indices]
+        
+        # Act
+        sub_dfs : list[DataFrame] = self.bymdf_manager._BYMDFManager__filter_by_index_lists(df = df, index_lists = expected_indices) # type: ignore
+        
+        # Assert
+        self.assertEqual(len(sub_dfs), len(expected_columns))
+        for i, sub_df in enumerate(sub_dfs):
+            self.assertEqual(sub_df.columns.tolist(), expected_columns[i])
+
+    @parameterized.expand([
         [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17, 18, 19] ]],
         [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17] ]]
     ])
