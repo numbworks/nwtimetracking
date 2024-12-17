@@ -2895,6 +2895,28 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         displayer.display.assert_called_once_with(
             df = definitions_df
         )
+    def test_getsummary_shouldreturnttsummaryobject_wheninvoked(self):
+        
+        # Arrange
+        summary : Mock = Mock()
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()        
+        actual : TTSummary = tt_processor.get_summary()
+
+        # Assert
+        self.assertEqual(actual, summary)
 
     @parameterized.expand([
         ["process_tt"],
