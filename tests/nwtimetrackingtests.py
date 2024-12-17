@@ -982,19 +982,19 @@ class SettingBagTestCase(unittest.TestCase):
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
-        options_tt : list[Literal[OPTION.display]] = [OPTION.display]
-        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]
-        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]
-        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]
-        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]
-        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]
-        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]
-        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]
-        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]
-        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]
-        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]
-        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]
-        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                       # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]   # type: ignore
+        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
+        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]                        # type: ignore
+        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]                   # type: ignore
+        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                         # type: ignore
+        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]       # type: ignore
+        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]   # type: ignore
+        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]                           # type: ignore
+        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                      # type: ignore
+        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
+        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                # type: ignore
+        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
         tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
