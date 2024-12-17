@@ -15,10 +15,9 @@ from enum import StrEnum, auto
 from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
 from typing import Any, Callable, Literal, Optional, Tuple, cast
-
-# LOCAL MODULES
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
 
+# LOCAL MODULES
 # CONSTANTS
 class TTCN(StrEnum):
     

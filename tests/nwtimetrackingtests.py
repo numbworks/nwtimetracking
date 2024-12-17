@@ -10,14 +10,15 @@ from parameterized import parameterized
 from types import FunctionType
 from typing import Any, Literal, Optional, Tuple, cast
 from unittest.mock import Mock, patch
+from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMDFManager, TimeTrackingProcessor, YearlyTarget, EffortStatus, MDInfo, TTSummary
-from nwtimetracking import DefaultPathProvider, YearProvider, SoftwareProjectNameProvider, MDInfoProvider, SettingBag
-from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, ComponentBag
+from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMDFManager, TimeTrackingProcessor
+from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
+from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
+from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter
 
 # SUPPORT METHODS
 class SupportMethodProvider():
