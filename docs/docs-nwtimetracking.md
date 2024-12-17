@@ -173,6 +173,14 @@ Considering the old-fashioned syntax adopted by both `make` and `bash`, here a s
 | `$@` | Variable that stores the target name. |
 | `if [[ ... ]]` | Double square brackets to enable pattern matching. |
 
+## BYMDFManager
+
+The scope of this class is to partition a “by month” table in smaller tables, following a custom logic. 
+
+Here a visual example of how its algorithm works:
+
+![Diagram-BYMDFManager.png](Diagrams/Diagram-BYMDFManager.png)
+
 ## Known Issues - nwshared
 
 If `nwshared` creates some issues for you, please refer to [its documentation on Github](https://github.com/numbworks/nwshared/blob/master/docs/docs-nwshared.md).
