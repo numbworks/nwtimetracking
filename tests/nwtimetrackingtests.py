@@ -2036,6 +2036,32 @@ class BYMDFManagerTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+
+    def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.create_tts_by_month_df()
+        expected_column_names : list[list[str]] = [
+            ['Month', '2015', '↕', '2016', '↕', '2017', '↕', '2018'],
+            ['Month', '2018', '↕', '2019', '↕', '2020', '↕', '2021'],
+            ['Month', '2021', '↕', '2022', '↕', '2023', '↕', '2024']
+        ]
+        
+        # Act
+        sub_dfs : list[DataFrame] = self.bymdf_manager.create_sub_dfs(df = df)
+        
+        # Assert
+        self.assertEqual(len(sub_dfs), len(expected_column_names))
+        for i, sub_df in enumerate(sub_dfs):
+            self.assertEqual(sub_df.columns.tolist(), expected_column_names[i])
+    def test_createsubdfs_shouldraiseexception_wheninvaliddf(self) -> None:
+        
+        # Arrange
+        df : DataFrame = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        
+        # Act & Assert
+        with self.assertRaises(Exception):
+            self.bymdf_manager.create_sub_dfs(df = df)
 class TTMarkdownFactoryTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
