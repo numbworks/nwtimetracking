@@ -26,3 +26,7 @@ RUN pip install mypy==1.13.0
 RUN pip install pandas-stubs==2.2.3.241009
 RUN pip install types-openpyxl==3.1.5.20241126
 RUN pip install types-requests==2.32.0.20241016
+RUN pip install radon==6.0.1
+
+# OTHERS
+RUN pip install --upgrade pip==24.3.1
