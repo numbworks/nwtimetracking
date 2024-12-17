@@ -1,3 +1,9 @@
+v4.5.0
+- Library:
+	- Feature: added support for splitting the "by month" Markdown table in clusters, so that it looks better on Github (BYMDFManager).
+- Documentation:
+	- Feature: updated to v4.5.0.
+
 v4.0.0 - BREAKING CHANGES
 - Application:
 	- Feature: re-structured the whole architecture to simplify usage and future expansions.
