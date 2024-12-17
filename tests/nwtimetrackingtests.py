@@ -2558,7 +2558,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tt = ["display"]
+        setting_bag.options_tt = [OPTION.display]   # type: ignore
         setting_bag.tt_head_n = 5
         setting_bag.tt_display_head_n_with_tail = False
         setting_bag.tt_hide_index = True
@@ -2590,7 +2590,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_month = ["display"]
+        setting_bag.options_tts_by_month = [OPTION.display]     # type: ignore
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2618,7 +2618,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year = ["display"]      
+        setting_bag.options_tts_by_year = [OPTION.display]  # type: ignore
         
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2646,7 +2646,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_month = ["display"]
+        setting_bag.options_tts_by_year_month = [OPTION.display]    # type: ignore
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2674,7 +2674,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_month_spnv = ["display"]
+        setting_bag.options_tts_by_year_month_spnv = [OPTION.display]   # type: ignore
         setting_bag.tts_by_year_month_spnv_formatters = {"%_DME": "{:.2f}", "%_TME": "{:.2f}"}
 
         # Act
@@ -2704,7 +2704,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
         
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_spnv = ["display"]
+        setting_bag.options_tts_by_year_spnv = [OPTION.display]     # type: ignore
         setting_bag.tts_by_year_spnv_formatters = {"%_DYE": "{:.2f}", "%_TYE": "{:.2f}"}
 
         # Act
@@ -2736,7 +2736,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn = ["display"]
+        setting_bag.options_tts_by_spn = [OPTION.display]   # type: ignore
         setting_bag.tts_by_spn_formatters = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
 
         # Act
@@ -2768,7 +2768,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn_spv = ["display"]
+        setting_bag.options_tts_by_spn_spv = [OPTION.display]   # type: ignore
 
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2796,7 +2796,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_hashtag = ["display"]
+        setting_bag.options_tts_by_hashtag = [OPTION.display]   # type: ignore
         setting_bag.tts_by_hashtag_formatters = {"Effort%" : "{:.2f}"}
 
         # Act
@@ -2827,7 +2827,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_efs = ["display"]
+        setting_bag.options_tts_by_efs = [OPTION.display]   # type: ignore
 
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2855,7 +2855,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_tr = ["display"]
+        setting_bag.options_tts_by_tr = [OPTION.display]    # type: ignore
         setting_bag.tts_by_tr_head_n = uint(10)
 
         # Act
@@ -2884,7 +2884,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_definitions = ["display"]
+        setting_bag.options_definitions = [OPTION.display]  # type: ignore
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2909,7 +2909,8 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         ["process_tts_by_hashtag_year"],
         ["process_tts_by_efs"],
         ["process_tts_by_tr"],
-        ["process_definitions"]
+        ["process_definitions"],
+        ["get_summary"]
     ])
     def test_processmethod_shouldraiseexception_wheninitializenotrun(self, method_name : str) -> None:
         
