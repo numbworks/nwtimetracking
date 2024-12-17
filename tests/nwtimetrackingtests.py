@@ -1976,6 +1976,21 @@ class BYMDFManagerTestCase(unittest.TestCase):
         self.assertEqual(expected, actual)
 
     @parameterized.expand([
+        [[0, 1], [0, 1]],
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]]
+    ])
+    def test_createcolumnnumbers_shouldreturnexpectedcolumnnumbers_wheninvoked(self, index_list : list[int], expected : list[int]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.create_tts_by_month_df(index_list = index_list)
+        
+        # Act
+        actual : list[int] = self.bymdf_manager._BYMDFManager__create_column_numbers(df = df) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
         [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17, 18, 19] ]],
         [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17] ]]
     ])
