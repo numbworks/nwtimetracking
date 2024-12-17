@@ -366,7 +366,7 @@ class ObjectMother():
             
         return (df1, df2)
     @staticmethod
-    def create_tts_by_month_df(index_list : list[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]) -> DataFrame:
+    def get_tts_by_month_df(index_list : list[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]) -> DataFrame:
 
         '''
             index_list: [0, 1]
@@ -1980,7 +1980,7 @@ class BYMDFManagerTestCase(unittest.TestCase):
     def test_createcolumnnumbers_shouldreturnexpectedcolumnnumbers_wheninvoked(self, index_list : list[int], expected : list[int]) -> None:
         
         # Arrange
-        df : DataFrame = ObjectMother.create_tts_by_month_df(index_list = index_list)
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
         
         # Act
         actual : list[int] = self.bymdf_manager._BYMDFManager__create_column_numbers(df = df) # type: ignore
@@ -1995,7 +1995,7 @@ class BYMDFManagerTestCase(unittest.TestCase):
     def test_filterbyindexlist_shouldreturnfiltereddf_wheninvoked(self, index_list : list[int], expected_indices : list[int]) -> None:
         
         # Arrange
-        df : DataFrame = ObjectMother.create_tts_by_month_df(index_list = index_list)
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
         expected_columns : list[str] = [df.columns[i] for i in expected_indices]
         
         # Act
@@ -2011,7 +2011,7 @@ class BYMDFManagerTestCase(unittest.TestCase):
     def test_filterbyindexlists_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_indices : list[list[int]]) -> None:
         
         # Arrange
-        df : DataFrame = ObjectMother.create_tts_by_month_df(index_list = index_list)
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
         expected_columns : list[list[str]] = [[df.columns[i] for i in index_list] for index_list in expected_indices]
         
         # Act
@@ -2048,7 +2048,7 @@ class BYMDFManagerTestCase(unittest.TestCase):
     def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_column_names : list[list[str]]) -> None:
         
         # Arrange
-        df : DataFrame = ObjectMother.create_tts_by_month_df(index_list = index_list)
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
         
         # Act
         sub_dfs : list[DataFrame] = self.bymdf_manager.create_sub_dfs(df = df)
@@ -2074,24 +2074,46 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
             markdown_helper = MarkdownHelper(formatter = Formatter()),
             bymdf_manager = BYMDFManager()
         )
-    def test_createttsbymonthmd_shouldreturnexpectedstring_wheninvoked(self) -> None:
+        self.paragraph_title : str = "Time Tracking By Month"
+        self.last_update : datetime = datetime(2024, 11, 30)
+    def test_createttsbymonthmd_shouldreturnexpectedstring_whenenablegithuboptimizationsisfalse(self) -> None:
 
 		# Arrange
-        paragraph_title : str = "Time Tracking By Month"
-        last_update : datetime = datetime(2024, 11, 30)
+        enable_github_optimizations : bool = False
         tts_by_month_upd_df : DataFrame = ObjectMother().get_tts_by_month_tpl()[0]
         expected : str = ObjectMother().get_tts_by_month_md()
+        expected_newlines : int = (9 + 14)
 
         # Act
         actual : str = self.md_factory.create_tts_by_month_md(
-            paragraph_title = paragraph_title, 
-            last_update = last_update, 
+            paragraph_title = self.paragraph_title, 
+            last_update = self.last_update, 
             tts_by_month_upd_df = tts_by_month_upd_df,
-            enable_github_optimizations = False
+            enable_github_optimizations = enable_github_optimizations
         )
+        actual_newlines : int = actual.count("\n")
 
         # Assert
         self.assertEqual(expected, actual)
+        self.assertEqual(expected_newlines, actual_newlines)
+    def test_createttsbymonthmd_shouldreturnexpectedstring_whenenablegithuboptimizationsistrue(self) -> None:
+
+		# Arrange
+        enable_github_optimizations : bool = True
+        tts_by_month_upd_df : DataFrame = ObjectMother().get_tts_by_month_df()
+        expected_newlines : int = (9 + 14 + 14 + 14 + 2)
+
+        # Act
+        actual : str = self.md_factory.create_tts_by_month_md(
+            paragraph_title = self.paragraph_title, 
+            last_update = self.last_update, 
+            tts_by_month_upd_df = tts_by_month_upd_df,
+            enable_github_optimizations = enable_github_optimizations
+        )
+        actual_newlines : int = actual.count("\n")
+
+        # Assert
+        self.assertEqual(expected_newlines, actual_newlines)
 class TTAdapterTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
