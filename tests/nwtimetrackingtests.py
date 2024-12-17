@@ -2,9 +2,7 @@
 import unittest
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from datetime import date
-from datetime import timedelta
+from datetime import datetime, date, timedelta
 from numpy import int64, uint
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
@@ -2037,15 +2035,20 @@ class BYMDFManagerTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected, actual)
 
-    def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self) -> None:
+    @parameterized.expand([
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 
+            [ ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], ["Month", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], ["Month", "2021", "↕", "2022", "↕", "2023", "↕", "2024"] ]
+        ],
+        [
+            [0, 1], 
+            [ ["Month", "2015"] ]
+        ]
+    ])
+    def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_column_names : list[list[str]]) -> None:
         
         # Arrange
-        df : DataFrame = ObjectMother.create_tts_by_month_df()
-        expected_column_names : list[list[str]] = [
-            ['Month', '2015', '↕', '2016', '↕', '2017', '↕', '2018'],
-            ['Month', '2018', '↕', '2019', '↕', '2020', '↕', '2021'],
-            ['Month', '2021', '↕', '2022', '↕', '2023', '↕', '2024']
-        ]
+        df : DataFrame = ObjectMother.create_tts_by_month_df(index_list = index_list)
         
         # Act
         sub_dfs : list[DataFrame] = self.bymdf_manager.create_sub_dfs(df = df)
@@ -2054,6 +2057,7 @@ class BYMDFManagerTestCase(unittest.TestCase):
         self.assertEqual(len(sub_dfs), len(expected_column_names))
         for i, sub_df in enumerate(sub_dfs):
             self.assertEqual(sub_df.columns.tolist(), expected_column_names[i])
+    
     def test_createsubdfs_shouldraiseexception_wheninvaliddf(self) -> None:
         
         # Arrange
