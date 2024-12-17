@@ -2394,6 +2394,17 @@ class TimeTrackingProcessor():
 
         if "display" in options:
             self.__component_bag.displayer.display(df = df)
+    def get_summary(self) -> TTSummary:
+
+        '''
+            Returns __tt_summary.
+
+            It raises an exception if the 'initialize' method has not been run yet.    
+        '''
+
+        self.__validate_summary()
+
+        return self.__tt_summary
 
 # MAIN
 if __name__ == "__main__":

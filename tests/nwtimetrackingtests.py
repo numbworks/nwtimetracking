@@ -96,19 +96,19 @@ class ObjectMother():
     def get_setting_bag() -> SettingBag:
 
         setting_bag : SettingBag = SettingBag(
-            options_tt = ["display"],
-            options_tts_by_month = ["display", "save"],
-            options_tts_by_year = ["display"],
-            options_tts_by_year_month = ["display"],
-            options_tts_by_year_month_spnv = ["display"],
-            options_tts_by_year_spnv = ["display"],
-            options_tts_by_spn = ["display", "log"],
+            options_tt = [OPTION.display],                          # type: ignore
+            options_tts_by_month = [OPTION.display, OPTION.save],   # type: ignore
+            options_tts_by_year = [OPTION.display],                 # type: ignore
+            options_tts_by_year_month = [OPTION.display],           # type: ignore
+            options_tts_by_year_month_spnv = [OPTION.display],      # type: ignore
+            options_tts_by_year_spnv = [OPTION.display],            # type: ignore
+            options_tts_by_spn = [OPTION.display, OPTION.log],      # type: ignore
             options_tts_by_spn_spv = [],
-            options_tts_by_hashtag = ["display"],
-            options_tts_by_hashtag_year = ["display"],
-            options_tts_by_efs = ["display"],
-            options_tts_by_tr = ["display"],
-            options_definitions = ["display"],
+            options_tts_by_hashtag = [OPTION.display],              # type: ignore
+            options_tts_by_hashtag_year = [OPTION.display],         # type: ignore
+            options_tts_by_efs = [OPTION.display],                  # type: ignore
+            options_tts_by_tr = [OPTION.display],                   # type: ignore
+            options_definitions = [OPTION.display],                 # type: ignore
             excel_nrows = 1301,
             tts_by_year_month_spnv_display_only_spn = "nwtimetracking",
             tts_by_year_spnv_display_only_spn = "nwtimetracking",
