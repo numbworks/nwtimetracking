@@ -15,7 +15,7 @@ from unittest.mock import Mock, patch
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, _MessageCollection, BYMDFManager, TimeTrackingProcessor, YearlyTarget, EffortStatus, MDInfo, TTSummary
+from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMDFManager, TimeTrackingProcessor, YearlyTarget, EffortStatus, MDInfo, TTSummary
 from nwtimetracking import DefaultPathProvider, YearProvider, SoftwareProjectNameProvider, MDInfoProvider, SettingBag
 from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, ComponentBag
 
@@ -982,19 +982,19 @@ class SettingBagTestCase(unittest.TestCase):
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
-        options_tt : list[Literal["display"]] = ["display"]
-        options_tts_by_month : list[Literal["display", "save"]] = ["display", "save"]
-        options_tts_by_year : list[Literal["display"]] = ["display"]
-        options_tts_by_year_month : list[Literal["display"]] = ["display"]
-        options_tts_by_year_month_spnv : list[Literal["display"]] = ["display"]
-        options_tts_by_year_spnv : list[Literal["display"]] = ["display"]
-        options_tts_by_spn : list[Literal["display", "log"]] = ["display", "log"]
-        options_tts_by_spn_spv : list[Literal["display", "log"]] = ["display", "log"]
-        options_tts_by_hashtag : list[Literal["display"]] = ["display"]
-        options_tts_by_hashtag_year : list[Literal["display"]] = ["display"]
-        options_tts_by_efs : list[Literal["display"]] = ["display"]
-        options_tts_by_tr : list[Literal["display"]] = ["display"]
-        options_definitions : list[Literal["display"]] = ["display"]
+        options_tt : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]
+        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]
+        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]
+        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]
+        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]
+        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
         tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
@@ -2151,6 +2151,7 @@ class TTAdapterTestCase(unittest.TestCase):
                 MDInfo(id = TTID.TTSBYMONTH, file_name = "TIMETRACKINGBYMONTH.md", paragraph_title = "Time Tracking By Month")
             ]
         self.md_last_update : datetime = datetime(2023, 11, 25)
+        self.md_enable_github_optimizations : bool = True
 
         # Other
         self.paragraph_title : str = "Time Tracking By Month"
@@ -2446,6 +2447,7 @@ class TTAdapterTestCase(unittest.TestCase):
         setting_bag : Mock = Mock()
         setting_bag.md_infos = self.md_infos
         setting_bag.md_last_update = self.md_last_update
+        setting_bag.md_enable_github_optimizations = self.md_enable_github_optimizations
 
         tts_by_month_tpl : Tuple[Mock, Mock] = (Mock(), Mock())
 
@@ -2456,7 +2458,8 @@ class TTAdapterTestCase(unittest.TestCase):
         md_factory.create_tts_by_month_md.assert_called_once_with(
             paragraph_title = self.md_infos[0].paragraph_title,
             last_update = self.md_last_update,
-            tts_by_month_upd_df = tts_by_month_tpl[1]
+            tts_by_month_upd_df = tts_by_month_tpl[1],
+            enable_github_optimizations = self.md_enable_github_optimizations
         )
     def test_createsummary_shouldreturnexpectedsummary_wheninvoked(self) -> None:
 

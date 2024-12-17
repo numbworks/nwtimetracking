@@ -11,7 +11,7 @@ import pandas as pd
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from enum import StrEnum
+from enum import StrEnum, auto
 from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
 from typing import Any, Callable, Literal, Optional, Tuple, cast
@@ -72,6 +72,13 @@ class DEFINITIONSCN(StrEnum):
 
     TERM = "Term"
     DEFINITION = "Definition"
+class OPTION(StrEnum):
+
+    '''Represents a collection of source ids.'''
+
+    display = auto()
+    save = auto()
+    log = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -255,8 +262,7 @@ class SoftwareProjectNameProvider():
             "nwtimetracking",
             "nwtraderaanalytics",
             "nwshared",
-            "nwpackageversions",
-            "nwtraderaanalytics"
+            "nwpackageversions"
         ]
 
         return software_project_names
@@ -298,19 +304,19 @@ class SettingBag():
     '''Represents a collection of settings.'''
 
     # Without Defaults
-    options_tt : list[Literal["display"]]
-    options_tts_by_month : list[Literal["display", "save"]]
-    options_tts_by_year : list[Literal["display"]]
-    options_tts_by_year_month : list[Literal["display"]]
-    options_tts_by_year_month_spnv : list[Literal["display"]]
-    options_tts_by_year_spnv : list[Literal["display"]]    
-    options_tts_by_spn : list[Literal["display", "log"]]
-    options_tts_by_spn_spv : list[Literal["display", "log"]]
-    options_tts_by_hashtag : list[Literal["display"]]
-    options_tts_by_hashtag_year : list[Literal["display"]]
-    options_tts_by_efs : list[Literal["display"]]
-    options_tts_by_tr : list[Literal["display"]]
-    options_definitions : list[Literal["display"]]    
+    options_tt : list[Literal[OPTION.display]]
+    options_tts_by_month : list[Literal[OPTION.display, OPTION.save]]
+    options_tts_by_year : list[Literal[OPTION.display]]
+    options_tts_by_year_month : list[Literal[OPTION.display]]
+    options_tts_by_year_month_spnv : list[Literal[OPTION.display]]
+    options_tts_by_year_spnv : list[Literal[OPTION.display]]    
+    options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]]
+    options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]]
+    options_tts_by_hashtag : list[Literal[OPTION.display]]
+    options_tts_by_hashtag_year : list[Literal[OPTION.display]]
+    options_tts_by_efs : list[Literal[OPTION.display]]
+    options_tts_by_tr : list[Literal[OPTION.display]]
+    options_definitions : list[Literal[OPTION.display]]    
     excel_nrows : int
     tts_by_year_month_spnv_display_only_spn : Optional[str]
     tts_by_year_spnv_display_only_spn : Optional[str]
