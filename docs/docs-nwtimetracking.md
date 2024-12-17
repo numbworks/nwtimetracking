@@ -16,6 +16,7 @@ Contact: numbworks@gmail.com
 | 2024-10-28 | numbworks | Updated to v3.8.0. |
 | 2024-12-01 | numbworks | Updated to v3.9.0. |
 | 2024-12-05 | numbworks | Updated to v4.0.0. |
+| 2024-12-17 | numbworks | Updated to v4.5.0. |
 
 ## Introduction
 
@@ -140,18 +141,24 @@ The avalaible target names are:
 | type-verbose | Runs a type verification task and logs everything. |
 | coverage-verbose | Runs a unit test coverage calculation task and logs the % per class. |
 | tryinstall-verbose | Simulates a "pip install" and logs everything. |
+| compile-verbose | Runs "python" command against the module file. |
+| unittest-verbose | Runs "python" command against the test files. |
+| codemetrics-verbose | Runs a cyclomatic complexity analysis against all the nw*.py files in /src. |
 | all-concise | Runs a batch of verification tasks and logs one summary line for each of them. |
 
 The expected outcome for `all-concise` is:
 
 ```
 MODULE_NAME: nwtimetracking
-MODULE_VERSION: 4.0.0
+MODULE_VERSION: 4.5.0
 COVERAGE_THRESHOLD: 70%
 [OK] type-concise: passed!
 [OK] changelog-concise: 'CHANGELOG' updated to current version!
 [OK] setup-concise: 'setup.py' updated to current version!
 [OK] coverage-concise: unit test coverage >= 70%.
+[OK] compile-concise: compiling the library throws no issues.
+[OK] unittest-concise: '268' tests found and run.
+[OK] codemetrics-concise: the cyclomatic complexity is excellent ('A').
 [OK] tryinstall-concise: installation process works.
 ```
 
