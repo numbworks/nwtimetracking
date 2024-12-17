@@ -10,7 +10,7 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
-from typing import Literal, Optional, Tuple, cast
+from typing import Any, Literal, Optional, Tuple, cast
 from unittest.mock import Mock, patch
 
 # LOCAL MODULES
@@ -1877,6 +1877,39 @@ class BYMDFManagerTestCase(unittest.TestCase):
         self.bymdf_manager = BYMDFManager()
     
     @parameterized.expand([
+        (2024, True),
+        (1000, True),
+        (9999, True),
+        (999, False),
+        (10000, False),
+        ("year", False)
+    ])
+    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_year(value = value)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (2, True),
+        (0, True),
+        (-4, True),
+        (3, False),
+        (-5, False),
+    ])
+    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_even(number = number)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
         [["Month", "2015"], True],
         [["Month", "2015", "↕", "2016"], True],
         [["Month", "2015", "↕", "2016", "↕", "2017"], True],
@@ -1904,6 +1937,40 @@ class BYMDFManagerTestCase(unittest.TestCase):
         # Arrange
         # Act
         actual : bool = self.bymdf_manager._BYMDFManager__is_valid(column_list = column_list) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (1, True),
+        (7, True),
+        (13, True),
+        (25, True),
+        (49, True),
+        (8, False),
+        (-7, False),
+    ])
+    def test_isinsequence_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_in_sequence(number = number)  # type: ignore
+        
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (1, [1], True),
+        (5, [1, 2, 3, 4, 5], True),
+        (1, [], False),
+        (0, [1], False),
+        (4, [1, 2, 3, 4, 5], False),
+    ])
+    def test_islast_shouldreturnexpectedbool_wheninvoked(self, number : int, lst : list[int], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_last(number = number, lst = lst)  # type: ignore
 
         # Assert
         self.assertEqual(expected, actual)
