@@ -2,24 +2,23 @@
 import unittest
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from datetime import date
-from datetime import timedelta
+from datetime import datetime, date, timedelta
 from numpy import int64, uint
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
-from typing import Literal, Optional, Tuple, cast
+from typing import Any, Literal, Optional, Tuple, cast
 from unittest.mock import Mock, patch
+from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, _MessageCollection, TimeTrackingProcessor, YearlyTarget, EffortStatus, MDInfo, TTSummary
-from nwtimetracking import DefaultPathProvider, YearProvider, SoftwareProjectNameProvider, MDInfoProvider, SettingBag
-from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, ComponentBag
+from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMDFManager, TimeTrackingProcessor
+from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
+from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
+from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -97,19 +96,19 @@ class ObjectMother():
     def get_setting_bag() -> SettingBag:
 
         setting_bag : SettingBag = SettingBag(
-            options_tt = ["display"],
-            options_tts_by_month = ["display", "save"],
-            options_tts_by_year = ["display"],
-            options_tts_by_year_month = ["display"],
-            options_tts_by_year_month_spnv = ["display"],
-            options_tts_by_year_spnv = ["display"],
-            options_tts_by_spn = ["display", "log"],
+            options_tt = [OPTION.display],                          # type: ignore
+            options_tts_by_month = [OPTION.display, OPTION.save],   # type: ignore
+            options_tts_by_year = [OPTION.display],                 # type: ignore
+            options_tts_by_year_month = [OPTION.display],           # type: ignore
+            options_tts_by_year_month_spnv = [OPTION.display],      # type: ignore
+            options_tts_by_year_spnv = [OPTION.display],            # type: ignore
+            options_tts_by_spn = [OPTION.display, OPTION.log],      # type: ignore
             options_tts_by_spn_spv = [],
-            options_tts_by_hashtag = ["display"],
-            options_tts_by_hashtag_year = ["display"],
-            options_tts_by_efs = ["display"],
-            options_tts_by_tr = ["display"],
-            options_definitions = ["display"],
+            options_tts_by_hashtag = [OPTION.display],              # type: ignore
+            options_tts_by_hashtag_year = [OPTION.display],         # type: ignore
+            options_tts_by_efs = [OPTION.display],                  # type: ignore
+            options_tts_by_tr = [OPTION.display],                   # type: ignore
+            options_definitions = [OPTION.display],                 # type: ignore
             excel_nrows = 1301,
             tts_by_year_month_spnv_display_only_spn = "nwtimetracking",
             tts_by_year_spnv_display_only_spn = "nwtimetracking",
@@ -121,16 +120,16 @@ class ObjectMother():
     def get_excel_data() -> DataFrame:
 
         excel_data_dict : dict = {
-            "Date": "2015-10-31",
-            "StartTime": "",
-            "EndTime": "",
-            "Effort": "8h 00m",
-            "Hashtag": "#untagged",
-            "Descriptor": "",
-            "IsSoftwareProject": "False",
-            "IsReleaseDay": "False",
-            "Year": "2015",
-            "Month": "10"
+            TTCN.DATE: "2015-10-31",
+            TTCN.STARTTIME: "",
+            TTCN.ENDTIME: "",
+            TTCN.EFFORT: "8h 00m",
+            TTCN.HASHTAG: "#untagged",
+            TTCN.DESCRIPTOR: "",
+            TTCN.ISSOFTWAREPROJECT: "False",
+            TTCN.ISRELEASEDAY: "False",
+            TTCN.YEAR: "2015",
+            TTCN.MONTH: "10"
             }
         excel_data_df : DataFrame = pd.DataFrame(data = excel_data_dict, index=[0])
 
@@ -139,16 +138,16 @@ class ObjectMother():
     def get_tt_df_column_names() -> list[str]:
 
         column_names : list[str] = []
-        column_names.append("Date")                 # [0], date
-        column_names.append("StartTime")            # [1], str
-        column_names.append("EndTime")              # [2], str
-        column_names.append("Effort")               # [3], str
-        column_names.append("Hashtag")              # [4], str
-        column_names.append("Descriptor")           # [5], str
-        column_names.append("IsSoftwareProject")    # [6], bool
-        column_names.append("IsReleaseDay")         # [7], bool
-        column_names.append("Year")                 # [8], int
-        column_names.append("Month")                # [9], int
+        column_names.append(TTCN.DATE)                 # [0], date
+        column_names.append(TTCN.STARTTIME)            # [1], str
+        column_names.append(TTCN.ENDTIME)              # [2], str
+        column_names.append(TTCN.EFFORT)               # [3], str
+        column_names.append(TTCN.HASHTAG)              # [4], str
+        column_names.append(TTCN.DESCRIPTOR)           # [5], str
+        column_names.append(TTCN.ISSOFTWAREPROJECT)    # [6], bool
+        column_names.append(TTCN.ISRELEASEDAY)         # [7], bool
+        column_names.append(TTCN.YEAR)                 # [8], int
+        column_names.append(TTCN.MONTH)                # [9], int
 
         return column_names
     @staticmethod
@@ -200,16 +199,16 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Date': np.array([date(2024, 2, 12), date(2024, 2, 13), date(2024, 2, 13), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 15), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 25), date(2024, 2, 25), date(2024, 2, 26)], dtype=str),
-                'StartTime': np.array(['21:00', '11:00', '14:30', '08:00', '17:15', '20:00', '17:15', '11:00', '13:30', '17:00', '22:00', '23:00', '11:15', '15:30', '20:15', '08:45', '13:30', '15:30', '10:15', '14:00', '08:15'], dtype=str),
-                'EndTime': np.array(['22:00', '13:00', '16:45', '08:30', '18:00', '20:15', '17:45', '12:30', '15:00', '18:00', '23:00', '23:30', '13:00', '18:00', '21:15', '12:15', '14:00', '16:30', '13:00', '19:45', '12:45'], dtype=str),
-                'Effort': np.array(['1h 00m', '2h 00m', '2h 15m', '0h 30m', '0h 45m', '0h 15m', '0h 30m', '1h 30m', '1h 30m', '1h 00m', '1h 00m', '0h 30m', '1h 45m', '2h 30m', '1h 00m', '3h 30m', '0h 30m', '1h 00m', '2h 45m', '5h 45m', '4h 30m'], dtype=str),
-                'Hashtag': np.array(['#maintenance', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#maintenance', '#maintenance', '#python', '#python', '#maintenance', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying'], dtype=str),
-                'Descriptor': np.array(['', 'NW.Shared.Serialization v1.0.0', 'NW.Shared.Serialization v1.0.0', 'NW.NGramTextClassification v4.2.0', 'NW.NGramTextClassification v4.2.0', 'NW.UnivariateForecasting v4.2.0', 'NW.UnivariateForecasting v4.2.0', '', '', 'nwreadinglistmanager v2.1.0', 'nwreadinglistmanager v2.1.0', '', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.'], dtype=str),
-                'IsSoftwareProject': np.array([False, True, True, True, True, True, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
-                'IsReleaseDay': np.array([False, True, True, True, True, False, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
-                'Year': np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int64),
-                'Month': np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int64),
+                TTCN.DATE: np.array([date(2024, 2, 12), date(2024, 2, 13), date(2024, 2, 13), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 14), date(2024, 2, 15), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 18), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 19), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 20), date(2024, 2, 25), date(2024, 2, 25), date(2024, 2, 26)], dtype=str),
+                TTCN.STARTTIME: np.array(['21:00', '11:00', '14:30', '08:00', '17:15', '20:00', '17:15', '11:00', '13:30', '17:00', '22:00', '23:00', '11:15', '15:30', '20:15', '08:45', '13:30', '15:30', '10:15', '14:00', '08:15'], dtype=str),
+                TTCN.ENDTIME: np.array(['22:00', '13:00', '16:45', '08:30', '18:00', '20:15', '17:45', '12:30', '15:00', '18:00', '23:00', '23:30', '13:00', '18:00', '21:15', '12:15', '14:00', '16:30', '13:00', '19:45', '12:45'], dtype=str),
+                TTCN.EFFORT: np.array(['1h 00m', '2h 00m', '2h 15m', '0h 30m', '0h 45m', '0h 15m', '0h 30m', '1h 30m', '1h 30m', '1h 00m', '1h 00m', '0h 30m', '1h 45m', '2h 30m', '1h 00m', '3h 30m', '0h 30m', '1h 00m', '2h 45m', '5h 45m', '4h 30m'], dtype=str),
+                TTCN.HASHTAG: np.array(['#maintenance', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#csharp', '#maintenance', '#maintenance', '#python', '#python', '#maintenance', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying', '#studying'], dtype=str),
+                TTCN.DESCRIPTOR: np.array(['', 'NW.Shared.Serialization v1.0.0', 'NW.Shared.Serialization v1.0.0', 'NW.NGramTextClassification v4.2.0', 'NW.NGramTextClassification v4.2.0', 'NW.UnivariateForecasting v4.2.0', 'NW.UnivariateForecasting v4.2.0', '', '', 'nwreadinglistmanager v2.1.0', 'nwreadinglistmanager v2.1.0', '', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.', 'Books.'], dtype=str),
+                TTCN.ISSOFTWAREPROJECT: np.array([False, True, True, True, True, True, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
+                TTCN.ISRELEASEDAY: np.array([False, True, True, True, True, False, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.MONTH: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int64),
             }, index=pd.RangeIndex(start=980, stop=1001, step=1))
     @staticmethod
     def get_tts_by_year_df() -> DataFrame:
@@ -220,11 +219,11 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024], dtype=int64),
-                'Effort': np.array(['36h 00m'], dtype=object),
-                'YearlyTarget': np.array(['250h 00m'], dtype=object),
-                'TargetDiff': np.array(['-214h 00m'], dtype=object),
-                'IsTargetMet': np.array([False], dtype=bool),
+                TTCN.YEAR: np.array([2024], dtype=int64),
+                TTCN.EFFORT: np.array(['36h 00m'], dtype=object),
+                TTCN.YEARLYTARGET: np.array(['250h 00m'], dtype=object),
+                TTCN.TARGETDIFF: np.array(['-214h 00m'], dtype=object),
+                TTCN.ISTARGETMET: np.array([False], dtype=bool),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))
     @staticmethod
     def get_tts_by_year_month_tpl() -> Tuple[DataFrame, DataFrame]:
@@ -238,11 +237,11 @@ class ObjectMother():
         '''
 
         df : DataFrame = pd.DataFrame({
-                'Year': np.array([2024], dtype=int64),
-                'Month': np.array([2], dtype=int64),
-                'Effort': np.array(['36h 00m'], dtype=object),
-                'YearlyTotal': np.array(['36h 00m'], dtype=object),
-                'ToTarget': np.array(['-214h 00m'], dtype=object),
+                TTCN.YEAR: np.array([2024], dtype=int64),
+                TTCN.MONTH: np.array([2], dtype=int64),
+                TTCN.EFFORT: np.array(['36h 00m'], dtype=object),
+                TTCN.YEARLYTOTAL: np.array(['36h 00m'], dtype=object),
+                TTCN.TOTARGET: np.array(['-214h 00m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))
         
         return (df, df)
@@ -261,27 +260,27 @@ class ObjectMother():
         '''
 
         df1 : DataFrame = pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
-                'Month': np.array([2, 2, 2, 2], dtype=int64),
-                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
-                'DME': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                '%_DME': np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
-                'TME': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                '%_TME': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.MONTH: np.array([2, 2, 2, 2], dtype=int64),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+                TTCN.DME: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                TTCN.PERCDME: np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
+                TTCN.TME: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                TTCN.PERCTME: np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
         
         df2 : DataFrame = pd.DataFrame({
-                'Year': np.array([2024], dtype=int64),
-                'Month': np.array([2], dtype=int64),
-                'ProjectName': np.array(['NW.NGramTextClassification'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0'], dtype=object),
-                'Effort': np.array(['01h 15m'], dtype=object),
-                'DME': np.array(['08h 45m'], dtype=object),
-                '%_DME': np.array([14.29], dtype= np.float64),
-                'TME': np.array(['36h 00m'], dtype=object),
-                '%_TME': np.array([3.47], dtype= np.float64),
+                TTCN.YEAR: np.array([2024], dtype=int64),
+                TTCN.MONTH: np.array([2], dtype=int64),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m'], dtype=object),
+                TTCN.DME: np.array(['08h 45m'], dtype=object),
+                TTCN.PERCDME: np.array([14.29], dtype= np.float64),
+                TTCN.TME: np.array(['36h 00m'], dtype=object),
+                TTCN.PERCTME: np.array([3.47], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))        
 
         return (df1, df2)
@@ -300,25 +299,25 @@ class ObjectMother():
         '''
 
         df1 : DataFrame = pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
-                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
-                'DYE': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                '%_DYE': np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
-                'TYE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                '%_TYE': np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+                TTCN.DYE: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                TTCN.PERCDYE: np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
+                TTCN.TYE: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                TTCN.PERCTYE: np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
 
         df2 : DataFrame = pd.DataFrame({
-                'Year': np.array([2024], dtype=int64),
-                'ProjectName': np.array(['NW.NGramTextClassification'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0'], dtype=object),
-                'Effort': np.array(['01h 15m'], dtype=object),
-                'DYE': np.array(['08h 45m'], dtype=object),
-                '%_DYE': np.array([14.29], dtype= np.float64),
-                'TYE': np.array(['36h 00m'], dtype=object),
-                '%_TYE': np.array([3.47], dtype= np.float64),
+                TTCN.YEAR: np.array([2024], dtype=int64),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m'], dtype=object),
+                TTCN.DYE: np.array(['08h 45m'], dtype=object),
+                TTCN.PERCDYE: np.array([14.29], dtype= np.float64),
+                TTCN.TYE: np.array(['36h 00m'], dtype=object),
+                TTCN.PERCTYE: np.array([3.47], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=1, step=1))
 
         return (df1, df2)
@@ -334,9 +333,9 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'ProjectName': np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                'ProjectVersion': np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                'Effort': np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))    
     @staticmethod
     def get_tts_by_month_tpl() -> Tuple[DataFrame, DataFrame]:
@@ -357,16 +356,52 @@ class ObjectMother():
         '''
 
         df1 : DataFrame = pd.DataFrame({
-                'Month': np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
+                TTCN.MONTH: np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
                 '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)				
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
 
         df2 : DataFrame = pd.DataFrame({
-                'Month': np.array(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', ''], dtype=object),
+                TTCN.MONTH: np.array(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', ''], dtype=object),
                 '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', ''], dtype=object)				
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
             
         return (df1, df2)
+    @staticmethod
+    def get_tts_by_month_df(index_list : list[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]) -> DataFrame:
+
+        '''
+            index_list: [0, 1]
+            ...
+            index_list: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+        '''
+
+        df : DataFrame = pd.DataFrame({
+                TTCN.MONTH: np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
+                '2015': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2015': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2016': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2016': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2017': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2017': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2018': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2018': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2019': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2019': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2020': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2020': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2021': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2021': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2022': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2022': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),		
+                '2023': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
+                '↕_2023': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
+                '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)	
+            }, index=pd.RangeIndex(start=0, stop=12, step=1))
+        
+        df.rename(columns=lambda x: "↕" if x.startswith("↕_") else x, inplace=True)
+        df = df.iloc[:, index_list]
+
+        return df    
     @staticmethod
     def get_tts_by_tr_df() -> DataFrame:
 
@@ -381,8 +416,8 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'TimeRangeId': np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
-                'Occurrences': np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
+                TTCN.TIMERANGEID: np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
+                TTCN.OCCURRENCES: np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
             }, index=pd.RangeIndex(start=0, stop=21, step=1))    
     @staticmethod
     def get_tts_by_spn_df() -> DataFrame:
@@ -396,13 +431,13 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Hashtag': np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object),
-                'ProjectName': np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
-                'Effort': np.array(['02h 00m', '04h 15m', '01h 15m', '00h 45m'], dtype=object),
-                'DE': np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                '%_DE': np.array([22.86, 48.57, 14.29, 8.57], dtype= np.float64),
-                'TE': np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                '%_TE': np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
+                TTCN.HASHTAG: np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object),
+                TTCN.PROJECTNAME: np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
+                TTCN.EFFORT: np.array(['02h 00m', '04h 15m', '01h 15m', '00h 45m'], dtype=object),
+                TTCN.DE: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
+                TTCN.PERCDE: np.array([22.86, 48.57, 14.29, 8.57], dtype= np.float64),
+                TTCN.TE: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
+                TTCN.PERCTE: np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_tts_by_hashtag_year_df() -> DataFrame:
@@ -416,9 +451,9 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Year': np.array([2024, 2024, 2024, 2024], dtype=int64),
-                'Hashtag': np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
-                'Effort': np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.HASHTAG: np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
+                TTCN.EFFORT: np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_tts_by_hashtag_df() -> DataFrame:
@@ -432,9 +467,9 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                'Hashtag': np.array(['#studying', '#csharp', '#maintenance', '#python'], dtype=object),
-                'Effort': np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
-                'Effort%': np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
+                TTCN.HASHTAG: np.array(['#studying', '#csharp', '#maintenance', '#python'], dtype=object),
+                TTCN.EFFORT: np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
+                TTCN.EFFORTPERC: np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_definitions_df() -> DataFrame:
@@ -442,12 +477,12 @@ class ObjectMother():
         columns : list[str] = [DEFINITIONSCN.TERM, DEFINITIONSCN.DEFINITION]
 
         definitions : dict[str, str] = { 
-            "DME": "Development Monthly Effort",
-            "TME": "Total Monthly Effort",
-            "DYE": "Development Yearly Effort",
-            "TYE": "Total Yearly Effort",
-            "DE": "Development Effort",
-            "TE": "Total Effort"
+            TTCN.DME: "Development Monthly Effort",
+            TTCN.TME: "Total Monthly Effort",
+            TTCN.DYE: "Development Yearly Effort",
+            TTCN.TYE: "Total Yearly Effort",
+            TTCN.DE: "Development Effort",
+            TTCN.TE: "Total Effort"
         }
         
         definitions_df : DataFrame = DataFrame(
@@ -604,6 +639,19 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Act
         actual : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_provideddfinvalidcolumnlist_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        column_list : list[str] = ["Month", "2015"]
+        expected : str = (
+            f"The provided df has an invalid column list ('{column_list}')."
+        )
+
+        # Act
+        actual : str = _MessageCollection.provided_df_invalid_column_list(column_list = column_list)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -935,19 +983,19 @@ class SettingBagTestCase(unittest.TestCase):
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
-        options_tt : list[Literal["display"]] = ["display"]
-        options_tts_by_month : list[Literal["display", "save"]] = ["display", "save"]
-        options_tts_by_year : list[Literal["display"]] = ["display"]
-        options_tts_by_year_month : list[Literal["display"]] = ["display"]
-        options_tts_by_year_month_spnv : list[Literal["display"]] = ["display"]
-        options_tts_by_year_spnv : list[Literal["display"]] = ["display"]
-        options_tts_by_spn : list[Literal["display", "log"]] = ["display", "log"]
-        options_tts_by_spn_spv : list[Literal["display", "log"]] = ["display", "log"]
-        options_tts_by_hashtag : list[Literal["display"]] = ["display"]
-        options_tts_by_hashtag_year : list[Literal["display"]] = ["display"]
-        options_tts_by_efs : list[Literal["display"]] = ["display"]
-        options_tts_by_tr : list[Literal["display"]] = ["display"]
-        options_definitions : list[Literal["display"]] = ["display"]
+        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                       # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]   # type: ignore
+        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
+        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]                        # type: ignore
+        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]                   # type: ignore
+        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                         # type: ignore
+        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]       # type: ignore
+        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]   # type: ignore
+        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]                           # type: ignore
+        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                      # type: ignore
+        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
+        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                # type: ignore
+        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
         tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
@@ -979,6 +1027,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_by_tr_display_head_n_with_tail : bool = False
         md_infos : list = []
         md_last_update : datetime = datetime.now()
+        md_enable_github_optimizations : bool = True
 
 		# Act
         actual : SettingBag = SettingBag(
@@ -1025,7 +1074,8 @@ class SettingBagTestCase(unittest.TestCase):
             tts_by_tr_head_n = tts_by_tr_head_n,
             tts_by_tr_display_head_n_with_tail = tts_by_tr_display_head_n_with_tail,
             md_infos = md_infos,
-            md_last_update = md_last_update
+            md_last_update = md_last_update,
+            md_enable_github_optimizations = md_enable_github_optimizations
         )
 
 		# Assert
@@ -1073,6 +1123,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_tr_display_head_n_with_tail, tts_by_tr_display_head_n_with_tail)
         self.assertEqual(actual.md_infos, md_infos)
         self.assertEqual(actual.md_last_update, md_last_update)
+        self.assertEqual(actual.md_enable_github_optimizations, md_enable_github_optimizations)
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1819,28 +1870,251 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
+class BYMDFManagerTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.bymdf_manager = BYMDFManager()
+    
+    @parameterized.expand([
+        (2024, True),
+        (1000, True),
+        (9999, True),
+        (999, False),
+        (10000, False),
+        ("year", False)
+    ])
+    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_year(value = value)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (2, True),
+        (0, True),
+        (-4, True),
+        (3, False),
+        (-5, False),
+    ])
+    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_even(number = number)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [["Month", "2015"], True],
+        [["Month", "2015", "↕", "2016"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
+        [[], False],
+        [["Month"], False],
+        [["Month", "2015", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
+        [["Month", "↕"], False],
+        [["Month", "↕", "↕"], False],
+        [["Month", "2015", "2015"], False],
+        [["Month", "2015", "↕", "↕"], False]
+    ])
+    def test_isvalid_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_valid(column_list = column_list) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (1, True),
+        (7, True),
+        (13, True),
+        (25, True),
+        (49, True),
+        (8, False),
+        (-7, False),
+    ])
+    def test_isinsequence_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_in_sequence(number = number)  # type: ignore
+        
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (1, [1], True),
+        (5, [1, 2, 3, 4, 5], True),
+        (1, [], False),
+        (0, [1], False),
+        (4, [1, 2, 3, 4, 5], False),
+    ])
+    def test_islast_shouldreturnexpectedbool_wheninvoked(self, number : int, lst : list[int], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bymdf_manager._BYMDFManager__is_last(number = number, lst = lst)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [[0, 1], [0, 1]],
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]]
+    ])
+    def test_createcolumnnumbers_shouldreturnexpectedcolumnnumbers_wheninvoked(self, index_list : list[int], expected : list[int]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        
+        # Act
+        actual : list[int] = self.bymdf_manager._BYMDFManager__create_column_numbers(df = df) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [[0, 1, 2], [0, 2]],
+        [[0, 1, 2, 3, 4], [0, 1, 4]]
+    ])
+    def test_filterbyindexlist_shouldreturnfiltereddf_wheninvoked(self, index_list : list[int], expected_indices : list[int]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        expected_columns : list[str] = [df.columns[i] for i in expected_indices]
+        
+        # Act
+        filtered_df : DataFrame = self.bymdf_manager._BYMDFManager__filter_by_index_list(df = df, index_list = expected_indices) # type: ignore
+        
+        # Assert
+        self.assertEqual(filtered_df.columns.tolist(), expected_columns)
+
+    @parameterized.expand([
+        [[0, 1, 2, 3, 4], [[0, 1], [2, 3]]],
+        [[0, 1, 2, 3, 4, 5], [[0, 2, 4], [1, 3, 5]]]
+    ])
+    def test_filterbyindexlists_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_indices : list[list[int]]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        expected_columns : list[list[str]] = [[df.columns[i] for i in index_list] for index_list in expected_indices]
+        
+        # Act
+        sub_dfs : list[DataFrame] = self.bymdf_manager._BYMDFManager__filter_by_index_lists(df = df, index_lists = expected_indices) # type: ignore
+        
+        # Assert
+        self.assertEqual(len(sub_dfs), len(expected_columns))
+        for i, sub_df in enumerate(sub_dfs):
+            self.assertEqual(sub_df.columns.tolist(), expected_columns[i])
+
+    @parameterized.expand([
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17, 18, 19] ]],
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17] ]]
+    ])
+    def test_createindexlists_shouldreturnexpectedlistoflists_wheninvoked(self, column_numbers : list[int], expected : list[list[int]]) -> None:
+        
+        # Arrange
+        # Act
+        actual : list[list[int]] = self.bymdf_manager._BYMDFManager__create_index_lists(column_numbers = column_numbers) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 
+            [ ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], ["Month", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], ["Month", "2021", "↕", "2022", "↕", "2023", "↕", "2024"] ]
+        ],
+        [
+            [0, 1], 
+            [ ["Month", "2015"] ]
+        ]
+    ])
+    def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_column_names : list[list[str]]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        
+        # Act
+        sub_dfs : list[DataFrame] = self.bymdf_manager.create_sub_dfs(df = df)
+        
+        # Assert
+        self.assertEqual(len(sub_dfs), len(expected_column_names))
+        for i, sub_df in enumerate(sub_dfs):
+            self.assertEqual(sub_df.columns.tolist(), expected_column_names[i])
+    
+    def test_createsubdfs_shouldraiseexception_wheninvaliddf(self) -> None:
+        
+        # Arrange
+        df : DataFrame = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        
+        # Act & Assert
+        with self.assertRaises(Exception):
+            self.bymdf_manager.create_sub_dfs(df = df)
 class TTMarkdownFactoryTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
 
-        self.md_factory : TTMarkdownFactory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter()))
-    def test_createttsbymonthmd_shouldreturnexpectedstring_wheninvoked(self) -> None:
+        self.md_factory : TTMarkdownFactory = TTMarkdownFactory(
+            markdown_helper = MarkdownHelper(formatter = Formatter()),
+            bymdf_manager = BYMDFManager()
+        )
+        self.paragraph_title : str = "Time Tracking By Month"
+        self.last_update : datetime = datetime(2024, 11, 30)
+    def test_createttsbymonthmd_shouldreturnexpectedstring_whenenablegithuboptimizationsisfalse(self) -> None:
 
 		# Arrange
-        paragraph_title : str = "Time Tracking By Month"
-        last_update : datetime = datetime(2024, 11, 30)
+        enable_github_optimizations : bool = False
         tts_by_month_upd_df : DataFrame = ObjectMother().get_tts_by_month_tpl()[0]
         expected : str = ObjectMother().get_tts_by_month_md()
+        expected_newlines : int = (9 + 14)
 
         # Act
         actual : str = self.md_factory.create_tts_by_month_md(
-            paragraph_title = paragraph_title, 
-            last_update = last_update, 
-            tts_by_month_upd_df = tts_by_month_upd_df
+            paragraph_title = self.paragraph_title, 
+            last_update = self.last_update, 
+            tts_by_month_upd_df = tts_by_month_upd_df,
+            enable_github_optimizations = enable_github_optimizations
         )
+        actual_newlines : int = actual.count("\n")
 
         # Assert
         self.assertEqual(expected, actual)
+        self.assertEqual(expected_newlines, actual_newlines)
+    def test_createttsbymonthmd_shouldreturnexpectedstring_whenenablegithuboptimizationsistrue(self) -> None:
+
+		# Arrange
+        enable_github_optimizations : bool = True
+        tts_by_month_upd_df : DataFrame = ObjectMother().get_tts_by_month_df()
+        expected_newlines : int = (9 + 14 + 14 + 14 + 2)
+
+        # Act
+        actual : str = self.md_factory.create_tts_by_month_md(
+            paragraph_title = self.paragraph_title, 
+            last_update = self.last_update, 
+            tts_by_month_upd_df = tts_by_month_upd_df,
+            enable_github_optimizations = enable_github_optimizations
+        )
+        actual_newlines : int = actual.count("\n")
+
+        # Assert
+        self.assertEqual(expected_newlines, actual_newlines)
 class TTAdapterTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -1878,6 +2152,7 @@ class TTAdapterTestCase(unittest.TestCase):
                 MDInfo(id = TTID.TTSBYMONTH, file_name = "TIMETRACKINGBYMONTH.md", paragraph_title = "Time Tracking By Month")
             ]
         self.md_last_update : datetime = datetime(2023, 11, 25)
+        self.md_enable_github_optimizations : bool = True
 
         # Other
         self.paragraph_title : str = "Time Tracking By Month"
@@ -2173,6 +2448,7 @@ class TTAdapterTestCase(unittest.TestCase):
         setting_bag : Mock = Mock()
         setting_bag.md_infos = self.md_infos
         setting_bag.md_last_update = self.md_last_update
+        setting_bag.md_enable_github_optimizations = self.md_enable_github_optimizations
 
         tts_by_month_tpl : Tuple[Mock, Mock] = (Mock(), Mock())
 
@@ -2183,7 +2459,8 @@ class TTAdapterTestCase(unittest.TestCase):
         md_factory.create_tts_by_month_md.assert_called_once_with(
             paragraph_title = self.md_infos[0].paragraph_title,
             last_update = self.md_last_update,
-            tts_by_month_upd_df = tts_by_month_tpl[1]
+            tts_by_month_upd_df = tts_by_month_tpl[1],
+            enable_github_optimizations = self.md_enable_github_optimizations
         )
     def test_createsummary_shouldreturnexpectedsummary_wheninvoked(self) -> None:
 
@@ -2281,7 +2558,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tt = ["display"]
+        setting_bag.options_tt = [OPTION.display]   # type: ignore
         setting_bag.tt_head_n = 5
         setting_bag.tt_display_head_n_with_tail = False
         setting_bag.tt_hide_index = True
@@ -2313,7 +2590,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_month = ["display"]
+        setting_bag.options_tts_by_month = [OPTION.display]     # type: ignore
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2341,7 +2618,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year = ["display"]      
+        setting_bag.options_tts_by_year = [OPTION.display]  # type: ignore
         
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2369,7 +2646,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_month = ["display"]
+        setting_bag.options_tts_by_year_month = [OPTION.display]    # type: ignore
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2397,7 +2674,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_month_spnv = ["display"]
+        setting_bag.options_tts_by_year_month_spnv = [OPTION.display]   # type: ignore
         setting_bag.tts_by_year_month_spnv_formatters = {"%_DME": "{:.2f}", "%_TME": "{:.2f}"}
 
         # Act
@@ -2427,7 +2704,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
         
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_spnv = ["display"]
+        setting_bag.options_tts_by_year_spnv = [OPTION.display]     # type: ignore
         setting_bag.tts_by_year_spnv_formatters = {"%_DYE": "{:.2f}", "%_TYE": "{:.2f}"}
 
         # Act
@@ -2459,7 +2736,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn = ["display"]
+        setting_bag.options_tts_by_spn = [OPTION.display]   # type: ignore
         setting_bag.tts_by_spn_formatters = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
 
         # Act
@@ -2491,7 +2768,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn_spv = ["display"]
+        setting_bag.options_tts_by_spn_spv = [OPTION.display]   # type: ignore
 
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2519,7 +2796,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_hashtag = ["display"]
+        setting_bag.options_tts_by_hashtag = [OPTION.display]   # type: ignore
         setting_bag.tts_by_hashtag_formatters = {"Effort%" : "{:.2f}"}
 
         # Act
@@ -2550,7 +2827,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_efs = ["display"]
+        setting_bag.options_tts_by_efs = [OPTION.display]   # type: ignore
 
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2578,7 +2855,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_tr = ["display"]
+        setting_bag.options_tts_by_tr = [OPTION.display]    # type: ignore
         setting_bag.tts_by_tr_head_n = uint(10)
 
         # Act
@@ -2607,7 +2884,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_definitions = ["display"]
+        setting_bag.options_definitions = [OPTION.display]  # type: ignore
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2618,6 +2895,28 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         displayer.display.assert_called_once_with(
             df = definitions_df
         )
+    def test_getsummary_shouldreturnttsummaryobject_wheninvoked(self):
+        
+        # Arrange
+        summary : Mock = Mock()
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()        
+        actual : TTSummary = tt_processor.get_summary()
+
+        # Assert
+        self.assertEqual(actual, summary)
 
     @parameterized.expand([
         ["process_tt"],
@@ -2632,7 +2931,8 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         ["process_tts_by_hashtag_year"],
         ["process_tts_by_efs"],
         ["process_tts_by_tr"],
-        ["process_definitions"]
+        ["process_definitions"],
+        ["get_summary"]
     ])
     def test_processmethod_shouldraiseexception_wheninitializenotrun(self, method_name : str) -> None:
         

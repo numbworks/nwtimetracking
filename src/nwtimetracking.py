@@ -11,14 +11,13 @@ import pandas as pd
 import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from enum import StrEnum
+from enum import StrEnum, auto
 from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
 from typing import Any, Callable, Literal, Optional, Tuple, cast
-
-# LOCAL MODULES
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
 
+# LOCAL MODULES
 # CONSTANTS
 class TTCN(StrEnum):
     
@@ -41,7 +40,7 @@ class TTCN(StrEnum):
     DYE = "DYE"
     TYE = "TYE"
     TREND = "↕"
-    EFFORTPRC = "Effort%"
+    EFFORTPERC = "Effort%"
     YEARLYTARGET = "YearlyTarget"
     TARGETDIFF = "TargetDiff"
     ISTARGETMET = "IsTargetMet"
@@ -72,6 +71,13 @@ class DEFINITIONSCN(StrEnum):
 
     TERM = "Term"
     DEFINITION = "Definition"
+class OPTION(StrEnum):
+
+    '''Represents a collection of source ids.'''
+
+    display = auto()
+    save = auto()
+    log = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -121,7 +127,11 @@ class _MessageCollection():
     def this_content_successfully_saved_as(id : TTID, file_path : str) -> str:
         return f"This content (id: '{id}') has been successfully saved as '{file_path}'."
 
-# DTOs
+    @staticmethod
+    def provided_df_invalid_column_list(column_list : list[str]) -> str:
+        return f"The provided df has an invalid column list ('{column_list}')."
+
+# CLASSES
 @dataclass(frozen=True)
 class YearlyTarget():
     
@@ -179,8 +189,6 @@ class TTSummary():
 
     # Markdowns
     tts_by_month_md : str
-
-# CLASSES
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -295,19 +303,19 @@ class SettingBag():
     '''Represents a collection of settings.'''
 
     # Without Defaults
-    options_tt : list[Literal["display"]]
-    options_tts_by_month : list[Literal["display", "save"]]
-    options_tts_by_year : list[Literal["display"]]
-    options_tts_by_year_month : list[Literal["display"]]
-    options_tts_by_year_month_spnv : list[Literal["display"]]
-    options_tts_by_year_spnv : list[Literal["display"]]    
-    options_tts_by_spn : list[Literal["display", "log"]]
-    options_tts_by_spn_spv : list[Literal["display", "log"]]
-    options_tts_by_hashtag : list[Literal["display"]]
-    options_tts_by_hashtag_year : list[Literal["display"]]
-    options_tts_by_efs : list[Literal["display"]]
-    options_tts_by_tr : list[Literal["display"]]
-    options_definitions : list[Literal["display"]]    
+    options_tt : list[Literal[OPTION.display]]
+    options_tts_by_month : list[Literal[OPTION.display, OPTION.save]]
+    options_tts_by_year : list[Literal[OPTION.display]]
+    options_tts_by_year_month : list[Literal[OPTION.display]]
+    options_tts_by_year_month_spnv : list[Literal[OPTION.display]]
+    options_tts_by_year_spnv : list[Literal[OPTION.display]]    
+    options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]]
+    options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]]
+    options_tts_by_hashtag : list[Literal[OPTION.display]]
+    options_tts_by_hashtag_year : list[Literal[OPTION.display]]
+    options_tts_by_efs : list[Literal[OPTION.display]]
+    options_tts_by_tr : list[Literal[OPTION.display]]
+    options_definitions : list[Literal[OPTION.display]]    
     excel_nrows : int
     tts_by_year_month_spnv_display_only_spn : Optional[str]
     tts_by_year_spnv_display_only_spn : Optional[str]
@@ -341,6 +349,7 @@ class SettingBag():
     tts_by_tr_display_head_n_with_tail : bool = field(default = False)
     md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
+    md_enable_github_optimizations : bool = field(default = False)
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -1012,7 +1021,7 @@ class TTDataFrameFactory():
         tts_df = tts_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
 
         summarized : float = tts_df[TTCN.EFFORT].sum()
-        tts_df[TTCN.EFFORTPRC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
+        tts_df[TTCN.EFFORTPERC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
 
         return tts_df
 
@@ -1638,22 +1647,208 @@ class TTDataFrameFactory():
         )
 
         return definitions_df
+class BYMDFManager():
+    
+    '''Encapsulates additional logic related to *_by_month_df dataframes.'''
+
+    def __is_year(self, value : Any) -> bool:
+
+        """Returns True if value is a valid year."""
+
+        try:       
+            year : int = int(value)
+            return 1000 <= year <= 9999
+        except:
+            return False
+    def __is_even(self, number : int) -> bool:
+        
+        """Returns True if number is even."""
+
+        return number % 2 == 0
+    def __is_valid(self, column_list : list[str]) -> bool:
+        
+        """
+            Validates the column names of a certain DataFrame according to the specified pattern.
+            
+            Valid::
+
+                ["Month", "2015"]
+                ["Month", "2015", "↕", "2016"]
+                ["Month", "2015", "↕", "2016", "↕", "2017"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"]
+                ...
+
+            Invalid::
+
+                []
+                ["Month"]
+                ["Month", "2015", "↕"]
+                ["Month", "2015", "↕", "2016", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"]
+                ["Month", "↕"]
+                ["Month", "↕", "↕"]
+                ["Month", "2015", "2015"]
+                ["Month", "2015", "↕", "↕"]
+                ...
+        """
+
+        if len(column_list) < 2 or column_list[0] != "Month":
+            return False
+
+        for i in range(1, len(column_list)):
+            if i % 2 == 1:
+                if not self.__is_year(column_list[i]):
+                    return False
+            else:
+                if column_list[i] != '↕':
+                    return False
+
+        return self.__is_even(number = len(column_list))
+    def __is_in_sequence(self, number : int) -> bool:
+        
+        """
+            Determines if a given number is part of the sequence defined by n = (number + 5) / 6.
+
+            Sequence: [1, 7, 13, 19, 25, 31, 37, 43, 49, 55, 61, 67, 73, 79, 85, 91, 97, 103, 109, 115, ...].
+        """
+
+        n = (number + 5) / 6
+
+        return n.is_integer() and n > 0
+    def __is_last(self, number : int, lst: list[int]) -> bool:
+        
+        """Determines if the given value is the last element in the provided list."""
+
+        if not lst:
+            return False
+
+        return lst[-1] == number
+    def __create_column_numbers(self, df : DataFrame) -> list[int]:
+        
+        """Returns a list of column numbers for df."""
+
+        return list(range(len(df.columns)))
+    def __create_index_lists(self, column_numbers : list[int]) -> list[list[int]]:
+        
+        """
+            Creates index_lists specific for *_by_month_df dataframes.
+
+            Steps::
+
+                Step 1 -> column_numbers: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+                Step 2 -> tmp: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+                Step 3 -> initials: [1, 7, 13]
+                Step 4 -> index_lists: [ [0, 1], [0, 7], [0, 13] ]
+                Step 5 -> tmp: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+                Step 6 -> index_lists: [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17, 18, 19] ]
+        """
+
+        tmp : list[int] = list(column_numbers)
+        tmp.remove(0)
+
+        initials : list[int] = []
+        for idx in range(0, len(column_numbers)):
+            if self.__is_in_sequence(number = idx) and not self.__is_last(number = idx, lst = tmp):
+                initials.append(idx)
+
+        index_lists : list[list[int]] = []
+        for idx in initials:
+            index_list : list[int] = [0, idx]
+            index_lists.append(index_list)
+
+        for index_list in index_lists:
+            start_value = index_list[1]
+            start_index = tmp.index(start_value)
+            index_list.extend(tmp[(start_index + 1):(start_index + 7)])
+
+        if self.__is_even(index_lists[-1][-1]):
+            index_lists[-1].remove(index_lists[-1][-1])
+
+        return index_lists
+    def __filter_by_index_list(self, df : DataFrame, index_list : list[int]) -> DataFrame:
+
+        """Filters df to include only columns specified by index_list."""
+
+        filtered_df : DataFrame = df.iloc[:, index_list]
+        
+        return filtered_df
+    def __filter_by_index_lists(self, df : DataFrame, index_lists : list[list[int]]) -> list[DataFrame]:
+
+        """Filters df to include only columns specified by index_lists."""
+
+        sub_dfs : list[DataFrame] = []
+
+        for index_list in index_lists:
+            sub_df : DataFrame = self.__filter_by_index_list(df = df, index_list = index_list)
+            sub_dfs.append(sub_df)
+
+        return sub_dfs
+
+    def create_sub_dfs(self, df : DataFrame) -> list[DataFrame]:
+
+        """
+            Splits df in sub_dfs.
+
+            Examples::
+
+                df = ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", ...]
+                sub_dfs = [
+                    ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"],
+                    ["Month", "2018", "↕", "2019", "↕", "2020", "↕", "2021"],
+                    ["Month", "2021", "↕", "2022", "↕", "2023", "↕", "2024"]
+                ]
+        """
+
+        column_list : list[str] = df.columns.to_list()
+
+        if not self.__is_valid(column_list = column_list):
+            raise Exception(_MessageCollection.provided_df_invalid_column_list(column_list))
+        
+        if len(column_list) == 2:
+            return [df]
+
+        column_numbers : list[int] = self.__create_column_numbers(df = df)
+        index_lists : list[list[int]] = self.__create_index_lists(column_numbers = column_numbers)
+        sub_dfs : list[DataFrame] = self.__filter_by_index_lists(df = df, index_lists = index_lists)
+
+        return sub_dfs
 class TTMarkdownFactory():
 
     '''Collects all the logic related to Markdown creation out of Time Tracking dataframes.'''
 
     __markdown_helper : MarkdownHelper
+    __bymdf_manager : BYMDFManager
 
-    def __init__(self, markdown_helper : MarkdownHelper) -> None:
+    def __init__(self, markdown_helper : MarkdownHelper, bymdf_manager : BYMDFManager) -> None:
 
         self.__markdown_helper = markdown_helper
+        self.__bymdf_manager = bymdf_manager
 
-    def create_tts_by_month_md(self, paragraph_title : str, last_update : datetime, tts_by_month_upd_df : DataFrame) -> str:
+    def __convert_sub_dfs(self, smaller_dfs : list[DataFrame]) -> str:
+
+        smaller_mds : list[str] = []
+
+        for smaller_df in smaller_dfs:
+            smaller_md : str = smaller_df.to_markdown(index = False)
+            smaller_mds.append(smaller_md)
+
+        return "\n\n".join(smaller_mds)
+    def create_tts_by_month_md(self, paragraph_title : str, last_update : datetime, tts_by_month_upd_df : DataFrame, enable_github_optimizations : bool) -> str:
 
         '''Creates the expected Markdown content for the provided arguments.'''
 
         markdown_header : str = self.__markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = paragraph_title)
         tts_by_month_upd_md : str = tts_by_month_upd_df.to_markdown(index = False)
+
+        if enable_github_optimizations:
+            sub_dfs : list[DataFrame] = self.__bymdf_manager.create_sub_dfs(df = tts_by_month_upd_df)
+            tts_by_month_upd_md = self.__convert_sub_dfs(smaller_dfs = sub_dfs) 
 
         md_content : str = markdown_header
         md_content += "\n"
@@ -1819,7 +2014,8 @@ class TTAdapter():
         tts_by_month_md : str = self.__md_factory.create_tts_by_month_md(
             paragraph_title = self.extract_file_name_and_paragraph_title(id = TTID.TTSBYMONTH, setting_bag = setting_bag)[1],
             last_update = setting_bag.md_last_update,
-            tts_by_month_upd_df = tts_by_month_tpl[1]
+            tts_by_month_upd_df = tts_by_month_tpl[1],
+            enable_github_optimizations = setting_bag.md_enable_github_optimizations
         )
 
         return tts_by_month_md
@@ -1870,8 +2066,10 @@ class ComponentBag():
 
     tt_adapter : TTAdapter = field(default = TTAdapter(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
-        md_factory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())
-        )))
+        md_factory = TTMarkdownFactory(
+            markdown_helper = MarkdownHelper(formatter = Formatter()),
+            bymdf_manager = BYMDFManager())
+        ))
 
     logging_function : Callable[[str], None] = field(default = LambdaProvider().get_default_logging_function())
     displayer : Displayer = field(default = Displayer())
@@ -2196,6 +2394,17 @@ class TimeTrackingProcessor():
 
         if "display" in options:
             self.__component_bag.displayer.display(df = df)
+    def get_summary(self) -> TTSummary:
+
+        '''
+            Returns __tt_summary.
+
+            It raises an exception if the 'initialize' method has not been run yet.    
+        '''
+
+        self.__validate_summary()
+
+        return self.__tt_summary
 
 # MAIN
 if __name__ == "__main__":
