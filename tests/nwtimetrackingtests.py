@@ -18,7 +18,7 @@ sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMDFManager, TimeTrackingProcessor
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
-from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter
+from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -1231,42 +1231,6 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected, actual)
 
-    @parameterized.expand([
-        [timedelta(minutes=30), timedelta(hours=1), "↑"],
-        [timedelta(hours=1), timedelta(minutes=30), "↓"],
-        [timedelta(minutes=30), timedelta(minutes=30), "="],
-    ])
-    def test_gettrendbytimedelta_shouldreturnexpectedtrend_wheninvoked(
-        self, 
-        td_1 : timedelta, 
-        td_2 : timedelta, 
-        expected : str
-    ):
-        
-        # Arrange
-        # Act
-        actual : str = self.df_helper.get_trend_by_timedelta(td_1 = td_1, td_2 = td_2)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        ["↕1", TTCN.TREND],
-        ["2016", "2016"],
-    ])
-    def test_tryconsolidatetrendcolumnname_shouldreturnexpectedcolumnname_wheninvoked(
-        self, 
-        column_name: str, 
-        expected: str
-    ):
-
-        # Arrange
-        # Act
-        actual : str = self.df_helper.try_consolidate_trend_column_name(column_name)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
     def test_getyearlytarget_shouldreturnexpectedhours_whenyearinlist(self):
 
         # Arrange
@@ -1658,6 +1622,68 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(TTCN.EFFORTSTATUS in df.columns)
+
+class BYMFactoryTestCase(unittest.TestCase):
+
+    def setUp(self):
+
+        self.bym_factory = BYMFactory(df_helper = TTDataFrameHelper())
+
+    @parameterized.expand([
+        [timedelta(minutes=30), timedelta(hours=1), "↑"],
+        [timedelta(hours=1), timedelta(minutes=30), "↓"],
+        [timedelta(minutes=30), timedelta(minutes=30), "="],
+    ])
+    def test_gettrendbytimedelta_shouldreturnexpectedtrend_wheninvoked(
+        self, 
+        td_1 : timedelta, 
+        td_2 : timedelta, 
+        expected : str
+    ):
+        
+        # Arrange
+        # Act
+        actual : str = self.bym_factory._BYMFactory__get_trend_by_timedelta(td_1 = td_1, td_2 = td_2)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ["↕1", TTCN.TREND],
+        ["2016", "2016"],
+    ])
+    def test_tryconsolidatetrendcolumnname_shouldreturnexpectedcolumnname_wheninvoked(
+        self, 
+        column_name: str, 
+        expected: str
+    ):
+
+        # Arrange
+        # Act
+        actual : str = self.bym_factory._BYMFactory__try_consolidate_trend_column_name(column_name = column_name)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_createttsbymonthtpl_shouldreturnexpectedtuple_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        now : datetime = datetime(2024, 11, 30) 
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_month_tpl()
+
+        # Act
+        actual_tpl : Tuple[DataFrame, DataFrame]  = self.bym_factory.create_tts_by_month_tpl(
+            tt_df = tt_df, 
+            years = years,
+            now = now
+        )
+
+        # Assert
+        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
+        assert_frame_equal(expected_tpl[1] , actual_tpl[1])  
+
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1776,24 +1802,6 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-    def test_createttsbymonthtpl_shouldreturnexpectedtuple_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        now : datetime = datetime(2024, 11, 30) 
-        tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_month_tpl()
-
-        # Act
-        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_month_tpl(
-            tt_df = tt_df, 
-            years = years,
-            now = now
-        )
-
-        # Assert
-        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
-        assert_frame_equal(expected_tpl[1] , actual_tpl[1])  
     def test_createttsbytrdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -2162,8 +2170,9 @@ class TTAdapterTestCase(unittest.TestCase):
         
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         id : TTID = TTID.TTSBYMONTH
         setting_bag : SettingBag = Mock(md_infos = self.md_infos)
@@ -2177,8 +2186,9 @@ class TTAdapterTestCase(unittest.TestCase):
         
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
         
         id : TTID = TTID.TTSBYMONTH
 
@@ -2189,16 +2199,17 @@ class TTAdapterTestCase(unittest.TestCase):
 
         # Act
         with self.assertRaises(Exception) as context:
-            adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = setting_bag)
+            tt_adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = setting_bag)
         
         # Assert
         self.assertEqual(str(context.exception), _MessageCollection.no_mdinfo_found(id = id))   
     def test_createttdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.excel_path = self.excel_path
@@ -2207,7 +2218,7 @@ class TTAdapterTestCase(unittest.TestCase):
         setting_bag.excel_tabname = "Sessions"
 
         # Act
-        adapter.create_tt_df(setting_bag = setting_bag)
+        tt_adapter.create_tt_df(setting_bag = setting_bag)
 
         # Assert
         df_factory.create_tt_df.assert_called_once_with(
@@ -2216,12 +2227,13 @@ class TTAdapterTestCase(unittest.TestCase):
             excel_nrows = self.excel_nrows,
             excel_tabname = self.excel_tabname
         )
-    def test_createttsbymonthtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+    def test_createttsbymonthtpl_shouldcallbymfactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2230,10 +2242,10 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : Mock = Mock()
 
         # Act
-        adapter.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
 
         # Assert
-        df_factory.create_tts_by_month_tpl.assert_called_once_with(
+        bym_factory.create_tts_by_month_tpl.assert_called_once_with(
             tt_df = tt_df,
             years = self.years,
             now = self.now
@@ -2241,9 +2253,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyyeardf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2252,7 +2265,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : Mock = Mock()
 
         # Act
-        adapter.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
 
         # Assert
         df_factory.create_tts_by_year_df.assert_called_once_with(
@@ -2263,9 +2276,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyyearmonthdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2275,7 +2289,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : Mock = Mock()
 
         # Act
-        adapter.create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
 
         # Assert
         df_factory.create_tts_by_year_month_tpl.assert_called_once_with(
@@ -2287,9 +2301,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyyearmonthspnvtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2311,9 +2326,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyyearspnvtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2335,9 +2351,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyspndf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2359,9 +2376,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyspnspvdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2381,9 +2399,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyhashtagyeardf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2401,9 +2420,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyefstpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.tts_by_efs_is_correct = self.tts_by_efs_is_correct
@@ -2421,9 +2441,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbytrdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.tts_by_tr_unknown_id = self.tts_by_tr_unknown_id
@@ -2443,9 +2464,10 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbymonthmd_shouldcallmdfactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : Mock = Mock()
         setting_bag.md_infos = self.md_infos
@@ -2455,7 +2477,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tts_by_month_tpl : Tuple[Mock, Mock] = (Mock(), Mock())
 
         # Act
-        adapter.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
 
         # Assert
         md_factory.create_tts_by_month_md.assert_called_once_with(
@@ -2484,7 +2506,6 @@ class TTAdapterTestCase(unittest.TestCase):
 
         df_factory : TTDataFrameFactory = Mock()
         df_factory.create_tt_df.return_value = tt_df
-        df_factory.create_tts_by_month_tpl.return_value = tts_by_month_tpl
         df_factory.create_tts_by_year_df.return_value = tts_by_year_df
         df_factory.create_tts_by_year_month_tpl.return_value = tts_by_year_month_tpl
         df_factory.create_tts_by_year_month_spnv_tpl.return_value = tts_by_year_month_spnv_tpl
@@ -2497,10 +2518,13 @@ class TTAdapterTestCase(unittest.TestCase):
         df_factory.create_tts_by_tr_df.return_value = tts_by_tr_df
         df_factory.create_definitions_df.return_value = definitions_df
 
+        bym_factory : BYMFactory = Mock()
+        bym_factory.create_tts_by_month_tpl.return_value = tts_by_month_tpl
+
         md_factory : TTMarkdownFactory = Mock()
         md_factory.create_tts_by_month_md.return_value = tts_by_month_md
 
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
 
         setting_bag : SettingBag = ObjectMother.get_setting_bag()
 

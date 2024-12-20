@@ -385,35 +385,6 @@ class TTDataFrameHelper():
 
         return effort_td
 
-    def get_trend_by_timedelta(self, td_1 : timedelta, td_2 : timedelta) -> str:
-
-        '''
-            0h 30m, 1h 00m => "↑"
-            1h 00m, 0h 30m => "↓"
-            0, 0 => "="
-        '''
-        trend : Optional[str] = None
-
-        if td_1 < td_2:
-            trend = "↑"
-        elif td_1 > td_2:
-            trend = "↓"
-        else:
-            trend = "="
-
-        return trend
-    def try_consolidate_trend_column_name(self, column_name : str) -> str:
-
-        '''
-            "2016"  => "2016"
-            "↕1"    => "↕"
-        '''
-
-        if column_name.startswith(TTCN.TREND):
-            return TTCN.TREND
-        
-        return column_name
-
     def create_time_object(self, time : str) -> datetime:
 
         '''It creates a datetime object suitable for timedelta calculation out of the provided time.'''
@@ -635,9 +606,325 @@ class TTDataFrameHelper():
 
         return time_range_id
 
-class BYMBuilder():
+class BYMFactory():
 
     '''Encapsulates additional logic related to the creation of *_by_month_df dataframes.'''
+
+    __df_helper : TTDataFrameHelper
+
+    def __init__(self, df_helper : TTDataFrameHelper) -> None:
+
+        self.__df_helper = df_helper
+
+    def __get_trend_by_timedelta(self, td_1 : timedelta, td_2 : timedelta) -> str:
+
+        '''
+            0h 30m, 1h 00m => "↑"
+            1h 00m, 0h 30m => "↓"
+            0, 0 => "="
+        '''
+        trend : Optional[str] = None
+
+        if td_1 < td_2:
+            trend = "↑"
+        elif td_1 > td_2:
+            trend = "↓"
+        else:
+            trend = "="
+
+        return trend
+    def __try_consolidate_trend_column_name(self, column_name : str) -> str:
+
+        '''
+            "2016"  => "2016"
+            "↕1"    => "↕"
+        '''
+
+        if column_name.startswith(TTCN.TREND):
+            return TTCN.TREND
+        
+        return column_name
+    def __enforce_dataframe_definition_for_raw_ttm_df(self, df : DataFrame) -> DataFrame:
+
+        '''Ensures that the columns of the provided dataframe have the expected data types.'''
+
+        df = df.astype({TTCN.MONTH: int})
+        # can't enforce the year column as "timedelta"
+
+        return df 
+    def __create_default_raw_ttm(self, year : int) -> DataFrame:
+
+        '''
+            default_df:
+
+                    Month	2019
+                0	1	    0 days
+                ...
+        '''
+
+        td : timedelta = self.__df_helper.unbox_effort(effort_str = "0h 00m")
+
+        default_df : DataFrame = pd.DataFrame(
+            {
+                f"{TTCN.MONTH}": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+                f"{str(year)}": [td, td, td, td, td, td, td, td, td, td, td, td]
+            },
+            index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+        )
+
+        default_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = default_df)
+
+        return default_df    
+    def __try_complete_raw_ttm(self, ttm_df : DataFrame, year : int) -> DataFrame:
+
+        '''
+            We expect ttm_df to have 12 months: 
+            
+                - if that's the case, we are done with it and we return it;
+                - if it's not the case, we generate a default_df and we use it to fill the missing values.
+
+                ttm_df
+            
+                        Month	2015
+                    0	10	    8h 00m
+                    1	11	    10h 00m
+                    2	12	    0h 00m
+            
+                default_df:
+
+                        Month	2015
+                    0	1	    0h 00m
+                    1	2	    0h 00m              
+                    ... ...     ...
+                    11	12	    0h 00m
+
+                missing_df:
+
+                        Month	2015
+                    0	1	    0h 00m
+                    1	2	    0h 00m              
+                    ... ...     ...
+                    8	9	    0h 00m                 
+
+                completed_df
+            
+                        Month	2015
+                    0	1	    0h 00m
+                    1	2	    0h 00m
+                    ... ...     ...
+                    9	10	    8h 00m
+                    10	11	    10h 00m
+                    11	12	    0h 00m  
+        '''
+
+        if ttm_df[TTCN.MONTH].count() != 12:
+
+            default_df : DataFrame = self.__create_default_raw_ttm(year = year)
+            missing_df : DataFrame = default_df.loc[~default_df[TTCN.MONTH].astype(str).isin(ttm_df[TTCN.MONTH].astype(str))]
+
+            completed_df : DataFrame = pd.concat([ttm_df, missing_df], ignore_index = True)
+            completed_df = completed_df.sort_values(by = TTCN.MONTH, ascending = [True])
+            completed_df = completed_df.reset_index(drop = True)
+
+            return completed_df
+
+        return ttm_df
+    def __create_raw_ttm(self, tt_df : DataFrame, year : int) -> DataFrame:
+        
+        '''
+            ttm_df:
+
+                Year	    Month	Effort
+                0	2015	10	    8h 00m
+                1	2015	11	    10h 00m
+                2	2015	12	    0h 00m
+
+            ttm_df:
+
+                Year	    Month	2015	        
+                0	2015	10	    0 days 08:00:00
+                1	2015	11	    0 days 10:00:00
+                2	2015	12	    0 days 00:00:00            
+
+            ttm_df:
+
+                    Month	2015
+                0	1	    0 days 00:00:00
+                ...
+                9	10	    0 days 08:00:00
+                10	11	    0 days 10:00:00
+                11	12	    0 days 00:00:00
+        '''
+
+        ttm_df : DataFrame = tt_df.copy(deep=True)
+        ttm_df = ttm_df[[TTCN.YEAR, TTCN.MONTH, TTCN.EFFORT]]
+
+        condition : Series = (tt_df[TTCN.YEAR] == year)
+        ttm_df = ttm_df.loc[condition]
+
+        ttm_df[TTCN.EFFORT] = ttm_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
+        ttm_df[str(year)] = ttm_df[TTCN.EFFORT]
+        cn_effort = str(year)    
+
+        ttm_df = ttm_df.groupby([TTCN.MONTH])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
+        ttm_df = ttm_df.sort_values(by = TTCN.MONTH).reset_index(drop = True)
+
+        ttm_df = self.__try_complete_raw_ttm(ttm_df = ttm_df, year = year)
+        ttm_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = ttm_df)
+
+        return ttm_df
+    def __expand_raw_ttm_by_year(self, tt_df : DataFrame, years : list, tts_by_month_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
+
+        '''    
+            actual_df:
+
+                    Month	2016
+                0	1	    0h 00m
+                1	2	    0h 00m
+                ...
+
+            ttm_df:
+
+                    Month	2017
+                0	1	    13h 00m
+                1	2	    1h 00m
+                ...            
+
+            expansion_df:
+
+                    Month	2016	2017
+                0	1	    0h 00m	13h 00m
+                1	2	    0h 00m	1h 00m
+                ...
+
+            expansion_df:        
+
+                    Month	2016	2017	    ↕1
+                0	1	    0h 00m	13h 00m	    ↑
+                1	2	    0h 00m	1h 00m	    ↑
+                ...
+
+            expansion_df:
+
+                    Month	2016	↕1	2017
+                0	1	    0h 00m	↑	13h 00m
+                1	2	    0h 00m	↑	1h 00m
+                ...
+
+            Now that we have the expansion_df, we append it to the right of actual_df:
+
+            actual_df:
+
+                    Month	2016	↕1	2017
+                0	1	    0h 00m	↑	13h 00m
+                1	2	    0h 00m	↑	1h 00m
+                ...
+        '''
+        
+        actual_df : DataFrame = tts_by_month_df.copy(deep = True)
+        ttm_df : DataFrame = self.__create_raw_ttm(tt_df = tt_df, year = years[i])
+
+        expansion_df = pd.merge(
+            left = actual_df, 
+            right = ttm_df, 
+            how = "inner", 
+            left_on = TTCN.MONTH, 
+            right_on = TTCN.MONTH)
+
+        if add_trend == True:
+
+            cn_trend : str = f"↕{i}"
+            cn_trend_1 : str = str(years[i-1])   # for ex. "2016"
+            cn_trend_2 : str = str(years[i])     # for ex. "2017"
+            
+            expansion_df[cn_trend] = expansion_df.apply(lambda x : self.__get_trend_by_timedelta(td_1 = x[cn_trend_1], td_2 = x[cn_trend_2]), axis = 1) 
+
+            new_column_names : list = [TTCN.MONTH, cn_trend_1, cn_trend, cn_trend_2]   # for ex. ["Month", "2016", "↕", "2017"]
+            expansion_df = expansion_df.reindex(columns = new_column_names)
+
+            shared_columns : list = [TTCN.MONTH, str(years[i-1])] # ["Month", "2016"]
+            actual_df = pd.merge(
+                left = actual_df, 
+                right = expansion_df, 
+                how = "inner", 
+                left_on = shared_columns, 
+                right_on = shared_columns)
+
+        else:
+            actual_df = expansion_df
+
+        return actual_df
+    def __update_future_months_to_empty(self, tts_by_month_df : DataFrame, now : datetime) -> DataFrame:
+
+        '''	
+            If now is 2023-08-09:
+
+                Month	2022	↕	2023
+                ...
+                8	    0h 00m	=	0h 00m
+                9	    1h 00m	↓	0h 00m
+                10	    0h 00m	=	0h 00m
+                11	    0h 00m	=	0h 00m
+                12	    0h 00m	=	0h 00m		            
+
+                Month	2022	↕	2023
+                ...
+                8	    0h 00m	=	0h 00m
+                9	    1h 00m		
+                10	    0h 00m		
+                11	    0h 00m		
+                12	    0h 00m
+        '''
+
+        tts_by_month_upd_df : DataFrame = tts_by_month_df.copy(deep = True)
+
+        now_year : int = now.year
+        now_month : int = now.month	
+        cn_year : str = str(now_year)
+        new_value : str = ""
+
+        condition : Series = (tts_by_month_upd_df[TTCN.MONTH] > now_month)
+        tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
+            
+        idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
+        idx_trend : int = (idx_year - 1)
+        tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
+
+        return tts_by_month_upd_df
+
+    def create_tts_by_month_tpl(self, tt_df : DataFrame, years : list, now : datetime) -> Tuple[DataFrame, DataFrame]:
+
+        '''
+                Month	2016	↕   2017	    ↕	2018    ...
+            0	1	    0h 00m	↑	13h 00m		↓	0h 00m
+            1	2	    0h 00m	↑	1h 00m	    ↓	0h 00m
+            ...
+
+            Returns: (tts_by_month_df, tts_by_month_upd_df).
+        '''
+
+        tts_df : DataFrame = pd.DataFrame()
+
+        for i in range(len(years)):
+
+            if i == 0:
+                tts_df = self.__create_raw_ttm(tt_df = tt_df, year = years[i])
+            else:
+                tts_df = self.__expand_raw_ttm_by_year(
+                    tt_df = tt_df, 
+                    years = years, 
+                    tts_by_month_df = tts_df, 
+                    i = i, 
+                    add_trend = True)
+                
+        for year in years:
+            tts_df[str(year)] = tts_df[str(year)].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
+
+        tts_df.rename(columns = (lambda x : self.__try_consolidate_trend_column_name(column_name = x)), inplace = True)
+        tts_upd_df : DataFrame = self.__update_future_months_to_empty(tts_by_month_df = tts_df, now = now)
+
+        return (tts_df, tts_upd_df)
+
 
 
 class TTDataFrameFactory():
@@ -1011,289 +1298,6 @@ class TTDataFrameFactory():
         filtered_df = tts_by_efs_df.loc[condition]
 
         return filtered_df
-
-
-
-    def __enforce_dataframe_definition_for_raw_ttm_df(self, df : DataFrame) -> DataFrame:
-
-        '''Ensures that the columns of the provided dataframe have the expected data types.'''
-
-        df = df.astype({TTCN.MONTH: int})
-        # can't enforce the year column as "timedelta"
-
-        return df 
-    def __create_default_raw_ttm(self, year : int) -> DataFrame:
-
-        '''
-            default_df:
-
-                    Month	2019
-                0	1	    0 days
-                ...
-        '''
-
-        td : timedelta = self.__df_helper.unbox_effort(effort_str = "0h 00m")
-
-        default_df : DataFrame = pd.DataFrame(
-            {
-                f"{TTCN.MONTH}": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
-                f"{str(year)}": [td, td, td, td, td, td, td, td, td, td, td, td]
-            },
-            index=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
-        )
-
-        default_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = default_df)
-
-        return default_df    
-    def __try_complete_raw_ttm(self, ttm_df : DataFrame, year : int) -> DataFrame:
-
-        '''
-            We expect ttm_df to have 12 months: 
-            
-                - if that's the case, we are done with it and we return it;
-                - if it's not the case, we generate a default_df and we use it to fill the missing values.
-
-                ttm_df
-            
-                        Month	2015
-                    0	10	    8h 00m
-                    1	11	    10h 00m
-                    2	12	    0h 00m
-            
-                default_df:
-
-                        Month	2015
-                    0	1	    0h 00m
-                    1	2	    0h 00m              
-                    ... ...     ...
-                    11	12	    0h 00m
-
-                missing_df:
-
-                        Month	2015
-                    0	1	    0h 00m
-                    1	2	    0h 00m              
-                    ... ...     ...
-                    8	9	    0h 00m                 
-
-                completed_df
-            
-                        Month	2015
-                    0	1	    0h 00m
-                    1	2	    0h 00m
-                    ... ...     ...
-                    9	10	    8h 00m
-                    10	11	    10h 00m
-                    11	12	    0h 00m  
-        '''
-
-        if ttm_df[TTCN.MONTH].count() != 12:
-
-            default_df : DataFrame = self.__create_default_raw_ttm(year = year)
-            missing_df : DataFrame = default_df.loc[~default_df[TTCN.MONTH].astype(str).isin(ttm_df[TTCN.MONTH].astype(str))]
-
-            completed_df : DataFrame = pd.concat([ttm_df, missing_df], ignore_index = True)
-            completed_df = completed_df.sort_values(by = TTCN.MONTH, ascending = [True])
-            completed_df = completed_df.reset_index(drop = True)
-
-            return completed_df
-
-        return ttm_df
-    def __create_raw_ttm(self, tt_df : DataFrame, year : int) -> DataFrame:
-        
-        '''
-            ttm_df:
-
-                Year	    Month	Effort
-                0	2015	10	    8h 00m
-                1	2015	11	    10h 00m
-                2	2015	12	    0h 00m
-
-            ttm_df:
-
-                Year	    Month	2015	        
-                0	2015	10	    0 days 08:00:00
-                1	2015	11	    0 days 10:00:00
-                2	2015	12	    0 days 00:00:00            
-
-            ttm_df:
-
-                    Month	2015
-                0	1	    0 days 00:00:00
-                ...
-                9	10	    0 days 08:00:00
-                10	11	    0 days 10:00:00
-                11	12	    0 days 00:00:00
-        '''
-
-        ttm_df : DataFrame = tt_df.copy(deep=True)
-        ttm_df = ttm_df[[TTCN.YEAR, TTCN.MONTH, TTCN.EFFORT]]
-
-        condition : Series = (tt_df[TTCN.YEAR] == year)
-        ttm_df = ttm_df.loc[condition]
-
-        ttm_df[TTCN.EFFORT] = ttm_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        ttm_df[str(year)] = ttm_df[TTCN.EFFORT]
-        cn_effort = str(year)    
-
-        ttm_df = ttm_df.groupby([TTCN.MONTH])[cn_effort].sum().sort_values(ascending = [False]).reset_index(name = cn_effort)
-        ttm_df = ttm_df.sort_values(by = TTCN.MONTH).reset_index(drop = True)
-
-        ttm_df = self.__try_complete_raw_ttm(ttm_df = ttm_df, year = year)
-        ttm_df = self.__enforce_dataframe_definition_for_raw_ttm_df(df = ttm_df)
-
-        return ttm_df
-    def __expand_raw_ttm_by_year(self, tt_df : DataFrame, years : list, tts_by_month_df : DataFrame, i : int, add_trend : bool) -> DataFrame:
-
-        '''    
-            actual_df:
-
-                    Month	2016
-                0	1	    0h 00m
-                1	2	    0h 00m
-                ...
-
-            ttm_df:
-
-                    Month	2017
-                0	1	    13h 00m
-                1	2	    1h 00m
-                ...            
-
-            expansion_df:
-
-                    Month	2016	2017
-                0	1	    0h 00m	13h 00m
-                1	2	    0h 00m	1h 00m
-                ...
-
-            expansion_df:        
-
-                    Month	2016	2017	    ↕1
-                0	1	    0h 00m	13h 00m	    ↑
-                1	2	    0h 00m	1h 00m	    ↑
-                ...
-
-            expansion_df:
-
-                    Month	2016	↕1	2017
-                0	1	    0h 00m	↑	13h 00m
-                1	2	    0h 00m	↑	1h 00m
-                ...
-
-            Now that we have the expansion_df, we append it to the right of actual_df:
-
-            actual_df:
-
-                    Month	2016	↕1	2017
-                0	1	    0h 00m	↑	13h 00m
-                1	2	    0h 00m	↑	1h 00m
-                ...
-        '''
-        
-        actual_df : DataFrame = tts_by_month_df.copy(deep = True)
-        ttm_df : DataFrame = self.__create_raw_ttm(tt_df = tt_df, year = years[i])
-
-        expansion_df = pd.merge(
-            left = actual_df, 
-            right = ttm_df, 
-            how = "inner", 
-            left_on = TTCN.MONTH, 
-            right_on = TTCN.MONTH)
-
-        if add_trend == True:
-
-            cn_trend : str = f"↕{i}"
-            cn_trend_1 : str = str(years[i-1])   # for ex. "2016"
-            cn_trend_2 : str = str(years[i])     # for ex. "2017"
-            
-            expansion_df[cn_trend] = expansion_df.apply(lambda x : self.__df_helper.get_trend_by_timedelta(td_1 = x[cn_trend_1], td_2 = x[cn_trend_2]), axis = 1) 
-
-            new_column_names : list = [TTCN.MONTH, cn_trend_1, cn_trend, cn_trend_2]   # for ex. ["Month", "2016", "↕", "2017"]
-            expansion_df = expansion_df.reindex(columns = new_column_names)
-
-            shared_columns : list = [TTCN.MONTH, str(years[i-1])] # ["Month", "2016"]
-            actual_df = pd.merge(
-                left = actual_df, 
-                right = expansion_df, 
-                how = "inner", 
-                left_on = shared_columns, 
-                right_on = shared_columns)
-
-        else:
-            actual_df = expansion_df
-
-        return actual_df
-    def __update_future_months_to_empty(self, tts_by_month_df : DataFrame, now : datetime) -> DataFrame:
-
-        '''	
-            If now is 2023-08-09:
-
-                Month	2022	↕	2023
-                ...
-                8	    0h 00m	=	0h 00m
-                9	    1h 00m	↓	0h 00m
-                10	    0h 00m	=	0h 00m
-                11	    0h 00m	=	0h 00m
-                12	    0h 00m	=	0h 00m		            
-
-                Month	2022	↕	2023
-                ...
-                8	    0h 00m	=	0h 00m
-                9	    1h 00m		
-                10	    0h 00m		
-                11	    0h 00m		
-                12	    0h 00m
-        '''
-
-        tts_by_month_upd_df : DataFrame = tts_by_month_df.copy(deep = True)
-
-        now_year : int = now.year
-        now_month : int = now.month	
-        cn_year : str = str(now_year)
-        new_value : str = ""
-
-        condition : Series = (tts_by_month_upd_df[TTCN.MONTH] > now_month)
-        tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
-            
-        idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
-        idx_trend : int = (idx_year - 1)
-        tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
-
-        return tts_by_month_upd_df
-    def create_tts_by_month_tpl(self, tt_df : DataFrame, years : list, now : datetime) -> Tuple[DataFrame, DataFrame]:
-
-        '''
-                Month	2016	↕   2017	    ↕	2018    ...
-            0	1	    0h 00m	↑	13h 00m		↓	0h 00m
-            1	2	    0h 00m	↑	1h 00m	    ↓	0h 00m
-            ...
-
-            Returns: (tts_by_month_df, tts_by_month_upd_df).
-        '''
-
-        tts_df : DataFrame = pd.DataFrame()
-
-        for i in range(len(years)):
-
-            if i == 0:
-                tts_df = self.__create_raw_ttm(tt_df = tt_df, year = years[i])
-            else:
-                tts_df = self.__expand_raw_ttm_by_year(
-                    tt_df = tt_df, 
-                    years = years, 
-                    tts_by_month_df = tts_df, 
-                    i = i, 
-                    add_trend = True)
-                
-        for year in years:
-            tts_df[str(year)] = tts_df[str(year)].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
-
-        tts_df.rename(columns = (lambda x : self.__df_helper.try_consolidate_trend_column_name(column_name = x)), inplace = True)
-        tts_upd_df : DataFrame = self.__update_future_months_to_empty(tts_by_month_df = tts_df, now = now)
-
-        return (tts_df, tts_upd_df)
-
 
     def create_tt_df(self, excel_path : str, excel_skiprows : int, excel_nrows : int, excel_tabname : str) -> DataFrame:
         
@@ -1883,11 +1887,18 @@ class TTAdapter():
     '''Adapts SettingBag properties for use in TT*Factory methods.'''
 
     __df_factory : TTDataFrameFactory
+    __bym_factory : BYMFactory
     __md_factory : TTMarkdownFactory
 
-    def __init__(self, df_factory : TTDataFrameFactory, md_factory : TTMarkdownFactory) -> None:
+    def __init__(
+            self, 
+            df_factory : TTDataFrameFactory, 
+            bym_factory : BYMFactory, 
+            md_factory : TTMarkdownFactory
+        ) -> None:
         
         self.__df_factory = df_factory
+        self.__bym_factory = bym_factory
         self.__md_factory = md_factory
 
     def extract_file_name_and_paragraph_title(self, id : TTID, setting_bag : SettingBag) -> Tuple[str, str]: 
@@ -1916,7 +1927,7 @@ class TTAdapter():
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_month_tpl(
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__bym_factory.create_tts_by_month_tpl(
             tt_df = tt_df,
             years = setting_bag.years,
             now = setting_bag.now
@@ -2088,6 +2099,7 @@ class ComponentBag():
 
     tt_adapter : TTAdapter = field(default = TTAdapter(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
+        bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
         md_factory = TTMarkdownFactory(
             markdown_helper = MarkdownHelper(formatter = Formatter()),
             bymdf_manager = BYMDFManager())
