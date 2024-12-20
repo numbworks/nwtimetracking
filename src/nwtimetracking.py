@@ -5,13 +5,17 @@ Alias: nwtt
 '''
 
 # GLOBAL MODULES
+from matplotlib.pylab import ArrayLike
 import numpy as np
 import os
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import pandas as pd
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from enum import StrEnum, auto
+from matplotlib.dates import relativedelta
 from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
 from typing import Any, Callable, Literal, Optional, Tuple, cast
@@ -60,6 +64,12 @@ class TTCN(StrEnum):
     ESMESSAGE = "ES_Message"
     TIMERANGEID = "TimeRangeId"
     OCCURRENCES = "Occurrences"
+    STARTDATE = "StartDate"
+    ENDDATE = "EndDate"
+    DURATION = "Duration"
+    EFFORTH = "EffortH"
+    SEQRANK = "SeqRank"
+    HASHTAGSEQ = "HashtagSeq"
 class TTID(StrEnum):
     
     '''Collects all the ids that identify the dataframes created by TTDataFrameFactory.'''
@@ -604,7 +614,7 @@ class TTDataFrameHelper():
         return time_range_id
 class BYMFactory():
 
-    '''Encapsulates additional logic related to the creation of *_by_month_df dataframes.'''
+    '''Encapsulates all the logic related to the creation of *_by_month_df dataframes.'''
 
     __df_helper : TTDataFrameHelper
 
@@ -922,7 +932,7 @@ class BYMFactory():
         return (tts_df, tts_upd_df)
 class BYMSplitter():
     
-    '''Encapsulates additional logic related to the splitting of *_by_month_df dataframes.'''
+    '''Encapsulates all the logic related to the splitting of *_by_month_df dataframes.'''
 
     def __is_year(self, value : Any) -> bool:
 
@@ -1093,7 +1103,7 @@ class BYMSplitter():
         return sub_dfs
 class TTDataFrameFactory():
 
-    '''Collects all the logic related to dataframe creation out of "Time Tracking.xlsx".'''
+    '''Encapsulates all the logic related to dataframe creation out of "Time Tracking.xlsx".'''
 
     __df_helper : TTDataFrameHelper
 
@@ -1833,7 +1843,7 @@ class TTDataFrameFactory():
         return definitions_df
 class TTMarkdownFactory():
 
-    '''Collects all the logic related to Markdown creation out of Time Tracking dataframes.'''
+    '''Encapsulates all the logic related to Markdown creation out of Time Tracking dataframes.'''
 
     __markdown_helper : MarkdownHelper
     __bym_splitter : BYMSplitter
@@ -1870,6 +1880,387 @@ class TTMarkdownFactory():
         md_content += "\n"
 
         return md_content
+class TTSequencer():
+
+    '''Encapsulates all the logic related to sequencing tt_df.'''
+
+    __df_helper : TTDataFrameHelper
+
+    def __init__(self, df_helper : TTDataFrameHelper) -> None:
+
+        self.__df_helper = df_helper
+
+    def __calculate_from_start_date(self, now : datetime, months : int) -> date:
+        
+        """Calculates from_start_date as 'now - months'."""
+
+        from_start_date : datetime = now - relativedelta(months = months)
+
+        return from_start_date.date()
+    def __filter_by_from_start_date(self, df : DataFrame, from_start_date : date, sort_by : Literal[TTCN.DESCRIPTOR, TTCN.HASHTAGSEQ]) -> DataFrame:
+
+        '''Filters out a df according to the condition: TTCN.STARTDATE > from_start_date.'''
+
+        filtered_df : DataFrame = df.copy(deep = True)
+
+        condition : Series = (filtered_df[TTCN.STARTDATE] > pd.Timestamp(from_start_date))
+        filtered_df = cast(DataFrame, filtered_df.loc[condition])
+        filtered_df = filtered_df.sort_values(by = [sort_by, TTCN.STARTDATE]).reset_index(drop = True)
+
+        return filtered_df
+    def __filter_by_is_software_project(self, df : DataFrame, value : bool = True, spns : Optional[list[str]] = None) -> DataFrame:
+        
+        '''
+            Filters out a df according to the condition: TTCN.ISSOFTWAREPROJECT == <value>.
+
+            If spns is not None, only the listed software projects will be considered.    
+        '''
+
+        filtered_df : DataFrame = df.copy(deep = True)
+
+        condition : Series = (filtered_df[TTCN.ISSOFTWAREPROJECT] == value)
+        filtered_df = cast(DataFrame, filtered_df.loc[condition])
+
+        if spns:
+            filtered_df[TTCN.PROJECTNAME] = filtered_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
+            condition = (filtered_df[TTCN.PROJECTNAME].isin(cast(list[str], spns)))
+            filtered_df = cast(DataFrame, filtered_df.loc[condition])
+            filtered_df.drop(columns = [TTCN.PROJECTNAME], inplace = True)
+
+        filtered_df.reset_index(drop = True, inplace = True)
+
+        return filtered_df
+    def __filter_by_hashtag(self, df : DataFrame, value : bool = True, hashtags : Optional[list[str]] = None) -> DataFrame:
+        
+        '''
+            Filters out a df according to the condition: TTCN.HASHTAG == <value>.
+
+            If spns is not None, only the listed software projects will be considered.    
+        '''
+
+        filtered_df : DataFrame = df.copy(deep = True)
+
+        condition : Series = (filtered_df[TTCN.HASHTAG] == value)
+        filtered_df = cast(DataFrame, filtered_df.loc[condition])
+
+        if hashtags:
+            condition = (filtered_df[TTCN.HASHTAG].isin(cast(list[str], hashtags)))
+            filtered_df = cast(DataFrame, filtered_df.loc[condition])
+
+        filtered_df.reset_index(drop = True, inplace = True)
+
+        return filtered_df    
+    def __filter_by_duration(self, df : DataFrame, min_duration : int) -> DataFrame:
+        
+        '''Filters out a df according to the condition: [TTCN.DURATION] >= min_duration.'''
+
+        filtered_df : DataFrame = df.copy(deep = True)
+
+        condition : Series = (filtered_df[TTCN.DURATION] >= min_duration)
+        filtered_df = cast(DataFrame, filtered_df.loc[condition])
+
+        filtered_df.reset_index(drop = True, inplace = True)
+
+        return filtered_df
+    def __round_effort(self, effort : str) -> int:
+
+        '''
+            14h 00m -> 14
+            34h 15m -> 34
+            13h 30m -> 13
+            31h 45m -> 31 -> 32
+        '''
+
+        components : list[str] = effort.split()
+        hour_str : str = components[0]
+        minute_str : str = components[1]
+
+        hours : int = int(hour_str.replace("h", ""))
+
+        if "45m" in minute_str:
+            hours += 1
+
+        return hours
+
+    def __add_seq_rank(self, df : DataFrame, group_by : Literal[TTCN.HASHTAG] = TTCN.HASHTAG) -> DataFrame:
+
+        '''
+            Assigns sequential ranks to hashtags sorted by Date.
+
+            Steps:
+                1 -> [ "Date", "StartTime", "EndTime", "Effort", "Hashtag", "Descriptor", "IsSoftwareProject", "IsReleaseDay", "Year", "Month" ]
+                2 -> ["Date", "Effort", "Hashtag"]
+                3 -> ["Date", "Effort", "Hashtag", "SeqRank"]
+        '''
+
+        ranked_df : DataFrame = cast(DataFrame, df[[TTCN.DATE, TTCN.EFFORT, group_by]].copy(deep = True))
+        ranked_df = ranked_df.sort_values(by = TTCN.DATE).reset_index(drop = True)
+
+        hashtag_rank : dict[str, int] = {}
+        current_seqrank : int = 1
+        previous_hashtag : Optional[str] = None
+        
+        seq_ranks : list[int] = []
+
+        for _, row in ranked_df.iterrows():
+
+            current_hashtag: str = str(row[group_by])
+            
+            if current_hashtag != previous_hashtag:
+                if current_hashtag not in hashtag_rank:
+                    hashtag_rank[current_hashtag] = current_seqrank
+                else:
+                    hashtag_rank[current_hashtag] += 1
+            
+            seq_ranks.append(hashtag_rank[current_hashtag])
+
+            previous_hashtag = current_hashtag
+        
+        ranked_df[TTCN.SEQRANK] = seq_ranks
+
+        return ranked_df
+    def __add_hashtag_seq(self, df : DataFrame) -> DataFrame:
+
+        '''
+            Expects: ["Date", "Effort", "Hashtag", "SeqRank"]
+            Returns: ["Date", "Effort", "Hashtag", "SeqRank", "HashtagSeq"]
+        '''
+
+        hseq_df : DataFrame = cast(DataFrame, df[[TTCN.DATE, TTCN.EFFORT, TTCN.HASHTAG, TTCN.SEQRANK]].copy(deep = True))
+
+        hseq_df[TTCN.HASHTAGSEQ] = hseq_df[TTCN.HASHTAG].astype(str) + hseq_df[TTCN.SEQRANK].astype(str)
+
+        return hseq_df
+
+    def __create_gannt_df(self, df : DataFrame, group_by : Literal[TTCN.DESCRIPTOR, TTCN.HASHTAGSEQ]) -> DataFrame:
+
+        '''
+
+            
+            Steps:
+                1 -> [ "Date", "StartTime", "EndTime", "Effort", "Hashtag", "Descriptor", "IsSoftwareProject", "IsReleaseDay", "Year", "Month" ]
+                2 -> ["Descriptor", "StartDate", "EndDate", "EffortH"] ("EffortH" as timedelta)
+                3 -> ["Descriptor", "StartDate", "EndDate", "EffortH", "Duration"] ("EffortH" as timedelta)
+                4 -> ["Descriptor", "StartDate", "EndDate", "EffortH", "Duration"] ("EffortH" as rounded int)
+        '''
+
+        gantt_df : DataFrame = df.copy(deep = True)
+        gantt_df[TTCN.EFFORTH] = gantt_df[TTCN.EFFORT].apply(self.__df_helper.unbox_effort)
+        
+        gantt_df = (
+            gantt_df
+            .groupby(group_by)
+            .agg(
+                StartDate = (TTCN.DATE, 'min'), 
+                EndDate = (TTCN.DATE, 'max'),
+                EffortH = (TTCN.EFFORTH, 'sum'))
+            .reset_index()
+        )
+
+        gantt_df[TTCN.STARTDATE] = pd.to_datetime(gantt_df[TTCN.STARTDATE])
+        gantt_df[TTCN.ENDDATE] = pd.to_datetime(gantt_df[TTCN.ENDDATE])
+        gantt_df[TTCN.DURATION] = (gantt_df[TTCN.ENDDATE] - gantt_df[TTCN.STARTDATE]).astype("timedelta64[ns]").dt.days
+
+        gantt_df[TTCN.EFFORTH] = gantt_df[TTCN.EFFORTH].apply(self.__df_helper.box_effort)
+        gantt_df[TTCN.EFFORTH] = gantt_df[TTCN.EFFORTH].apply(self.__round_effort)
+
+        gantt_df.reset_index(drop = True, inplace = True)
+
+        return gantt_df
+    def __show_gantt_chart(
+            self, 
+            df : DataFrame, 
+            fig_size : Tuple[int, int], 
+            title : Optional[str], 
+            x_label : Optional[str], 
+            y_label : Optional[str],
+            barh_y : Literal[TTCN.DESCRIPTOR, TTCN.HASHTAGSEQ]
+            ) -> None:
+        
+        """
+            Expects:
+                - ["Descriptor", "StartDate", "EndDate", "Duration", "Effort"]
+                - ["HashtagSeq", "StartDate", "EndDate", "Duration", "Effort"]
+
+            It shows a gannt chart out of df.
+        """
+
+        fig, ax = plt.subplots(figsize = fig_size)
+
+        x_min : float = cast(float, (mdates.date2num(df[TTCN.STARTDATE].min()) - 5))
+        x_max : float = cast(float, (mdates.date2num(df[TTCN.ENDDATE].max()) + 5))
+        ax.set_xlim(xmin = x_min, xmax = x_max)
+
+        y_min : float = -2.5
+        y_max : float = len(df) + 2.5
+        ax.set_ylim(ymin = y_min, ymax = y_max)
+
+        for row_number, row in enumerate(df.itertuples()):
+
+            row_caller : Any = getattr(row, barh_y)
+            ax.barh(row_caller, cast(ArrayLike, row.Duration), left = cast(ArrayLike, row.StartDate), color = "skyblue", edgecolor = "black")
+
+            ax.plot(cast(ArrayLike, [row.EndDate, row.EndDate]), [row_number - 0.4, row_number + 0.8], linestyle = "dotted", color = "black")
+            formatted_date : str = f"{cast(datetime, row.EndDate).strftime("%Y-%m-%d")}"
+            ax.text(
+                cast(float, mdates.date2num(row.EndDate)),
+                row_number + 0.8, 
+                formatted_date, 
+                ha = "center", 
+                va = "bottom", 
+                fontsize = 6, 
+                rotation = 90,
+                clip_on = True
+            )
+
+            if barh_y == TTCN.HASHTAGSEQ:
+                ax.plot(cast(ArrayLike, [row.StartDate, row.StartDate]), [row_number - 0.4, row_number + 0.8], linestyle = "dotted", color = "black")
+                formatted_date = f"{cast(datetime, row.StartDate).strftime("%Y-%m-%d")}"
+                ax.text(
+                    cast(float, mdates.date2num(row.StartDate)), 
+                    row_number + 0.8, 
+                    formatted_date, 
+                    ha = "center", 
+                    va = "bottom", 
+                    fontsize = 6, 
+                    rotation = 90,
+                    clip_on = True
+                )
+
+
+            mid_point : datetime = cast(datetime, row.StartDate) + timedelta(days = cast(float, row.Duration) / 2)
+            ax.text(
+                cast(float, mdates.date2num(mid_point)),
+                row_number,
+                str(row.EffortH),
+                ha = "center",
+                va = "center",
+                fontsize = 9,
+                color = "black"
+            )
+
+        clean_label : Callable[[Optional[str]], str] = lambda x : str(x) if x else ""
+
+        ax.set_xlabel(xlabel = clean_label(x_label))
+        ax.set_ylabel(ylabel = clean_label(y_label))
+        ax.set_title(label = clean_label(title))
+        ax.xaxis_date()
+        plt.xticks(rotation = 45)
+        plt.tight_layout()
+
+        plt.show()
+
+    def create_tts_gantt_spnv_df(
+        self, 
+        tt_df : DataFrame, 
+        spns : Optional[list[str]],
+        now : datetime,
+        months : int,
+        min_duration : int = 4
+        ) -> DataFrame:
+
+        '''
+            Expects: [ "Date", "StartTime", "EndTime", "Effort", "Hashtag", "Descriptor", "IsSoftwareProject", "IsReleaseDay", "Year", "Month" ]
+            Returns: ["Descriptor", "StartDate", "EndDate", "Duration", "EffortH"].
+        '''
+
+        if months < 1:
+            raise Exception(f"'months' can't be < 1.")
+        if cast(int, min_duration) < 1:
+            raise Exception(f"'min_duration' can't be < 1.")
+
+        df : DataFrame = tt_df.copy(deep = True)
+
+        if not spns:
+            df = self.__filter_by_is_software_project(df = df, spns = spns)
+
+        group_by : Literal[TTCN.DESCRIPTOR, TTCN.HASHTAGSEQ] = TTCN.DESCRIPTOR
+        df  = self.__create_gannt_df(df = df, group_by = group_by)
+
+        from_start_date : date = self.__calculate_from_start_date(now = now, months = months)
+        df = self.__filter_by_from_start_date(df = df, from_start_date = from_start_date, sort_by = group_by)
+
+        df = self.__filter_by_duration(df = df, min_duration = min_duration)        
+
+        return df
+    def create_tts_gantt_spnv_chart_function(
+            self, 
+            df : DataFrame,
+            fig_size : Tuple[int, int] = (10, 6), 
+            title : Optional[str] = None, 
+            x_label : Optional[str] = None, 
+            y_label : Optional[str] = None
+            ) -> Callable[[], None]:
+
+        '''Returns a function that visualizes df as GANNT chart.'''
+
+        func : Callable[[], None] = lambda : self.__show_gantt_chart(
+            df = df,
+            fig_size = fig_size,
+            title = title,
+            x_label = x_label,
+            y_label = y_label,
+            barh_y = TTCN.DESCRIPTOR
+        )
+
+        return func
+    def create_tts_gantt_hseq_df(
+            self, 
+            tt_df : DataFrame,
+            hashtags : Optional[list[str]],
+            now : datetime,
+            months : int,
+            min_duration : int = 4
+            ) -> DataFrame:
+
+        '''
+            Expects: [ "Date", "StartTime", "EndTime", "Effort", "Hashtag", "Descriptor", "IsSoftwareProject", "IsReleaseDay", "Year", "Month" ]
+            Returns: [ "HashtagSeq", "StartDate", "EndDate", "EffortH", "Duration" ]
+        '''
+
+        if months < 1:
+            raise Exception(f"'months' can't be < 1.")
+        if cast(int, min_duration) < 1:
+            raise Exception(f"'min_duration' can't be < 1.")
+
+        df : DataFrame = tt_df.copy(deep = True)
+
+        if not hashtags:
+            df = self.__filter_by_hashtag(df = df, hashtags = hashtags)
+
+        df = self.__add_seq_rank(df = df)
+        df = self.__add_hashtag_seq(df = df)
+
+        group_by : Literal[TTCN.DESCRIPTOR, TTCN.HASHTAGSEQ] = TTCN.HASHTAGSEQ
+        df  = self.__create_gannt_df(df = df, group_by = group_by)
+
+        from_start_date : date = self.__calculate_from_start_date(now = now, months = months)
+        df = self.__filter_by_from_start_date(df = df, from_start_date = from_start_date, sort_by = group_by)
+
+        df = self.__filter_by_duration(df = df, min_duration = min_duration)
+
+        return df    
+    def create_tts_gantt_hseq_chart_function(
+            self, 
+            df : DataFrame,
+            fig_size : Tuple[int, int] = (10, 6), 
+            title : Optional[str] = None, 
+            x_label : Optional[str] = None, 
+            y_label : Optional[str] = None
+            ) -> Callable[[], None]:
+
+        '''Returns a function that visualizes df as GANNT chart.'''
+
+        func : Callable[[], None] = lambda : self.__show_gantt_chart(
+            df = df,
+            fig_size = fig_size,
+            title = title,
+            x_label = x_label,
+            y_label = y_label,
+            barh_y = TTCN.HASHTAGSEQ
+        )
+
+        return func
 class TTAdapter():
 
     '''Adapts SettingBag properties for use in TT*Factory methods.'''
