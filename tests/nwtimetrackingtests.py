@@ -1130,6 +1130,41 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         self.df_helper = TTDataFrameHelper()
         self.sm_provider = SupportMethodProvider()
+
+    def test_boxeffort_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
+
+        # Arrange
+        effort_td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "255h 30m"
+
+        # Act
+        actual : str = self.df_helper.box_effort(effort_td = effort_td, add_plus_sign = False)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_boxeffort_shouldreturnexpectedstring_whenpropertimedeltaandplussigntrue(self):    
+
+        # Arrange
+        effort_td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "+255h 30m"
+
+        # Act
+        actual : str = self.df_helper.box_effort(effort_td = effort_td, add_plus_sign = True)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_unboxeffort_shouldreturnexpectedtimedelta_whenproperstring(self):
+
+        # Arrange
+        effort_str : str = "5h 30m"
+        expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
+
+        # Act
+        actual_td : timedelta = self.df_helper.unbox_effort(effort_str = effort_str)
+
+        # Assert
+        self.assertEqual(expected_td, actual_td)
+
     def test_calculatepercentage_shouldreturnexpectedfloat_when0and16(self):
 
         # Arrange
@@ -1195,40 +1230,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-    def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
 
-        # Arrange
-        td_str : str = "5h 30m"
-        expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
-
-        # Act
-        actual_td : timedelta = self.df_helper.convert_string_to_timedelta(td_str = td_str)
-
-        # Assert
-        self.assertEqual(expected_td, actual_td)
-    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
-
-        # Arrange
-        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
-        expected : str = "255h 30m"
-
-        # Act
-        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = False)
-        
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussigntrue(self):    
-
-        # Arrange
-        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
-        expected : str = "+255h 30m"
-
-        # Act
-        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = True)
-        
-        # Assert
-        self.assertEqual(expected, actual)
-    
     @parameterized.expand([
         [timedelta(minutes=30), timedelta(hours=1), "↑"],
         [timedelta(hours=1), timedelta(minutes=30), "↓"],
@@ -1551,7 +1553,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
             effort_str : str):
 
         # Arrange
-        actual_td : timedelta = self.df_helper.convert_string_to_timedelta(td_str = effort_str)
+        actual_td : timedelta = self.df_helper.unbox_effort(effort_str = effort_str)
         expected : EffortStatus = EffortStatus(
             idx = idx,
             start_time_str = None,
