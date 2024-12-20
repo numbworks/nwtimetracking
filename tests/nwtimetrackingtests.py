@@ -15,7 +15,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, TimeTrackingProcessor
+from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, TTSequencer, TimeTrackingProcessor
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
 from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -2169,8 +2169,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         id : TTID = TTID.TTSBYMONTH
         setting_bag : SettingBag = Mock(md_infos = self.md_infos)
@@ -2185,8 +2192,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
         
         id : TTID = TTID.TTSBYMONTH
 
@@ -2206,8 +2220,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.excel_path = self.excel_path
@@ -2230,8 +2251,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2253,8 +2281,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2276,8 +2311,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2301,8 +2343,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2326,8 +2375,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2351,8 +2407,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2376,8 +2439,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2399,8 +2469,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2420,8 +2497,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.tts_by_efs_is_correct = self.tts_by_efs_is_correct
@@ -2441,8 +2525,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.tts_by_tr_unknown_id = self.tts_by_tr_unknown_id
@@ -2464,8 +2555,15 @@ class TTAdapterTestCase(unittest.TestCase):
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.md_infos = self.md_infos
@@ -2519,10 +2617,17 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_factory.create_tts_by_month_tpl.return_value = tts_by_month_tpl
 
+        tt_sequencer : TTSequencer = Mock()
+
         md_factory : TTMarkdownFactory = Mock()
         md_factory.create_tts_by_month_md.return_value = tts_by_month_md
 
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, bym_factory = bym_factory, md_factory = md_factory)
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : SettingBag = ObjectMother.get_setting_bag()
 
