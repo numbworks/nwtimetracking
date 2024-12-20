@@ -173,13 +173,13 @@ Considering the old-fashioned syntax adopted by both `make` and `bash`, here a s
 | `$@` | Variable that stores the target name. |
 | `if [[ ... ]]` | Double square brackets to enable pattern matching. |
 
-## BYMDFManager
+## BYMSplitter
 
 The scope of this class is to partition a “by month” table in smaller tables, following a custom logic. 
 
 Here a visual example of how its algorithm works:
 
-![Diagram-BYMDFManager.png](Diagrams/Diagram-BYMDFManager.png)
+![Diagram-BYMSplitter.png](Diagrams/Diagram-BYMSplitter.png)
 
 ## Known Issues - nwshared
 

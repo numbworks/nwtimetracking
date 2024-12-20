@@ -15,7 +15,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMDFManager, TimeTrackingProcessor
+from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, TimeTrackingProcessor
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
 from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -1622,7 +1622,6 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(TTCN.EFFORTSTATUS in df.columns)
-
 class BYMFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1683,7 +1682,203 @@ class BYMFactoryTestCase(unittest.TestCase):
         # Assert
         assert_frame_equal(expected_tpl[0] , actual_tpl[0])
         assert_frame_equal(expected_tpl[1] , actual_tpl[1])  
+class BYMSplitterTestCase(unittest.TestCase):
 
+    def setUp(self):
+        self.bym_splitter = BYMSplitter()
+    
+    @parameterized.expand([
+        (2024, True),
+        (1000, True),
+        (9999, True),
+        (999, False),
+        (10000, False),
+        ("year", False)
+    ])
+    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_year(value = value)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (2, True),
+        (0, True),
+        (-4, True),
+        (3, False),
+        (-5, False),
+    ])
+    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_even(number = number)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [["Month", "2015"], True],
+        [["Month", "2015", "↕", "2016"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
+        [[], False],
+        [["Month"], False],
+        [["Month", "2015", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
+        [["Month", "↕"], False],
+        [["Month", "↕", "↕"], False],
+        [["Month", "2015", "2015"], False],
+        [["Month", "2015", "↕", "↕"], False]
+    ])
+    def test_isvalid_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_valid(column_list = column_list) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (1, True),
+        (7, True),
+        (13, True),
+        (25, True),
+        (49, True),
+        (8, False),
+        (-7, False),
+    ])
+    def test_isinsequence_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_in_sequence(number = number)  # type: ignore
+        
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (1, [1], True),
+        (5, [1, 2, 3, 4, 5], True),
+        (1, [], False),
+        (0, [1], False),
+        (4, [1, 2, 3, 4, 5], False),
+    ])
+    def test_islast_shouldreturnexpectedbool_wheninvoked(self, number : int, lst : list[int], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_last(number = number, lst = lst)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [[0, 1], [0, 1]],
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]]
+    ])
+    def test_createcolumnnumbers_shouldreturnexpectedcolumnnumbers_wheninvoked(self, index_list : list[int], expected : list[int]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        
+        # Act
+        actual : list[int] = self.bym_splitter._BYMSplitter__create_column_numbers(df = df) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [[0, 1, 2], [0, 2]],
+        [[0, 1, 2, 3, 4], [0, 1, 4]]
+    ])
+    def test_filterbyindexlist_shouldreturnfiltereddf_wheninvoked(self, index_list : list[int], expected_indices : list[int]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        expected_columns : list[str] = [df.columns[i] for i in expected_indices]
+        
+        # Act
+        filtered_df : DataFrame = self.bym_splitter._BYMSplitter__filter_by_index_list(df = df, index_list = expected_indices) # type: ignore
+        
+        # Assert
+        self.assertEqual(filtered_df.columns.tolist(), expected_columns)
+
+    @parameterized.expand([
+        [[0, 1, 2, 3, 4], [[0, 1], [2, 3]]],
+        [[0, 1, 2, 3, 4, 5], [[0, 2, 4], [1, 3, 5]]]
+    ])
+    def test_filterbyindexlists_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_indices : list[list[int]]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        expected_columns : list[list[str]] = [[df.columns[i] for i in index_list] for index_list in expected_indices]
+        
+        # Act
+        sub_dfs : list[DataFrame] = self.bym_splitter._BYMSplitter__filter_by_index_lists(df = df, index_lists = expected_indices) # type: ignore
+        
+        # Assert
+        self.assertEqual(len(sub_dfs), len(expected_columns))
+        for i, sub_df in enumerate(sub_dfs):
+            self.assertEqual(sub_df.columns.tolist(), expected_columns[i])
+
+    @parameterized.expand([
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17, 18, 19] ]],
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17] ]]
+    ])
+    def test_createindexlists_shouldreturnexpectedlistoflists_wheninvoked(self, column_numbers : list[int], expected : list[list[int]]) -> None:
+        
+        # Arrange
+        # Act
+        actual : list[list[int]] = self.bym_splitter._BYMSplitter__create_index_lists(column_numbers = column_numbers) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 
+            [ ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], ["Month", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], ["Month", "2021", "↕", "2022", "↕", "2023", "↕", "2024"] ]
+        ],
+        [
+            [0, 1], 
+            [ ["Month", "2015"] ]
+        ]
+    ])
+    def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_column_names : list[list[str]]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        
+        # Act
+        sub_dfs : list[DataFrame] = self.bym_splitter.create_sub_dfs(df = df)
+        
+        # Assert
+        self.assertEqual(len(sub_dfs), len(expected_column_names))
+        for i, sub_df in enumerate(sub_dfs):
+            self.assertEqual(sub_df.columns.tolist(), expected_column_names[i])
+    
+    def test_createsubdfs_shouldraiseexception_wheninvaliddf(self) -> None:
+        
+        # Arrange
+        df : DataFrame = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        
+        # Act & Assert
+        with self.assertRaises(Exception):
+            self.bym_splitter.create_sub_dfs(df = df)
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1880,210 +2075,13 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-class BYMDFManagerTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.bymdf_manager = BYMDFManager()
-    
-    @parameterized.expand([
-        (2024, True),
-        (1000, True),
-        (9999, True),
-        (999, False),
-        (10000, False),
-        ("year", False)
-    ])
-    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_year(value = value)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (2, True),
-        (0, True),
-        (-4, True),
-        (3, False),
-        (-5, False),
-    ])
-    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_even(number = number)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [["Month", "2015"], True],
-        [["Month", "2015", "↕", "2016"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
-        [[], False],
-        [["Month"], False],
-        [["Month", "2015", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
-        [["Month", "↕"], False],
-        [["Month", "↕", "↕"], False],
-        [["Month", "2015", "2015"], False],
-        [["Month", "2015", "↕", "↕"], False]
-    ])
-    def test_isvalid_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_valid(column_list = column_list) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (1, True),
-        (7, True),
-        (13, True),
-        (25, True),
-        (49, True),
-        (8, False),
-        (-7, False),
-    ])
-    def test_isinsequence_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_in_sequence(number = number)  # type: ignore
-        
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (1, [1], True),
-        (5, [1, 2, 3, 4, 5], True),
-        (1, [], False),
-        (0, [1], False),
-        (4, [1, 2, 3, 4, 5], False),
-    ])
-    def test_islast_shouldreturnexpectedbool_wheninvoked(self, number : int, lst : list[int], expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_last(number = number, lst = lst)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [[0, 1], [0, 1]],
-        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]]
-    ])
-    def test_createcolumnnumbers_shouldreturnexpectedcolumnnumbers_wheninvoked(self, index_list : list[int], expected : list[int]) -> None:
-        
-        # Arrange
-        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
-        
-        # Act
-        actual : list[int] = self.bymdf_manager._BYMDFManager__create_column_numbers(df = df) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [[0, 1, 2], [0, 2]],
-        [[0, 1, 2, 3, 4], [0, 1, 4]]
-    ])
-    def test_filterbyindexlist_shouldreturnfiltereddf_wheninvoked(self, index_list : list[int], expected_indices : list[int]) -> None:
-        
-        # Arrange
-        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
-        expected_columns : list[str] = [df.columns[i] for i in expected_indices]
-        
-        # Act
-        filtered_df : DataFrame = self.bymdf_manager._BYMDFManager__filter_by_index_list(df = df, index_list = expected_indices) # type: ignore
-        
-        # Assert
-        self.assertEqual(filtered_df.columns.tolist(), expected_columns)
-
-    @parameterized.expand([
-        [[0, 1, 2, 3, 4], [[0, 1], [2, 3]]],
-        [[0, 1, 2, 3, 4, 5], [[0, 2, 4], [1, 3, 5]]]
-    ])
-    def test_filterbyindexlists_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_indices : list[list[int]]) -> None:
-        
-        # Arrange
-        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
-        expected_columns : list[list[str]] = [[df.columns[i] for i in index_list] for index_list in expected_indices]
-        
-        # Act
-        sub_dfs : list[DataFrame] = self.bymdf_manager._BYMDFManager__filter_by_index_lists(df = df, index_lists = expected_indices) # type: ignore
-        
-        # Assert
-        self.assertEqual(len(sub_dfs), len(expected_columns))
-        for i, sub_df in enumerate(sub_dfs):
-            self.assertEqual(sub_df.columns.tolist(), expected_columns[i])
-
-    @parameterized.expand([
-        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17, 18, 19] ]],
-        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17] ]]
-    ])
-    def test_createindexlists_shouldreturnexpectedlistoflists_wheninvoked(self, column_numbers : list[int], expected : list[list[int]]) -> None:
-        
-        # Arrange
-        # Act
-        actual : list[list[int]] = self.bymdf_manager._BYMDFManager__create_index_lists(column_numbers = column_numbers) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 
-            [ ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], ["Month", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], ["Month", "2021", "↕", "2022", "↕", "2023", "↕", "2024"] ]
-        ],
-        [
-            [0, 1], 
-            [ ["Month", "2015"] ]
-        ]
-    ])
-    def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_column_names : list[list[str]]) -> None:
-        
-        # Arrange
-        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
-        
-        # Act
-        sub_dfs : list[DataFrame] = self.bymdf_manager.create_sub_dfs(df = df)
-        
-        # Assert
-        self.assertEqual(len(sub_dfs), len(expected_column_names))
-        for i, sub_df in enumerate(sub_dfs):
-            self.assertEqual(sub_df.columns.tolist(), expected_column_names[i])
-    
-    def test_createsubdfs_shouldraiseexception_wheninvaliddf(self) -> None:
-        
-        # Arrange
-        df : DataFrame = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
-        
-        # Act & Assert
-        with self.assertRaises(Exception):
-            self.bymdf_manager.create_sub_dfs(df = df)
 class TTMarkdownFactoryTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
 
         self.md_factory : TTMarkdownFactory = TTMarkdownFactory(
             markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bymdf_manager = BYMDFManager()
+            bym_splitter = BYMSplitter()
         )
         self.paragraph_title : str = "Time Tracking By Month"
         self.last_update : datetime = datetime(2024, 11, 30)
