@@ -2239,7 +2239,7 @@ class TTSequencer():
         return df
     def create_tts_gantt_spnv_chart_function(
             self, 
-            df : DataFrame,
+            gantt_df : DataFrame,
             fig_size : Tuple[int, int], 
             title : Optional[str], 
             x_label : Optional[str], 
@@ -2249,7 +2249,7 @@ class TTSequencer():
         '''Returns a function that visualizes df as GANNT chart.'''
 
         func : Callable[[], None] = lambda : self.__show_gantt_chart(
-            df = df,
+            df = gantt_df,
             fig_size = fig_size,
             title = title,
             x_label = x_label,
@@ -2297,7 +2297,7 @@ class TTSequencer():
         return df    
     def create_tts_gantt_hseq_chart_function(
             self, 
-            df : DataFrame,
+            gantt_df : DataFrame,
             fig_size : Tuple[int, int], 
             title : Optional[str], 
             x_label : Optional[str], 
@@ -2307,7 +2307,7 @@ class TTSequencer():
         '''Returns a function that visualizes df as GANNT chart.'''
 
         func : Callable[[], None] = lambda : self.__show_gantt_chart(
-            df = df,
+            df = gantt_df,
             fig_size = fig_size,
             title = title,
             x_label = x_label,
@@ -2477,6 +2477,52 @@ class TTAdapter():
         )
 
         return tts_by_tr_df
+    def create_tts_gantt_spnv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        return self.__tt_sequencer.create_tts_gantt_spnv_df(
+            tt_df = tt_df,
+            spns = setting_bag.tts_gantt_spnv_spns,
+            criteria = setting_bag.tts_gantt_spnv_criteria,
+            now = setting_bag.now,
+            months = setting_bag.tts_gantt_spnv_months,
+            min_duration = setting_bag.tts_gantt_spnv_min_duration
+        )
+    def create_tts_gantt_spnv_plot_function(self, gantt_df : DataFrame, setting_bag : SettingBag) -> Callable[[], None]:
+
+        '''Creates the expected function out of the provided arguments.'''
+
+        return self.__tt_sequencer.create_tts_gantt_spnv_chart_function(
+            gantt_df = gantt_df,
+            fig_size = setting_bag.tts_gantt_spnv_fig_size,
+            title = setting_bag.tts_gantt_spnv_title,
+            x_label = setting_bag.tts_gantt_spnv_x_label,
+            y_label = setting_bag.tts_gantt_spnv_y_label
+        )
+    def create_tts_gantt_hseq_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        return self.__tt_sequencer.create_tts_gantt_hseq_df(
+            tt_df = tt_df,
+            hashtags = setting_bag.tts_gantt_hseq_hashtags,
+            criteria = setting_bag.tts_gantt_hseq_criteria,
+            now = setting_bag.now,
+            months = setting_bag.tts_gantt_hseq_months,
+            min_duration = setting_bag.tts_gantt_hseq_min_duration
+        )
+    def create_tts_gantt_hseq_plot_function(self, gantt_df : DataFrame, setting_bag : SettingBag) -> Callable[[], None]:
+
+        '''Creates the expected function out of the provided arguments.'''
+
+        return self.__tt_sequencer.create_tts_gantt_hseq_chart_function(
+            gantt_df = gantt_df,
+            fig_size = setting_bag.tts_gantt_hseq_fig_size,
+            title = setting_bag.tts_gantt_hseq_title,
+            x_label = setting_bag.tts_gantt_hseq_x_label,
+            y_label = setting_bag.tts_gantt_hseq_y_label
+        )   
     def create_tts_by_month_md(self, tts_by_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> str:
 
         '''Creates the expected Markdown content out of the provided arguments.'''
@@ -2504,13 +2550,10 @@ class TTAdapter():
         tts_by_year_hashtag_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
-        
-        # TO UPDATE
-        tts_gantt_spnv_df : DataFrame = DataFrame()
-        tts_gantt_spnv_plot_function : Callable[[], None] = lambda : None
-        tts_gantt_hseq_df : DataFrame = DataFrame()
-        tts_gantt_hseq_plot_function : Callable[[], None] = lambda : None
-        
+        tts_gantt_spnv_df : DataFrame = self.create_tts_gantt_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_gantt_spnv_plot_function : Callable[[], None] = self.create_tts_gantt_spnv_plot_function(gantt_df = tts_gantt_spnv_df, setting_bag = setting_bag)
+        tts_gantt_hseq_df : DataFrame = self.create_tts_gantt_hseq_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_gantt_hseq_plot_function : Callable[[], None] = self.create_tts_gantt_hseq_plot_function(gantt_df = tts_gantt_hseq_df, setting_bag = setting_bag)       
         tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
         definitions_df : DataFrame = self.__df_factory.create_definitions_df()
         tts_by_month_md : str = self.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
