@@ -88,6 +88,7 @@ class OPTION(StrEnum):
     display = auto()
     save = auto()
     log = auto()
+    plot = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
