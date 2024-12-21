@@ -2230,35 +2230,35 @@ class TTSequencerTestCase(unittest.TestCase):
         df_helper : TTDataFrameHelper = TTDataFrameHelper()
 
         # Act
-        sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
 
         # Assert
-        self.assertIsInstance(sequencer, TTSequencer)
+        self.assertIsInstance(tt_sequencer, TTSequencer)
     def test_convertcriteriatovalue_shouldreturnboolean_wheninvoked(self) -> None:
 
         # Arrange
         df_helper : TTDataFrameHelper = TTDataFrameHelper()
-        sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
 
         # Act & Assert
-        self.assertIsNone(sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.do_nothing))   # type: ignore
-        self.assertTrue(sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.include))        # type: ignore
-        self.assertFalse(sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.exclude))       # type: ignore
+        self.assertIsNone(tt_sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.do_nothing))   # type: ignore
+        self.assertTrue(tt_sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.include))        # type: ignore
+        self.assertFalse(tt_sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.exclude))       # type: ignore
     def test_convertcriteriatovalue_shouldraiseexception_wheninvalidcriteria(self) -> None:
 
         # Arrange
         df_helper : TTDataFrameHelper = TTDataFrameHelper()
-        sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
-        invalid_criteria : str = cast(CRITERIA, "invalid")
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+        criteria : str = cast(CRITERIA, "invalid")
 
         # Act
         with self.assertRaises(Exception) as context:
-            sequencer._TTSequencer__convert_criteria_to_value(invalid_criteria)  # type: ignore
+            tt_sequencer._TTSequencer__convert_criteria_to_value(criteria = criteria)  # type: ignore
 
         # Assert
         self.assertEqual(
             str(context.exception),
-            _MessageCollection.no_strategy_available_for_provided_criteria(criteria = invalid_criteria)
+            _MessageCollection.no_strategy_available_for_provided_criteria(criteria = criteria)
         )
 
     @parameterized.expand([
@@ -2266,20 +2266,40 @@ class TTSequencerTestCase(unittest.TestCase):
         ("2024-12-21", 6, "2024-06-21"),
         ("2024-12-21", 12, "2023-12-21"),
     ])
-    def test_calculatefromstartdate_shouldreturndate_wheninvoked(self, now_str : str, months : int, expected_str : str) -> None:
+    def test_calculatefromstartdate_shouldreturnexpecteddate_wheninvoked(self, now_str : str, months : int, expected_str : str) -> None:
 
         # Arrange
         now : datetime = datetime.strptime(now_str, "%Y-%m-%d")
         expected : date = datetime.strptime(expected_str, "%Y-%m-%d").date()
         df_helper : TTDataFrameHelper = TTDataFrameHelper()
-        sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
 
         # Act
-        actual : date = sequencer._TTSequencer__calculate_from_start_date(now = now, months = months)   # type: ignore
+        actual : date = tt_sequencer._TTSequencer__calculate_from_start_date(now = now, months = months)   # type: ignore
 
         # Assert
         self.assertEqual(actual, expected)
 
+    @parameterized.expand([
+        ("14h 00m", 14),
+        ("34h 15m", 34),
+        ("13h 30m", 13),
+        ("31h 45m", 32),
+        ("07h 45m", 8),
+        ("28h 15m", 28),
+        ("35h 15m", 35)
+    ])
+    def test_roundeffort_shouldreturnexpectedint_wheninvoked(self, effort : str, expected : int) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+
+        # Act
+        actual : int = tt_sequencer._TTSequencer__round_effort(effort = effort)   # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
 
 
 class TTAdapterTestCase(unittest.TestCase):
