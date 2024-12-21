@@ -3061,6 +3061,34 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             df = tts_by_spn_df, 
             formatters = setting_bag.tts_by_spn_formatters
         )
+    def test_processttsbyspn_shouldlog_whenoptionislog(self) -> None:
+        
+        # Arrange
+        tts_by_spn_df : DataFrame = Mock()
+        definitions_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_spn_df = tts_by_spn_df
+        summary.definitions_df = definitions_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_spn = [OPTION.log]  # type: ignore
+
+        # Act, Assert
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+
+        with patch.object(tt_processor, '_TimeTrackingProcessor__try_log_definitions') as try_log_definitions:
+            tt_processor.process_tts_by_spn()
+            try_log_definitions.assert_called_once_with(df = tts_by_spn_df, definitions = definitions_df)
     def test_processttsbyspnspv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
