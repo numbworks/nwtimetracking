@@ -83,12 +83,19 @@ class DEFINITIONSCN(StrEnum):
     DEFINITION = "Definition"
 class OPTION(StrEnum):
 
-    '''Represents a collection of source ids.'''
+    '''Represents a collection of options.'''
 
     display = auto()
     save = auto()
     log = auto()
     plot = auto()
+class CRITERIA(StrEnum):
+
+    '''Represents a collection of criterias.'''
+
+    exclude = auto()
+    include = auto()
+    do_nothing = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -1891,6 +1898,16 @@ class TTSequencer():
 
         self.__df_helper = df_helper
 
+    def __convert_criteria_to_value(self, criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude]) -> Optional[bool]:
+
+        if criteria == CRITERIA.do_nothing:
+            return None
+        elif criteria == CRITERIA.include:
+            return True
+        elif criteria == CRITERIA.exclude:
+            return False
+        else:
+            raise Exception(f"No strategy available for the provided CRITERIA ('{criteria}').")
     def __calculate_from_start_date(self, now : datetime, months : int) -> date:
         
         """Calculates from_start_date as 'now - months'."""
@@ -1909,13 +1926,16 @@ class TTSequencer():
         filtered_df = filtered_df.sort_values(by = [sort_by, TTCN.STARTDATE]).reset_index(drop = True)
 
         return filtered_df
-    def __filter_by_is_software_project(self, df : DataFrame, value : bool = True, spns : Optional[list[str]] = None) -> DataFrame:
+    def __filter_by_is_software_project(self, df : DataFrame, spns : Optional[list[str]], value : Optional[bool]) -> DataFrame:
         
         '''
             Filters out a df according to the condition: TTCN.ISSOFTWAREPROJECT == <value>.
 
-            If spns is not None, only the listed software projects will be considered.    
+            If spns or value are None, df will be returned as-is.
         '''
+
+        if not spns or not value:
+            return df
 
         filtered_df : DataFrame = df.copy(deep = True)
 
@@ -1931,13 +1951,16 @@ class TTSequencer():
         filtered_df.reset_index(drop = True, inplace = True)
 
         return filtered_df
-    def __filter_by_hashtag(self, df : DataFrame, value : bool = True, hashtags : Optional[list[str]] = None) -> DataFrame:
+    def __filter_by_hashtag(self, df : DataFrame, hashtags : Optional[list[str]], value : Optional[bool]) -> DataFrame:
         
         '''
             Filters out a df according to the condition: TTCN.HASHTAG == <value>.
 
-            If spns is not None, only the listed software projects will be considered.    
+            If spns or value are None, df will be returned as-is.
         '''
+
+        if not hashtags or not value:
+            return df
 
         filtered_df : DataFrame = df.copy(deep = True)
 
@@ -2155,9 +2178,10 @@ class TTSequencer():
         self, 
         tt_df : DataFrame, 
         spns : Optional[list[str]],
+        criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude],
         now : datetime,
         months : int,
-        min_duration : int = 4
+        min_duration : int
         ) -> DataFrame:
 
         '''
@@ -2172,8 +2196,8 @@ class TTSequencer():
 
         df : DataFrame = tt_df.copy(deep = True)
 
-        if not spns:
-            df = self.__filter_by_is_software_project(df = df, spns = spns)
+        value : Optional[bool] = self.__convert_criteria_to_value(criteria = criteria)
+        df = self.__filter_by_is_software_project(df = df, spns = spns, value = value)
 
         group_by : Literal[TTCN.DESCRIPTOR, TTCN.HASHTAGSEQ] = TTCN.DESCRIPTOR
         df  = self.__create_gannt_df(df = df, group_by = group_by)
@@ -2187,10 +2211,10 @@ class TTSequencer():
     def create_tts_gantt_spnv_chart_function(
             self, 
             df : DataFrame,
-            fig_size : Tuple[int, int] = (10, 6), 
-            title : Optional[str] = None, 
-            x_label : Optional[str] = None, 
-            y_label : Optional[str] = None
+            fig_size : Tuple[int, int], 
+            title : Optional[str], 
+            x_label : Optional[str], 
+            y_label : Optional[str]
             ) -> Callable[[], None]:
 
         '''Returns a function that visualizes df as GANNT chart.'''
@@ -2209,9 +2233,10 @@ class TTSequencer():
             self, 
             tt_df : DataFrame,
             hashtags : Optional[list[str]],
+            criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude],
             now : datetime,
             months : int,
-            min_duration : int = 4
+            min_duration : int
             ) -> DataFrame:
 
         '''
@@ -2226,8 +2251,8 @@ class TTSequencer():
 
         df : DataFrame = tt_df.copy(deep = True)
 
-        if not hashtags:
-            df = self.__filter_by_hashtag(df = df, hashtags = hashtags)
+        value : Optional[bool] = self.__convert_criteria_to_value(criteria = criteria)
+        df = self.__filter_by_hashtag(df = df, hashtags = hashtags, value = value)
 
         df = self.__add_seq_rank(df = df)
         df = self.__add_hashtag_seq(df = df)
@@ -2244,10 +2269,10 @@ class TTSequencer():
     def create_tts_gantt_hseq_chart_function(
             self, 
             df : DataFrame,
-            fig_size : Tuple[int, int] = (10, 6), 
-            title : Optional[str] = None, 
-            x_label : Optional[str] = None, 
-            y_label : Optional[str] = None
+            fig_size : Tuple[int, int], 
+            title : Optional[str], 
+            x_label : Optional[str], 
+            y_label : Optional[str]
             ) -> Callable[[], None]:
 
         '''Returns a function that visualizes df as GANNT chart.'''
