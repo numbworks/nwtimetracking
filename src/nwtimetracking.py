@@ -149,6 +149,13 @@ class _MessageCollection():
     def provided_df_invalid_column_list(column_list : list[str]) -> str:
         return f"The provided df has an invalid column list ('{column_list}')."
 
+    @staticmethod
+    def no_strategy_available_for_provided_criteria(criteria : CRITERIA) -> str:
+        return f"No strategy available for the provided CRITERIA ('{criteria}')."
+    @staticmethod
+    def variable_cant_be_less_than_one(variable_name : str) -> str:
+        return f"'{variable_name}' can't be < 1."
+
 # CLASSES
 @dataclass(frozen=True)
 class YearlyTarget():
@@ -1907,7 +1914,7 @@ class TTSequencer():
         elif criteria == CRITERIA.exclude:
             return False
         else:
-            raise Exception(f"No strategy available for the provided CRITERIA ('{criteria}').")
+            raise Exception(_MessageCollection.no_strategy_available_for_provided_criteria(criteria = criteria))
     def __calculate_from_start_date(self, now : datetime, months : int) -> date:
         
         """Calculates from_start_date as 'now - months'."""
@@ -2190,9 +2197,9 @@ class TTSequencer():
         '''
 
         if months < 1:
-            raise Exception(f"'months' can't be < 1.")
+            raise Exception(_MessageCollection.variable_cant_be_less_than_one("months"))
         if cast(int, min_duration) < 1:
-            raise Exception(f"'min_duration' can't be < 1.")
+            raise Exception(_MessageCollection.variable_cant_be_less_than_one("min_duration"))
 
         df : DataFrame = tt_df.copy(deep = True)
 
@@ -2245,9 +2252,9 @@ class TTSequencer():
         '''
 
         if months < 1:
-            raise Exception(f"'months' can't be < 1.")
+            raise Exception(_MessageCollection.variable_cant_be_less_than_one("months"))
         if cast(int, min_duration) < 1:
-            raise Exception(f"'min_duration' can't be < 1.")
+            raise Exception(_MessageCollection.variable_cant_be_less_than_one("min_duration"))
 
         df : DataFrame = tt_df.copy(deep = True)
 

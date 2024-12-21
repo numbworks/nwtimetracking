@@ -15,7 +15,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, TTSequencer, TimeTrackingProcessor
+from nwtimetracking import CRITERIA, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, TTSequencer, TimeTrackingProcessor
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
 from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -652,6 +652,33 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Act
         actual : str = _MessageCollection.provided_df_invalid_column_list(column_list = column_list)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [CRITERIA.do_nothing, "No strategy available for the provided CRITERIA ('do_nothing')."],
+        [CRITERIA.include, "No strategy available for the provided CRITERIA ('include')."],
+        [CRITERIA.exclude, "No strategy available for the provided CRITERIA ('exclude')."]
+    ])
+    def test_nostrategyavailableforprovidedcriteria_shouldreturnexpectedmessage_wheninvoked(self, criteria : CRITERIA, expected : str):
+        
+        # Arrange
+        # Act
+        actual : str = _MessageCollection.no_strategy_available_for_provided_criteria(criteria = criteria)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ["months", "'months' can't be < 1."],
+        ["min_duration", "'min_duration' can't be < 1."],
+    ])
+    def test_variablecantbelessthanone_shouldreturnexpectedmessage_wheninvoked(self, variable_name : str, expected : str):
+        
+        # Arrange
+        # Act
+        actual : str = _MessageCollection.variable_cant_be_less_than_one(variable_name = variable_name)
 
         # Assert
         self.assertEqual(expected, actual)
