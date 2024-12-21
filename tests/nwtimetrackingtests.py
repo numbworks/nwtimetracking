@@ -108,6 +108,8 @@ class ObjectMother():
             options_tts_by_hashtag_year = [OPTION.display],         # type: ignore
             options_tts_by_efs = [OPTION.display],                  # type: ignore
             options_tts_by_tr = [OPTION.display],                   # type: ignore
+            options_tts_gantt_spnv = [OPTION.display],              # type: ignore
+            options_tts_gantt_hseq = [OPTION.display],              # type: ignore
             options_definitions = [OPTION.display],                 # type: ignore
             excel_nrows = 1301,
             tts_by_year_month_spnv_display_only_spn = "nwtimetracking",
@@ -1022,6 +1024,8 @@ class SettingBagTestCase(unittest.TestCase):
         options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                      # type: ignore
         options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
         options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                # type: ignore
+        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot]] = [OPTION.display, OPTION.plot] # type: ignore
+        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot]] = [OPTION.display, OPTION.plot] # type: ignore
         options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
@@ -1052,6 +1056,22 @@ class SettingBagTestCase(unittest.TestCase):
         tts_by_tr_filter_by_top_n : uint = uint(5)
         tts_by_tr_head_n : uint = uint(10)
         tts_by_tr_display_head_n_with_tail : bool = False
+        tts_gantt_spnv_spns : Optional[list[str]] = []
+        tts_gantt_spnv_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing
+        tts_gantt_spnv_months : int = 4
+        tts_gantt_spnv_min_duration : int = 4
+        tts_gantt_spnv_fig_size : Tuple[int, int] = (10, 6)
+        tts_gantt_spnv_title : Optional[str] = None
+        tts_gantt_spnv_x_label : Optional[str] = None
+        tts_gantt_spnv_y_label : Optional[str] = None
+        tts_gantt_hseq_hashtags : Optional[list[str]] = []
+        tts_gantt_hseq_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing
+        tts_gantt_hseq_months : int = 4
+        tts_gantt_hseq_min_duration : int = 4
+        tts_gantt_hseq_fig_size : Tuple[int, int] = (10, 6)
+        tts_gantt_hseq_title : Optional[str] = None
+        tts_gantt_hseq_x_label : Optional[str] = None
+        tts_gantt_hseq_y_label : Optional[str] = None
         md_infos : list = []
         md_last_update : datetime = datetime.now()
         md_enable_github_optimizations : bool = True
@@ -1070,6 +1090,8 @@ class SettingBagTestCase(unittest.TestCase):
             options_tts_by_hashtag_year = options_tts_by_hashtag_year,
             options_tts_by_efs = options_tts_by_efs,
             options_tts_by_tr = options_tts_by_tr,
+            options_tts_gantt_spnv = options_tts_gantt_spnv,
+            options_tts_gantt_hseq = options_tts_gantt_hseq,
             options_definitions = options_definitions,
             excel_nrows = excel_nrows,
             tts_by_year_month_spnv_display_only_spn = tts_by_year_month_spnv_display_only_spn,
@@ -1100,6 +1122,22 @@ class SettingBagTestCase(unittest.TestCase):
             tts_by_tr_filter_by_top_n = tts_by_tr_filter_by_top_n,
             tts_by_tr_head_n = tts_by_tr_head_n,
             tts_by_tr_display_head_n_with_tail = tts_by_tr_display_head_n_with_tail,
+            tts_gantt_spnv_spns = tts_gantt_spnv_spns,
+            tts_gantt_spnv_criteria = tts_gantt_spnv_criteria,
+            tts_gantt_spnv_months = tts_gantt_spnv_months,
+            tts_gantt_spnv_min_duration = tts_gantt_spnv_min_duration,
+            tts_gantt_spnv_fig_size = tts_gantt_spnv_fig_size,
+            tts_gantt_spnv_title = tts_gantt_spnv_title,
+            tts_gantt_spnv_x_label = tts_gantt_spnv_x_label,
+            tts_gantt_spnv_y_label = tts_gantt_spnv_y_label,
+            tts_gantt_hseq_hashtags = tts_gantt_hseq_hashtags,
+            tts_gantt_hseq_criteria = tts_gantt_hseq_criteria,
+            tts_gantt_hseq_months = tts_gantt_hseq_months,
+            tts_gantt_hseq_min_duration = tts_gantt_hseq_min_duration,
+            tts_gantt_hseq_fig_size = tts_gantt_hseq_fig_size,
+            tts_gantt_hseq_title = tts_gantt_hseq_title,
+            tts_gantt_hseq_x_label = tts_gantt_hseq_x_label,
+            tts_gantt_hseq_y_label = tts_gantt_hseq_y_label,
             md_infos = md_infos,
             md_last_update = md_last_update,
             md_enable_github_optimizations = md_enable_github_optimizations
@@ -1118,6 +1156,8 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.options_tts_by_hashtag_year, options_tts_by_hashtag_year)
         self.assertEqual(actual.options_tts_by_efs, options_tts_by_efs)
         self.assertEqual(actual.options_tts_by_tr, options_tts_by_tr)
+        self.assertEqual(actual.options_tts_gantt_spnv, options_tts_gantt_spnv)
+        self.assertEqual(actual.options_tts_gantt_hseq, options_tts_gantt_hseq)
         self.assertEqual(actual.options_definitions, options_definitions)
         self.assertEqual(actual.excel_nrows, excel_nrows)
         self.assertEqual(actual.tts_by_year_month_spnv_display_only_spn, tts_by_year_month_spnv_display_only_spn)
@@ -1148,6 +1188,22 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_tr_filter_by_top_n, tts_by_tr_filter_by_top_n)
         self.assertEqual(actual.tts_by_tr_head_n, tts_by_tr_head_n)
         self.assertEqual(actual.tts_by_tr_display_head_n_with_tail, tts_by_tr_display_head_n_with_tail)
+        self.assertEqual(actual.tts_gantt_spnv_spns, tts_gantt_spnv_spns)
+        self.assertEqual(actual.tts_gantt_spnv_criteria, tts_gantt_spnv_criteria)
+        self.assertEqual(actual.tts_gantt_spnv_months, tts_gantt_spnv_months)
+        self.assertEqual(actual.tts_gantt_spnv_min_duration, tts_gantt_spnv_min_duration)
+        self.assertEqual(actual.tts_gantt_spnv_fig_size, tts_gantt_spnv_fig_size)
+        self.assertEqual(actual.tts_gantt_spnv_title, tts_gantt_spnv_title)
+        self.assertEqual(actual.tts_gantt_spnv_x_label, tts_gantt_spnv_x_label)
+        self.assertEqual(actual.tts_gantt_spnv_y_label, tts_gantt_spnv_y_label)
+        self.assertEqual(actual.tts_gantt_hseq_hashtags, tts_gantt_hseq_hashtags)
+        self.assertEqual(actual.tts_gantt_hseq_criteria, tts_gantt_hseq_criteria)
+        self.assertEqual(actual.tts_gantt_hseq_months, tts_gantt_hseq_months)
+        self.assertEqual(actual.tts_gantt_hseq_min_duration, tts_gantt_hseq_min_duration)
+        self.assertEqual(actual.tts_gantt_hseq_fig_size, tts_gantt_hseq_fig_size)
+        self.assertEqual(actual.tts_gantt_hseq_title, tts_gantt_hseq_title)
+        self.assertEqual(actual.tts_gantt_hseq_x_label, tts_gantt_hseq_x_label)
+        self.assertEqual(actual.tts_gantt_hseq_y_label, tts_gantt_hseq_y_label)
         self.assertEqual(actual.md_infos, md_infos)
         self.assertEqual(actual.md_last_update, md_last_update)
         self.assertEqual(actual.md_enable_github_optimizations, md_enable_github_optimizations)

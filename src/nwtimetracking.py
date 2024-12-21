@@ -340,6 +340,8 @@ class SettingBag():
     options_tts_by_hashtag_year : list[Literal[OPTION.display]]
     options_tts_by_efs : list[Literal[OPTION.display]]
     options_tts_by_tr : list[Literal[OPTION.display]]
+    options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot]]
+    options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot]]
     options_definitions : list[Literal[OPTION.display]]    
     excel_nrows : int
     tts_by_year_month_spnv_display_only_spn : Optional[str]
@@ -372,6 +374,22 @@ class SettingBag():
     tts_by_tr_filter_by_top_n : Optional[uint] = field(default = uint(5))
     tts_by_tr_head_n : Optional[uint] = field(default = uint(10))
     tts_by_tr_display_head_n_with_tail : bool = field(default = False)
+    tts_gantt_spnv_spns : Optional[list[str]] = field(default_factory = lambda : []) 
+    tts_gantt_spnv_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = field(default = CRITERIA.do_nothing)
+    tts_gantt_spnv_months : int = field(default = 4)
+    tts_gantt_spnv_min_duration : int = field(default = 4)
+    tts_gantt_spnv_fig_size : Tuple[int, int] = field(default = (10, 6))
+    tts_gantt_spnv_title : Optional[str] = field(default = None)
+    tts_gantt_spnv_x_label : Optional[str] = field(default = None)
+    tts_gantt_spnv_y_label : Optional[str] = field(default = None)
+    tts_gantt_hseq_hashtags : Optional[list[str]] = field(default_factory = lambda : []) 
+    tts_gantt_hseq_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = field(default = CRITERIA.do_nothing)
+    tts_gantt_hseq_months : int = field(default = 4)
+    tts_gantt_hseq_min_duration : int = field(default = 4)
+    tts_gantt_hseq_fig_size : Tuple[int, int] = field(default = (10, 6))
+    tts_gantt_hseq_title : Optional[str] = field(default = None)
+    tts_gantt_hseq_x_label : Optional[str] = field(default = None)
+    tts_gantt_hseq_y_label : Optional[str] = field(default = None)    
     md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
     md_enable_github_optimizations : bool = field(default = False)
