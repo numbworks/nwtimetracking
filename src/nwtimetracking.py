@@ -2114,7 +2114,7 @@ class TTSequencer():
         gantt_df[TTCN.ENDDATE] = pd.to_datetime(gantt_df[TTCN.ENDDATE])
         gantt_df[TTCN.DURATION] = (gantt_df[TTCN.ENDDATE] - gantt_df[TTCN.STARTDATE]).astype("timedelta64[ns]").dt.days
 
-        gantt_df[TTCN.EFFORTH] = gantt_df[TTCN.EFFORTH].apply(self.__df_helper.box_effort)
+        gantt_df[TTCN.EFFORTH] = gantt_df[TTCN.EFFORTH].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
         gantt_df[TTCN.EFFORTH] = gantt_df[TTCN.EFFORTH].apply(self.__round_effort)
 
         gantt_df.reset_index(drop = True, inplace = True)
@@ -2721,7 +2721,7 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__optimize_tt_for_display(tt_df = self.__tt_summary.tt_df)
         hide_index : bool = self.__setting_bag.tt_hide_index
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, hide_index = hide_index)
     def process_tts_by_month(self) -> None:
 
@@ -2738,10 +2738,10 @@ class TimeTrackingProcessor():
         content : str = self.__tt_summary.tts_by_month_md
         id : TTID = TTID.TTSBYMONTH
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
 
-        if "save" in options:
+        if OPTION.save in options:
             self.__save_and_log(id = id, content = content)
     def process_tts_by_year(self) -> None:
 
@@ -2756,7 +2756,7 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_by_year
         df : DataFrame = self.__tt_summary.tts_by_year_df
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
     def process_tts_by_year_month(self) -> None:
 
@@ -2771,7 +2771,7 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_by_year_month
         df : DataFrame = self.__optimize_tts_by_year_month_for_display(tts_by_year_month_tpl = self.__tt_summary.tts_by_year_month_tpl)
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
     def process_tts_by_year_month_spnv(self) -> None:
 
@@ -2787,7 +2787,7 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__optimize_tts_by_year_month_spnv_for_display(tts_by_year_month_spnv_tpl = self.__tt_summary.tts_by_year_month_spnv_tpl)
         formatters : dict = self.__setting_bag.tts_by_year_month_spnv_formatters
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
     def process_tts_by_year_spnv(self) -> None:
 
@@ -2803,7 +2803,7 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__optimize_tts_by_year_spnv_for_display(tts_by_year_spnv_tpl = self.__tt_summary.tts_by_year_spnv_tpl)
         formatters : dict = self.__setting_bag.tts_by_year_spnv_formatters
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
     def process_tts_by_spn(self) -> None:
 
@@ -2820,10 +2820,10 @@ class TimeTrackingProcessor():
         formatters : dict = self.__setting_bag.tts_by_spn_formatters
         definitions_df : DataFrame = self.__tt_summary.definitions_df
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
-        if "log" in options:
+        if OPTION.log in options:
             self.__try_log_definitions(df = df, definitions = definitions_df)
     def process_tts_by_spn_spv(self) -> None:
 
@@ -2839,10 +2839,10 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__tt_summary.tts_by_spn_spv_df
         definitions_df : DataFrame = self.__tt_summary.definitions_df        
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
 
-        if "log" in options:
+        if OPTION.log in options:
             self.__try_log_definitions(df = df, definitions = definitions_df)
     def process_tts_by_hashtag(self) -> None:
 
@@ -2858,7 +2858,7 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__tt_summary.tts_by_hashtag_df
         formatters : dict = self.__setting_bag.tts_by_hashtag_formatters    
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
     def process_tts_by_hashtag_year(self) -> None:
 
@@ -2873,7 +2873,7 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_by_hashtag_year
         df : DataFrame = self.__tt_summary.tts_by_hashtag_year_df
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
     def process_tts_by_efs(self) -> None:
 
@@ -2888,7 +2888,7 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_by_efs
         df : DataFrame = self.__tt_summary.tts_by_efs_tpl[1]
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
     def process_tts_by_tr(self) -> None:
 
@@ -2903,8 +2903,44 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_by_tr
         df : DataFrame = self.__optimize_tts_by_tr_for_display(tts_by_tr_df = self.__tt_summary.tts_by_tr_df)
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
+    def process_tts_gantt_spnv(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_gantt_spnv.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_gantt_spnv
+        df : DataFrame = self.__tt_summary.tts_gantt_spnv_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(df = df)
+
+        if OPTION.plot in options:
+            self.__tt_summary.tts_gantt_spnv_plot_function()
+    def process_tts_gantt_hseq(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_gantt_hseq.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_gantt_hseq
+        df : DataFrame = self.__tt_summary.tts_gantt_hseq_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(df = df)
+
+        if OPTION.plot in options:
+            self.__tt_summary.tts_gantt_hseq_plot_function()    
     def process_definitions(self) -> None:
 
         '''
