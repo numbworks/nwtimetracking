@@ -2221,6 +2221,67 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected_newlines, actual_newlines)
+
+class TTSequencerTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+
+        # Act
+        sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+
+        # Assert
+        self.assertIsInstance(sequencer, TTSequencer)
+    def test_convertcriteriatovalue_shouldreturnboolean_wheninvoked(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+        sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+
+        # Act & Assert
+        self.assertIsNone(sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.do_nothing))   # type: ignore
+        self.assertTrue(sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.include))        # type: ignore
+        self.assertFalse(sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.exclude))       # type: ignore
+    def test_convertcriteriatovalue_shouldraiseexception_wheninvalidcriteria(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+        sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+        invalid_criteria : str = cast(CRITERIA, "invalid")
+
+        # Act
+        with self.assertRaises(Exception) as context:
+            sequencer._TTSequencer__convert_criteria_to_value(invalid_criteria)  # type: ignore
+
+        # Assert
+        self.assertEqual(
+            str(context.exception),
+            _MessageCollection.no_strategy_available_for_provided_criteria(criteria = invalid_criteria)
+        )
+
+    @parameterized.expand([
+        ("2024-12-21", 1, "2024-11-21"),
+        ("2024-12-21", 6, "2024-06-21"),
+        ("2024-12-21", 12, "2023-12-21"),
+    ])
+    def test_calculatefromstartdate_shouldreturndate_wheninvoked(self, now_str : str, months : int, expected_str : str) -> None:
+
+        # Arrange
+        now : datetime = datetime.strptime(now_str, "%Y-%m-%d")
+        expected : date = datetime.strptime(expected_str, "%Y-%m-%d").date()
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+        sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+
+        # Act
+        actual : date = sequencer._TTSequencer__calculate_from_start_date(now = now, months = months)   # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+
+
 class TTAdapterTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
