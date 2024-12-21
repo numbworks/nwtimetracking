@@ -490,7 +490,8 @@ class ObjectMother():
             TTCN.PERCDYE: r"% of Total Development Yearly Effort",
             TTCN.PERCTYE: r"% of Total Yearly Effort",
             TTCN.PERCDE: r"% of Total Development Effort",
-            TTCN.PERCTE: r"% of Total Effort"
+            TTCN.PERCTE: r"% of Total Effort",
+            TTCN.EFFORTPERC: "% of Total Effort"
         }
         
         definitions_df : DataFrame = DataFrame(

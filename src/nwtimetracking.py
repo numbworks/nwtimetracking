@@ -340,7 +340,7 @@ class SettingBag():
     options_tts_by_year_spnv : list[Literal[OPTION.display]]    
     options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]]
     options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]]
-    options_tts_by_hashtag : list[Literal[OPTION.display]]
+    options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.log]]
     options_tts_by_hashtag_year : list[Literal[OPTION.display]]
     options_tts_by_efs : list[Literal[OPTION.display]]
     options_tts_by_tr : list[Literal[OPTION.display]]
@@ -1877,7 +1877,8 @@ class TTDataFrameFactory():
             TTCN.PERCDYE: r"% of Total Development Yearly Effort",
             TTCN.PERCTYE: r"% of Total Yearly Effort",
             TTCN.PERCDE: r"% of Total Development Effort",
-            TTCN.PERCTE: r"% of Total Effort"
+            TTCN.PERCTE: r"% of Total Effort",
+            TTCN.EFFORTPERC: "% of Total Effort"
         }
         
         definitions_df : DataFrame = DataFrame(
@@ -2864,10 +2865,14 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_hashtag
         df : DataFrame = self.__tt_summary.tts_by_hashtag_df
-        formatters : dict = self.__setting_bag.tts_by_hashtag_formatters    
+        formatters : dict = self.__setting_bag.tts_by_hashtag_formatters
+        definitions_df : DataFrame = self.__tt_summary.definitions_df
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
+
+        if OPTION.log in options:
+            self.__try_log_definitions(df = df, definitions = definitions_df)
     def process_tts_by_hashtag_year(self) -> None:
 
         '''
