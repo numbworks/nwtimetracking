@@ -491,7 +491,10 @@ class ObjectMother():
             TTCN.PERCTYE: r"% of Total Yearly Effort",
             TTCN.PERCDE: r"% of Total Development Effort",
             TTCN.PERCTE: r"% of Total Effort",
-            TTCN.EFFORTPERC: "% of Total Effort"
+            TTCN.EFFORTPERC: "% of Total Effort",
+            TTCN.HASHTAGSEQ: "Period of time in which the same hashtag has been used without breaks.",
+            TTCN.EFFORTH: "Total Hours of Effort between StartDate and EndDate.",
+            TTCN.DURATION: "Total number of days between StartDate and EndDate."
         }
         
         definitions_df : DataFrame = DataFrame(

@@ -344,9 +344,9 @@ class SettingBag():
     options_tts_by_hashtag_year : list[Literal[OPTION.display]]
     options_tts_by_efs : list[Literal[OPTION.display]]
     options_tts_by_tr : list[Literal[OPTION.display]]
-    options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot]]
-    options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot]]
-    options_definitions : list[Literal[OPTION.display]]    
+    options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.log]]
+    options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.log]]
+    options_definitions : list[Literal[OPTION.display]]
     excel_nrows : int
     tts_by_year_month_spnv_display_only_spn : Optional[str]
     tts_by_year_spnv_display_only_spn : Optional[str]
@@ -1878,7 +1878,10 @@ class TTDataFrameFactory():
             TTCN.PERCTYE: r"% of Total Yearly Effort",
             TTCN.PERCDE: r"% of Total Development Effort",
             TTCN.PERCTE: r"% of Total Effort",
-            TTCN.EFFORTPERC: "% of Total Effort"
+            TTCN.EFFORTPERC: "% of Total Effort",
+            TTCN.HASHTAGSEQ: "Period of time in which the same hashtag has been used without breaks.",
+            TTCN.EFFORTH: "Total Hours of Effort between StartDate and EndDate.",
+            TTCN.DURATION: "Total number of days between StartDate and EndDate."
         }
         
         definitions_df : DataFrame = DataFrame(
@@ -2931,9 +2934,13 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_gantt_spnv
         df : DataFrame = self.__tt_summary.tts_gantt_spnv_df
         formatters : dict = self.__setting_bag.tts_gantt_spnv_formatters
+        definitions_df : DataFrame = self.__tt_summary.definitions_df   
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
+
+        if OPTION.log in options:
+            self.__try_log_definitions(df = df, definitions = definitions_df)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_spnv_plot_function()
@@ -2950,12 +2957,16 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_gantt_hseq
         df : DataFrame = self.__tt_summary.tts_gantt_hseq_df
         formatters : dict = self.__setting_bag.tts_gantt_hseq_formatters
+        definitions_df : DataFrame = self.__tt_summary.definitions_df   
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
+        if OPTION.log in options:
+            self.__try_log_definitions(df = df, definitions = definitions_df)
+
         if OPTION.plot in options:
-            self.__tt_summary.tts_gantt_hseq_plot_function()    
+            self.__tt_summary.tts_gantt_hseq_plot_function()
     def process_definitions(self) -> None:
 
         '''
