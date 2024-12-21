@@ -1866,12 +1866,18 @@ class TTDataFrameFactory():
         columns : list[str] = [DEFINITIONSCN.TERM, DEFINITIONSCN.DEFINITION]
 
         definitions : dict[str, str] = { 
-            "DME": "Development Monthly Effort",
-            "TME": "Total Monthly Effort",
-            "DYE": "Development Yearly Effort",
-            "TYE": "Total Yearly Effort",
-            "DE": "Development Effort",
-            "TE": "Total Effort"
+            TTCN.DME: "Total Development Monthly Effort",
+            TTCN.TME: "Total Monthly Effort",
+            TTCN.DYE: "Total Development Yearly Effort",
+            TTCN.TYE: "Total Yearly Effort",
+            TTCN.DE: "Total Development Effort",
+            TTCN.TE: "Total Effort",
+            TTCN.PERCDME: r"% of Total Development Monthly Effort",
+            TTCN.PERCTME: r"% of Total Monthly Effort",
+            TTCN.PERCDYE: r"% of Total Development Yearly Effort",
+            TTCN.PERCTYE: r"% of Total Yearly Effort",
+            TTCN.PERCDE: r"% of Total Development Effort",
+            TTCN.PERCTE: r"% of Total Effort"
         }
         
         definitions_df : DataFrame = DataFrame(
