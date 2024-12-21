@@ -3094,7 +3094,118 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         displayer.display.assert_called_once_with(
             df = tts_by_tr_df.head(10)
         )
+    def test_processttsganttspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_gantt_spnv_df : DataFrame = Mock()
 
+        summary : Mock = Mock()
+        summary.tts_gantt_spnv_df = tts_gantt_spnv_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_gantt_spnv = [OPTION.display]    # type: ignore
+        setting_bag.tts_gantt_spnv_formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_gantt_spnv()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_gantt_spnv_df,
+            formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+        )
+    def test_processttsganttspnv_shouldplot_whenoptionisplot(self) -> None:
+        
+        # Arrange
+        tts_gantt_spnv_plot_function : Callable[[], None] = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_gantt_spnv_plot_function = tts_gantt_spnv_plot_function
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_gantt_spnv = [OPTION.plot]    # type: ignore
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_gantt_spnv()
+
+        # Assert
+        summary.tts_gantt_spnv_plot_function.assert_called_once()
+    def test_processttsgantthseq_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_gantt_hseq_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_gantt_hseq_df = tts_gantt_hseq_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_gantt_hseq = [OPTION.display]    # type: ignore
+        setting_bag.tts_gantt_hseq_formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_gantt_hseq()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_gantt_hseq_df,
+            formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+        )
+    def test_processttsgantthseq_shouldplot_whenoptionisplot(self) -> None:
+        
+        # Arrange
+        tts_gantt_hseq_plot_function : Callable[[], None] = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_gantt_hseq_plot_function = tts_gantt_hseq_plot_function
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_gantt_hseq = [OPTION.plot]    # type: ignore
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_gantt_hseq()
+
+        # Assert
+        summary.tts_gantt_hseq_plot_function.assert_called_once()
     def test_processdefinitions_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
