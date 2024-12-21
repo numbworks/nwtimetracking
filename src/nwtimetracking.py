@@ -210,6 +210,10 @@ class TTSummary():
     tts_by_hashtag_year_df : DataFrame
     tts_by_efs_tpl : Tuple[DataFrame, DataFrame]
     tts_by_tr_df : DataFrame
+    tts_gantt_spnv_df : DataFrame
+    tts_gantt_spnv_plot_function : Callable[[], None]
+    tts_gantt_hseq_df : DataFrame
+    tts_gantt_hseq_plot_function : Callable[[], None]
     definitions_df : DataFrame
 
     # Markdowns
@@ -2500,6 +2504,13 @@ class TTAdapter():
         tts_by_year_hashtag_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        
+        # TO UPDATE
+        tts_gantt_spnv_df : DataFrame = DataFrame()
+        tts_gantt_spnv_plot_function : Callable[[], None] = lambda : None
+        tts_gantt_hseq_df : DataFrame = DataFrame()
+        tts_gantt_hseq_plot_function : Callable[[], None] = lambda : None
+        
         tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
         definitions_df : DataFrame = self.__df_factory.create_definitions_df()
         tts_by_month_md : str = self.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
@@ -2517,6 +2528,10 @@ class TTAdapter():
             tts_by_hashtag_df = tts_by_hashtag_df,
             tts_by_efs_tpl = tts_by_efs_tpl,
             tts_by_tr_df = tts_by_tr_df,
+            tts_gantt_spnv_df = tts_gantt_spnv_df,
+            tts_gantt_spnv_plot_function = tts_gantt_spnv_plot_function,
+            tts_gantt_hseq_df = tts_gantt_hseq_df,
+            tts_gantt_hseq_plot_function = tts_gantt_hseq_plot_function,
             definitions_df = definitions_df,
             tts_by_month_md = tts_by_month_md
         )

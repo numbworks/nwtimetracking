@@ -8,7 +8,7 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
-from typing import Any, Literal, Optional, Tuple, cast
+from typing import Any, Callable, Literal, Optional, Tuple, cast
 from unittest.mock import Mock, patch
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
 
@@ -823,6 +823,7 @@ class TTSummaryTestCase(unittest.TestCase):
         # Arrange
         empty_df : DataFrame = DataFrame()
         empty_tuple : Tuple[DataFrame, DataFrame] = (empty_df, empty_df)
+        empty_func : Callable[[], None] = lambda : None
         markdown : str = ""
 
         # Act
@@ -839,6 +840,10 @@ class TTSummaryTestCase(unittest.TestCase):
             tts_by_hashtag_year_df = empty_df,
             tts_by_efs_tpl = empty_tuple,
             tts_by_tr_df = empty_df,
+            tts_gantt_spnv_df = empty_df,
+            tts_gantt_spnv_plot_function = empty_func,
+            tts_gantt_hseq_df = empty_df,
+            tts_gantt_hseq_plot_function = empty_func,
             definitions_df = empty_df,
             tts_by_month_md = markdown,
         )
@@ -856,6 +861,10 @@ class TTSummaryTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_hashtag_year_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_efs_tpl, empty_tuple)
         self.assertEqual(actual.tts_by_tr_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_gantt_spnv_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_gantt_spnv_plot_function, empty_func)
+        self.assertEqual(actual.tts_gantt_hseq_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_gantt_hseq_plot_function, empty_func)
         self.assertEqual(actual.definitions_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_month_md, markdown)
         self.assertIsInstance(actual.tts_by_month_md, str)
