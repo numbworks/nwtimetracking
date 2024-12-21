@@ -1066,7 +1066,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_by_tr_head_n : uint = uint(10)
         tts_by_tr_display_head_n_with_tail : bool = False
         tts_gantt_spnv_spns : Optional[list[str]] = []
-        tts_gantt_spnv_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing
+        tts_gantt_spnv_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing    # type: ignore
         tts_gantt_spnv_months : int = 4
         tts_gantt_spnv_min_duration : int = 4
         tts_gantt_spnv_fig_size : Tuple[int, int] = (10, 6)
@@ -1075,7 +1075,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_gantt_spnv_y_label : Optional[str] = None
         tts_gantt_spnv_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         tts_gantt_hseq_hashtags : Optional[list[str]] = []
-        tts_gantt_hseq_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing
+        tts_gantt_hseq_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing    # type: ignore
         tts_gantt_hseq_months : int = 4
         tts_gantt_hseq_min_duration : int = 4
         tts_gantt_hseq_fig_size : Tuple[int, int] = (10, 6)
