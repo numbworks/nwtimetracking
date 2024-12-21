@@ -1073,6 +1073,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_gantt_spnv_title : Optional[str] = None
         tts_gantt_spnv_x_label : Optional[str] = None
         tts_gantt_spnv_y_label : Optional[str] = None
+        tts_gantt_spnv_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         tts_gantt_hseq_hashtags : Optional[list[str]] = []
         tts_gantt_hseq_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing
         tts_gantt_hseq_months : int = 4
@@ -1081,6 +1082,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_gantt_hseq_title : Optional[str] = None
         tts_gantt_hseq_x_label : Optional[str] = None
         tts_gantt_hseq_y_label : Optional[str] = None
+        tts_gantt_hseq_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         md_infos : list = []
         md_last_update : datetime = datetime.now()
         md_enable_github_optimizations : bool = True
@@ -1139,6 +1141,7 @@ class SettingBagTestCase(unittest.TestCase):
             tts_gantt_spnv_title = tts_gantt_spnv_title,
             tts_gantt_spnv_x_label = tts_gantt_spnv_x_label,
             tts_gantt_spnv_y_label = tts_gantt_spnv_y_label,
+            tts_gantt_spnv_formatters = tts_gantt_spnv_formatters,
             tts_gantt_hseq_hashtags = tts_gantt_hseq_hashtags,
             tts_gantt_hseq_criteria = tts_gantt_hseq_criteria,
             tts_gantt_hseq_months = tts_gantt_hseq_months,
@@ -1147,6 +1150,7 @@ class SettingBagTestCase(unittest.TestCase):
             tts_gantt_hseq_title = tts_gantt_hseq_title,
             tts_gantt_hseq_x_label = tts_gantt_hseq_x_label,
             tts_gantt_hseq_y_label = tts_gantt_hseq_y_label,
+            tts_gantt_hseq_formatters = tts_gantt_hseq_formatters,
             md_infos = md_infos,
             md_last_update = md_last_update,
             md_enable_github_optimizations = md_enable_github_optimizations
@@ -1205,6 +1209,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_gantt_spnv_title, tts_gantt_spnv_title)
         self.assertEqual(actual.tts_gantt_spnv_x_label, tts_gantt_spnv_x_label)
         self.assertEqual(actual.tts_gantt_spnv_y_label, tts_gantt_spnv_y_label)
+        self.assertEqual(actual.tts_gantt_spnv_formatters, tts_gantt_spnv_formatters)
         self.assertEqual(actual.tts_gantt_hseq_hashtags, tts_gantt_hseq_hashtags)
         self.assertEqual(actual.tts_gantt_hseq_criteria, tts_gantt_hseq_criteria)
         self.assertEqual(actual.tts_gantt_hseq_months, tts_gantt_hseq_months)
@@ -1213,6 +1218,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_gantt_hseq_title, tts_gantt_hseq_title)
         self.assertEqual(actual.tts_gantt_hseq_x_label, tts_gantt_hseq_x_label)
         self.assertEqual(actual.tts_gantt_hseq_y_label, tts_gantt_hseq_y_label)
+        self.assertEqual(actual.tts_gantt_hseq_formatters, tts_gantt_hseq_formatters)
         self.assertEqual(actual.md_infos, md_infos)
         self.assertEqual(actual.md_last_update, md_last_update)
         self.assertEqual(actual.md_enable_github_optimizations, md_enable_github_optimizations)
@@ -3088,6 +3094,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         displayer.display.assert_called_once_with(
             df = tts_by_tr_df.head(10)
         )
+
     def test_processdefinitions_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -3152,6 +3159,8 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         ["process_tts_by_hashtag_year"],
         ["process_tts_by_efs"],
         ["process_tts_by_tr"],
+        ["process_tts_gantt_spnv"],
+        ["process_tts_gantt_hseq"],
         ["process_definitions"],
         ["get_summary"]
     ])

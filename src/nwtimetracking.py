@@ -386,6 +386,7 @@ class SettingBag():
     tts_gantt_spnv_title : Optional[str] = field(default = None)
     tts_gantt_spnv_x_label : Optional[str] = field(default = None)
     tts_gantt_spnv_y_label : Optional[str] = field(default = None)
+    tts_gantt_spnv_formatters : dict = field(default_factory = lambda : { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" })
     tts_gantt_hseq_hashtags : Optional[list[str]] = field(default_factory = lambda : []) 
     tts_gantt_hseq_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = field(default = CRITERIA.do_nothing)
     tts_gantt_hseq_months : int = field(default = 4)
@@ -393,7 +394,8 @@ class SettingBag():
     tts_gantt_hseq_fig_size : Tuple[int, int] = field(default = (10, 6))
     tts_gantt_hseq_title : Optional[str] = field(default = None)
     tts_gantt_hseq_x_label : Optional[str] = field(default = None)
-    tts_gantt_hseq_y_label : Optional[str] = field(default = None)    
+    tts_gantt_hseq_y_label : Optional[str] = field(default = None)
+    tts_gantt_hseq_formatters : dict = field(default_factory = lambda : { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" })
     md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
     md_enable_github_optimizations : bool = field(default = False)
@@ -2917,9 +2919,10 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_gantt_spnv
         df : DataFrame = self.__tt_summary.tts_gantt_spnv_df
+        formatters : dict = self.__setting_bag.tts_gantt_spnv_formatters
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(df = df, formatters = formatters)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_spnv_plot_function()
@@ -2935,9 +2938,10 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_gantt_hseq
         df : DataFrame = self.__tt_summary.tts_gantt_hseq_df
+        formatters : dict = self.__setting_bag.tts_gantt_hseq_formatters
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(df = df, formatters = formatters)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_hseq_plot_function()    
