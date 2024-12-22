@@ -2651,6 +2651,13 @@ class TTLogger():
         if len(setting_names) > 0:
             setting_subset : SettingSubset = self.__create_setting_subset(setting_bag = setting_bag, setting_names = setting_names)
             self.__logging_function(str(setting_subset))
+    def log(self, msg : str) -> None:
+
+        '''Logs the provided msg. Does nothing if msg is empty'''
+
+        if len(msg) > 0:
+            self.__logging_function(msg)
+
 @dataclass(frozen=True)
 class ComponentBag():
 
@@ -2702,7 +2709,6 @@ class TimeTrackingProcessor():
 
         message : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
         logging_function(message)
-
 
     def __orchestrate_head_n(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
 

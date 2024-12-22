@@ -3000,6 +3000,36 @@ class TTLoggerTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(len(messages), 0)
+
+    @parameterized.expand([
+        ("Some message")
+    ])
+    def test_log_shouldlogmessage_whenmessageisprovided(self, msg : str) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Act
+        tt_logger.log(msg = msg)
+
+        # Assert
+        logging_function.assert_called_once_with(msg)
+
+    @parameterized.expand([
+        ("")
+    ])
+    def test_log_shouldnotlogmessage_whenmessageisempty(self, msg : str) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Act
+        tt_logger.log(msg = msg)
+
+        # Assert
+        logging_function.assert_not_called()
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
