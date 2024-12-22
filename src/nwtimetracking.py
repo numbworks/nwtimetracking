@@ -146,6 +146,9 @@ class _MessageCollection():
     @staticmethod
     def this_content_successfully_saved_as(id : TTID, file_path : str) -> str:
         return f"This content (id: '{id}') has been successfully saved as '{file_path}'."
+    @staticmethod
+    def something_failed_while_saving(file_path : str) -> str:
+        return f"Something failed while saving '{file_path}'."
 
     @staticmethod
     def provided_df_invalid_column_list(column_list : list[str]) -> str:
@@ -2657,7 +2660,6 @@ class TTLogger():
 
         if len(msg) > 0:
             self.__logging_function(msg)
-
 @dataclass(frozen=True)
 class ComponentBag():
 
@@ -2704,11 +2706,14 @@ class TimeTrackingProcessor():
             folder_path = self.__setting_bag.working_folder_path,
             file_name = self.__component_bag.tt_adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = self.__setting_bag)[0]
         )
-        
-        self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
 
-        message : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
-        logging_function(message)
+        try:
+           
+            self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
+            logging_function(_MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path))
+
+        except:
+            logging_function(_MessageCollection.something_failed_while_saving(file_path = file_path))
 
     def __orchestrate_head_n(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
 
@@ -2806,12 +2811,13 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__tt_summary.tts_by_month_tpl[1]
         content : str = self.__tt_summary.tts_by_month_md
         id : TTID = TTID.TTSBYMONTH
+        logging_function : Callable[[str], None] = lambda msg : self.__component_bag.tt_logger.log(msg)
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
 
         if OPTION.save in options:
-            self.__save_and_log(id = id, content = content)
+            self.__save_and_log(id = id, content = content, logging_function = logging_function)
     def process_tts_by_year(self) -> None:
 
         '''

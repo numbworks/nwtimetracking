@@ -646,12 +646,21 @@ class MessageCollectionTestCase(unittest.TestCase):
         # Arrange
         id : TTID = TTID.TTSBYMONTH
         file_path : str = "/path/to/file.csv"
-        expected : str = (
-            "This content (id: 'tts_by_month') has been successfully saved as '/path/to/file.csv'."
-        )
+        expected : str = "This content (id: 'tts_by_month') has been successfully saved as '/path/to/file.csv'."
 
         # Act
         actual : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_somethingfailedwhilesaving_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        file_path : str = "/path/to/file.csv"
+        expected : str = "Something failed while saving '/path/to/file.csv'."
+
+        # Act
+        actual : str = _MessageCollection.something_failed_while_saving(file_path = file_path)
 
         # Assert
         self.assertEqual(expected, actual)
