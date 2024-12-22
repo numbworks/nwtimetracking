@@ -3003,7 +3003,7 @@ class TimeTrackingProcessor():
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
         if OPTION.log in options:
-            self.__try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_spnv_plot_function()
@@ -3026,7 +3026,7 @@ class TimeTrackingProcessor():
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
         if OPTION.log in options:
-            self.__try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_hseq_plot_function()
