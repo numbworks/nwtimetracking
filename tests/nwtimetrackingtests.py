@@ -1,4 +1,5 @@
 # GLOBAL MODULES
+import json
 import unittest
 import numpy as np
 import pandas as pd
@@ -15,7 +16,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import CRITERIA, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, TTLogger, TTSequencer, TimeTrackingProcessor
+from nwtimetracking import CRITERIA, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, SettingSubset, TTLogger, TTSequencer, TimeTrackingProcessor
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
 from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -2840,6 +2841,41 @@ class TTAdapterTestCase(unittest.TestCase):
         assert_frame_equal(actual.tts_by_tr_df, tts_by_tr_df)
         assert_frame_equal(actual.definitions_df, definitions_df)
         self.assertEqual(actual.tts_by_month_md, tts_by_month_md)
+class SettingSubsetTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+	
+        self.working_folder_path : str = "/home/nwtimetracking/"
+        self.excel_skiprows : int = 0
+		
+        self.subset : SettingSubset = SettingSubset(
+            working_folder_path = self.working_folder_path,
+            excel_skiprows = self.excel_skiprows
+        )
+    def test_init_shouldassignproperties_wheninvoked(self) -> None:
+
+		# Arrange
+		# Act
+        # Assert
+        self.assertEqual(self.subset.working_folder_path, self.working_folder_path)
+        self.assertEqual(self.subset.excel_skiprows, self.excel_skiprows)
+        self.assertIsInstance(self.subset.working_folder_path, str)
+        self.assertIsInstance(self.subset.excel_skiprows, int)
+    def test_str_shouldreturnexpectedstring_wheninvoked(self) -> None:
+
+        # Arrange
+        expected : str = json.dumps({
+            "working_folder_path": self.working_folder_path,
+            "excel_skiprows": self.excel_skiprows
+        })
+
+        # Act
+        actual_str : str = str(self.subset)
+        actual_repr : str = repr(self.subset)
+
+        # Assert
+        self.assertEqual(actual_str, expected)
+        self.assertEqual(actual_repr, expected)
 class TTLoggerTestCase(unittest.TestCase):
 
     def setUp(self) -> None:

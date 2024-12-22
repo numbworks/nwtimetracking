@@ -5,6 +5,8 @@ Alias: nwtt
 '''
 
 # GLOBAL MODULES
+import json
+from types import SimpleNamespace
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -2592,6 +2594,17 @@ class TTAdapter():
         )
 
         return tt_summary
+class SettingSubset(SimpleNamespace):
+
+    '''A dynamically assigned subset of SettingBag properties with a custom __str__ method that returns them as JSON.'''
+
+    def __str__(self):
+        return json.dumps(
+            {key: getattr(self, key) for key in self.__dict__}
+        )
+
+    def __repr__(self):
+        return self.__str__()
 class TTLogger():
 
     '''Collects all the logging logic.'''
