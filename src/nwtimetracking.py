@@ -2999,16 +2999,20 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_gantt_spnv
         df : DataFrame = self.__tt_summary.tts_gantt_spnv_df
         formatters : dict = self.__setting_bag.tts_gantt_spnv_formatters
-        definitions_df : DataFrame = self.__tt_summary.definitions_df   
+        definitions_df : DataFrame = self.__tt_summary.definitions_df
+        term : str = "tts_gantt_spnv"
+        setting_names : list[str] = [ "tts_gantt_spnv_months", "tts_gantt_spnv_min_duration" ]
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
-        if OPTION.log in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
-
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_spnv_plot_function()
+
+        if OPTION.log in options:
+            self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
     def process_tts_gantt_hseq(self) -> None:
 
         '''
@@ -3023,15 +3027,19 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__tt_summary.tts_gantt_hseq_df
         formatters : dict = self.__setting_bag.tts_gantt_hseq_formatters
         definitions_df : DataFrame = self.__tt_summary.definitions_df   
+        term : str = "tts_gantt_hseq"
+        setting_names : list[str] = [ "tts_gantt_hseq_months", "tts_gantt_hseq_min_duration" ]
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
-        if OPTION.log in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
-
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_hseq_plot_function()
+
+        if OPTION.log in options:
+            self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
     def process_definitions(self) -> None:
 
         '''
