@@ -2592,6 +2592,27 @@ class TTAdapter():
         )
 
         return tt_summary
+class TTLogger():
+
+    '''Collects all the logging logic.'''
+
+    __logging_function : Callable[[str], None]
+
+    def __init__(self, logging_function : Callable[[str], None]) -> None:
+    
+        self.__logging_function = logging_function
+
+    def try_log_column_definitions(self, df : DataFrame, definitions : DataFrame) -> None:
+        
+        """Logs the definitions for matching column names in the DataFrame."""
+
+        definitions_dict : dict = definitions.set_index(DEFINITIONSCN.TERM)[DEFINITIONSCN.DEFINITION].to_dict()
+        
+        for column_name in df.columns:
+            if column_name in definitions_dict:
+                self.__logging_function(f"{column_name}: {definitions_dict[column_name]}")
+
+
 @dataclass(frozen=True)
 class ComponentBag():
 
@@ -2609,7 +2630,7 @@ class ComponentBag():
             bym_splitter = BYMSplitter())
         ))
 
-    logging_function : Callable[[str], None] = field(default = LambdaProvider().get_default_logging_function())
+    tt_logger : TTLogger = field(default = TTLogger(logging_function = LambdaProvider().get_default_logging_function()))
     displayer : Displayer = field(default = Displayer())
 class TimeTrackingProcessor():
 
@@ -2630,7 +2651,7 @@ class TimeTrackingProcessor():
 
         if not hasattr(self, '_TimeTrackingProcessor__tt_summary'):
             raise Exception(_MessageCollection.please_run_initialize_first())
-    def __save_and_log(self, id : TTID, content : str) -> None:
+    def __save_and_log(self, id : TTID, content : str, logging_function : Callable[[str], None]) -> None:
 
         '''Creates the provided Markdown content using __setting_bag.'''
 
@@ -2642,16 +2663,8 @@ class TimeTrackingProcessor():
         self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
 
         message : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
-        self.__component_bag.logging_function(message)
-    def __try_log_definitions(self, df : DataFrame, definitions : DataFrame) -> None:
-        
-        """Logs the definitions for matching column names in the DataFrame."""
+        logging_function(message)
 
-        definitions_dict : dict = definitions.set_index(DEFINITIONSCN.TERM)[DEFINITIONSCN.DEFINITION].to_dict()
-        
-        for column_name in df.columns:
-            if column_name in definitions_dict:
-                print(f"{column_name}: {definitions_dict[column_name]}")
 
     def __orchestrate_head_n(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
 
@@ -2836,7 +2849,7 @@ class TimeTrackingProcessor():
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
         if OPTION.log in options:
-            self.__try_log_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
     def process_tts_by_spn_spv(self) -> None:
 
         '''
@@ -2855,7 +2868,7 @@ class TimeTrackingProcessor():
             self.__component_bag.displayer.display(df = df)
 
         if OPTION.log in options:
-            self.__try_log_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
     def process_tts_by_hashtag(self) -> None:
 
         '''
@@ -2875,7 +2888,7 @@ class TimeTrackingProcessor():
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
         if OPTION.log in options:
-            self.__try_log_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
     def process_tts_by_hashtag_year(self) -> None:
 
         '''
@@ -2940,7 +2953,7 @@ class TimeTrackingProcessor():
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
         if OPTION.log in options:
-            self.__try_log_definitions(df = df, definitions = definitions_df)
+            self.__try_log_column_definitions(df = df, definitions = definitions_df)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_spnv_plot_function()
@@ -2963,7 +2976,7 @@ class TimeTrackingProcessor():
             self.__component_bag.displayer.display(df = df, formatters = formatters)
 
         if OPTION.log in options:
-            self.__try_log_definitions(df = df, definitions = definitions_df)
+            self.__try_log_column_definitions(df = df, definitions = definitions_df)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_hseq_plot_function()

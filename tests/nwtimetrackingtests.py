@@ -15,7 +15,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import CRITERIA, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, TTSequencer, TimeTrackingProcessor
+from nwtimetracking import CRITERIA, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, TTLogger, TTSequencer, TimeTrackingProcessor
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
 from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -2852,7 +2852,7 @@ class ComponentBagTestCase(unittest.TestCase):
         self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
         self.assertIsInstance(component_bag.file_manager, FileManager)
         self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
-        self.assertIsInstance(component_bag.logging_function, FunctionType)
+        self.assertIsInstance(component_bag.tt_logger, TTLogger)
         self.assertIsInstance(component_bag.displayer, Displayer)
 class TimeTrackingProcessorTestCase(unittest.TestCase):
 
@@ -3081,17 +3081,20 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag : Mock = Mock()
         component_bag.displayer = displayer
         component_bag.tt_adapter = tt_adapter
+        component_bag.tt_logger.try_log_column_definitions = Mock()
 
         setting_bag : Mock = Mock()
         setting_bag.options_tts_by_spn = [OPTION.log]  # type: ignore
 
-        # Act, Assert
+        # Act, 
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()
+        tt_processor.process_tts_by_spn()
 
-        with patch.object(tt_processor, '_TimeTrackingProcessor__try_log_definitions') as try_log_definitions:
-            tt_processor.process_tts_by_spn()
-            try_log_definitions.assert_called_once_with(df = tts_by_spn_df, definitions = definitions_df)
+        # Assert
+        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
+            df = tts_by_spn_df, 
+            definitions = definitions_df)
     def test_processttsbyspnspv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -3139,17 +3142,20 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag : Mock = Mock()
         component_bag.displayer = displayer
         component_bag.tt_adapter = tt_adapter
+        component_bag.tt_logger.try_log_column_definitions = Mock()
 
         setting_bag : Mock = Mock()
         setting_bag.options_tts_by_spn_spv = [OPTION.log]  # type: ignore
 
-        # Act, Assert
+        # Act, 
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()
+        tt_processor.process_tts_by_spn_spv()
 
-        with patch.object(tt_processor, '_TimeTrackingProcessor__try_log_definitions') as try_log_definitions:
-            tt_processor.process_tts_by_spn_spv()
-            try_log_definitions.assert_called_once_with(df = tts_by_spn_spv_df, definitions = definitions_df)
+        # Assert
+        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
+            df = tts_by_spn_spv_df, 
+            definitions = definitions_df)
     def test_processttsbyhashtag_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -3197,17 +3203,20 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag : Mock = Mock()
         component_bag.displayer = displayer
         component_bag.tt_adapter = tt_adapter
+        component_bag.tt_logger.try_log_column_definitions = Mock()
 
         setting_bag : Mock = Mock()
         setting_bag.options_tts_by_hashtag = [OPTION.log]  # type: ignore
 
-        # Act, Assert
+        # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()
+        tt_processor.process_tts_by_hashtag()
 
-        with patch.object(tt_processor, '_TimeTrackingProcessor__try_log_definitions') as try_log_definitions:
-            tt_processor.process_tts_by_hashtag()
-            try_log_definitions.assert_called_once_with(df = tts_by_hashtag_df, definitions = definitions_df)
+        # Assert
+        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
+            df = tts_by_hashtag_df, 
+            definitions = definitions_df)
     def test_processttsbyefs_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
