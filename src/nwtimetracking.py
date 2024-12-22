@@ -2980,7 +2980,7 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_definitions
         df : DataFrame = self.__tt_summary.definitions_df
 
-        if "display" in options:
+        if OPTION.display in options:
             self.__component_bag.displayer.display(df = df)
     def get_summary(self) -> TTSummary:
 
