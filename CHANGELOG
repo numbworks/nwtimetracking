@@ -1,6 +1,7 @@
 v4.6.0
 - Library:
 	- Feature: added support for GANTT charts.
+	- Feature: centralized and expanded logging capabilities via TTLogger.
 - Documentation:
 	- Feature: updated to v4.6.0.
 
