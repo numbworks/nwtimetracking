@@ -2840,13 +2840,11 @@ class TTAdapterTestCase(unittest.TestCase):
         assert_frame_equal(actual.tts_by_tr_df, tts_by_tr_df)
         assert_frame_equal(actual.definitions_df, definitions_df)
         self.assertEqual(actual.tts_by_month_md, tts_by_month_md)
-
 class TTLoggerTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
 
         self.definitions_df : DataFrame = ObjectMother().get_definitions_df()
-
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
@@ -2859,7 +2857,38 @@ class TTLoggerTestCase(unittest.TestCase):
         self.assertEqual(actual._TTLogger__logging_function, logging_function)      # type: ignore
         self.assertIsInstance(actual._TTLogger__logging_function, FunctionType)     # type: ignore
 
+    @parameterized.expand([
+        (TTCN.DME, "Total Development Monthly Effort"),
+        (TTCN.TME, "Total Monthly Effort")
+    ])
+    def test_trylogcolumndefinitions_shouldlogdefinitions_whencolumnnamesmatch(self, column_name : str, definition : str) -> None:
 
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+        df : DataFrame = DataFrame(columns = [column_name, "SomeColumn"])
+
+        # Act
+        tt_logger.try_log_column_definitions(df = df, definitions = self.definitions_df)
+
+        # Assert
+        logging_function.assert_any_call(f"{column_name}: {definition}")
+
+    @parameterized.expand([
+        (["SomeColumn", "SomeOtherColumn"], 0)
+    ])
+    def test_trylogcolumndefinitions_shouldnotlogdefinitions_whennomatchingcolumns(self, columns : list[str], expected_call_count : int) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+        df : DataFrame = DataFrame(columns = columns)
+
+        # Act
+        tt_logger.try_log_column_definitions(df = df, definitions = self.definitions_df)
+
+        # Assert
+        self.assertEqual(logging_function.call_count, expected_call_count)
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
