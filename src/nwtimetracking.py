@@ -2615,14 +2615,14 @@ class TTLogger():
     
         self.__logging_function = logging_function
 
-    def __create_setting_subset(self, setting_bag : SettingBag, ids : list[str]) -> SettingSubset:
+    def __create_setting_subset(self, setting_bag : SettingBag, setting_names : list[str]) -> SettingSubset:
         
         '''Extract all the SettingBag properties matching ids and returns a SettingSubset .'''
 
         matching_properties : dict = {}
 
         for field in fields(setting_bag):
-            if field.name in ids:
+            if field.name in setting_names:
                 matching_properties[field.name] = getattr(setting_bag, field.name)
         
         return SettingSubset(**matching_properties)
@@ -2636,12 +2636,12 @@ class TTLogger():
         for column_name in df.columns:
             if column_name in definitions_dict:
                 self.__logging_function(f"{column_name}: {definitions_dict[column_name]}")
-    def try_log_settings(self, setting_bag : SettingBag, ids : list[str]) -> None:
+    def try_log_settings(self, setting_bag : SettingBag, setting_names : list[str]) -> None:
         
         """Logs only the settings with names contained in ids."""
 
-        if len(ids) > 0:
-            setting_subset : SettingSubset = self.__create_setting_subset(setting_bag = setting_bag, ids = ids)
+        if len(setting_names) > 0:
+            setting_subset : SettingSubset = self.__create_setting_subset(setting_bag = setting_bag, setting_names = setting_names)
             self.__logging_function(str(setting_subset))
 
 @dataclass(frozen=True)

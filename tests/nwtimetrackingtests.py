@@ -2932,10 +2932,10 @@ class TTLoggerTestCase(unittest.TestCase):
         # Arrange
         logging_function : Mock = Mock()
         tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
-        ids : list[str] = ["working_folder_path"]
+        setting_names : list[str] = ["working_folder_path"]
 
         # Act
-        actual : SettingSubset = tt_logger._TTLogger__create_setting_subset(setting_bag = self.setting_bag, ids = ids) # type: ignore
+        actual : SettingSubset = tt_logger._TTLogger__create_setting_subset(setting_bag = self.setting_bag, setting_names = setting_names) # type: ignore
 
         # Assert
         self.assertIsInstance(actual, SettingSubset)
@@ -2948,10 +2948,10 @@ class TTLoggerTestCase(unittest.TestCase):
         messages : list[str] = []
         logging_function : Callable[[str], None] = lambda msg : messages.append(msg)
         tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
-        ids : list[str] = ["working_folder_path"]
+        setting_names : list[str] = ["working_folder_path"]
 
         # Act
-        tt_logger.try_log_settings(setting_bag = self.setting_bag, ids = ids)
+        tt_logger.try_log_settings(setting_bag = self.setting_bag, setting_names = setting_names)
 
         # Assert
         self.assertEqual(len(messages), 1)
@@ -2962,10 +2962,10 @@ class TTLoggerTestCase(unittest.TestCase):
         messages : list[str] = []
         logging_function : Callable[[str], None] = lambda msg : messages.append(msg)
         tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
-        ids : list[str] = []
+        setting_names : list[str] = []
 
         # Act
-        tt_logger.try_log_settings(setting_bag = self.setting_bag, ids = ids)
+        tt_logger.try_log_settings(setting_bag = self.setting_bag, setting_names = setting_names)
 
         # Assert
         self.assertEqual(len(messages), 0)
