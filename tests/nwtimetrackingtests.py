@@ -2881,6 +2881,7 @@ class TTLoggerTestCase(unittest.TestCase):
     def setUp(self) -> None:
 
         self.definitions_df : DataFrame = ObjectMother().get_definitions_df()
+        self.setting_bag : SettingBag = ObjectMother().get_setting_bag()
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
@@ -2925,6 +2926,50 @@ class TTLoggerTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(logging_function.call_count, expected_call_count)
+
+    def test_createsettingsubset_shouldreturnsubsetwithmatchingproperties_whenidsprovided(self) -> None:
+        
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
+        ids : list[str] = ["working_folder_path"]
+
+        # Act
+        actual : SettingSubset = tt_logger._TTLogger__create_setting_subset(setting_bag = self.setting_bag, ids = ids) # type: ignore
+
+        # Assert
+        self.assertIsInstance(actual, SettingSubset)
+        self.assertEqual(actual.working_folder_path, self.setting_bag.working_folder_path)
+        with self.assertRaises(AttributeError):
+            _ = actual.excel_skiprows
+    def test_trylogsettings_shouldlogsubset_whenidsprovided(self) -> None:
+        
+        # Arrange
+        messages : list[str] = []
+        logging_function : Callable[[str], None] = lambda msg : messages.append(msg)
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
+        ids : list[str] = ["working_folder_path"]
+
+        # Act
+        tt_logger.try_log_settings(setting_bag = self.setting_bag, ids = ids)
+
+        # Assert
+        self.assertEqual(len(messages), 1)
+        self.assertIn(self.setting_bag.working_folder_path, messages[0])
+    def test_trylogsettings_shouldnotloganything_whenidsisempty(self) -> None:
+        
+        # Arrange
+        messages : list[str] = []
+        logging_function : Callable[[str], None] = lambda msg : messages.append(msg)
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
+        ids : list[str] = []
+
+        # Act
+        tt_logger.try_log_settings(setting_bag = self.setting_bag, ids = ids)
+
+        # Assert
+        self.assertEqual(len(messages), 0)
+
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
