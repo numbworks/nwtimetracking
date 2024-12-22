@@ -10,7 +10,7 @@ from parameterized import parameterized
 from types import FunctionType
 from typing import Any, Callable, Literal, Optional, Tuple, cast
 from unittest.mock import Mock, patch
-from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
+from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer, LambdaProvider
 
 # LOCAL MODULES
 import sys, os
@@ -2840,6 +2840,26 @@ class TTAdapterTestCase(unittest.TestCase):
         assert_frame_equal(actual.tts_by_tr_df, tts_by_tr_df)
         assert_frame_equal(actual.definitions_df, definitions_df)
         self.assertEqual(actual.tts_by_month_md, tts_by_month_md)
+
+class TTLoggerTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.definitions_df : DataFrame = ObjectMother().get_definitions_df()
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        logging_function : Callable[[str], None] = LambdaProvider().get_default_logging_function()
+
+        # Act
+        actual : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Assert
+        self.assertEqual(actual._TTLogger__logging_function, logging_function)      # type: ignore
+        self.assertIsInstance(actual._TTLogger__logging_function, FunctionType)     # type: ignore
+
+
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
