@@ -1886,7 +1886,9 @@ class TTDataFrameFactory():
             TTCN.EFFORTPERC: "% of Total Effort",
             TTCN.HASHTAGSEQ: "Period of time in which the same hashtag has been used without breaks.",
             TTCN.EFFORTH: "Total Hours of Effort between StartDate and EndDate.",
-            TTCN.DURATION: "Total number of days between StartDate and EndDate."
+            TTCN.DURATION: "Total number of days between StartDate and EndDate.",
+            "tts_gantt_spnv": "Shows how much subsequent work has been performed per software project name/version.",
+            "tts_gantt_hseq": "Shows how much subsequent work has been performed per hashtag."
         }
         
         definitions_df : DataFrame = DataFrame(
