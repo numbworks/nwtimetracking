@@ -2636,6 +2636,14 @@ class TTLogger():
         for column_name in df.columns:
             if column_name in definitions_dict:
                 self.__logging_function(f"{column_name}: {definitions_dict[column_name]}")
+    def try_log_term_definition(self, term : str, definitions : DataFrame) -> None:
+
+        """Logs the definitions for matching term in the DataFrame."""
+
+        definitions_dict : dict = definitions.set_index(DEFINITIONSCN.TERM)[DEFINITIONSCN.DEFINITION].to_dict()
+
+        if term in definitions_dict:
+            self.__logging_function(f"{term}: {definitions_dict[term]}")        
     def try_log_settings(self, setting_bag : SettingBag, setting_names : list[str]) -> None:
         
         """Logs only the settings with names contained in ids."""
@@ -2643,7 +2651,6 @@ class TTLogger():
         if len(setting_names) > 0:
             setting_subset : SettingSubset = self.__create_setting_subset(setting_bag = setting_bag, setting_names = setting_names)
             self.__logging_function(str(setting_subset))
-
 @dataclass(frozen=True)
 class ComponentBag():
 

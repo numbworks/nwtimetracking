@@ -2927,6 +2927,37 @@ class TTLoggerTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(logging_function.call_count, expected_call_count)
 
+    @parameterized.expand([
+        (TTCN.DME, "Total Development Monthly Effort"),
+        (TTCN.TME, "Total Monthly Effort")
+    ])
+    def test_trylogtermdefinition_shouldlogdefinition_whenmatchingtermexists(self, term : str, definition : str) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Act
+        tt_logger.try_log_term_definition(term = term, definitions = self.definitions_df)
+
+        # Assert
+        logging_function.assert_any_call(f"{term}: {definition}")
+
+    @parameterized.expand([
+        ("NonExistentTerm", 0)
+    ])
+    def test_trylogtermdefinition_shouldnotlogdefinition_whenmatchingtermdoesnotexist(self, term : str, expected_call_count : int) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Act
+        tt_logger.try_log_term_definition(term = term, definitions = self.definitions_df)
+
+        # Assert
+        self.assertEqual(logging_function.call_count, expected_call_count)
+
     def test_createsettingsubset_shouldreturnsubsetwithmatchingproperties_whenidsprovided(self) -> None:
         
         # Arrange
@@ -2969,7 +3000,6 @@ class TTLoggerTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(len(messages), 0)
-
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
