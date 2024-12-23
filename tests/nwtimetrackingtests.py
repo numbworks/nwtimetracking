@@ -3047,7 +3047,20 @@ class ComponentBagTestCase(unittest.TestCase):
 
         # Arrange
         # Act
-        component_bag : ComponentBag = ComponentBag()
+        component_bag : ComponentBag = ComponentBag(
+            file_path_manager = FilePathManager(),
+            file_manager = FileManager(file_path_manager = FilePathManager()),
+            tt_adapter = TTAdapter(
+                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
+                bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
+                tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
+                md_factory = TTMarkdownFactory(
+                    markdown_helper = MarkdownHelper(formatter = Formatter()),
+                    bym_splitter = BYMSplitter())
+                ),
+            tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
+            displayer = Displayer()
+        )
 
         # Assert
         self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
