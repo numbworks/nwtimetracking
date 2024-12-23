@@ -6,7 +6,6 @@ Alias: nwtt
 
 # GLOBAL MODULES
 import json
-from types import SimpleNamespace
 import numpy as np
 import os
 import matplotlib.pyplot as plt
@@ -20,6 +19,7 @@ from matplotlib.dates import relativedelta
 from numpy import uint
 from numpy.typing import ArrayLike
 from pandas import DataFrame, Series, NamedAgg
+from types import SimpleNamespace
 from typing import Any, Callable, Literal, Optional, Tuple, cast
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
 
