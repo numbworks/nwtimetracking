@@ -3130,6 +3130,37 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         displayer.display.assert_called_once_with(
             df = tts_by_month_tpl[1]
         )
+    def test_processttsbymonth_shouldsaveandlog_whenoptionissave(self) -> None:
+        
+        # Arrange
+        tts_by_month_tpl: Tuple[DataFrame, DataFrame] = (Mock(), Mock())
+
+        summary: Mock = Mock()
+        summary.tts_by_month_tpl = tts_by_month_tpl
+
+        displayer: Mock = Mock()
+        tt_adapter: Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag: Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag: Mock = Mock()
+        setting_bag.options_tts_by_month = [OPTION.save]  # type: ignore
+
+		# Act, Assert
+        with patch("nwtimetracking.TimeTrackingProcessor._TimeTrackingProcessor__save_and_log") as save_and_log:
+
+            tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(
+                component_bag = component_bag, 
+                setting_bag = setting_bag
+            )
+            tt_processor.initialize()		
+            tt_processor.process_tts_by_month()
+
+            # Assert
+            save_and_log.assert_called()
     def test_processttsbyyear_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
