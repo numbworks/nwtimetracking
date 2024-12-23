@@ -174,6 +174,12 @@ Considering the old-fashioned syntax adopted by both `make` and `bash`, here a s
 | `$@` | Variable that stores the target name. |
 | `if [[ ... ]]` | Double square brackets to enable pattern matching. |
 
+## Architecture
+
+A partial class diagram showing the core architecture of the application:
+
+![Diagram-Architecture.png](Diagrams/Diagram-Architecture.png)
+
 ## BYMSplitter
 
 The scope of this class is to partition a “by month” table in smaller tables, following a custom logic. 
