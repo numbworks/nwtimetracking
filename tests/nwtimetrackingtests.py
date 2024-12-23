@@ -3102,6 +3102,40 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.file_manager.save_content.assert_called()
         logging_function.assert_called_with(expected)
 
+    @parameterized.expand([
+        ("content.md", "/home/nwtimetracking/"),
+    ])
+    def test_saveandlog_shouldlogexpectedmessage_whenexceptionisraised(self, file_name : str, folder_path : str) -> None:
+
+        # Arrange
+        id : TTID = TTID.TTSBYMONTH
+        content : str = "Some Content"
+        paragraph_title : str = "Some paragraph title"
+        error_message : str = "Some saving issue happened."
+
+        file_path : str = f"{folder_path}/{file_name}"
+        expected : str = _MessageCollection.something_failed_while_saving(file_path = file_path)
+
+        component_bag : Mock = Mock()
+        component_bag.file_path_manager.create_file_path = Mock()
+        component_bag.file_path_manager.create_file_path.return_value = file_path
+        component_bag.tt_adapter.extract_file_name_and_paragraph_title = Mock()
+        component_bag.tt_adapter.extract_file_name_and_paragraph_title.return_value = (paragraph_title, None)
+        component_bag.file_manager.save_content = Mock()
+        component_bag.file_manager.save_content.side_effect = Exception(error_message)
+
+        setting_bag : SettingBag = ObjectMother().get_setting_bag()
+        logging_function : Callable[[str], None] = Mock()
+
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content, logging_function = logging_function)  # type: ignore
+
+        # Assert
+        component_bag.file_path_manager.create_file_path.assert_called()
+        component_bag.file_manager.save_content.assert_called()
+        logging_function.assert_called_with(expected)
+
     def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
