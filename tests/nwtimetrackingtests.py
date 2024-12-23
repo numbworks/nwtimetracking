@@ -1,4 +1,5 @@
 # GLOBAL MODULES
+import json
 import unittest
 import numpy as np
 import pandas as pd
@@ -8,17 +9,17 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
-from typing import Any, Literal, Optional, Tuple, cast
+from typing import Any, Callable, Literal, Optional, Tuple, cast
 from unittest.mock import Mock, patch
-from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer
+from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer, LambdaProvider
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMDFManager, TimeTrackingProcessor
+from nwtimetracking import CRITERIA, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, SettingSubset, TTLogger, TTSequencer, TimeTrackingProcessor
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
-from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter
+from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -108,6 +109,8 @@ class ObjectMother():
             options_tts_by_hashtag_year = [OPTION.display],         # type: ignore
             options_tts_by_efs = [OPTION.display],                  # type: ignore
             options_tts_by_tr = [OPTION.display],                   # type: ignore
+            options_tts_gantt_spnv = [OPTION.display],              # type: ignore
+            options_tts_gantt_hseq = [OPTION.display],              # type: ignore
             options_definitions = [OPTION.display],                 # type: ignore
             excel_nrows = 1301,
             tts_by_year_month_spnv_display_only_spn = "nwtimetracking",
@@ -477,12 +480,24 @@ class ObjectMother():
         columns : list[str] = [DEFINITIONSCN.TERM, DEFINITIONSCN.DEFINITION]
 
         definitions : dict[str, str] = { 
-            TTCN.DME: "Development Monthly Effort",
+            TTCN.DME: "Total Development Monthly Effort",
             TTCN.TME: "Total Monthly Effort",
-            TTCN.DYE: "Development Yearly Effort",
+            TTCN.DYE: "Total Development Yearly Effort",
             TTCN.TYE: "Total Yearly Effort",
-            TTCN.DE: "Development Effort",
-            TTCN.TE: "Total Effort"
+            TTCN.DE: "Total Development Effort",
+            TTCN.TE: "Total Effort",
+            TTCN.PERCDME: r"% of Total Development Monthly Effort",
+            TTCN.PERCTME: r"% of Total Monthly Effort",
+            TTCN.PERCDYE: r"% of Total Development Yearly Effort",
+            TTCN.PERCTYE: r"% of Total Yearly Effort",
+            TTCN.PERCDE: r"% of Total Development Effort",
+            TTCN.PERCTE: r"% of Total Effort",
+            TTCN.EFFORTPERC: "% of Total Effort",
+            TTCN.HASHTAGSEQ: "Period of time in which the same hashtag has been used without breaks.",
+            TTCN.EFFORTH: "Total Hours of Effort between StartDate and EndDate.",
+            TTCN.DURATION: "Total number of days between StartDate and EndDate.",
+            "tts_gantt_spnv": "Shows how much subsequent work has been performed per software project name/version.",
+            "tts_gantt_hseq": "Shows how much subsequent work has been performed per hashtag."            
         }
         
         definitions_df : DataFrame = DataFrame(
@@ -633,12 +648,21 @@ class MessageCollectionTestCase(unittest.TestCase):
         # Arrange
         id : TTID = TTID.TTSBYMONTH
         file_path : str = "/path/to/file.csv"
-        expected : str = (
-            "This content (id: 'tts_by_month') has been successfully saved as '/path/to/file.csv'."
-        )
+        expected : str = "This content (id: 'tts_by_month') has been successfully saved as '/path/to/file.csv'."
 
         # Act
         actual : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_somethingfailedwhilesaving_shouldreturnexpectedmessage_wheninvoked(self):
+        
+        # Arrange
+        file_path : str = "/path/to/file.csv"
+        expected : str = "Something failed while saving '/path/to/file.csv'."
+
+        # Act
+        actual : str = _MessageCollection.something_failed_while_saving(file_path = file_path)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -652,6 +676,33 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Act
         actual : str = _MessageCollection.provided_df_invalid_column_list(column_list = column_list)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [CRITERIA.do_nothing, "No strategy available for the provided CRITERIA ('do_nothing')."],
+        [CRITERIA.include, "No strategy available for the provided CRITERIA ('include')."],
+        [CRITERIA.exclude, "No strategy available for the provided CRITERIA ('exclude')."]
+    ])
+    def test_nostrategyavailableforprovidedcriteria_shouldreturnexpectedmessage_wheninvoked(self, criteria : CRITERIA, expected : str):
+        
+        # Arrange
+        # Act
+        actual : str = _MessageCollection.no_strategy_available_for_provided_criteria(criteria = criteria)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ["months", "'months' can't be < 1."],
+        ["min_duration", "'min_duration' can't be < 1."],
+    ])
+    def test_variablecantbelessthanone_shouldreturnexpectedmessage_wheninvoked(self, variable_name : str, expected : str):
+        
+        # Arrange
+        # Act
+        actual : str = _MessageCollection.variable_cant_be_less_than_one(variable_name = variable_name)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -794,6 +845,7 @@ class TTSummaryTestCase(unittest.TestCase):
         # Arrange
         empty_df : DataFrame = DataFrame()
         empty_tuple : Tuple[DataFrame, DataFrame] = (empty_df, empty_df)
+        empty_func : Callable[[], None] = lambda : None
         markdown : str = ""
 
         # Act
@@ -810,6 +862,10 @@ class TTSummaryTestCase(unittest.TestCase):
             tts_by_hashtag_year_df = empty_df,
             tts_by_efs_tpl = empty_tuple,
             tts_by_tr_df = empty_df,
+            tts_gantt_spnv_df = empty_df,
+            tts_gantt_spnv_plot_function = empty_func,
+            tts_gantt_hseq_df = empty_df,
+            tts_gantt_hseq_plot_function = empty_func,
             definitions_df = empty_df,
             tts_by_month_md = markdown,
         )
@@ -827,6 +883,10 @@ class TTSummaryTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_hashtag_year_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_efs_tpl, empty_tuple)
         self.assertEqual(actual.tts_by_tr_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_gantt_spnv_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_gantt_spnv_plot_function, empty_func)
+        self.assertEqual(actual.tts_gantt_hseq_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_gantt_hseq_plot_function, empty_func)
         self.assertEqual(actual.definitions_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_month_md, markdown)
         self.assertIsInstance(actual.tts_by_month_md, str)
@@ -995,6 +1055,8 @@ class SettingBagTestCase(unittest.TestCase):
         options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                      # type: ignore
         options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
         options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                # type: ignore
+        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot]] = [OPTION.display, OPTION.plot] # type: ignore
+        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot]] = [OPTION.display, OPTION.plot] # type: ignore
         options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
@@ -1025,6 +1087,24 @@ class SettingBagTestCase(unittest.TestCase):
         tts_by_tr_filter_by_top_n : uint = uint(5)
         tts_by_tr_head_n : uint = uint(10)
         tts_by_tr_display_head_n_with_tail : bool = False
+        tts_gantt_spnv_spns : Optional[list[str]] = []
+        tts_gantt_spnv_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing    # type: ignore
+        tts_gantt_spnv_months : int = 4
+        tts_gantt_spnv_min_duration : int = 4
+        tts_gantt_spnv_fig_size : Tuple[int, int] = (10, 6)
+        tts_gantt_spnv_title : Optional[str] = None
+        tts_gantt_spnv_x_label : Optional[str] = None
+        tts_gantt_spnv_y_label : Optional[str] = None
+        tts_gantt_spnv_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+        tts_gantt_hseq_hashtags : Optional[list[str]] = []
+        tts_gantt_hseq_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing    # type: ignore
+        tts_gantt_hseq_months : int = 4
+        tts_gantt_hseq_min_duration : int = 4
+        tts_gantt_hseq_fig_size : Tuple[int, int] = (10, 6)
+        tts_gantt_hseq_title : Optional[str] = None
+        tts_gantt_hseq_x_label : Optional[str] = None
+        tts_gantt_hseq_y_label : Optional[str] = None
+        tts_gantt_hseq_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         md_infos : list = []
         md_last_update : datetime = datetime.now()
         md_enable_github_optimizations : bool = True
@@ -1043,6 +1123,8 @@ class SettingBagTestCase(unittest.TestCase):
             options_tts_by_hashtag_year = options_tts_by_hashtag_year,
             options_tts_by_efs = options_tts_by_efs,
             options_tts_by_tr = options_tts_by_tr,
+            options_tts_gantt_spnv = options_tts_gantt_spnv,
+            options_tts_gantt_hseq = options_tts_gantt_hseq,
             options_definitions = options_definitions,
             excel_nrows = excel_nrows,
             tts_by_year_month_spnv_display_only_spn = tts_by_year_month_spnv_display_only_spn,
@@ -1073,6 +1155,24 @@ class SettingBagTestCase(unittest.TestCase):
             tts_by_tr_filter_by_top_n = tts_by_tr_filter_by_top_n,
             tts_by_tr_head_n = tts_by_tr_head_n,
             tts_by_tr_display_head_n_with_tail = tts_by_tr_display_head_n_with_tail,
+            tts_gantt_spnv_spns = tts_gantt_spnv_spns,
+            tts_gantt_spnv_criteria = tts_gantt_spnv_criteria,
+            tts_gantt_spnv_months = tts_gantt_spnv_months,
+            tts_gantt_spnv_min_duration = tts_gantt_spnv_min_duration,
+            tts_gantt_spnv_fig_size = tts_gantt_spnv_fig_size,
+            tts_gantt_spnv_title = tts_gantt_spnv_title,
+            tts_gantt_spnv_x_label = tts_gantt_spnv_x_label,
+            tts_gantt_spnv_y_label = tts_gantt_spnv_y_label,
+            tts_gantt_spnv_formatters = tts_gantt_spnv_formatters,
+            tts_gantt_hseq_hashtags = tts_gantt_hseq_hashtags,
+            tts_gantt_hseq_criteria = tts_gantt_hseq_criteria,
+            tts_gantt_hseq_months = tts_gantt_hseq_months,
+            tts_gantt_hseq_min_duration = tts_gantt_hseq_min_duration,
+            tts_gantt_hseq_fig_size = tts_gantt_hseq_fig_size,
+            tts_gantt_hseq_title = tts_gantt_hseq_title,
+            tts_gantt_hseq_x_label = tts_gantt_hseq_x_label,
+            tts_gantt_hseq_y_label = tts_gantt_hseq_y_label,
+            tts_gantt_hseq_formatters = tts_gantt_hseq_formatters,
             md_infos = md_infos,
             md_last_update = md_last_update,
             md_enable_github_optimizations = md_enable_github_optimizations
@@ -1091,6 +1191,8 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.options_tts_by_hashtag_year, options_tts_by_hashtag_year)
         self.assertEqual(actual.options_tts_by_efs, options_tts_by_efs)
         self.assertEqual(actual.options_tts_by_tr, options_tts_by_tr)
+        self.assertEqual(actual.options_tts_gantt_spnv, options_tts_gantt_spnv)
+        self.assertEqual(actual.options_tts_gantt_hseq, options_tts_gantt_hseq)
         self.assertEqual(actual.options_definitions, options_definitions)
         self.assertEqual(actual.excel_nrows, excel_nrows)
         self.assertEqual(actual.tts_by_year_month_spnv_display_only_spn, tts_by_year_month_spnv_display_only_spn)
@@ -1121,6 +1223,24 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_tr_filter_by_top_n, tts_by_tr_filter_by_top_n)
         self.assertEqual(actual.tts_by_tr_head_n, tts_by_tr_head_n)
         self.assertEqual(actual.tts_by_tr_display_head_n_with_tail, tts_by_tr_display_head_n_with_tail)
+        self.assertEqual(actual.tts_gantt_spnv_spns, tts_gantt_spnv_spns)
+        self.assertEqual(actual.tts_gantt_spnv_criteria, tts_gantt_spnv_criteria)
+        self.assertEqual(actual.tts_gantt_spnv_months, tts_gantt_spnv_months)
+        self.assertEqual(actual.tts_gantt_spnv_min_duration, tts_gantt_spnv_min_duration)
+        self.assertEqual(actual.tts_gantt_spnv_fig_size, tts_gantt_spnv_fig_size)
+        self.assertEqual(actual.tts_gantt_spnv_title, tts_gantt_spnv_title)
+        self.assertEqual(actual.tts_gantt_spnv_x_label, tts_gantt_spnv_x_label)
+        self.assertEqual(actual.tts_gantt_spnv_y_label, tts_gantt_spnv_y_label)
+        self.assertEqual(actual.tts_gantt_spnv_formatters, tts_gantt_spnv_formatters)
+        self.assertEqual(actual.tts_gantt_hseq_hashtags, tts_gantt_hseq_hashtags)
+        self.assertEqual(actual.tts_gantt_hseq_criteria, tts_gantt_hseq_criteria)
+        self.assertEqual(actual.tts_gantt_hseq_months, tts_gantt_hseq_months)
+        self.assertEqual(actual.tts_gantt_hseq_min_duration, tts_gantt_hseq_min_duration)
+        self.assertEqual(actual.tts_gantt_hseq_fig_size, tts_gantt_hseq_fig_size)
+        self.assertEqual(actual.tts_gantt_hseq_title, tts_gantt_hseq_title)
+        self.assertEqual(actual.tts_gantt_hseq_x_label, tts_gantt_hseq_x_label)
+        self.assertEqual(actual.tts_gantt_hseq_y_label, tts_gantt_hseq_y_label)
+        self.assertEqual(actual.tts_gantt_hseq_formatters, tts_gantt_hseq_formatters)
         self.assertEqual(actual.md_infos, md_infos)
         self.assertEqual(actual.md_last_update, md_last_update)
         self.assertEqual(actual.md_enable_github_optimizations, md_enable_github_optimizations)
@@ -1130,6 +1250,41 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         self.df_helper = TTDataFrameHelper()
         self.sm_provider = SupportMethodProvider()
+
+    def test_boxeffort_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
+
+        # Arrange
+        effort_td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "255h 30m"
+
+        # Act
+        actual : str = self.df_helper.box_effort(effort_td = effort_td, add_plus_sign = False)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_boxeffort_shouldreturnexpectedstring_whenpropertimedeltaandplussigntrue(self):    
+
+        # Arrange
+        effort_td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
+        expected : str = "+255h 30m"
+
+        # Act
+        actual : str = self.df_helper.box_effort(effort_td = effort_td, add_plus_sign = True)
+        
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_unboxeffort_shouldreturnexpectedtimedelta_whenproperstring(self):
+
+        # Arrange
+        effort_str : str = "5h 30m"
+        expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
+
+        # Act
+        actual_td : timedelta = self.df_helper.unbox_effort(effort_str = effort_str)
+
+        # Assert
+        self.assertEqual(expected_td, actual_td)
+
     def test_calculatepercentage_shouldreturnexpectedfloat_when0and16(self):
 
         # Arrange
@@ -1192,75 +1347,6 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         
         # Act
         actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_convertstringtotimedelta_shouldreturnexpectedtimedelta_whenproperstring(self):
-
-        # Arrange
-        td_str : str = "5h 30m"
-        expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
-
-        # Act
-        actual_td : timedelta = self.df_helper.convert_string_to_timedelta(td_str = td_str)
-
-        # Assert
-        self.assertEqual(expected_td, actual_td)
-    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussignfalse(self):    
-
-        # Arrange
-        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
-        expected : str = "255h 30m"
-
-        # Act
-        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = False)
-        
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_formattimedelta_shouldreturnexpectedstring_whenpropertimedeltaandplussigntrue(self):    
-
-        # Arrange
-        td : timedelta = pd.Timedelta(hours = 255, minutes = 30)
-        expected : str = "+255h 30m"
-
-        # Act
-        actual : str = self.df_helper.format_timedelta(td = td, add_plus_sign = True)
-        
-        # Assert
-        self.assertEqual(expected, actual)
-    
-    @parameterized.expand([
-        [timedelta(minutes=30), timedelta(hours=1), "↑"],
-        [timedelta(hours=1), timedelta(minutes=30), "↓"],
-        [timedelta(minutes=30), timedelta(minutes=30), "="],
-    ])
-    def test_gettrendbytimedelta_shouldreturnexpectedtrend_wheninvoked(
-        self, 
-        td_1 : timedelta, 
-        td_2 : timedelta, 
-        expected : str
-    ):
-        
-        # Arrange
-        # Act
-        actual : str = self.df_helper.get_trend_by_timedelta(td_1 = td_1, td_2 = td_2)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        ["↕1", TTCN.TREND],
-        ["2016", "2016"],
-    ])
-    def test_tryconsolidatetrendcolumnname_shouldreturnexpectedcolumnname_wheninvoked(
-        self, 
-        column_name: str, 
-        expected: str
-    ):
-
-        # Arrange
-        # Act
-        actual : str = self.df_helper.try_consolidate_trend_column_name(column_name)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -1551,7 +1637,7 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
             effort_str : str):
 
         # Arrange
-        actual_td : timedelta = self.df_helper.convert_string_to_timedelta(td_str = effort_str)
+        actual_td : timedelta = self.df_helper.unbox_effort(effort_str = effort_str)
         expected : EffortStatus = EffortStatus(
             idx = idx,
             start_time_str = None,
@@ -1656,6 +1742,263 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(TTCN.EFFORTSTATUS in df.columns)
+class BYMFactoryTestCase(unittest.TestCase):
+
+    def setUp(self):
+
+        self.bym_factory = BYMFactory(df_helper = TTDataFrameHelper())
+
+    @parameterized.expand([
+        [timedelta(minutes=30), timedelta(hours=1), "↑"],
+        [timedelta(hours=1), timedelta(minutes=30), "↓"],
+        [timedelta(minutes=30), timedelta(minutes=30), "="],
+    ])
+    def test_gettrendbytimedelta_shouldreturnexpectedtrend_wheninvoked(
+        self, 
+        td_1 : timedelta, 
+        td_2 : timedelta, 
+        expected : str
+    ):
+        
+        # Arrange
+        # Act
+        actual : str = self.bym_factory._BYMFactory__get_trend_by_timedelta(td_1 = td_1, td_2 = td_2)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ["↕1", TTCN.TREND],
+        ["2016", "2016"],
+    ])
+    def test_tryconsolidatetrendcolumnname_shouldreturnexpectedcolumnname_wheninvoked(
+        self, 
+        column_name: str, 
+        expected: str
+    ):
+
+        # Arrange
+        # Act
+        actual : str = self.bym_factory._BYMFactory__try_consolidate_trend_column_name(column_name = column_name)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_createttsbymonthtpl_shouldreturnexpectedtuple_wheninvoked(self):
+
+        # Arrange
+        years : list[int] = [2024]
+        now : datetime = datetime(2024, 11, 30) 
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_month_tpl()
+
+        # Act
+        actual_tpl : Tuple[DataFrame, DataFrame]  = self.bym_factory.create_tts_by_month_tpl(
+            tt_df = tt_df, 
+            years = years,
+            now = now
+        )
+
+        # Assert
+        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
+        assert_frame_equal(expected_tpl[1] , actual_tpl[1])  
+class BYMSplitterTestCase(unittest.TestCase):
+
+    def setUp(self):
+        self.bym_splitter = BYMSplitter()
+    
+    @parameterized.expand([
+        (2024, True),
+        (1000, True),
+        (9999, True),
+        (999, False),
+        (10000, False),
+        ("year", False)
+    ])
+    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_year(value = value)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (2, True),
+        (0, True),
+        (-4, True),
+        (3, False),
+        (-5, False),
+    ])
+    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_even(number = number)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [["Month", "2015"], True],
+        [["Month", "2015", "↕", "2016"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
+        [[], False],
+        [["Month"], False],
+        [["Month", "2015", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
+        [["Month", "↕"], False],
+        [["Month", "↕", "↕"], False],
+        [["Month", "2015", "2015"], False],
+        [["Month", "2015", "↕", "↕"], False]
+    ])
+    def test_isvalid_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_valid(column_list = column_list) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (1, True),
+        (7, True),
+        (13, True),
+        (25, True),
+        (49, True),
+        (8, False),
+        (-7, False),
+    ])
+    def test_isinsequence_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_in_sequence(number = number)  # type: ignore
+        
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (1, [1], True),
+        (5, [1, 2, 3, 4, 5], True),
+        (1, [], False),
+        (0, [1], False),
+        (4, [1, 2, 3, 4, 5], False),
+    ])
+    def test_islast_shouldreturnexpectedbool_wheninvoked(self, number : int, lst : list[int], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.bym_splitter._BYMSplitter__is_last(number = number, lst = lst)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [[0, 1], [0, 1]],
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]]
+    ])
+    def test_createcolumnnumbers_shouldreturnexpectedcolumnnumbers_wheninvoked(self, index_list : list[int], expected : list[int]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        
+        # Act
+        actual : list[int] = self.bym_splitter._BYMSplitter__create_column_numbers(df = df) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [[0, 1, 2], [0, 2]],
+        [[0, 1, 2, 3, 4], [0, 1, 4]]
+    ])
+    def test_filterbyindexlist_shouldreturnfiltereddf_wheninvoked(self, index_list : list[int], expected_indices : list[int]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        expected_columns : list[str] = [df.columns[i] for i in expected_indices]
+        
+        # Act
+        filtered_df : DataFrame = self.bym_splitter._BYMSplitter__filter_by_index_list(df = df, index_list = expected_indices) # type: ignore
+        
+        # Assert
+        self.assertEqual(filtered_df.columns.tolist(), expected_columns)
+
+    @parameterized.expand([
+        [[0, 1, 2, 3, 4], [[0, 1], [2, 3]]],
+        [[0, 1, 2, 3, 4, 5], [[0, 2, 4], [1, 3, 5]]]
+    ])
+    def test_filterbyindexlists_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_indices : list[list[int]]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        expected_columns : list[list[str]] = [[df.columns[i] for i in index_list] for index_list in expected_indices]
+        
+        # Act
+        sub_dfs : list[DataFrame] = self.bym_splitter._BYMSplitter__filter_by_index_lists(df = df, index_lists = expected_indices) # type: ignore
+        
+        # Assert
+        self.assertEqual(len(sub_dfs), len(expected_columns))
+        for i, sub_df in enumerate(sub_dfs):
+            self.assertEqual(sub_df.columns.tolist(), expected_columns[i])
+
+    @parameterized.expand([
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17, 18, 19] ]],
+        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17] ]]
+    ])
+    def test_createindexlists_shouldreturnexpectedlistoflists_wheninvoked(self, column_numbers : list[int], expected : list[list[int]]) -> None:
+        
+        # Arrange
+        # Act
+        actual : list[list[int]] = self.bym_splitter._BYMSplitter__create_index_lists(column_numbers = column_numbers) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [
+            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 
+            [ ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], ["Month", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], ["Month", "2021", "↕", "2022", "↕", "2023", "↕", "2024"] ]
+        ],
+        [
+            [0, 1], 
+            [ ["Month", "2015"] ]
+        ]
+    ])
+    def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_column_names : list[list[str]]) -> None:
+        
+        # Arrange
+        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
+        
+        # Act
+        sub_dfs : list[DataFrame] = self.bym_splitter.create_sub_dfs(df = df)
+        
+        # Assert
+        self.assertEqual(len(sub_dfs), len(expected_column_names))
+        for i, sub_df in enumerate(sub_dfs):
+            self.assertEqual(sub_df.columns.tolist(), expected_column_names[i])
+    
+    def test_createsubdfs_shouldraiseexception_wheninvaliddf(self) -> None:
+        
+        # Arrange
+        df : DataFrame = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        
+        # Act & Assert
+        with self.assertRaises(Exception):
+            self.bym_splitter.create_sub_dfs(df = df)
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1774,24 +2117,6 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-    def test_createttsbymonthtpl_shouldreturnexpectedtuple_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        now : datetime = datetime(2024, 11, 30) 
-        tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_month_tpl()
-
-        # Act
-        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_month_tpl(
-            tt_df = tt_df, 
-            years = years,
-            now = now
-        )
-
-        # Assert
-        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
-        assert_frame_equal(expected_tpl[1] , actual_tpl[1])  
     def test_createttsbytrdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1870,210 +2195,13 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-class BYMDFManagerTestCase(unittest.TestCase):
-
-    def setUp(self):
-        self.bymdf_manager = BYMDFManager()
-    
-    @parameterized.expand([
-        (2024, True),
-        (1000, True),
-        (9999, True),
-        (999, False),
-        (10000, False),
-        ("year", False)
-    ])
-    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_year(value = value)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (2, True),
-        (0, True),
-        (-4, True),
-        (3, False),
-        (-5, False),
-    ])
-    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_even(number = number)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [["Month", "2015"], True],
-        [["Month", "2015", "↕", "2016"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
-        [[], False],
-        [["Month"], False],
-        [["Month", "2015", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
-        [["Month", "↕"], False],
-        [["Month", "↕", "↕"], False],
-        [["Month", "2015", "2015"], False],
-        [["Month", "2015", "↕", "↕"], False]
-    ])
-    def test_isvalid_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_valid(column_list = column_list) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (1, True),
-        (7, True),
-        (13, True),
-        (25, True),
-        (49, True),
-        (8, False),
-        (-7, False),
-    ])
-    def test_isinsequence_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_in_sequence(number = number)  # type: ignore
-        
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (1, [1], True),
-        (5, [1, 2, 3, 4, 5], True),
-        (1, [], False),
-        (0, [1], False),
-        (4, [1, 2, 3, 4, 5], False),
-    ])
-    def test_islast_shouldreturnexpectedbool_wheninvoked(self, number : int, lst : list[int], expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bymdf_manager._BYMDFManager__is_last(number = number, lst = lst)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [[0, 1], [0, 1]],
-        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]]
-    ])
-    def test_createcolumnnumbers_shouldreturnexpectedcolumnnumbers_wheninvoked(self, index_list : list[int], expected : list[int]) -> None:
-        
-        # Arrange
-        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
-        
-        # Act
-        actual : list[int] = self.bymdf_manager._BYMDFManager__create_column_numbers(df = df) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [[0, 1, 2], [0, 2]],
-        [[0, 1, 2, 3, 4], [0, 1, 4]]
-    ])
-    def test_filterbyindexlist_shouldreturnfiltereddf_wheninvoked(self, index_list : list[int], expected_indices : list[int]) -> None:
-        
-        # Arrange
-        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
-        expected_columns : list[str] = [df.columns[i] for i in expected_indices]
-        
-        # Act
-        filtered_df : DataFrame = self.bymdf_manager._BYMDFManager__filter_by_index_list(df = df, index_list = expected_indices) # type: ignore
-        
-        # Assert
-        self.assertEqual(filtered_df.columns.tolist(), expected_columns)
-
-    @parameterized.expand([
-        [[0, 1, 2, 3, 4], [[0, 1], [2, 3]]],
-        [[0, 1, 2, 3, 4, 5], [[0, 2, 4], [1, 3, 5]]]
-    ])
-    def test_filterbyindexlists_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_indices : list[list[int]]) -> None:
-        
-        # Arrange
-        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
-        expected_columns : list[list[str]] = [[df.columns[i] for i in index_list] for index_list in expected_indices]
-        
-        # Act
-        sub_dfs : list[DataFrame] = self.bymdf_manager._BYMDFManager__filter_by_index_lists(df = df, index_lists = expected_indices) # type: ignore
-        
-        # Assert
-        self.assertEqual(len(sub_dfs), len(expected_columns))
-        for i, sub_df in enumerate(sub_dfs):
-            self.assertEqual(sub_df.columns.tolist(), expected_columns[i])
-
-    @parameterized.expand([
-        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17, 18, 19] ]],
-        [[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18], [ [0, 1, 2, 3, 4, 5, 6, 7], [0, 7, 8, 9, 10, 11, 12, 13], [0, 13, 14, 15, 16, 17] ]]
-    ])
-    def test_createindexlists_shouldreturnexpectedlistoflists_wheninvoked(self, column_numbers : list[int], expected : list[list[int]]) -> None:
-        
-        # Arrange
-        # Act
-        actual : list[list[int]] = self.bymdf_manager._BYMDFManager__create_index_lists(column_numbers = column_numbers) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [
-            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], 
-            [ ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], ["Month", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], ["Month", "2021", "↕", "2022", "↕", "2023", "↕", "2024"] ]
-        ],
-        [
-            [0, 1], 
-            [ ["Month", "2015"] ]
-        ]
-    ])
-    def test_createsubdfs_shouldreturnexpectedsubdfs_wheninvoked(self, index_list : list[int], expected_column_names : list[list[str]]) -> None:
-        
-        # Arrange
-        df : DataFrame = ObjectMother.get_tts_by_month_df(index_list = index_list)
-        
-        # Act
-        sub_dfs : list[DataFrame] = self.bymdf_manager.create_sub_dfs(df = df)
-        
-        # Assert
-        self.assertEqual(len(sub_dfs), len(expected_column_names))
-        for i, sub_df in enumerate(sub_dfs):
-            self.assertEqual(sub_df.columns.tolist(), expected_column_names[i])
-    
-    def test_createsubdfs_shouldraiseexception_wheninvaliddf(self) -> None:
-        
-        # Arrange
-        df : DataFrame = pd.DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
-        
-        # Act & Assert
-        with self.assertRaises(Exception):
-            self.bymdf_manager.create_sub_dfs(df = df)
 class TTMarkdownFactoryTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
 
         self.md_factory : TTMarkdownFactory = TTMarkdownFactory(
             markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bymdf_manager = BYMDFManager()
+            bym_splitter = BYMSplitter()
         )
         self.paragraph_title : str = "Time Tracking By Month"
         self.last_update : datetime = datetime(2024, 11, 30)
@@ -2115,6 +2243,84 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected_newlines, actual_newlines)
+class TTSequencerTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+
+        # Act
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+
+        # Assert
+        self.assertIsInstance(tt_sequencer, TTSequencer)
+    def test_convertcriteriatovalue_shouldreturnboolean_wheninvoked(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+
+        # Act & Assert
+        self.assertIsNone(tt_sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.do_nothing))   # type: ignore
+        self.assertTrue(tt_sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.include))        # type: ignore
+        self.assertFalse(tt_sequencer._TTSequencer__convert_criteria_to_value(CRITERIA.exclude))       # type: ignore
+    def test_convertcriteriatovalue_shouldraiseexception_wheninvalidcriteria(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+        criteria : str = cast(CRITERIA, "invalid")
+
+        # Act
+        with self.assertRaises(Exception) as context:
+            tt_sequencer._TTSequencer__convert_criteria_to_value(criteria = criteria)  # type: ignore
+
+        # Assert
+        self.assertEqual(
+            str(context.exception),
+            _MessageCollection.no_strategy_available_for_provided_criteria(criteria = criteria)
+        )
+
+    @parameterized.expand([
+        ("2024-12-21", 1, "2024-11-21"),
+        ("2024-12-21", 6, "2024-06-21"),
+        ("2024-12-21", 12, "2023-12-21"),
+    ])
+    def test_calculatefromstartdate_shouldreturnexpecteddate_wheninvoked(self, now_str : str, months : int, expected_str : str) -> None:
+
+        # Arrange
+        now : datetime = datetime.strptime(now_str, "%Y-%m-%d")
+        expected : date = datetime.strptime(expected_str, "%Y-%m-%d").date()
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+
+        # Act
+        actual : date = tt_sequencer._TTSequencer__calculate_from_start_date(now = now, months = months)   # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+    @parameterized.expand([
+        ("14h 00m", 14),
+        ("34h 15m", 34),
+        ("13h 30m", 13),
+        ("31h 45m", 32),
+        ("07h 45m", 8),
+        ("28h 15m", 28),
+        ("35h 15m", 35)
+    ])
+    def test_roundeffort_shouldreturnexpectedint_wheninvoked(self, effort : str, expected : int) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+        tt_sequencer : TTSequencer = TTSequencer(df_helper = df_helper)
+
+        # Act
+        actual : int = tt_sequencer._TTSequencer__round_effort(effort = effort)   # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
 class TTAdapterTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -2160,8 +2366,16 @@ class TTAdapterTestCase(unittest.TestCase):
         
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         id : TTID = TTID.TTSBYMONTH
         setting_bag : SettingBag = Mock(md_infos = self.md_infos)
@@ -2175,8 +2389,16 @@ class TTAdapterTestCase(unittest.TestCase):
         
         # Arrange
         df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
         
         id : TTID = TTID.TTSBYMONTH
 
@@ -2187,16 +2409,24 @@ class TTAdapterTestCase(unittest.TestCase):
 
         # Act
         with self.assertRaises(Exception) as context:
-            adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = setting_bag)
+            tt_adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = setting_bag)
         
         # Assert
         self.assertEqual(str(context.exception), _MessageCollection.no_mdinfo_found(id = id))   
     def test_createttdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.excel_path = self.excel_path
@@ -2205,7 +2435,7 @@ class TTAdapterTestCase(unittest.TestCase):
         setting_bag.excel_tabname = "Sessions"
 
         # Act
-        adapter.create_tt_df(setting_bag = setting_bag)
+        tt_adapter.create_tt_df(setting_bag = setting_bag)
 
         # Assert
         df_factory.create_tt_df.assert_called_once_with(
@@ -2214,12 +2444,20 @@ class TTAdapterTestCase(unittest.TestCase):
             excel_nrows = self.excel_nrows,
             excel_tabname = self.excel_tabname
         )
-    def test_createttsbymonthtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
+    def test_createttsbymonthtpl_shouldcallbymfactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2228,10 +2466,10 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : Mock = Mock()
 
         # Act
-        adapter.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
 
         # Assert
-        df_factory.create_tts_by_month_tpl.assert_called_once_with(
+        bym_factory.create_tts_by_month_tpl.assert_called_once_with(
             tt_df = tt_df,
             years = self.years,
             now = self.now
@@ -2239,9 +2477,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyyeardf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2250,7 +2496,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : Mock = Mock()
 
         # Act
-        adapter.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
 
         # Assert
         df_factory.create_tts_by_year_df.assert_called_once_with(
@@ -2261,9 +2507,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyyearmonthdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2273,7 +2527,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : Mock = Mock()
 
         # Act
-        adapter.create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
 
         # Assert
         df_factory.create_tts_by_year_month_tpl.assert_called_once_with(
@@ -2285,9 +2539,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyyearmonthspnvtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2309,9 +2571,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyyearspnvtpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2333,9 +2603,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyspndf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2357,9 +2635,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyspnspvdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2379,9 +2665,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyhashtagyeardf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
@@ -2399,9 +2693,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyefstpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.tts_by_efs_is_correct = self.tts_by_efs_is_correct
@@ -2419,9 +2721,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbytrdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.tts_by_tr_unknown_id = self.tts_by_tr_unknown_id
@@ -2441,9 +2751,17 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbymonthmd_shouldcallmdfactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
-        df_factory : Mock = Mock()
-        md_factory : Mock = Mock()
-        adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        df_factory : TTDataFrameFactory = Mock()
+        bym_factory : BYMFactory = Mock()
+        tt_sequencer : TTSequencer = Mock()
+        md_factory : TTMarkdownFactory = Mock()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : Mock = Mock()
         setting_bag.md_infos = self.md_infos
@@ -2453,7 +2771,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tts_by_month_tpl : Tuple[Mock, Mock] = (Mock(), Mock())
 
         # Act
-        adapter.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
 
         # Assert
         md_factory.create_tts_by_month_md.assert_called_once_with(
@@ -2482,7 +2800,6 @@ class TTAdapterTestCase(unittest.TestCase):
 
         df_factory : TTDataFrameFactory = Mock()
         df_factory.create_tt_df.return_value = tt_df
-        df_factory.create_tts_by_month_tpl.return_value = tts_by_month_tpl
         df_factory.create_tts_by_year_df.return_value = tts_by_year_df
         df_factory.create_tts_by_year_month_tpl.return_value = tts_by_year_month_tpl
         df_factory.create_tts_by_year_month_spnv_tpl.return_value = tts_by_year_month_spnv_tpl
@@ -2495,10 +2812,20 @@ class TTAdapterTestCase(unittest.TestCase):
         df_factory.create_tts_by_tr_df.return_value = tts_by_tr_df
         df_factory.create_definitions_df.return_value = definitions_df
 
+        bym_factory : BYMFactory = Mock()
+        bym_factory.create_tts_by_month_tpl.return_value = tts_by_month_tpl
+
+        tt_sequencer : TTSequencer = Mock()
+
         md_factory : TTMarkdownFactory = Mock()
         md_factory.create_tts_by_month_md.return_value = tts_by_month_md
 
-        tt_adapter : TTAdapter = TTAdapter(df_factory = df_factory, md_factory = md_factory)
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory, 
+            bym_factory = bym_factory, 
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory
+        )
 
         setting_bag : SettingBag = ObjectMother.get_setting_bag()
 
@@ -2525,21 +2852,289 @@ class TTAdapterTestCase(unittest.TestCase):
         assert_frame_equal(actual.tts_by_tr_df, tts_by_tr_df)
         assert_frame_equal(actual.definitions_df, definitions_df)
         self.assertEqual(actual.tts_by_month_md, tts_by_month_md)
+class SettingSubsetTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+	
+        self.working_folder_path : str = "/home/nwtimetracking/"
+        self.excel_skiprows : int = 0
+		
+        self.subset : SettingSubset = SettingSubset(
+            working_folder_path = self.working_folder_path,
+            excel_skiprows = self.excel_skiprows
+        )
+    def test_init_shouldassignproperties_wheninvoked(self) -> None:
+
+		# Arrange
+		# Act
+        # Assert
+        self.assertEqual(self.subset.working_folder_path, self.working_folder_path)
+        self.assertEqual(self.subset.excel_skiprows, self.excel_skiprows)
+        self.assertIsInstance(self.subset.working_folder_path, str)
+        self.assertIsInstance(self.subset.excel_skiprows, int)
+    def test_str_shouldreturnexpectedstring_wheninvoked(self) -> None:
+
+        # Arrange
+        expected : str = json.dumps({
+            "working_folder_path": self.working_folder_path,
+            "excel_skiprows": self.excel_skiprows
+        })
+
+        # Act
+        actual_str : str = str(self.subset)
+        actual_repr : str = repr(self.subset)
+
+        # Assert
+        self.assertEqual(actual_str, expected)
+        self.assertEqual(actual_repr, expected)
+class TTLoggerTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.definitions_df : DataFrame = ObjectMother().get_definitions_df()
+        self.setting_bag : SettingBag = ObjectMother().get_setting_bag()
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        logging_function : Callable[[str], None] = LambdaProvider().get_default_logging_function()
+
+        # Act
+        actual : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Assert
+        self.assertEqual(actual._TTLogger__logging_function, logging_function)      # type: ignore
+        self.assertIsInstance(actual._TTLogger__logging_function, FunctionType)     # type: ignore
+
+    @parameterized.expand([
+        (TTCN.DME, "Total Development Monthly Effort"),
+        (TTCN.TME, "Total Monthly Effort")
+    ])
+    def test_trylogcolumndefinitions_shouldlogdefinitions_whencolumnnamesmatch(self, column_name : str, definition : str) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+        df : DataFrame = DataFrame(columns = [column_name, "SomeColumn"])
+
+        # Act
+        tt_logger.try_log_column_definitions(df = df, definitions = self.definitions_df)
+
+        # Assert
+        logging_function.assert_any_call(f"{column_name}: {definition}")
+
+    @parameterized.expand([
+        (["SomeColumn", "SomeOtherColumn"], 0)
+    ])
+    def test_trylogcolumndefinitions_shouldnotlogdefinitions_whennomatchingcolumns(self, columns : list[str], expected_call_count : int) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+        df : DataFrame = DataFrame(columns = columns)
+
+        # Act
+        tt_logger.try_log_column_definitions(df = df, definitions = self.definitions_df)
+
+        # Assert
+        self.assertEqual(logging_function.call_count, expected_call_count)
+
+    @parameterized.expand([
+        (TTCN.DME, "Total Development Monthly Effort"),
+        (TTCN.TME, "Total Monthly Effort")
+    ])
+    def test_trylogtermdefinition_shouldlogdefinition_whenmatchingtermexists(self, term : str, definition : str) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Act
+        tt_logger.try_log_term_definition(term = term, definitions = self.definitions_df)
+
+        # Assert
+        logging_function.assert_any_call(f"{term}: {definition}")
+
+    @parameterized.expand([
+        ("NonExistentTerm", 0)
+    ])
+    def test_trylogtermdefinition_shouldnotlogdefinition_whenmatchingtermdoesnotexist(self, term : str, expected_call_count : int) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Act
+        tt_logger.try_log_term_definition(term = term, definitions = self.definitions_df)
+
+        # Assert
+        self.assertEqual(logging_function.call_count, expected_call_count)
+
+    def test_createsettingsubset_shouldreturnsubsetwithmatchingproperties_whenidsprovided(self) -> None:
+        
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
+        setting_names : list[str] = ["working_folder_path"]
+
+        # Act
+        actual : SettingSubset = tt_logger._TTLogger__create_setting_subset(setting_bag = self.setting_bag, setting_names = setting_names) # type: ignore
+
+        # Assert
+        self.assertIsInstance(actual, SettingSubset)
+        self.assertEqual(actual.working_folder_path, self.setting_bag.working_folder_path)
+        with self.assertRaises(AttributeError):
+            _ = actual.excel_skiprows
+    def test_trylogsettings_shouldlogsubset_whenidsprovided(self) -> None:
+        
+        # Arrange
+        messages : list[str] = []
+        logging_function : Callable[[str], None] = lambda msg : messages.append(msg)
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
+        setting_names : list[str] = ["working_folder_path"]
+
+        # Act
+        tt_logger.try_log_settings(setting_bag = self.setting_bag, setting_names = setting_names)
+
+        # Assert
+        self.assertEqual(len(messages), 1)
+        self.assertIn(self.setting_bag.working_folder_path, messages[0])
+    def test_trylogsettings_shouldnotloganything_whenidsisempty(self) -> None:
+        
+        # Arrange
+        messages : list[str] = []
+        logging_function : Callable[[str], None] = lambda msg : messages.append(msg)
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
+        setting_names : list[str] = []
+
+        # Act
+        tt_logger.try_log_settings(setting_bag = self.setting_bag, setting_names = setting_names)
+
+        # Assert
+        self.assertEqual(len(messages), 0)
+
+    @parameterized.expand([
+        ("Some message")
+    ])
+    def test_log_shouldlogmessage_whenmessageisprovided(self, msg : str) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Act
+        tt_logger.log(msg = msg)
+
+        # Assert
+        logging_function.assert_called_once_with(msg)
+
+    @parameterized.expand([
+        ("")
+    ])
+    def test_log_shouldnotlogmessage_whenmessageisempty(self, msg : str) -> None:
+
+        # Arrange
+        logging_function : Mock = Mock()
+        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
+
+        # Act
+        tt_logger.log(msg = msg)
+
+        # Assert
+        logging_function.assert_not_called()
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
 
         # Arrange
         # Act
-        component_bag : ComponentBag = ComponentBag()
+        component_bag : ComponentBag = ComponentBag(
+            file_path_manager = FilePathManager(),
+            file_manager = FileManager(file_path_manager = FilePathManager()),
+            tt_adapter = TTAdapter(
+                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
+                bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
+                tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
+                md_factory = TTMarkdownFactory(
+                    markdown_helper = MarkdownHelper(formatter = Formatter()),
+                    bym_splitter = BYMSplitter())
+                ),
+            tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
+            displayer = Displayer()
+        )
 
         # Assert
         self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
         self.assertIsInstance(component_bag.file_manager, FileManager)
         self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
-        self.assertIsInstance(component_bag.logging_function, FunctionType)
+        self.assertIsInstance(component_bag.tt_logger, TTLogger)
         self.assertIsInstance(component_bag.displayer, Displayer)
 class TimeTrackingProcessorTestCase(unittest.TestCase):
+
+    @parameterized.expand([
+        ("content.md", "/home/nwtimetracking/"),
+    ])
+    def test_saveandlog_shouldcallexpecteddependenciesandlogexpectedmessage_wheninvoked(self, file_name : str, folder_path : str) -> None:
+
+        # Arrange
+        id : TTID = TTID.TTSBYMONTH
+        content : str = "Some Content"
+        paragraph_title : str = "Some paragraph title"
+
+        file_path : str = f"{folder_path}/{file_name}"
+        expected : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
+
+        component_bag : Mock = Mock()
+        component_bag.file_path_manager.create_file_path = Mock()
+        component_bag.file_path_manager.create_file_path.return_value = file_path
+        component_bag.tt_adapter.extract_file_name_and_paragraph_title = Mock()
+        component_bag.tt_adapter.extract_file_name_and_paragraph_title.return_value = (paragraph_title, None)
+        component_bag.file_manager.save_content = Mock()
+
+        setting_bag : SettingBag = ObjectMother().get_setting_bag()
+        logging_function : Callable[[str], None] = Mock()
+
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content, logging_function = logging_function)  # type: ignore
+
+        # Assert
+        component_bag.file_path_manager.create_file_path.assert_called()
+        component_bag.file_manager.save_content.assert_called()
+        logging_function.assert_called_with(expected)
+
+    @parameterized.expand([
+        ("content.md", "/home/nwtimetracking/"),
+    ])
+    def test_saveandlog_shouldlogexpectedmessage_whenexceptionisraised(self, file_name : str, folder_path : str) -> None:
+
+        # Arrange
+        id : TTID = TTID.TTSBYMONTH
+        content : str = "Some Content"
+        paragraph_title : str = "Some paragraph title"
+        error_message : str = "Some saving issue happened."
+
+        file_path : str = f"{folder_path}/{file_name}"
+        expected : str = _MessageCollection.something_failed_while_saving(file_path = file_path)
+
+        component_bag : Mock = Mock()
+        component_bag.file_path_manager.create_file_path = Mock()
+        component_bag.file_path_manager.create_file_path.return_value = file_path
+        component_bag.tt_adapter.extract_file_name_and_paragraph_title = Mock()
+        component_bag.tt_adapter.extract_file_name_and_paragraph_title.return_value = (paragraph_title, None)
+        component_bag.file_manager.save_content = Mock()
+        component_bag.file_manager.save_content.side_effect = Exception(error_message)
+
+        setting_bag : SettingBag = ObjectMother().get_setting_bag()
+        logging_function : Callable[[str], None] = Mock()
+
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content, logging_function = logging_function)  # type: ignore
+
+        # Assert
+        component_bag.file_path_manager.create_file_path.assert_called()
+        component_bag.file_manager.save_content.assert_called()
+        logging_function.assert_called_with(expected)
 
     def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
         
@@ -2601,6 +3196,37 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         displayer.display.assert_called_once_with(
             df = tts_by_month_tpl[1]
         )
+    def test_processttsbymonth_shouldsaveandlog_whenoptionissave(self) -> None:
+        
+        # Arrange
+        tts_by_month_tpl: Tuple[DataFrame, DataFrame] = (Mock(), Mock())
+
+        summary: Mock = Mock()
+        summary.tts_by_month_tpl = tts_by_month_tpl
+
+        displayer: Mock = Mock()
+        tt_adapter: Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag: Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag: Mock = Mock()
+        setting_bag.options_tts_by_month = [OPTION.save]  # type: ignore
+
+		# Act, Assert
+        with patch("nwtimetracking.TimeTrackingProcessor._TimeTrackingProcessor__save_and_log") as save_and_log:
+
+            tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(
+                component_bag = component_bag, 
+                setting_bag = setting_bag
+            )
+            tt_processor.initialize()		
+            tt_processor.process_tts_by_month()
+
+            # Assert
+            save_and_log.assert_called()
     def test_processttsbyyear_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -2749,6 +3375,37 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             df = tts_by_spn_df, 
             formatters = setting_bag.tts_by_spn_formatters
         )
+    def test_processttsbyspn_shouldlog_whenoptionislog(self) -> None:
+        
+        # Arrange
+        tts_by_spn_df : DataFrame = Mock()
+        definitions_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_spn_df = tts_by_spn_df
+        summary.definitions_df = definitions_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+        component_bag.tt_logger.try_log_column_definitions = Mock()
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_spn = [OPTION.log]  # type: ignore
+
+        # Act, 
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_spn()
+
+        # Assert
+        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
+            df = tts_by_spn_df, 
+            definitions = definitions_df)
     def test_processttsbyspnspv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -2779,6 +3436,37 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         displayer.display.assert_called_once_with(
             df = tts_by_spn_spv_df
         )
+    def test_processttsbyspnspv_shouldlog_whenoptionislog(self) -> None:
+        
+        # Arrange
+        tts_by_spn_spv_df : DataFrame = Mock()
+        definitions_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_spn_spv_df = tts_by_spn_spv_df
+        summary.definitions_df = definitions_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+        component_bag.tt_logger.try_log_column_definitions = Mock()
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_spn_spv = [OPTION.log]  # type: ignore
+
+        # Act, 
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_spn_spv()
+
+        # Assert
+        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
+            df = tts_by_spn_spv_df, 
+            definitions = definitions_df)
     def test_processttsbyhashtag_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -2809,6 +3497,37 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             df = tts_by_hashtag_df, 
             formatters = setting_bag.tts_by_hashtag_formatters
         )
+    def test_processttsbyhashtag_shouldlog_whenoptionislog(self) -> None:
+        
+        # Arrange
+        tts_by_hashtag_df : DataFrame = Mock()
+        definitions_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_hashtag_df = tts_by_hashtag_df
+        summary.definitions_df = definitions_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+        component_bag.tt_logger.try_log_column_definitions = Mock()
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_hashtag = [OPTION.log]  # type: ignore
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_hashtag()
+
+        # Assert
+        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
+            df = tts_by_hashtag_df, 
+            definitions = definitions_df)
     def test_processttsbyefs_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -2867,6 +3586,118 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         displayer.display.assert_called_once_with(
             df = tts_by_tr_df.head(10)
         )
+    def test_processttsganttspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_gantt_spnv_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_gantt_spnv_df = tts_gantt_spnv_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_gantt_spnv = [OPTION.display]    # type: ignore
+        setting_bag.tts_gantt_spnv_formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_gantt_spnv()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_gantt_spnv_df,
+            formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+        )
+    def test_processttsganttspnv_shouldplot_whenoptionisplot(self) -> None:
+        
+        # Arrange
+        tts_gantt_spnv_plot_function : Callable[[], None] = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_gantt_spnv_plot_function = tts_gantt_spnv_plot_function
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_gantt_spnv = [OPTION.plot]    # type: ignore
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_gantt_spnv()
+
+        # Assert
+        summary.tts_gantt_spnv_plot_function.assert_called_once()
+    def test_processttsgantthseq_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_gantt_hseq_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_gantt_hseq_df = tts_gantt_hseq_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_gantt_hseq = [OPTION.display]    # type: ignore
+        setting_bag.tts_gantt_hseq_formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_gantt_hseq()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            df = tts_gantt_hseq_df,
+            formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+        )
+    def test_processttsgantthseq_shouldplot_whenoptionisplot(self) -> None:
+        
+        # Arrange
+        tts_gantt_hseq_plot_function : Callable[[], None] = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_gantt_hseq_plot_function = tts_gantt_hseq_plot_function
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_gantt_hseq = [OPTION.plot]    # type: ignore
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_gantt_hseq()
+
+        # Assert
+        summary.tts_gantt_hseq_plot_function.assert_called_once()
     def test_processdefinitions_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -2931,6 +3762,8 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         ["process_tts_by_hashtag_year"],
         ["process_tts_by_efs"],
         ["process_tts_by_tr"],
+        ["process_tts_gantt_spnv"],
+        ["process_tts_gantt_hseq"],
         ["process_definitions"],
         ["get_summary"]
     ])

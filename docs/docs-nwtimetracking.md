@@ -17,6 +17,7 @@ Contact: numbworks@gmail.com
 | 2024-12-01 | numbworks | Updated to v3.9.0. |
 | 2024-12-05 | numbworks | Updated to v4.0.0. |
 | 2024-12-17 | numbworks | Updated to v4.5.0. |
+| 2024-12-21 | numbworks | Updated to v4.6.0. |
 
 ## Introduction
 
@@ -150,7 +151,7 @@ The expected outcome for `all-concise` is:
 
 ```
 MODULE_NAME: nwtimetracking
-MODULE_VERSION: 4.5.0
+MODULE_VERSION: 4.6.0
 COVERAGE_THRESHOLD: 70%
 [OK] type-concise: passed!
 [OK] changelog-concise: 'CHANGELOG' updated to current version!
@@ -173,13 +174,19 @@ Considering the old-fashioned syntax adopted by both `make` and `bash`, here a s
 | `$@` | Variable that stores the target name. |
 | `if [[ ... ]]` | Double square brackets to enable pattern matching. |
 
-## BYMDFManager
+## Architecture
+
+A partial class diagram showing the core architecture of the application:
+
+![Diagram-Architecture.png](Diagrams/Diagram-Architecture.png)
+
+## BYMSplitter
 
 The scope of this class is to partition a “by month” table in smaller tables, following a custom logic. 
 
 Here a visual example of how its algorithm works:
 
-![Diagram-BYMDFManager.png](Diagrams/Diagram-BYMDFManager.png)
+![Diagram-BYMSplitter.png](Diagrams/Diagram-BYMSplitter.png)
 
 ## Known Issues - nwshared
 
