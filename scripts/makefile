@@ -34,7 +34,7 @@ tryinstall-verbose:
 	rm -rf $(MODULE_NAME).egg-info; \
 	rm -rf venv; \
 	python /workspaces/$(MODULE_NAME)/src/setup.py bdist_wheel; \
-	python3 -m venv venv; \
+	python -m venv venv; \
 	source venv/bin/activate; \
 	pip install dist/$(MODULE_NAME)*.whl; \
 	pip show $(MODULE_NAME) | grep Version; \
@@ -59,6 +59,11 @@ check-pythonversion:
 	@clear; \
 	code="from nwpackageversions import LanguageChecker; print(LanguageChecker().get_version_status(required=(3, 12, 5)))"; \
 	python -c "$$code"
+check-requirements:
+	@clear; \
+	file_path="$(ROOT_DIR)/.devcontainer/Dockerfile"; \
+	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = False))"; \
+	python -c "$$code";
 
 # TARGETS (CONCISE)
 type-concise:

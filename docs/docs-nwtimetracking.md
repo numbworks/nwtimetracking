@@ -148,6 +148,7 @@ The avalaible target names are:
 | codemetrics-verbose | Runs a cyclomatic complexity analysis against all the nw*.py files in /src. |
 | commitavg-verbose | Shows the daily average time between commits, grouped by year and month. |
 | check-pythonversion | Checks if the installed Python version is the expected one and logs a message. |
+| check-requirements | Checks if the required dependencies match with the most recent releases on PyPi. |
 | all-concise | Runs a batch of verification tasks and logs one summary line for each of them. |
 
 The expected outcome for `all-concise` is:
