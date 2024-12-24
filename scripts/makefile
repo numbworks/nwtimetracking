@@ -64,6 +64,16 @@ check-requirements:
 	file_path="$(ROOT_DIR)/.devcontainer/Dockerfile"; \
 	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = False))"; \
 	python -c "$$code";
+update-codecoverage:
+	@clear; \
+	cd $(ROOT_DIR)/tests/; \
+	coverage run -m unittest $(MODULE_NAME)tests.py > /dev/null 2>&1; \
+	value=$$(coverage report --include=$(MODULE_NAME).py | grep -oP 'TOTAL\s+\d+\s+\d+\s+\K\d+(?=%)'); \
+	if [ $$value -le 39 ]; then color="red"; elif [ $$value -le 69 ]; then color="orange"; else color="green"; fi; \
+	url="https://img.shields.io/badge/coverage-$${value}.0%25-$${color}"; \
+	echo "$$url" > $(ROOT_DIR)/codecoverage.txt; \
+	curl -s $$url -o $(ROOT_DIR)/codecoverage.svg; \
+	if [ $$? -eq 0 ]; then echo "[OK] $@: coverage badge updated successfully!"; else echo "[ERROR] $@: failed to update coverage badge."; fi;
 
 # TARGETS (CONCISE)
 type-concise:

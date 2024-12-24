@@ -1,6 +1,6 @@
 v4.7.0
 - Library:
-	- Maintenance: makefile expanded (commitavg-verbose, check-pythonversion, check-requirements).
+	- Maintenance: makefile expanded (commitavg-verbose, check-pythonversion, check-requirements, update-codecoverage).
 - Documentation:
 	- Feature: updated to v4.7.0.
 
