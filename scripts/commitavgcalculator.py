@@ -293,6 +293,7 @@ class CommitAvgCalculator():
                 str(f"{monthly_status.avg_minutes:.2f}"),
                 ", ".join(monthly_status.ref_names)
             ]
+            row[3] = str(row[3]).replace("0.00", "Not enough data")
             rows.append(row)
 
         table : str = tabulate(
