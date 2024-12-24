@@ -52,6 +52,9 @@ unittest-verbose:
 codemetrics-verbose:
 	@clear; \
 	radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py | grep -e '^[ ]*[CFM].*' | grep -v ' - A';
+commitavg-verbose:
+	@clear; \
+	python $(ROOT_DIR)/scripts/commitavgcalculator.py;
 
 # TARGETS (CONCISE)
 type-concise:
