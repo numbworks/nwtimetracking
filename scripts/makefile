@@ -55,6 +55,10 @@ codemetrics-verbose:
 commitavg-verbose:
 	@clear; \
 	python $(ROOT_DIR)/scripts/commitavgcalculator.py;
+check-pythonversion:
+	@clear; \
+	code="from nwpackageversions import LanguageChecker; print(LanguageChecker().get_version_status(required=(3, 12, 5)))"; \
+	python -c "$$code"
 
 # TARGETS (CONCISE)
 type-concise:
