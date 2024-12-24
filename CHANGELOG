@@ -1,3 +1,9 @@
+v4.7.0
+- Library:
+	- Maintenance: makefile updated and expanded (commitavg-verbose).
+- Documentation:
+	- Feature: updated to v4.7.0.
+
 v4.6.0
 - Library:
 	- Feature: added support for GANTT charts.

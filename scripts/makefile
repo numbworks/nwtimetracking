@@ -3,7 +3,7 @@
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
-MODULE_VERSION = "4.6.0"
+MODULE_VERSION = "4.7.0"
 COVERAGE_THRESHOLD = 70
 
 # TARGETS (VERBOSE)
