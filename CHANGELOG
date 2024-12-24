@@ -1,6 +1,8 @@
 v4.7.0
-- Library:
-	- Maintenance: makefile expanded (commitavg-verbose, check-pythonversion, check-requirements, update-codecoverage).
+- Application:
+	- Maintenance: makefile expanded (commitavg-verbose, check-pythonversion, check-requirements).
+	- Maintenance: makefile expanded (update-codecoverage, compilenotebook-concise, compilenotebook-verbose).
+	- Maintenance: notebook, removed "Language/Requirement Checks".
 - Documentation:
 	- Feature: updated to v4.7.0.
 
