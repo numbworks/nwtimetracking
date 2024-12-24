@@ -3091,7 +3091,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.file_manager.save_content = Mock()
 
         setting_bag : SettingBag = ObjectMother().get_setting_bag()
-        logging_function : Callable[[str], None] = Mock()
+        logging_function : Mock = Mock(spec = Callable[[str], None])
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -3125,7 +3125,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.file_manager.save_content.side_effect = Exception(error_message)
 
         setting_bag : SettingBag = ObjectMother().get_setting_bag()
-        logging_function : Callable[[str], None] = Mock()
+        logging_function : Mock = Mock(spec = Callable[[str], None])
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -3619,7 +3619,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
     def test_processttsganttspnv_shouldplot_whenoptionisplot(self) -> None:
         
         # Arrange
-        tts_gantt_spnv_plot_function : Callable[[], None] = Mock()
+        tts_gantt_spnv_plot_function : Mock = Mock(spec = Callable[[], None])
 
         summary : Mock = Mock()
         summary.tts_gantt_spnv_plot_function = tts_gantt_spnv_plot_function
@@ -3675,7 +3675,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
     def test_processttsgantthseq_shouldplot_whenoptionisplot(self) -> None:
         
         # Arrange
-        tts_gantt_hseq_plot_function : Callable[[], None] = Mock()
+        tts_gantt_hseq_plot_function : Mock = Mock(spec = Callable[[], None])
 
         summary : Mock = Mock()
         summary.tts_gantt_hseq_plot_function = tts_gantt_hseq_plot_function

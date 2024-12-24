@@ -1,9 +1,9 @@
 # SETTINGS
-.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise compile-concise unittest-concise codemetrics-concise all-concise 
+.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise all-concise 
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
-MODULE_VERSION = "4.6.0"
+MODULE_VERSION = "4.7.0"
 COVERAGE_THRESHOLD = 70
 
 # TARGETS (VERBOSE)
@@ -34,7 +34,7 @@ tryinstall-verbose:
 	rm -rf $(MODULE_NAME).egg-info; \
 	rm -rf venv; \
 	python /workspaces/$(MODULE_NAME)/src/setup.py bdist_wheel; \
-	python3 -m venv venv; \
+	python -m venv venv; \
 	source venv/bin/activate; \
 	pip install dist/$(MODULE_NAME)*.whl; \
 	pip show $(MODULE_NAME) | grep Version; \
@@ -46,12 +46,39 @@ tryinstall-verbose:
 compile-verbose:
 	@clear; \
 	python -m py_compile $(ROOT_DIR)/src/$(MODULE_NAME).py;
+compilenotebook-verbose:
+	@clear; \
+	jupyter nbconvert --to script $(ROOT_DIR)/src/$(MODULE_NAME).ipynb --output /home/nbconvert; \
+	python -m py_compile /home/nbconvert.py; \
+	rm /home/nbconvert.py;
 unittest-verbose:
 	@clear; \
 	python $(ROOT_DIR)/tests/$(MODULE_NAME)tests.py;
 codemetrics-verbose:
 	@clear; \
 	radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py | grep -e '^[ ]*[CFM].*' | grep -v ' - A';
+commitavg-verbose:
+	@clear; \
+	python $(ROOT_DIR)/scripts/commitavgcalculator.py;
+check-pythonversion:
+	@clear; \
+	code="from nwpackageversions import LanguageChecker; print(LanguageChecker().get_version_status(required=(3, 12, 5)))"; \
+	python -c "$$code"
+check-requirements:
+	@clear; \
+	file_path="$(ROOT_DIR)/.devcontainer/Dockerfile"; \
+	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = False))"; \
+	python -c "$$code";
+update-codecoverage:
+	@clear; \
+	cd $(ROOT_DIR)/tests/; \
+	coverage run -m unittest $(MODULE_NAME)tests.py > /dev/null 2>&1; \
+	value=$$(coverage report --include=$(MODULE_NAME).py | grep -oP 'TOTAL\s+\d+\s+\d+\s+\K\d+(?=%)'); \
+	if [ $$value -le 39 ]; then color="red"; elif [ $$value -le 69 ]; then color="orange"; else color="green"; fi; \
+	url="https://img.shields.io/badge/coverage-$${value}.0%25-$${color}"; \
+	echo "$$url" > $(ROOT_DIR)/codecoverage.txt; \
+	curl -s $$url -o $(ROOT_DIR)/codecoverage.svg; \
+	if [ $$? -eq 0 ]; then echo "[OK] $@: coverage badge updated successfully!"; else echo "[ERROR] $@: failed to update coverage badge."; fi;
 
 # TARGETS (CONCISE)
 type-concise:
@@ -77,6 +104,12 @@ compile-concise:
 	@value=$$(python -m py_compile $(ROOT_DIR)/src/$(MODULE_NAME).py 2>&1); \
 	if [ -z "$${value}" ]; then value=0; else value=1; fi; \
 	if [ $$value -eq 0 ]; then echo "[OK] $@: compiling the library throws no issues."; else echo "[WARNING] $@: compiling the library throws some issues."; fi;
+compilenotebook-concise:
+	@jupyter nbconvert --to script $(ROOT_DIR)/src/$(MODULE_NAME).ipynb --output /home/nbconvert > /dev/null 2>&1; \
+	value=$$(python -m py_compile /home/nbconvert.py 2>&1); \
+	rm /home/nbconvert.py; \
+	if [ -z "$${value}" ]; then value=0; else value=1; fi; \
+	if [ $$value -eq 0 ]; then echo "[OK] $@: compiling the notebook throws no issues."; else echo "[WARNING] $@: compiling the notebook throws some issues."; fi;
 unittest-concise:
 	@value=$$(python $(ROOT_DIR)/tests/$(MODULE_NAME)tests.py 2>&1 | grep -oP '(?<=Ran )\d+(?= tests)'); \
 	if [ -z "$${value}" ]; then value=0; fi; \
@@ -86,4 +119,4 @@ codemetrics-concise:
 	if [[ "$$value" == *"A"* ]]; then echo "[OK] $@: the cyclomatic complexity is excellent ('$$value')."; else echo "[WARNING] $@: the cyclomatic complexity is not excellent ('$$value')"; fi;
 
 # TARGETS (AGGREGATE)
-all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise compile-concise unittest-concise codemetrics-concise tryinstall-concise
+all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise tryinstall-concise

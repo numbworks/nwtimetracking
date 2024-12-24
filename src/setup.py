@@ -6,7 +6,7 @@ from setuptools import setup
 # INFORMATION
 MODULE_ALIAS : str = "nwtt"
 MODULE_NAME : str = "nwtimetracking"
-MODULE_VERSION : str = "4.6.0"
+MODULE_VERSION : str = "4.7.0"
 
 # SETUP
 if __name__ == "__main__":

@@ -1,3 +1,11 @@
+v4.7.0
+- Application:
+	- Maintenance: makefile expanded (commitavg-verbose, check-pythonversion, check-requirements).
+	- Maintenance: makefile expanded (update-codecoverage, compilenotebook-concise, compilenotebook-verbose).
+	- Maintenance: notebook, removed "Language/Requirement Checks".
+- Documentation:
+	- Feature: updated to v4.7.0.
+
 v4.6.0
 - Library:
 	- Feature: added support for GANTT charts.
