@@ -376,6 +376,7 @@ class SettingBag():
     tts_by_spn_formatters : dict = field(default_factory = lambda : { "%_DE" : "{:.2f}", "%_TE" : "{:.2f}" })
     tts_by_spn_remove_untagged : bool = field(default = True)
     tts_by_hashtag_formatters : dict = field(default_factory = lambda : { "Effort%" : "{:.2f}" })
+    tts_by_hashtag_year_enable_pivot : bool = field(default = True)
     tts_by_efs_is_correct : bool = field(default = False)
     tts_by_efs_n : uint = field(default = uint(25))
     tts_by_tr_unknown_id : str = field(default = "Unknown")
@@ -1778,7 +1779,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
 
         return tts_df
-    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, years : list[int], enable_pivot : bool) -> DataFrame:
 
         '''
                 Year	Hashtag	        Effort
@@ -1790,6 +1791,10 @@ class TTDataFrameFactory():
     
         tts_df : DataFrame = self.__create_raw_tts_by_year_hashtag(tt_df = tt_df, years = years)
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
+
+        if enable_pivot:
+            tts_df = tts_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).reset_index()
+            tts_df = tts_df.fillna("")
 
         return tts_df
     def create_tts_by_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
@@ -2471,7 +2476,8 @@ class TTAdapter():
 
         tts_by_year_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_year_df(
             tt_df = tt_df,
-            years = setting_bag.years
+            years = setting_bag.years,
+            enable_pivot = setting_bag.tts_by_hashtag_year_enable_pivot
         )
 
         return tts_by_year_hashtag_df
@@ -2566,7 +2572,7 @@ class TTAdapter():
         tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spn_df : DataFrame = self.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spn_spv_df : DataFrame = self.create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_year_hashtag_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_hashtag_year_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_gantt_spnv_df : DataFrame = self.create_tts_gantt_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
@@ -2586,7 +2592,7 @@ class TTAdapter():
             tts_by_year_spnv_tpl = tts_by_year_spnv_tpl,
             tts_by_spn_df = tts_by_spn_df,
             tts_by_spn_spv_df = tts_by_spn_spv_df,
-            tts_by_hashtag_year_df = tts_by_year_hashtag_df,
+            tts_by_hashtag_year_df = tts_by_hashtag_year_df,
             tts_by_hashtag_df = tts_by_hashtag_df,
             tts_by_efs_tpl = tts_by_efs_tpl,
             tts_by_tr_df = tts_by_tr_df,

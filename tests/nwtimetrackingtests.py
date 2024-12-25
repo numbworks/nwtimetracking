@@ -2138,15 +2138,20 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
-    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
+    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_whenenablepivotisfalse(self):
 
         # Arrange
-        years : list[int] = [2024]
         tt_df : DataFrame = ObjectMother().get_tt_df()
+        years : list[int] = [2024]
+        enable_pivot : bool = False
         expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_year_df()
 
         # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(tt_df = tt_df, years = years)
+        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(
+            tt_df = tt_df, 
+            years = years, 
+            enable_pivot = enable_pivot
+        )
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
@@ -2350,6 +2355,7 @@ class TTAdapterTestCase(unittest.TestCase):
         self.software_project_names : list[str] = [ "nwshared", "nwpackageversions"]
         self.software_project_names_by_spv : list[str] = [ "nwshared" ]
         self.tts_by_year_month_display_only_years : Optional[list[int]] = [2024]
+        self.tts_by_hashtag_year_enable_pivot = False
         self.tts_by_spn_remove_untagged : bool = True
         self.tts_by_efs_is_correct : bool = True
         self.tts_by_tr_unknown_id : str = "Unknown"
@@ -2679,6 +2685,7 @@ class TTAdapterTestCase(unittest.TestCase):
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
+        setting_bag.tts_by_hashtag_year_enable_pivot = self.tts_by_hashtag_year_enable_pivot
 
         tt_df : Mock = Mock()
 
@@ -2688,7 +2695,8 @@ class TTAdapterTestCase(unittest.TestCase):
         # Assert
         df_factory.create_tts_by_hashtag_year_df.assert_called_once_with(
             tt_df = tt_df,
-            years = self.years
+            years = self.years,
+            enable_pivot = self.tts_by_hashtag_year_enable_pivot
         )
     def test_createttsbyefstpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
