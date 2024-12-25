@@ -1146,6 +1146,162 @@ class BYMSplitter():
         sub_dfs : list[DataFrame] = self.__filter_by_index_lists(df = df, index_lists = index_lists)
 
         return sub_dfs
+
+
+class CSSGREEN(StrEnum):
+
+	lightgreen = auto()
+	palegreen = auto()
+	lime = auto()
+	limegreen = auto()
+	green = auto()
+	darkgreen = auto()
+	forestgreen = auto()
+	seagreen = auto()
+	chartreuse = auto()
+	greenyellow = auto()
+	yellowgreen = auto()
+	mediumseagreen = auto()
+	mediumspringgreen = auto()
+	springgreen = auto()
+	olivedrab = auto()
+	olive = auto()
+	lawngreen = auto()
+	darkolivegreen = auto()
+class EFFORTSTYLE(StrEnum):
+
+    '''Represents a collection of styles for EffortHighlighter.'''
+
+    markdown_bold = auto()
+    background_color = auto()
+class EFFORTMODE(StrEnum):
+
+    '''Represents a collection of modes for EffortHighlighter.'''
+
+    top_effort_per_row = auto()
+    top_three_efforts = auto()
+@dataclass(frozen = True)
+class EffortCell():
+    
+    '''Collects all the information related to a DataFrame cell that are required by EffortHighlighter.'''
+
+    coordinate_pair : Tuple[int, int]
+    effort_str : str
+    effort_td : timedelta
+class EffortHighlighter():
+
+    '''Encapsulates all the logic related to highlighting cells in dataframes containing efforts.'''
+
+    __df_helper : TTDataFrameHelper
+
+    def __init__(self, df_helper : TTDataFrameHelper) -> None:
+
+        self.__df_helper = df_helper
+
+    def __extract_row(self, df : DataFrame, row_idx : int, cns_to_exclude : list[str]) -> list[EffortCell]:
+
+        '''Returns a collection of EffortCell objects for provided arguments.'''
+
+        effort_cells : list[EffortCell] = []
+
+        for col_idx in range(len(df.columns)):
+            if df.columns[col_idx] not in cns_to_exclude:
+
+                coordinate_pair : Tuple[int, int] = (row_idx, col_idx) 
+                effort_str : str = str(df.iloc[row_idx, col_idx])
+                effort_td : timedelta = self.__df_helper.unbox_effort(effort_str = effort_str)
+
+                effort_cell : EffortCell = EffortCell(
+                    coordinate_pair = coordinate_pair,
+                    effort_str = effort_str,
+                    effort_td = effort_td
+                )
+
+                effort_cells.append(effort_cell)
+
+        return effort_cells
+    def __extract_n(self, mode : EFFORTMODE) -> int:
+
+        '''Extracts n from mode.'''
+
+        if mode == EFFORTMODE.top_effort_per_row:
+            return 1
+        elif mode == EFFORTMODE.top_three_efforts:
+            return 3
+        else:
+            raise Exception(f"The provided mode is not supported: '{mode}'.")
+    def __extract_top_n_effort_cells(self, effort_cells : list[EffortCell], n : int) -> list[EffortCell]:
+
+        '''Extracts the n objects in bym_cells with the highest effort_td.'''
+
+        sorted_cells : list[EffortCell] = sorted(effort_cells, key = lambda cell : cell.effort_td, reverse = True)
+        top_n : list[EffortCell] = sorted_cells[:n]
+
+        return top_n
+    def __add_background_color(self, df : DataFrame, effort_cells : list[EffortCell], color : CSSGREEN) -> DataFrame:
+        
+        '''Highlights a specific cell in a DataFrame based on the provided coordinates.'''
+
+        styled_df : DataFrame = DataFrame('', index = df.index, columns = df.columns)
+        
+        for effort_cell in effort_cells:
+
+            row, col = effort_cell.coordinate_pair
+
+            if row < len(df) and col < len(df.columns):
+                styled_df.iloc[row, col] = f"background-color: {color}"
+
+        return styled_df
+    def __add_markdown_bold(self, df : DataFrame, effort_cells : list[EffortCell]) -> DataFrame:
+
+        '''Adds two asterisks around the content of a specific cell.'''
+
+        styled_df : DataFrame = df.copy(deep = True)
+
+        for effort_cell in effort_cells:
+
+            row, col = effort_cell.coordinate_pair
+
+            if row < len(df) and col < len(df.columns):
+                styled_df.iloc[row, col] = f"**{str(df.iloc[row, col])}**"
+            
+        return styled_df
+
+    def apply(
+        self, 
+        df : DataFrame, 
+        mode : EFFORTMODE, 
+        style : EFFORTSTYLE, 
+        color : CSSGREEN = CSSGREEN.lightgreen, 
+        cns_to_exclude : list[str] = ["↕"]
+        ) -> DataFrame:
+
+        '''
+            Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
+            Returns a df with highlighted cells as per arguments. 
+        '''
+
+        effort_cells : list[EffortCell] = []
+        last_row_idx : int = df.index[-1]
+        n : int = self.__extract_n(mode = mode)
+
+        for row_idx in range(last_row_idx):
+
+            current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx, cns_to_exclude = cns_to_exclude)
+            current = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
+            effort_cells.extend(current)
+
+        if style == EFFORTSTYLE.background_color:
+            return self.__add_background_color(df = df , effort_cells = effort_cells, color = color)
+        elif style == EFFORTSTYLE.markdown_bold:
+            return self.__add_markdown_bold(df = df, effort_cells = effort_cells)
+        else:
+            raise Exception(f"The provided style is not supported: '{style}'.")
+
+
+
+
+
 class TTDataFrameFactory():
 
     '''Encapsulates all the logic related to dataframe creation out of "Time Tracking.xlsx".'''
