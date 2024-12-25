@@ -19,8 +19,10 @@ from matplotlib.dates import relativedelta
 from numpy import uint
 from numpy.typing import ArrayLike
 from pandas import DataFrame, Series, NamedAgg
+from pandas.io.formats.style import Styler
+from re import Match
 from types import SimpleNamespace
-from typing import Any, Callable, Literal, Optional, Tuple, cast
+from typing import Any, Callable, Literal, Optional, Tuple, Union, cast
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
 
 # LOCAL MODULES
@@ -1198,26 +1200,41 @@ class EffortHighlighter():
 
         self.__df_helper = df_helper
 
-    def __extract_row(self, df : DataFrame, row_idx : int, cns_to_exclude : list[str]) -> list[EffortCell]:
+    def __is_effort(self, cell_content : str) -> bool :
+
+        '''Returns True if content in ["00h 00m", "08h 00m", "20h 45m", "101h 30m", ...].'''
+
+        pattern : str = r"^(\d{2,})h (0[0-9]|[1-5][0-9])m$"
+        match : Optional[Match[str]] = re.fullmatch(pattern = pattern, string = cell_content)
+
+        if match is not None:
+            return True
+        else:
+            return False
+    def __append_new_effort_cell(self, effort_cells : list[EffortCell], coordinate_pair : Tuple[int, int], cell_content : str):
+
+        '''Creates and append new EffortCell object to effort_cells.'''
+
+        effort_cell : EffortCell = EffortCell(
+                    coordinate_pair = coordinate_pair,
+                    effort_str = cell_content,
+                    effort_td = self.__df_helper.unbox_effort(effort_str = cell_content)
+                )
+        
+        effort_cells.append(effort_cell)
+    def __extract_row(self, df : DataFrame, row_idx : int) -> list[EffortCell]:
 
         '''Returns a collection of EffortCell objects for provided arguments.'''
 
         effort_cells : list[EffortCell] = []
 
         for col_idx in range(len(df.columns)):
-            if df.columns[col_idx] not in cns_to_exclude:
 
-                coordinate_pair : Tuple[int, int] = (row_idx, col_idx) 
-                effort_str : str = str(df.iloc[row_idx, col_idx])
-                effort_td : timedelta = self.__df_helper.unbox_effort(effort_str = effort_str)
+            coordinate_pair : Tuple[int, int] = (row_idx, col_idx)
+            cell_content : str = str(df.iloc[row_idx, col_idx])
 
-                effort_cell : EffortCell = EffortCell(
-                    coordinate_pair = coordinate_pair,
-                    effort_str = effort_str,
-                    effort_td = effort_td
-                )
-
-                effort_cells.append(effort_cell)
+            if self.__is_effort(cell_content = cell_content):
+                self.__append_new_effort_cell(effort_cells, coordinate_pair, cell_content)
 
         return effort_cells
     def __extract_n(self, mode : EFFORTMODE) -> int:
@@ -1238,9 +1255,9 @@ class EffortHighlighter():
         top_n : list[EffortCell] = sorted_cells[:n]
 
         return top_n
-    def __add_background_color(self, df : DataFrame, effort_cells : list[EffortCell], color : CSSGREEN) -> DataFrame:
+    def __create_styled_dataframe(self, df : DataFrame, effort_cells : list[EffortCell], color : CSSGREEN) -> DataFrame:
         
-        '''Highlights a specific cell in a DataFrame based on the provided coordinates.'''
+        '''Creates a styled_df out of df in which all the effort_cells have been highlighted.'''
 
         styled_df : DataFrame = DataFrame('', index = df.index, columns = df.columns)
         
@@ -1252,6 +1269,15 @@ class EffortHighlighter():
                 styled_df.iloc[row, col] = f"background-color: {color}"
 
         return styled_df
+    def __add_background_color(self, df : DataFrame, effort_cells : list[EffortCell], color : CSSGREEN) -> Styler:
+
+        '''Highlights effort_cells in df.'''
+
+        styled_df : DataFrame = self.__create_styled_dataframe(df = df, effort_cells = effort_cells, color = color)
+
+        return df.style.apply(lambda _ : styled_df, axis = None)
+
+
     def __add_markdown_bold(self, df : DataFrame, effort_cells : list[EffortCell]) -> DataFrame:
 
         '''Adds two asterisks around the content of a specific cell.'''
@@ -1272,9 +1298,8 @@ class EffortHighlighter():
         df : DataFrame, 
         mode : EFFORTMODE, 
         style : EFFORTSTYLE, 
-        color : CSSGREEN = CSSGREEN.lightgreen, 
-        cns_to_exclude : list[str] = ["↕"]
-        ) -> DataFrame:
+        color : CSSGREEN = CSSGREEN.lightgreen
+        ) -> Union[Styler, DataFrame]:
 
         '''
             Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
@@ -1287,8 +1312,8 @@ class EffortHighlighter():
 
         for row_idx in range(last_row_idx):
 
-            current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx, cns_to_exclude = cns_to_exclude)
-            current = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
+            current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+            current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
             effort_cells.extend(current)
 
         if style == EFFORTSTYLE.background_color:
