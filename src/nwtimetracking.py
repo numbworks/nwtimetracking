@@ -24,6 +24,7 @@ from re import Match
 from types import SimpleNamespace
 from typing import Any, Callable, Literal, Optional, Tuple, Union, cast
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
+import plotly.graph_objects as go
 
 # LOCAL MODULES
 # CONSTANTS
@@ -1334,6 +1335,100 @@ class EffortHighlighter():
             
         return styled_df
 
+    def __create_figure(self, df : DataFrame, effort_cells : list[EffortCell], color : CSSGREEN):
+        """
+        Creates a Plotly Table with highlighted cells.
+        """
+
+        cell_colors = [["white"] * len(df.columns) for _ in range(len(df))]
+
+        for effort_cell in effort_cells:
+            row, col = effort_cell.coordinate_pair
+            if row < len(df) and col < len(df.columns):
+                cell_colors[row][col] = color
+
+        header_values = df.columns.to_list()
+
+        header_dict = {
+            "values": header_values,
+            "fill_color": "paleturquoise",
+            "align": "left"
+        }
+
+        cell_values = []
+        for col in header_values:
+            if col in df.columns:
+                cell_values.append(df[col].tolist())
+            else:
+                cell_values.append([])
+
+        cell_dict = {
+            "values": cell_values,
+            "fill_color": cell_colors,
+            "align": "left"
+        }
+
+        table_trace = go.Table(
+            header=header_dict,
+            cells=cell_dict
+        )
+
+        fig = go.Figure(data=[table_trace])
+
+        return fig
+    def __get_show_function(self, df : DataFrame, effort_cells : list[EffortCell], color : CSSGREEN) -> Callable[[], None]:
+
+        fig = self.__create_figure(df, effort_cells, color)
+        func : Callable[[], None] = lambda : fig.show()
+
+        return func
+    def apply_fig(
+        self, 
+        df : DataFrame, 
+        mode : EFFORTMODE, 
+        style : EFFORTSTYLE, 
+        color : CSSGREEN = CSSGREEN.lightgreen
+        ) -> Callable[[], None]:
+
+        '''
+            Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
+            Returns a df with highlighted cells as per arguments. 
+        '''
+
+        tmp_df : DataFrame = df.copy(deep = True)
+
+        if self.__df_helper.is_bym(column_list = tmp_df.columns.tolist()):
+            tmp_df = self.__df_helper.unbox_bym_column_list(df = tmp_df)
+
+        effort_cells : list[EffortCell] = []
+        last_row_idx : int = len(tmp_df)
+        n : int = self.__extract_n(mode = mode)
+
+        if mode == EFFORTMODE.top_effort_per_row:
+
+            for row_idx in range(last_row_idx):
+                current : list[EffortCell] = self.__extract_row(df = tmp_df, row_idx = row_idx)
+                current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
+                effort_cells.extend(current)
+        
+        elif mode == EFFORTMODE.top_three_efforts:
+
+            for row_idx in range(last_row_idx):
+                current : list[EffortCell] = self.__extract_row(df = tmp_df, row_idx = row_idx)
+                effort_cells.extend(current)
+
+            effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
+
+        else:
+            raise Exception(f"The provided mode is not supported: '{mode}'.")
+
+        if style == EFFORTSTYLE.background_color:
+            return self.__get_show_function(df = tmp_df , effort_cells = effort_cells, color = color)
+        # elif style == EFFORTSTYLE.markdown_bold:
+        #    return self.__add_markdown_bold(df = tmp_df, effort_cells = effort_cells)
+        else:
+            raise Exception(f"The provided style is not supported: '{style}'.")
+
     def apply(
         self, 
         df : DataFrame, 
@@ -1347,21 +1442,26 @@ class EffortHighlighter():
             Returns a df with highlighted cells as per arguments. 
         '''
 
+        tmp_df : DataFrame = df.copy(deep = True)
+
+        if self.__df_helper.is_bym(column_list = tmp_df.columns.tolist()):
+            tmp_df = self.__df_helper.unbox_bym_column_list(df = tmp_df)
+
         effort_cells : list[EffortCell] = []
-        last_row_idx : int = len(df)
+        last_row_idx : int = len(tmp_df)
         n : int = self.__extract_n(mode = mode)
 
         if mode == EFFORTMODE.top_effort_per_row:
 
             for row_idx in range(last_row_idx):
-                current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+                current : list[EffortCell] = self.__extract_row(df = tmp_df, row_idx = row_idx)
                 current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
                 effort_cells.extend(current)
         
         elif mode == EFFORTMODE.top_three_efforts:
 
             for row_idx in range(last_row_idx):
-                current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+                current : list[EffortCell] = self.__extract_row(df = tmp_df, row_idx = row_idx)
                 effort_cells.extend(current)
 
             effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
@@ -1370,14 +1470,14 @@ class EffortHighlighter():
             raise Exception(f"The provided mode is not supported: '{mode}'.")
 
         if style == EFFORTSTYLE.background_color:
-            return self.__add_background_color(df = df , effort_cells = effort_cells, color = color)
+
+            styler : Styler = self.__add_background_color(df = tmp_df , effort_cells = effort_cells, color = color)
+
+            return styler
         elif style == EFFORTSTYLE.markdown_bold:
-            return self.__add_markdown_bold(df = df, effort_cells = effort_cells)
+            return self.__add_markdown_bold(df = tmp_df, effort_cells = effort_cells)
         else:
             raise Exception(f"The provided style is not supported: '{style}'.")
-
-
-
 
 
 class TTDataFrameFactory():
