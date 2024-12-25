@@ -2154,6 +2154,26 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         )
 
         # Assert
+        assert_frame_equal(expected_df , actual_df)
+    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_whenenablepivotistrue(self):
+
+        # Arrange
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+        years : list[int] = [2024]
+        enable_pivot : bool = True
+
+        expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_year_df()
+        expected_df = expected_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).reset_index()
+        expected_df = expected_df.fillna("")
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(
+            tt_df = tt_df, 
+            years = years, 
+            enable_pivot = enable_pivot
+        )
+
+        # Assert
         assert_frame_equal(expected_df , actual_df)  
     def test_createttsbyhashtagdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
