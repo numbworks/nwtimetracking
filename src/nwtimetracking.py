@@ -1276,8 +1276,6 @@ class EffortHighlighter():
         styled_df : DataFrame = self.__create_styled_dataframe(df = df, effort_cells = effort_cells, color = color)
 
         return df.style.apply(lambda _ : styled_df, axis = None)
-
-
     def __add_markdown_bold(self, df : DataFrame, effort_cells : list[EffortCell]) -> DataFrame:
 
         '''Adds two asterisks around the content of a specific cell.'''
@@ -1310,11 +1308,23 @@ class EffortHighlighter():
         last_row_idx : int = df.index[-1]
         n : int = self.__extract_n(mode = mode)
 
-        for row_idx in range(last_row_idx):
+        if mode == EFFORTMODE.top_effort_per_row:
 
-            current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
-            current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
-            effort_cells.extend(current)
+            for row_idx in range(last_row_idx):
+                current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+                current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
+                effort_cells.extend(current)
+        
+        elif mode == EFFORTMODE.top_three_efforts:
+
+            for row_idx in range(last_row_idx):
+                current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+                effort_cells.extend(current)
+
+            effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
+
+        else:
+            raise Exception(f"The provided mode is not supported: '{mode}'.")
 
         if style == EFFORTSTYLE.background_color:
             return self.__add_background_color(df = df , effort_cells = effort_cells, color = color)
