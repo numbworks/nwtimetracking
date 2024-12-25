@@ -719,6 +719,41 @@ class TTDataFrameHelper():
                     return False
 
         return self.is_even(number = len(column_list))
+
+    def unbox_bym_column_list(self, df : DataFrame) -> DataFrame:
+        
+        '''
+            Renames all "↕" column names by suffixing "↕" with a progressive number ["↕1", "↕2", "↕3", ...].
+
+            BYM DataFrames must be 'unboxed' before being piped into certain processing tasks due to a Pandas limitation.
+            Pandas does not support DataFrames with multiple columns sharing the same name.
+        '''
+
+        counter : int = 1
+        new_columns : list[str] = []
+
+        for col in df.columns:
+            if col == "↕":
+                new_columns.append(f"↕{counter}")
+                counter += 1
+            else:
+                new_columns.append(col)
+
+        df.columns = new_columns
+        
+        return df
+    def box_bym_column_list(self, df : DataFrame) -> DataFrame:
+        
+        '''
+            Revert back ["↕1", "↕2", "↕3", ...] ('unboxed' column names) to "↕".
+            
+            BYM DataFrames must be 'boxed' before being displayed.
+        '''
+        
+        new_columns : list[str] = ["↕" if col.startswith("↕") and col[1:].isdigit() else col for col in df.columns]
+        df.columns = new_columns
+        
+        return df
 class BYMFactory():
 
     '''Encapsulates all the logic related to the creation of *_by_month_df dataframes.'''

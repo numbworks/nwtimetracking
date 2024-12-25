@@ -1810,6 +1810,49 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+
+    def test_unboxbymcolumnlist_shouldrenamecolumnnamesprogressively_wheninvoked(self) -> None:
+
+        # Arrange
+        boxed_data : dict[str, list[Any]] = {
+            TTCN.MONTH: [1, 2],
+            "2015": [100, 200],
+            TTCN.TREND: ["↑", "↓"],
+            "2016": [500, 600],
+            TTCN.TREND: ["=", "↑"],
+            "2017": [900, 1000]
+        }
+        boxed_columns : list[str] = [TTCN.MONTH, "2015", TTCN.TREND, "2016", TTCN.TREND, "2017"]
+        boxed_df : DataFrame = DataFrame(boxed_data, columns = boxed_columns)
+
+        expected : list[str] = [TTCN.MONTH, "2015", f"{TTCN.TREND}1", "2016", f"{TTCN.TREND}2", "2017"]
+
+        # Act
+        actual : DataFrame = self.df_helper.unbox_bym_column_list(df = boxed_df)
+
+        # Assert
+        self.assertEqual(list(actual.columns), expected)
+    def test_boxbymcolumnlist_shouldrevertcolumnnames_wheninvoked(self) -> None:
+
+        # Arrange
+        unboxed_data : dict[str, list[Any]] = {
+            TTCN.MONTH: [1, 2],
+            "2015": [100, 200],
+            f"{TTCN.TREND}1": ["↑", "↓"],
+            "2016": [500, 600],
+            f"{TTCN.TREND}2": ["=", "↑"],
+            "2017": [900, 1000]
+        }
+        unboxed_columns : list[str] = [TTCN.MONTH, "2015", f"{TTCN.TREND}1", "2016", f"{TTCN.TREND}2", "2017"]
+        unboxed_df : DataFrame = DataFrame(unboxed_data, columns = unboxed_columns)
+
+        expected : list[str] = [TTCN.MONTH, "2015", TTCN.TREND, "2016", TTCN.TREND, "2017"]
+
+        # Act
+        actual : DataFrame = self.df_helper.box_bym_column_list(df = unboxed_df)
+
+        # Assert
+        self.assertEqual(list(actual.columns), expected)
 class BYMFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
