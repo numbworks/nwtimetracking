@@ -1305,7 +1305,7 @@ class EffortHighlighter():
         '''
 
         effort_cells : list[EffortCell] = []
-        last_row_idx : int = df.index[-1]
+        last_row_idx : int = len(df)
         n : int = self.__extract_n(mode = mode)
 
         if mode == EFFORTMODE.top_effort_per_row:
