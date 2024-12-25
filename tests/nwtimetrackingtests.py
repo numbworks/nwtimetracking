@@ -671,11 +671,11 @@ class MessageCollectionTestCase(unittest.TestCase):
         # Arrange
         column_list : list[str] = ["Month", "2015"]
         expected : str = (
-            f"The provided df has an invalid column list ('{column_list}')."
+            f"The provided df has an invalid BYM column list ('{column_list}')."
         )
 
         # Act
-        actual : str = _MessageCollection.provided_df_invalid_column_list(column_list = column_list)
+        actual : str = _MessageCollection.provided_df_invalid_bym_column_list(column_list = column_list)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -1745,6 +1745,71 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(TTCN.EFFORTSTATUS in df.columns)
+
+    @parameterized.expand([
+        (2024, True),
+        (1000, True),
+        (9999, True),
+        (999, False),
+        (10000, False),
+        ("year", False)
+    ])
+    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.df_helper.is_year(value = value)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (2, True),
+        (0, True),
+        (-4, True),
+        (3, False),
+        (-5, False),
+    ])
+    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.df_helper.is_even(number = number)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [["Month", "2015"], True],
+        [["Month", "2015", "↕", "2016"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
+        [[], False],
+        [["Month"], False],
+        [["Month", "2015", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
+        [["Month", "↕"], False],
+        [["Month", "↕", "↕"], False],
+        [["Month", "2015", "2015"], False],
+        [["Month", "2015", "↕", "↕"], False]
+    ])
+    def test_isbym_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.df_helper.is_bym(column_list = column_list) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
 class BYMFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1808,72 +1873,18 @@ class BYMFactoryTestCase(unittest.TestCase):
 class BYMSplitterTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.bym_splitter = BYMSplitter()
+        self.bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
     
-    @parameterized.expand([
-        (2024, True),
-        (1000, True),
-        (9999, True),
-        (999, False),
-        (10000, False),
-        ("year", False)
-    ])
-    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
-        
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
         # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+
         # Act
-        actual : bool = self.bym_splitter._BYMSplitter__is_year(value = value)  # type: ignore
+        bym_splitter : BYMSplitter = BYMSplitter(df_helper = df_helper)
 
         # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (2, True),
-        (0, True),
-        (-4, True),
-        (3, False),
-        (-5, False),
-    ])
-    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bym_splitter._BYMSplitter__is_even(number = number)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [["Month", "2015"], True],
-        [["Month", "2015", "↕", "2016"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
-        [[], False],
-        [["Month"], False],
-        [["Month", "2015", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
-        [["Month", "↕"], False],
-        [["Month", "↕", "↕"], False],
-        [["Month", "2015", "2015"], False],
-        [["Month", "2015", "↕", "↕"], False]
-    ])
-    def test_isvalid_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bym_splitter._BYMSplitter__is_valid(column_list = column_list) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
+        self.assertIsInstance(bym_splitter, BYMSplitter)
 
     @parameterized.expand([
         (1, True),
@@ -2229,7 +2240,7 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
 
         self.md_factory : TTMarkdownFactory = TTMarkdownFactory(
             markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bym_splitter = BYMSplitter()
+            bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
         )
         self.paragraph_title : str = "Time Tracking By Month"
         self.last_update : datetime = datetime(2024, 11, 30)
@@ -3087,7 +3098,7 @@ class ComponentBagTestCase(unittest.TestCase):
                 tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
                 md_factory = TTMarkdownFactory(
                     markdown_helper = MarkdownHelper(formatter = Formatter()),
-                    bym_splitter = BYMSplitter())
+                    bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()))
                 ),
             tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
             displayer = Displayer()

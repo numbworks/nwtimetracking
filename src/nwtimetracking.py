@@ -153,8 +153,8 @@ class _MessageCollection():
         return f"Something failed while saving '{file_path}'."
 
     @staticmethod
-    def provided_df_invalid_column_list(column_list : list[str]) -> str:
-        return f"The provided df has an invalid column list ('{column_list}')."
+    def provided_df_invalid_bym_column_list(column_list : list[str]) -> str:
+        return f"The provided df has an invalid BYM column list ('{column_list}')."
 
     @staticmethod
     def no_strategy_available_for_provided_criteria(criteria : CRITERIA) -> str:
@@ -659,6 +659,66 @@ class TTDataFrameHelper():
             time_range_id = unknown_id
 
         return time_range_id
+
+    def is_year(self, value : Any) -> bool:
+
+        """Returns True if value is a valid year."""
+
+        try:       
+            year : int = int(value)
+            return 1000 <= year <= 9999
+        except:
+            return False
+    def is_even(self, number : int) -> bool:
+        
+        """Returns True if number is even."""
+
+        return number % 2 == 0
+    def is_bym(self, column_list : list[str]) -> bool:
+        
+        """
+            Validates the column names of a certain DataFrame according to the specified pattern.
+            
+            Valid::
+
+                ["Month", "2015"]
+                ["Month", "2015", "↕", "2016"]
+                ["Month", "2015", "↕", "2016", "↕", "2017"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"]
+                ...
+
+            Invalid::
+
+                []
+                ["Month"]
+                ["Month", "2015", "↕"]
+                ["Month", "2015", "↕", "2016", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"]
+                ["Month", "↕"]
+                ["Month", "↕", "↕"]
+                ["Month", "2015", "2015"]
+                ["Month", "2015", "↕", "↕"]
+                ...
+        """
+
+        if len(column_list) < 2 or column_list[0] != TTCN.MONTH:
+            return False
+
+        for i in range(1, len(column_list)):
+            if i % 2 == 1:
+                if not self.is_year(column_list[i]):
+                    return False
+            else:
+                if column_list[i] != TTCN.TREND:
+                    return False
+
+        return self.is_even(number = len(column_list))
 class BYMFactory():
 
     '''Encapsulates all the logic related to the creation of *_by_month_df dataframes.'''
@@ -981,65 +1041,12 @@ class BYMSplitter():
     
     '''Encapsulates all the logic related to the splitting of *_by_month_df dataframes.'''
 
-    def __is_year(self, value : Any) -> bool:
+    __df_helper : TTDataFrameHelper
 
-        """Returns True if value is a valid year."""
+    def __init__(self, df_helper : TTDataFrameHelper) -> None:
 
-        try:       
-            year : int = int(value)
-            return 1000 <= year <= 9999
-        except:
-            return False
-    def __is_even(self, number : int) -> bool:
-        
-        """Returns True if number is even."""
+        self.__df_helper = df_helper
 
-        return number % 2 == 0
-    def __is_valid(self, column_list : list[str]) -> bool:
-        
-        """
-            Validates the column names of a certain DataFrame according to the specified pattern.
-            
-            Valid::
-
-                ["Month", "2015"]
-                ["Month", "2015", "↕", "2016"]
-                ["Month", "2015", "↕", "2016", "↕", "2017"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"]
-                ...
-
-            Invalid::
-
-                []
-                ["Month"]
-                ["Month", "2015", "↕"]
-                ["Month", "2015", "↕", "2016", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"]
-                ["Month", "↕"]
-                ["Month", "↕", "↕"]
-                ["Month", "2015", "2015"]
-                ["Month", "2015", "↕", "↕"]
-                ...
-        """
-
-        if len(column_list) < 2 or column_list[0] != "Month":
-            return False
-
-        for i in range(1, len(column_list)):
-            if i % 2 == 1:
-                if not self.__is_year(column_list[i]):
-                    return False
-            else:
-                if column_list[i] != '↕':
-                    return False
-
-        return self.__is_even(number = len(column_list))
     def __is_in_sequence(self, number : int) -> bool:
         
         """
@@ -1097,7 +1104,7 @@ class BYMSplitter():
             start_index = tmp.index(start_value)
             index_list.extend(tmp[(start_index + 1):(start_index + 7)])
 
-        if self.__is_even(index_lists[-1][-1]):
+        if self.__df_helper.is_even(index_lists[-1][-1]):
             index_lists[-1].remove(index_lists[-1][-1])
 
         return index_lists
@@ -1137,8 +1144,8 @@ class BYMSplitter():
 
         column_list : list[str] = df.columns.to_list()
 
-        if not self.__is_valid(column_list = column_list):
-            raise Exception(_MessageCollection.provided_df_invalid_column_list(column_list))
+        if not self.__df_helper.is_bym(column_list = column_list):
+            raise Exception(_MessageCollection.provided_df_invalid_bym_column_list(column_list))
         
         if len(column_list) == 2:
             return [df]
@@ -1148,6 +1155,7 @@ class BYMSplitter():
         sub_dfs : list[DataFrame] = self.__filter_by_index_lists(df = df, index_lists = index_lists)
 
         return sub_dfs
+
 
 
 class CSSGREEN(StrEnum):
@@ -2873,7 +2881,7 @@ class ComponentBag():
         tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
         md_factory = TTMarkdownFactory(
             markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bym_splitter = BYMSplitter())
+            bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()))
         ))
 
     tt_logger : TTLogger = field(default = TTLogger(logging_function = LambdaProvider().get_default_logging_function()))
