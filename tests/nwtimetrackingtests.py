@@ -1043,21 +1043,21 @@ class SettingBagTestCase(unittest.TestCase):
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
-        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                       # type: ignore
-        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]   # type: ignore
-        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
-        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]                        # type: ignore
-        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]                   # type: ignore
-        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                         # type: ignore
-        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]       # type: ignore
-        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]   # type: ignore
-        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]                           # type: ignore
-        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                      # type: ignore
-        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
-        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                # type: ignore
-        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot]] = [OPTION.display, OPTION.plot] # type: ignore
-        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot]] = [OPTION.display, OPTION.plot] # type: ignore
-        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
+        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                                   # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]               # type: ignore
+        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                                          # type: ignore
+        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]                                    # type: ignore
+        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
+        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                                     # type: ignore
+        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]                   # type: ignore
+        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]               # type: ignore
+        options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display]                           # type: ignore
+        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                                  # type: ignore
+        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                                           # type: ignore
+        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                            # type: ignore
+        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.log]] = [OPTION.display, OPTION.plot] # type: ignore
+        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.log]] = [OPTION.display, OPTION.plot] # type: ignore
+        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                                          # type: ignore
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
         tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
@@ -1080,6 +1080,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_by_spn_formatters : dict[str, str] = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
         tts_by_spn_remove_untagged : bool = True
         tts_by_hashtag_formatters : dict[str, str] = {"Effort%" : "{:.2f}"}
+        tts_by_hashtag_year_enable_pivot : bool = False
         tts_by_efs_is_correct : bool = False
         tts_by_efs_n : uint = uint(25)
         tts_by_tr_unknown_id : str = "Unknown"
@@ -1148,6 +1149,7 @@ class SettingBagTestCase(unittest.TestCase):
             tts_by_spn_formatters = tts_by_spn_formatters,
             tts_by_spn_remove_untagged = tts_by_spn_remove_untagged,
             tts_by_hashtag_formatters = tts_by_hashtag_formatters,
+            tts_by_hashtag_year_enable_pivot = tts_by_hashtag_year_enable_pivot,
             tts_by_efs_is_correct = tts_by_efs_is_correct,
             tts_by_efs_n = tts_by_efs_n,
             tts_by_tr_unknown_id = tts_by_tr_unknown_id,
@@ -1216,6 +1218,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_spn_formatters, tts_by_spn_formatters)
         self.assertEqual(actual.tts_by_spn_remove_untagged, tts_by_spn_remove_untagged)
         self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)
+        self.assertEqual(actual.tts_by_hashtag_year_enable_pivot, tts_by_hashtag_year_enable_pivot)
         self.assertEqual(actual.tts_by_efs_is_correct, tts_by_efs_is_correct)
         self.assertEqual(actual.tts_by_efs_n, tts_by_efs_n)
         self.assertEqual(actual.tts_by_tr_unknown_id, tts_by_tr_unknown_id)
