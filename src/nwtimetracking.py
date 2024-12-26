@@ -2921,7 +2921,10 @@ class ComponentBag():
 
     file_path_manager : FilePathManager = field(default = FilePathManager())
     file_manager : FileManager = field(default = FileManager(file_path_manager = FilePathManager()))
-
+    displayer : Displayer = field(default = Displayer())
+    
+    tt_logger : TTLogger = field(default = TTLogger(logging_function = LambdaProvider().get_default_logging_function()))
+    
     tt_adapter : TTAdapter = field(default = TTAdapter(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
         bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
@@ -2930,9 +2933,6 @@ class ComponentBag():
             markdown_helper = MarkdownHelper(formatter = Formatter()),
             bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()))
         ))
-
-    tt_logger : TTLogger = field(default = TTLogger(logging_function = LambdaProvider().get_default_logging_function()))
-    displayer : Displayer = field(default = Displayer())
 class TimeTrackingProcessor():
 
     '''Collects all the logic related to the processing of "Time Tracking.xlsx".'''
