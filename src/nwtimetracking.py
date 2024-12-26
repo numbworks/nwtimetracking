@@ -401,7 +401,7 @@ class SettingBag():
     tt_head_n : Optional[uint] = field(default = uint(5))
     tt_display_head_n_with_tail : bool = field(default = True)
     tt_hide_index : bool = field(default = True)
-    tts_by_month_enable_effort_highlight : bool = field(default = True)
+    tts_by_month_effort_highlight : bool = field(default = True)
     tts_by_month_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.textual_highlight)
     tts_by_month_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_one_effort_per_row)    
     tts_by_year_effort_highlight : bool = field(default = True)
@@ -1406,7 +1406,7 @@ class EffortHighlighter():
 
         return styler
 
-    def apply(
+    def highlight(
         self, 
         df : DataFrame, 
         style : EFFORTSTYLE, 
@@ -2636,7 +2636,7 @@ class TTAdapter():
     __bym_factory : BYMFactory
     __tt_sequencer : TTSequencer
     __md_factory : TTMarkdownFactory
-    __effort_highlighter = EffortHighlighter
+    __effort_highlighter : EffortHighlighter
 
     def __init__(
             self, 
@@ -2896,6 +2896,101 @@ class TTAdapter():
         )
 
         return tt_summary
+
+    def try_highlight_tts_by_month(self, tts_by_month_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_month_df
+
+        if setting_bag.tts_by_month_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_month_df,
+                style = setting_bag.tts_by_month_effort_highlight_style,
+                mode = setting_bag.tts_by_month_effort_highlight_mode
+            )
+        
+        return styler
+    def try_highlight_tts_by_year(self, tts_by_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_year_df
+
+        if setting_bag.tts_by_year_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_year_df,
+                style = setting_bag.tts_by_month_effort_highlight_style,
+                mode = setting_bag.tts_by_month_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_effort_highlight_column_names
+            )
+        
+        return styler
+    def try_highlight_tts_by_year_month_spnv(self, tts_by_year_month_spnv_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_year_month_spnv_df
+
+        if setting_bag.tts_by_year_month_spnv_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_year_month_spnv_df,
+                style = setting_bag.tts_by_year_month_spnv_effort_highlight_style,
+                mode = setting_bag.tts_by_year_month_spnv_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_month_spnv_effort_highlight_column_names
+            )
+        
+        return styler
+    def try_highlight_tts_by_year_spnv(self, tts_by_year_spnv_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_year_spnv_df
+
+        if setting_bag.tts_by_year_spnv_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_year_spnv_df,
+                style = setting_bag.tts_by_year_spnv_effort_highlight_style,
+                mode = setting_bag.tts_by_year_spnv_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_spnv_effort_highlight_column_names
+            )
+        
+        return styler
+    def try_highlight_tts_by_spn(self, tts_by_spn_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_spn_df
+
+        if setting_bag.tts_by_spn_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_spn_df,
+                style = setting_bag.tts_by_spn_effort_highlight_style,
+                mode = setting_bag.tts_by_spn_effort_highlight_mode,
+                column_names = setting_bag.tts_by_spn_effort_highlight_column_names
+            )
+        
+        return styler
+    def try_highlight_tts_by_hashtag_year(self, tts_by_hashtag_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_hashtag_year_df
+
+        if setting_bag.tts_by_hashtag_year_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_hashtag_year_df,
+                style = setting_bag.tts_by_hashtag_year_effort_highlight_style,
+                mode = setting_bag.tts_by_hashtag_year_effort_highlight_mode
+            )
+        
+        return styler
 class SettingSubset(SimpleNamespace):
 
     '''A dynamically assigned subset of SettingBag properties with a custom __str__ method that returns them as JSON.'''

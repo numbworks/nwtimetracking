@@ -1113,7 +1113,7 @@ class SettingBagTestCase(unittest.TestCase):
         tt_head_n : uint = uint(5)
         tt_display_head_n_with_tail : bool = True
         tt_hide_index : bool = True
-        tts_by_month_enable_effort_highlight : bool = True
+        tts_by_month_effort_highlight : bool = True
         tts_by_month_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
         tts_by_month_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
         tts_by_year_effort_highlight : bool = True
@@ -1204,7 +1204,7 @@ class SettingBagTestCase(unittest.TestCase):
             tt_head_n = tt_head_n,
             tt_display_head_n_with_tail = tt_display_head_n_with_tail,
             tt_hide_index = tt_hide_index,
-            tts_by_month_enable_effort_highlight = tts_by_month_enable_effort_highlight,
+            tts_by_month_effort_highlight = tts_by_month_effort_highlight,
             tts_by_month_effort_highlight_style = tts_by_month_effort_highlight_style,
             tts_by_month_effort_highlight_mode = tts_by_month_effort_highlight_mode,
             tts_by_year_effort_highlight = tts_by_year_effort_highlight,
@@ -1295,7 +1295,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tt_head_n, tt_head_n)
         self.assertEqual(actual.tt_display_head_n_with_tail, tt_display_head_n_with_tail)
         self.assertEqual(actual.tt_hide_index, tt_hide_index)
-        self.assertEqual(actual.tts_by_month_enable_effort_highlight, tts_by_month_enable_effort_highlight)
+        self.assertEqual(actual.tts_by_month_effort_highlight, tts_by_month_effort_highlight)
         self.assertEqual(actual.tts_by_month_effort_highlight_style, tts_by_month_effort_highlight_style)
         self.assertEqual(actual.tts_by_month_effort_highlight_mode, tts_by_month_effort_highlight_mode)
         self.assertEqual(actual.tts_by_year_effort_highlight, tts_by_year_effort_highlight)
@@ -2451,7 +2451,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual._compute().ctx)   # type: ignore
-    def test_apply_shouldreturnstyledataframe_whentextualhighlight(self) -> None:
+    def test_highlight_shouldreturnstyledataframe_whentextualhighlight(self) -> None:
 
         # Arrange
         style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
@@ -2463,11 +2463,11 @@ class EffortHighlighterTestCase(unittest.TestCase):
         expected.iloc[1, 5] = "[[ 65h 30m ]]"
 
         # Act
-        actual : DataFrame = self.effort_highlighter.apply(self.df_without_duplicates, style, mode, tokens) # type: ignore
+        actual : DataFrame = self.effort_highlighter.highlight(self.df_without_duplicates, style, mode, tokens) # type: ignore
 
         # Assert
         assert_frame_equal(expected, actual)
-    def test_apply_shouldreturnstyler_whencolorhighlight(self) -> None:
+    def test_highlight_shouldreturnstyler_whencolorhighlight(self) -> None:
 
         # Arrange
         style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
@@ -2480,11 +2480,11 @@ class EffortHighlighterTestCase(unittest.TestCase):
         }
 
         # Act
-        actual : Styler = self.effort_highlighter.apply(self.df_without_duplicates, style, mode, color = color) # type: ignore
+        actual : Styler = self.effort_highlighter.highlight(self.df_without_duplicates, style, mode, color = color) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual._compute().ctx)   # type: ignore
-    def test_apply_shouldraiseexception_wheninvalidstyle(self) -> None:
+    def test_highlight_shouldraiseexception_wheninvalidstyle(self) -> None:
 
         # Arrange
         style : EFFORTSTYLE = cast(EFFORTSTYLE, "Invalid")
@@ -2493,11 +2493,11 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Act
         with self.assertRaises(Exception) as context:
-            self.effort_highlighter.apply(df = self.df_without_duplicates, style = style, mode = mode)
+            self.effort_highlighter.highlight(df = self.df_without_duplicates, style = style, mode = mode)
 
         # Assert
         self.assertEqual(expected, str(context.exception))
-    def test_apply_shouldcalltryfilterbycolumnnames_whencolumnnamesareprovided(self) -> None:
+    def test_highlight_shouldcalltryfilterbycolumnnames_whencolumnnamesareprovided(self) -> None:
         
         # Arrange
         style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
@@ -2508,7 +2508,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Act, Assert
         with patch.object(EffortHighlighter, "_EffortHighlighter__try_filter_by_column_names") as try_filter_by_column_names:
-            self.effort_highlighter.apply(
+            self.effort_highlighter.highlight(
                 df = self.df_without_duplicates, 
                 style = style, 
                 mode = mode, 
