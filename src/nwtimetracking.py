@@ -19,6 +19,7 @@ from matplotlib.dates import relativedelta
 from numpy import uint
 from numpy.typing import ArrayLike
 from pandas import DataFrame, Series, NamedAgg
+from pandas import Index
 from pandas.io.formats.style import Styler
 from re import Match
 from types import SimpleNamespace
@@ -766,7 +767,7 @@ class TTDataFrameHelper():
             else:
                 new_columns.append(col)
 
-        df.columns = new_columns
+        df.columns = Index(new_columns)
         
         return df
     def box_bym_column_list(self, df : DataFrame) -> DataFrame:
@@ -777,8 +778,8 @@ class TTDataFrameHelper():
             BYM DataFrames must be 'boxed' before being displayed.
         '''
         
-        new_columns : list[str] = [TTCN.TREND if col.startswith(TTCN.TREND) and col[1:].isdigit() else col for col in df.columns]
-        df.columns = new_columns
+        new_columns : list[str] = [TTCN.TREND if col.startswith(TTCN.TREND) and col[1:].isdigit() else col for col in df.columns.to_list()]
+        df.columns = Index(new_columns)
         
         return df
 class BYMFactory():
@@ -1319,18 +1320,19 @@ class EffortHighlighter():
 
         last_row_idx : int = len(df)
         n : int = self.__extract_n(mode = mode)
+        current : list[EffortCell] = []
 
         if mode == EFFORTMODE.top_one_effort_per_row:
             for row_idx in range(last_row_idx):
 
-                current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+                current = self.__extract_row(df = df, row_idx = row_idx)
                 current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
                 effort_cells.extend(current)
                 
         elif mode == EFFORTMODE.top_three_efforts:
             for row_idx in range(last_row_idx):
                 
-                current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+                current = self.__extract_row(df = df, row_idx = row_idx)
                 effort_cells.extend(current)
 
             effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
