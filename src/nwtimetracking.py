@@ -719,7 +719,6 @@ class TTDataFrameHelper():
                     return False
 
         return self.is_even(number = len(column_list))
-
     def unbox_bym_column_list(self, df : DataFrame) -> DataFrame:
         
         '''
@@ -733,8 +732,8 @@ class TTDataFrameHelper():
         new_columns : list[str] = []
 
         for col in df.columns:
-            if col == "↕":
-                new_columns.append(f"↕{counter}")
+            if col == TTCN.TREND:
+                new_columns.append(f"{TTCN.TREND}{counter}")
                 counter += 1
             else:
                 new_columns.append(col)
@@ -750,7 +749,7 @@ class TTDataFrameHelper():
             BYM DataFrames must be 'boxed' before being displayed.
         '''
         
-        new_columns : list[str] = ["↕" if col.startswith("↕") and col[1:].isdigit() else col for col in df.columns]
+        new_columns : list[str] = [TTCN.TREND if col.startswith(TTCN.TREND) and col[1:].isdigit() else col for col in df.columns]
         df.columns = new_columns
         
         return df
