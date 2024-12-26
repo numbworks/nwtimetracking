@@ -100,6 +100,24 @@ class CRITERIA(StrEnum):
     exclude = auto()
     include = auto()
     do_nothing = auto()
+class COLORNAME(StrEnum):
+
+    '''Represents a collection of color names.'''
+
+    skyblue = auto()
+    lightgreen = auto()
+class EFFORTSTYLE(StrEnum):
+
+    '''Represents a collection of highlight styles for EffortHighlighter.'''
+
+    textual_highlight = auto()
+    color_highlight = auto()
+class EFFORTMODE(StrEnum):
+
+    '''Represents a collection of modes for EffortHighlighter.'''
+
+    top_one_effort_per_row = auto()
+    top_three_efforts = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -162,6 +180,16 @@ class _MessageCollection():
     @staticmethod
     def variable_cant_be_less_than_one(variable_name : str) -> str:
         return f"'{variable_name}' can't be < 1."
+
+    @staticmethod
+    def provided_df_has_duplicate_column_names(style : EFFORTSTYLE) -> str:
+        return f"The provided df has duplicate column names, therefore '{style}' is not supported."
+    @staticmethod
+    def provided_mode_not_supported(mode : EFFORTMODE):
+        return f"The provided mode is not supported: '{mode}'."
+    @staticmethod
+    def provided_style_not_supported(style : EFFORTSTYLE):
+        return f"The provided style is not supported: '{style}'."    
 
 # CLASSES
 @dataclass(frozen=True)
@@ -1192,22 +1220,6 @@ class BYMSplitter():
 
 
 
-class COLORNAME(StrEnum):
-
-    skyblue = auto()
-    lightgreen = auto()
-class EFFORTSTYLE(StrEnum):
-
-    '''Represents a collection of highlight styles for EffortHighlighter.'''
-
-    textual_highlight = auto()
-    color_highlight = auto()
-class EFFORTMODE(StrEnum):
-
-    '''Represents a collection of modes for EffortHighlighter.'''
-
-    top_one_effort_per_row = auto()
-    top_three_efforts = auto()
 @dataclass(frozen = True)
 class EffortCell():
     
@@ -1228,7 +1240,7 @@ class EffortHighlighter():
 
     def __has_duplicate_column_names(self, df : DataFrame) -> bool:
         
-        '''Checks if the DataFrame has duplicate column names.'''
+        '''Return True if the DataFrame has duplicate column names.'''
 
         return bool(df.columns.duplicated().any())
     def __validate(self, df : DataFrame, style : EFFORTSTYLE) -> None: 
@@ -1245,7 +1257,7 @@ class EffortHighlighter():
         flag : bool = self.__has_duplicate_column_names(df = df)
 
         if flag == True and style == EFFORTSTYLE.color_highlight:
-            raise Exception(f"The provided df has duplicate column names, therefore '{style}' is not supported.")
+            raise Exception(_MessageCollection.provided_df_has_duplicate_column_names(style))
 
     def __is_effort(self, cell_content : str) -> bool :
 
@@ -1263,10 +1275,10 @@ class EffortHighlighter():
         '''Creates and append new EffortCell object to effort_cells.'''
 
         effort_cell : EffortCell = EffortCell(
-                    coordinate_pair = coordinate_pair,
-                    effort_str = cell_content,
-                    effort_td = self.__df_helper.unbox_effort(effort_str = cell_content)
-                )
+            coordinate_pair = coordinate_pair,
+            effort_str = cell_content,
+            effort_td = self.__df_helper.unbox_effort(effort_str = cell_content)
+        )
         
         effort_cells.append(effort_cell)
     def __extract_row(self, df : DataFrame, row_idx : int) -> list[EffortCell]:
@@ -1293,7 +1305,7 @@ class EffortHighlighter():
         elif mode == EFFORTMODE.top_three_efforts:
             return 3
         else:
-            raise Exception(f"The provided mode is not supported: '{mode}'.")
+            raise Exception(_MessageCollection.provided_mode_not_supported(mode))
     def __extract_top_n_effort_cells(self, effort_cells : list[EffortCell], n : int) -> list[EffortCell]:
 
         '''Extracts the n objects in bym_cells with the highest effort_td.'''
@@ -1327,18 +1339,18 @@ class EffortHighlighter():
             effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
 
         else:
-            raise Exception(f"The provided mode is not supported: '{mode}'.")
+            raise Exception(_MessageCollection.provided_mode_not_supported(mode))
 
         return effort_cells
 
-    def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell]) -> DataFrame:
+    def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell], tokens : Tuple[str, str]) -> DataFrame:
 
         '''Adds two tokens around the content of the cells listed in effort_cells.'''
 
         styled_df : DataFrame = df.copy(deep = True)
 
-        left_h : str = "[["
-        right_h : str = "]]"
+        left_h : str = tokens[0]
+        right_h : str = tokens[1]
 
         for effort_cell in effort_cells:
 
@@ -1365,7 +1377,7 @@ class EffortHighlighter():
 
         return styler
 
-    def apply(self, df : DataFrame, style : EFFORTSTYLE, mode : EFFORTMODE, color : COLORNAME = COLORNAME.skyblue) -> Union[Styler, DataFrame]:
+    def apply(self, df : DataFrame, style : EFFORTSTYLE, mode : EFFORTMODE, color : COLORNAME = COLORNAME.skyblue, tokens : Tuple[str, str] = ("[[ ", " ]]")) -> Union[Styler, DataFrame]:
 
         '''
             Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
@@ -1380,9 +1392,9 @@ class EffortHighlighter():
         if style == EFFORTSTYLE.color_highlight:
             return self.__apply_color_highlights(df = tmp_df, effort_cells = effort_cells, color = color)
         elif style == EFFORTSTYLE.textual_highlight:
-            return self.__apply_textual_highlights(df = tmp_df, effort_cells = effort_cells)
+            return self.__apply_textual_highlights(df = tmp_df, effort_cells = effort_cells, tokens = tokens)
         else:
-            raise Exception(f"The provided style is not supported: '{style}'.")
+            raise Exception(_MessageCollection.provided_style_not_supported(style))
 
 
 class TTDataFrameFactory():
