@@ -16,7 +16,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, EffortCell, SettingSubset
+from nwtimetracking import CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
 from nwtimetracking import TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -2112,6 +2112,71 @@ class EffortCellTestCase(unittest.TestCase):
         self.assertEqual(effort_cell.coordinate_pair, coordinate_pair)
         self.assertEqual(effort_cell.effort_str, effort_str)
         self.assertEqual(effort_cell.effort_td, effort_td)
+class EffortHighlighterTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.effort_highlighter : EffortHighlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
+
+        data_01 : dict[str, list] = {
+            "Month": ["Jan", "Feb"],
+            "2015": [100, 200],
+            "↕": [300, 400],
+            "2016": [500, 600],
+            "↕_duplicate_1": [700, 800],
+            "2017": [900, 1000]
+        }
+        columns_01 : list[str] = ["Month", "2015", "↕", "2016", "↕", "2017"]
+        self.df_with_duplicates : DataFrame = DataFrame(data_01, columns = columns_01)
+
+        data_02 : dict[str, list] = {
+            "Month": ["Jan", "Feb"],
+            "2015": [100, 200],
+            "↕": [300, 400],
+            "2016": [500, 600],
+            "↕_duplicate_1": [700, 800],
+            "2017": [900, 1000]
+        }
+        columns_02 : list[str] = ["Month", "2015", "↕", "2016", "↕_duplicate_1", "2017"]
+        self.df_without_duplicates : DataFrame = DataFrame(data_02, columns = columns_02)
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+
+        # Act
+        actual : EffortHighlighter = EffortHighlighter(df_helper = df_helper)
+
+        # Assert
+        self.assertIsInstance(actual, EffortHighlighter)
+    def test_hasduplicatecolumnnames_shouldreturntrue_whenduplicatecolumnames(self) -> None:
+
+        # Arrange
+        # Act
+        actual : bool = self.effort_highlighter._EffortHighlighter__has_duplicate_column_names(df = self.df_with_duplicates) # type: ignore
+
+        # Assert
+        self.assertTrue(actual)
+    def test_hasduplicatecolumnnames_shouldreturnfalse_whennoduplicatecolumnames(self) -> None:
+
+        # Arrange
+        # Act
+        actual : bool = self.effort_highlighter._EffortHighlighter__has_duplicate_column_names(df = self.df_without_duplicates) # type: ignore
+
+        # Assert
+        self.assertFalse(actual)
+    def test_validate_shouldraiseexception_whenduplicatecolumnamesandcolorhighlight(self) -> None:
+
+        # Arrange
+        expected : str = _MessageCollection.provided_df_has_duplicate_column_names(EFFORTSTYLE.color_highlight)
+        
+        # Act
+        with self.assertRaises(Exception) as context:
+            self.effort_highlighter._EffortHighlighter__validate(df = self.df_with_duplicates, style = EFFORTSTYLE.color_highlight) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, str(context.exception))
 
 
 
@@ -3397,7 +3462,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df =tts_by_year_df
+            df = tts_by_year_df
         )
     def test_processttsbyyearmonth_shoulddisplay_whenoptionisdisplay(self) -> None:
         
