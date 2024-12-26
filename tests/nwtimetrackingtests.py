@@ -16,7 +16,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, SettingSubset
+from nwtimetracking import CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, EffortCell, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
 from nwtimetracking import TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -742,7 +742,6 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-
 class YearlyTargetTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
@@ -2093,6 +2092,29 @@ class BYMSplitterTestCase(unittest.TestCase):
         # Act & Assert
         with self.assertRaises(Exception):
             self.bym_splitter.create_sub_dfs(df = df)
+class EffortCellTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_whenvalidarguments(self) -> None:
+
+        # Arrange
+        coordinate_pair : Tuple[int, int] = (5, 10)
+        effort_str : str = "10h 00m"
+        effort_td : timedelta = timedelta(hours = 10)
+
+        # Act
+        effort_cell : EffortCell = EffortCell(
+            coordinate_pair = coordinate_pair,
+            effort_str = effort_str,
+            effort_td = effort_td
+        )
+
+        # Assert
+        self.assertEqual(effort_cell.coordinate_pair, coordinate_pair)
+        self.assertEqual(effort_cell.effort_str, effort_str)
+        self.assertEqual(effort_cell.effort_td, effort_td)
+
+
+
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):

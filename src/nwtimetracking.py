@@ -1217,9 +1217,6 @@ class BYMSplitter():
         sub_dfs : list[DataFrame] = self.__filter_by_index_lists(df = df, index_lists = index_lists)
 
         return sub_dfs
-
-
-
 @dataclass(frozen = True)
 class EffortCell():
     
@@ -1228,6 +1225,8 @@ class EffortCell():
     coordinate_pair : Tuple[int, int]
     effort_str : str
     effort_td : timedelta
+
+
 class EffortHighlighter():
 
     '''Encapsulates all the logic related to highlighting cells in dataframes containing efforts.'''
