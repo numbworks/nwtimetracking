@@ -16,7 +16,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import CRITERIA, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, SettingSubset
+from nwtimetracking import CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
 from nwtimetracking import TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -716,6 +716,29 @@ class MessageCollectionTestCase(unittest.TestCase):
         # Arrange
         # Act
         actual : str = _MessageCollection.provided_df_has_duplicate_column_names(style = style)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_providedmodenotsupported_shouldreturnexpectedmessage_wheninvalidmode(self) -> None:
+
+        # Arrange
+        invalid_mode : EFFORTMODE = EFFORTMODE("invalid")
+        expected : str = f"The provided mode is not supported: '{invalid_mode}'"
+
+        # Act
+        actual : str = _MessageCollection.provided_mode_not_supported(mode = invalid_mode)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_providedstylenotsupported_shouldreturnexpectedmessage_wheninvalidstyle(self) -> None:
+
+        # Arrange
+        invalid_style : EFFORTSTYLE = EFFORTSTYLE("invalid")
+        expected : str = f"The provided style is not supported: '{invalid_style}'"
+
+        # Act
+        actual : str = _MessageCollection.provided_style_not_supported(style = invalid_style)
 
         # Assert
         self.assertEqual(expected, actual)
