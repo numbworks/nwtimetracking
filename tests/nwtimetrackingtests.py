@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from numpy import int64, uint
 from pandas import DataFrame
+from pandas.io.formats.style import Styler
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
@@ -16,7 +17,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
+from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
 from nwtimetracking import TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -2290,6 +2291,44 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, str(context.exception))
+    def test_applytextualhighlights_shouldsurroundeffortcellsswithtokens_wheninvoked(self) -> None:
+
+        # Arrange
+        effort_cells : list[EffortCell] = [
+            EffortCell((0, 1), "00h 00m", timedelta(hours = 0, minutes = 0)),
+            EffortCell((1, 3), "45h 30m", timedelta(hours = 45, minutes = 30))
+        ]
+        tokens : Tuple[str, str] = ("[[ ", " ]]")
+        expected : DataFrame = self.df_without_duplicates.copy(deep = True)
+        expected.iloc[0, 1] = "[[ 00h 00m ]]"
+        expected.iloc[1, 3] = "[[ 45h 30m ]]"
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__apply_textual_highlights(self.df_without_duplicates, effort_cells, tokens)   # type: ignore
+
+        # Assert
+        self.assertTrue(expected.equals(actual))
+    def test_applycolorhighlights_shouldapplybackgroundtoeffortcells_wheninvoked(self) -> None:
+
+        # Arrange
+        effort_cells : list[EffortCell] = [
+            EffortCell((0, 1), "00h 00m", timedelta(hours = 0, minutes = 0)),
+            EffortCell((1, 3), "45h 30m", timedelta(hours = 45, minutes = 30))
+        ]
+        color : COLORNAME = COLORNAME.skyblue
+
+        expected : dict[Tuple[int, int], list] = {
+            (0, 1): [("background-color", color)],
+            (1, 3): [("background-color", color)]
+        }
+
+        # Act
+        actual : Styler = self.effort_highlighter._EffortHighlighter__apply_color_highlights(self.df_without_duplicates, effort_cells, color)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual._compute().ctx)   # type: ignore
+
+
 
 
 class TTDataFrameFactoryTestCase(unittest.TestCase):
