@@ -2914,12 +2914,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         id : TTID = TTID.TTSBYMONTH
@@ -2937,12 +2939,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
         
         id : TTID = TTID.TTSBYMONTH
@@ -2965,12 +2969,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2996,12 +3002,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3026,12 +3034,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3056,12 +3066,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3088,12 +3100,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3120,12 +3134,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3152,12 +3168,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3184,12 +3202,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3210,16 +3230,19 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyhashtagyeardf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
+        # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3244,12 +3267,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3272,12 +3297,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3302,12 +3329,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -3367,11 +3396,14 @@ class TTAdapterTestCase(unittest.TestCase):
         md_factory : TTMarkdownFactory = Mock()
         md_factory.create_tts_by_month_md.return_value = tts_by_month_md
 
+        effort_highlighter : EffortHighlighter = Mock()
+
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : SettingBag = ObjectMother.get_setting_bag()
@@ -3597,17 +3629,18 @@ class ComponentBagTestCase(unittest.TestCase):
         component_bag : ComponentBag = ComponentBag(
             file_path_manager = FilePathManager(),
             file_manager = FileManager(file_path_manager = FilePathManager()),
+            displayer = Displayer(),
+            tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
             tt_adapter = TTAdapter(
                 df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
                 bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
                 tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
                 md_factory = TTMarkdownFactory(
                     markdown_helper = MarkdownHelper(formatter = Formatter()),
-                    bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()))
+                    bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
                 ),
-            tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
-            displayer = Displayer()
-        )
+                effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
+            ))
 
         # Assert
         self.assertIsInstance(component_bag.file_path_manager, FilePathManager)

@@ -2636,19 +2636,22 @@ class TTAdapter():
     __bym_factory : BYMFactory
     __tt_sequencer : TTSequencer
     __md_factory : TTMarkdownFactory
+    __effort_highlighter = EffortHighlighter
 
     def __init__(
             self, 
             df_factory : TTDataFrameFactory, 
             bym_factory : BYMFactory, 
             tt_sequencer : TTSequencer,
-            md_factory : TTMarkdownFactory
+            md_factory : TTMarkdownFactory,
+            effort_highlighter : EffortHighlighter
         ) -> None:
         
         self.__df_factory = df_factory
         self.__bym_factory = bym_factory
         self.__tt_sequencer = tt_sequencer
         self.__md_factory = md_factory
+        self.__effort_highlighter = effort_highlighter
 
     def extract_file_name_and_paragraph_title(self, id : TTID, setting_bag : SettingBag) -> Tuple[str, str]: 
     
@@ -2973,7 +2976,9 @@ class ComponentBag():
         tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
         md_factory = TTMarkdownFactory(
             markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()))
+            bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
+            ),
+        effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
         ))
 class TimeTrackingProcessor():
 
