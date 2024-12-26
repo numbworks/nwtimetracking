@@ -1,6 +1,6 @@
 v4.8.0
-- Application:
-	- Feature: added support for effort highlight (EffortHighlighter).
+- Library:
+	- Feature: added EffortHighlighter.
 	- Feature: it's now possible to pivot tts_by_hashtag_year_df to improve readability.
 - Documentation:
 	- Feature: updated to v4.8.0.
