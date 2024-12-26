@@ -2327,8 +2327,52 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual._compute().ctx)   # type: ignore
+    def test_apply_shouldreturnstyledataframe_whentextualhighlight(self) -> None:
 
+        # Arrange
+        style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        tokens : Tuple[str, str] = ("[[ ", " ]]")
 
+        expected : DataFrame = self.df_without_duplicates.copy(deep = True)
+        expected.iloc[0, 5] = "[[ 88h 30m ]]"
+        expected.iloc[1, 5] = "[[ 65h 30m ]]"
+
+        # Act
+        actual : DataFrame = self.effort_highlighter.apply(self.df_without_duplicates, style, mode, tokens) # type: ignore
+
+        # Assert
+        assert_frame_equal(expected, actual)
+    def test_apply_shouldreturnstyler_whencolorhighlight(self) -> None:
+
+        # Arrange
+        style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        color : COLORNAME = COLORNAME.skyblue
+
+        expected : dict[Tuple[int, int], list] = {
+            (0, 5): [("background-color", color)],
+            (1, 5): [("background-color", color)]
+        }
+
+        # Act
+        actual : Styler = self.effort_highlighter.apply(self.df_without_duplicates, style, mode, color = color) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual._compute().ctx)   # type: ignore
+    def test_apply_shouldraiseexception_wheninvalidstyle(self) -> None:
+
+        # Arrange
+        style : EFFORTSTYLE = cast(EFFORTSTYLE, "Invalid")
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        expected : str = _MessageCollection.provided_style_not_supported(style)
+
+        # Act
+        with self.assertRaises(Exception) as context:
+            self.effort_highlighter.apply(df = self.df_without_duplicates, style = style, mode = mode)
+
+        # Assert
+        self.assertEqual(expected, str(context.exception))
 
 
 class TTDataFrameFactoryTestCase(unittest.TestCase):
