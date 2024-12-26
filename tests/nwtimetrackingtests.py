@@ -1100,6 +1100,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
         tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
         tts_by_spn_spv_display_only_spn : Optional[str] = "SPN3"
+
         working_folder_path : str = "/home/nwtimetracking/"
         excel_path : str = "/workspaces/nwtimetracking/"
         excel_skiprows : int = 0
@@ -1112,13 +1113,35 @@ class SettingBagTestCase(unittest.TestCase):
         tt_head_n : uint = uint(5)
         tt_display_head_n_with_tail : bool = True
         tt_hide_index : bool = True
+        tts_by_month_enable_effort_highlight : bool = True
+        tts_by_month_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
+        tts_by_month_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        tts_by_year_effort_highlight : bool = True
+        tts_by_year_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
+        tts_by_year_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_year_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_year_month_display_only_years : Optional[list[int]] = [2022]
         tts_by_year_month_spnv_formatters : dict[str, str] = {"%_DME" : "{:.2f}", "%_TME" : "{:.2f}"}
+        tts_by_year_month_spnv_effort_highlight : bool = True
+        tts_by_year_month_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
+        tts_by_year_month_spnv_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_year_month_spnv_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_year_spnv_formatters : dict[str, str] = {"%_DYE" : "{:.2f}", "%_TYE" : "{:.2f}"}
+        tts_by_year_spnv_effort_highlight : bool = True
+        tts_by_year_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
+        tts_by_year_spnv_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_year_spnv_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_spn_formatters : dict[str, str] = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
         tts_by_spn_remove_untagged : bool = True
+        tts_by_spn_effort_highlight : bool = True
+        tts_by_spn_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
+        tts_by_spn_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_spn_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_hashtag_formatters : dict[str, str] = {"Effort%" : "{:.2f}"}
         tts_by_hashtag_year_enable_pivot : bool = False
+        tts_by_hashtag_year_effort_highlight : bool = True
+        tts_by_hashtag_year_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_hashtag_year_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
         tts_by_efs_is_correct : bool = False
         tts_by_efs_n : uint = uint(25)
         tts_by_tr_unknown_id : str = "Unknown"
@@ -1181,13 +1204,35 @@ class SettingBagTestCase(unittest.TestCase):
             tt_head_n = tt_head_n,
             tt_display_head_n_with_tail = tt_display_head_n_with_tail,
             tt_hide_index = tt_hide_index,
+            tts_by_month_enable_effort_highlight = tts_by_month_enable_effort_highlight,
+            tts_by_month_effort_highlight_style = tts_by_month_effort_highlight_style,
+            tts_by_month_effort_highlight_mode = tts_by_month_effort_highlight_mode,
+            tts_by_year_effort_highlight = tts_by_year_effort_highlight,
+            tts_by_year_effort_highlight_column_names = tts_by_year_effort_highlight_column_names,
+            tts_by_year_effort_highlight_style = tts_by_year_effort_highlight_style,
+            tts_by_year_effort_highlight_mode = tts_by_year_effort_highlight_mode,
             tts_by_year_month_display_only_years = tts_by_year_month_display_only_years,
             tts_by_year_month_spnv_formatters = tts_by_year_month_spnv_formatters,
+            tts_by_year_month_spnv_effort_highlight = tts_by_year_month_spnv_effort_highlight,
+            tts_by_year_month_spnv_effort_highlight_column_names = tts_by_year_month_spnv_effort_highlight_column_names,
+            tts_by_year_month_spnv_effort_highlight_style = tts_by_year_month_spnv_effort_highlight_style,
+            tts_by_year_month_spnv_effort_highlight_mode = tts_by_year_month_spnv_effort_highlight_mode,
             tts_by_year_spnv_formatters = tts_by_year_spnv_formatters,
+            tts_by_year_spnv_effort_highlight = tts_by_year_spnv_effort_highlight,
+            tts_by_year_spnv_effort_highlight_column_names = tts_by_year_spnv_effort_highlight_column_names,
+            tts_by_year_spnv_effort_highlight_style = tts_by_year_spnv_effort_highlight_style,
+            tts_by_year_spnv_effort_highlight_mode = tts_by_year_spnv_effort_highlight_mode,
             tts_by_spn_formatters = tts_by_spn_formatters,
             tts_by_spn_remove_untagged = tts_by_spn_remove_untagged,
+            tts_by_spn_effort_highlight = tts_by_spn_effort_highlight,
+            tts_by_spn_effort_highlight_column_names = tts_by_spn_effort_highlight_column_names,
+            tts_by_spn_effort_highlight_style = tts_by_spn_effort_highlight_style,
+            tts_by_spn_effort_highlight_mode = tts_by_spn_effort_highlight_mode,
             tts_by_hashtag_formatters = tts_by_hashtag_formatters,
             tts_by_hashtag_year_enable_pivot = tts_by_hashtag_year_enable_pivot,
+            tts_by_hashtag_year_effort_highlight = tts_by_hashtag_year_effort_highlight,
+            tts_by_hashtag_year_effort_highlight_style = tts_by_hashtag_year_effort_highlight_style,
+            tts_by_hashtag_year_effort_highlight_mode = tts_by_hashtag_year_effort_highlight_mode,
             tts_by_efs_is_correct = tts_by_efs_is_correct,
             tts_by_efs_n = tts_by_efs_n,
             tts_by_tr_unknown_id = tts_by_tr_unknown_id,
@@ -1250,13 +1295,35 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tt_head_n, tt_head_n)
         self.assertEqual(actual.tt_display_head_n_with_tail, tt_display_head_n_with_tail)
         self.assertEqual(actual.tt_hide_index, tt_hide_index)
+        self.assertEqual(actual.tts_by_month_enable_effort_highlight, tts_by_month_enable_effort_highlight)
+        self.assertEqual(actual.tts_by_month_effort_highlight_style, tts_by_month_effort_highlight_style)
+        self.assertEqual(actual.tts_by_month_effort_highlight_mode, tts_by_month_effort_highlight_mode)
+        self.assertEqual(actual.tts_by_year_effort_highlight, tts_by_year_effort_highlight)
+        self.assertEqual(actual.tts_by_year_effort_highlight_column_names, tts_by_year_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_year_effort_highlight_style, tts_by_year_effort_highlight_style)
+        self.assertEqual(actual.tts_by_year_effort_highlight_mode, tts_by_year_effort_highlight_mode)
         self.assertEqual(actual.tts_by_year_month_display_only_years, tts_by_year_month_display_only_years)
         self.assertEqual(actual.tts_by_year_month_spnv_formatters, tts_by_year_month_spnv_formatters)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight, tts_by_year_month_spnv_effort_highlight)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_column_names, tts_by_year_month_spnv_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_style, tts_by_year_month_spnv_effort_highlight_style)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_mode, tts_by_year_month_spnv_effort_highlight_mode)
         self.assertEqual(actual.tts_by_year_spnv_formatters, tts_by_year_spnv_formatters)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight, tts_by_year_spnv_effort_highlight)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_column_names, tts_by_year_spnv_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_style, tts_by_year_spnv_effort_highlight_style)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_mode, tts_by_year_spnv_effort_highlight_mode)
         self.assertEqual(actual.tts_by_spn_formatters, tts_by_spn_formatters)
         self.assertEqual(actual.tts_by_spn_remove_untagged, tts_by_spn_remove_untagged)
+        self.assertEqual(actual.tts_by_spn_effort_highlight, tts_by_spn_effort_highlight)
+        self.assertEqual(actual.tts_by_spn_effort_highlight_column_names, tts_by_spn_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_spn_effort_highlight_style, tts_by_spn_effort_highlight_style)
+        self.assertEqual(actual.tts_by_spn_effort_highlight_mode, tts_by_spn_effort_highlight_mode)
         self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)
         self.assertEqual(actual.tts_by_hashtag_year_enable_pivot, tts_by_hashtag_year_enable_pivot)
+        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight, tts_by_hashtag_year_effort_highlight)
+        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight_style, tts_by_hashtag_year_effort_highlight_style)
+        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight_mode, tts_by_hashtag_year_effort_highlight_mode)
         self.assertEqual(actual.tts_by_efs_is_correct, tts_by_efs_is_correct)
         self.assertEqual(actual.tts_by_efs_n, tts_by_efs_n)
         self.assertEqual(actual.tts_by_tr_unknown_id, tts_by_tr_unknown_id)
