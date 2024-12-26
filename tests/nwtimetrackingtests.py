@@ -16,10 +16,11 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import CRITERIA, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, SettingSubset, TTLogger, TTSequencer, TimeTrackingProcessor
+from nwtimetracking import CRITERIA, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
-from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
-from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
+from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
+from nwtimetracking import TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
+from nwtimetracking import TTLogger, TTSequencer, TimeTrackingProcessor
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -706,6 +707,19 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [EFFORTSTYLE.color_highlight, "The provided df has duplicate column names, therefore 'color_highlight' is not supported."]
+    ])
+    def test_provideddfhasduplicatecolumnnames_shouldreturnexpectedmessage_wheninvoked(self, style : EFFORTSTYLE, expected : str):
+
+        # Arrange
+        # Act
+        actual : str = _MessageCollection.provided_df_has_duplicate_column_names(style = style)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
 class YearlyTargetTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
