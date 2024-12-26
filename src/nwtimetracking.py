@@ -1302,9 +1302,27 @@ class EffortHighlighter():
         top_n : list[EffortCell] = sorted_cells[:n]
 
         return top_n
-    def __create_styled_dataframe(self, df : DataFrame, effort_cells : list[EffortCell], color : COLORNAME) -> DataFrame:
+    
+    def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell]) -> DataFrame:
+
+        '''Adds two tokens around the content of the cells listed in effort_cells.'''
+
+        styled_df : DataFrame = df.copy(deep = True)
+
+        left_h : str = "[["
+        right_h : str = "]]"
+
+        for effort_cell in effort_cells:
+
+            row, col = effort_cell.coordinate_pair
+
+            if row < len(df) and col < len(df.columns):
+                styled_df.iloc[row, col] = f"{left_h}{str(df.iloc[row, col])}{right_h}"
+            
+        return styled_df
+    def __apply_color_highlights(self, df : DataFrame, effort_cells : list[EffortCell], color : COLORNAME) -> Styler:
         
-        '''Creates a styled_df out of df in which all the effort_cells have been highlighted.'''
+        '''Adds color as background color for the cells listed in effort_cells.'''
 
         styled_df : DataFrame = DataFrame('', index = df.index, columns = df.columns)
         
@@ -1315,28 +1333,11 @@ class EffortHighlighter():
             if row < len(df) and col < len(df.columns):
                 styled_df.iloc[row, col] = f"background-color: {color}"
 
-        return styled_df
-    def __add_background_color(self, df : DataFrame, effort_cells : list[EffortCell], color : COLORNAME) -> Styler:
+        styler : Styler = df.style.apply(lambda _ : styled_df, axis = None)
 
-        '''Highlights effort_cells in df.'''
+        return styler
 
-        styled_df : DataFrame = self.__create_styled_dataframe(df = df, effort_cells = effort_cells, color = color)
 
-        return df.style.apply(lambda _ : styled_df, axis = None)
-    def __add_markdown_bold(self, df : DataFrame, effort_cells : list[EffortCell]) -> DataFrame:
-
-        '''Adds two asterisks around the content of a specific cell.'''
-
-        styled_df : DataFrame = df.copy(deep = True)
-
-        for effort_cell in effort_cells:
-
-            row, col = effort_cell.coordinate_pair
-
-            if row < len(df) and col < len(df.columns):
-                styled_df.iloc[row, col] = f"**{str(df.iloc[row, col])}**"
-            
-        return styled_df
 
     def apply(
         self, 
@@ -1387,7 +1388,7 @@ class EffortHighlighter():
 
             return styler
         elif style == EFFORTSTYLE.textual_highlight:
-            return self.__add_markdown_bold(df = tmp_df, effort_cells = effort_cells)
+            return self.__apply_textual_highlights(df = tmp_df, effort_cells = effort_cells)
         else:
             raise Exception(f"The provided style is not supported: '{style}'.")
 
