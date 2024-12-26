@@ -1302,7 +1302,35 @@ class EffortHighlighter():
         top_n : list[EffortCell] = sorted_cells[:n]
 
         return top_n
-    
+    def __calculate_effort_cells(self, df : DataFrame, mode : EFFORTMODE) -> list[EffortCell]:
+
+        '''Returns a list of EffortCell objects according to df and mode.'''
+
+        effort_cells : list[EffortCell] = []
+
+        last_row_idx : int = len(df)
+        n : int = self.__extract_n(mode = mode)
+
+        if mode == EFFORTMODE.top_one_effort_per_row:
+            for row_idx in range(last_row_idx):
+
+                current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+                current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
+                effort_cells.extend(current)
+                
+        elif mode == EFFORTMODE.top_three_efforts:
+            for row_idx in range(last_row_idx):
+                
+                current : list[EffortCell] = self.__extract_row(df = df, row_idx = row_idx)
+                effort_cells.extend(current)
+
+            effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
+
+        else:
+            raise Exception(f"The provided mode is not supported: '{mode}'.")
+
+        return effort_cells
+
     def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell]) -> DataFrame:
 
         '''Adds two tokens around the content of the cells listed in effort_cells.'''
@@ -1337,56 +1365,20 @@ class EffortHighlighter():
 
         return styler
 
-
-
-    def apply(
-        self, 
-        df : DataFrame, 
-        mode : EFFORTMODE, 
-        style : EFFORTSTYLE, 
-        color : COLORNAME = COLORNAME.lightgreen
-        ) -> Union[Styler, DataFrame]:
+    def apply(self, df : DataFrame, style : EFFORTSTYLE, mode : EFFORTMODE, color : COLORNAME = COLORNAME.skyblue) -> Union[Styler, DataFrame]:
 
         '''
             Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
             Returns a df with highlighted cells as per arguments. 
         '''
 
+        self.__validate(df = df, style = style)
+
         tmp_df : DataFrame = df.copy(deep = True)
-
-        if self.__df_helper.is_bym(column_list = tmp_df.columns.tolist()):
-            # tmp_df = self.__df_helper.unbox_bym_column_list(df = tmp_df)
-            tmp_df.columns = pd.MultiIndex.from_tuples([(name, i) for i, name in enumerate(df.columns)])
-            # tmp_df.style.set_table_styles([{'selector': 'thead th', 'props': [('display', 'none')]}])
-            tmp_df.columns = ['_'.join(map(str, col)) for col in tmp_df.columns]
-
-        effort_cells : list[EffortCell] = []
-        last_row_idx : int = len(tmp_df)
-        n : int = self.__extract_n(mode = mode)
-
-        if mode == EFFORTMODE.top_one_effort_per_row:
-
-            for row_idx in range(last_row_idx):
-                current : list[EffortCell] = self.__extract_row(df = tmp_df, row_idx = row_idx)
-                current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
-                effort_cells.extend(current)
-        
-        elif mode == EFFORTMODE.top_three_efforts:
-
-            for row_idx in range(last_row_idx):
-                current : list[EffortCell] = self.__extract_row(df = tmp_df, row_idx = row_idx)
-                effort_cells.extend(current)
-
-            effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
-
-        else:
-            raise Exception(f"The provided mode is not supported: '{mode}'.")
+        effort_cells : list[EffortCell] = self.__calculate_effort_cells(df = df, mode = mode)
 
         if style == EFFORTSTYLE.color_highlight:
-
-            styler : Styler = self.__add_background_color(df = tmp_df , effort_cells = effort_cells, color = color)
-
-            return styler
+            return self.__apply_color_highlights(df = tmp_df, effort_cells = effort_cells, color = color)
         elif style == EFFORTSTYLE.textual_highlight:
             return self.__apply_textual_highlights(df = tmp_df, effort_cells = effort_cells)
         else:
