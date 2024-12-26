@@ -2199,6 +2199,40 @@ class EffortHighlighterTestCase(unittest.TestCase):
         self.assertEqual(effort_cells[0].coordinate_pair, coordinate_pair)
         self.assertEqual(effort_cells[0].effort_str, cell_content)
         self.assertEqual(effort_cells[0].effort_td, effort_td)
+    def test_extractrow_shouldreturneffortcells_whenrowhasvalidtimes(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m"], "↕": ["↑"], "2016": ["20h 45m"]})
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__extract_row(df = df, row_idx = 0)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "10h 30m")
+        self.assertEqual(actual[1].effort_str, "20h 45m")
+
+    @parameterized.expand([
+        (EFFORTMODE.top_one_effort_per_row, 1),
+        (EFFORTMODE.top_three_efforts, 3)
+    ])
+    def test_extractn_shouldreturnexpected_whenvalid(self, mode: EFFORTMODE, expected: int) -> None:
+        
+        # Arrange
+        # Act
+        actual : int = self.effort_highlighter._EffortHighlighter__extract_n(mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+    def test_extractn_shouldraiseexception_wheninvalid(self) -> None:
+        
+        # Arrange
+        mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+
+        # Act & Assert
+        with self.assertRaises(Exception):
+            self.effort_highlighter._EffortHighlighter__extract_n(mode = mode)   # type: ignore
 
 
 class TTDataFrameFactoryTestCase(unittest.TestCase):
