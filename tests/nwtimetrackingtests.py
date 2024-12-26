@@ -2316,6 +2316,38 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, str(context.exception))
+    def test_tryfilterbycolumnnames_shouldreturnfiltereddf_whencolumnnamesareprovided(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({
+            "2015" : ["10h 30m", "15h 45m"], 
+            "↕" : ["↑", "↑"], 
+            "2016" : ["20h 45m", "20h 00m"]
+        })        
+        column_names : list[str] = ["2015", "2016"]
+
+        expected : DataFrame = df[column_names]
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__try_filter_by_column_names(df = df, column_names = column_names)   # type: ignore
+
+        # Assert
+        assert_frame_equal(actual, expected)
+    def test_tryfilterbycolumnnames_shouldreturndfasis_whencolumnnamesareempty(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({
+            "2015" : ["10h 30m", "15h 45m"], 
+            "↕" : ["↑", "↑"], 
+            "2016" : ["20h 45m", "20h 00m"]
+        })             
+        column_names : list[str] = []
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__try_filter_by_column_names(df = df, column_names = column_names)   # type: ignore
+
+        # Assert
+        assert_frame_equal(actual, df)
     def test_applytextualhighlights_shouldsurroundeffortcellsswithtokens_wheninvoked(self) -> None:
 
         # Arrange
@@ -2398,6 +2430,27 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, str(context.exception))
+    def test_apply_shouldcalltryfilterbycolumnnames_whencolumnnamesareprovided(self) -> None:
+        
+        # Arrange
+        style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        color : COLORNAME = COLORNAME.skyblue
+        tokens : Tuple[str, str] = ("[[ ", " ]]")
+        column_names : list[str] = ["2015", "2016"]
+
+        # Act, Assert
+        with patch.object(EffortHighlighter, "_EffortHighlighter__try_filter_by_column_names") as try_filter_by_column_names:
+            self.effort_highlighter.apply(
+                df = self.df_without_duplicates, 
+                style = style, 
+                mode = mode, 
+                color = color, 
+                tokens = tokens, 
+                column_names = column_names
+            )
+
+            try_filter_by_column_names.assert_called()
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):

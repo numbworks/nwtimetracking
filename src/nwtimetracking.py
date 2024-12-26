@@ -1341,6 +1341,14 @@ class EffortHighlighter():
             raise Exception(_MessageCollection.provided_mode_not_supported(mode))
 
         return effort_cells
+    def __try_filter_by_column_names(self, df : DataFrame, column_names : list[str]) -> DataFrame:
+
+        '''Filters df to include only the specified column names or returns df as-is.'''
+        
+        if column_names:
+            return df[column_names]
+        
+        return df
 
     def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell], tokens : Tuple[str, str]) -> DataFrame:
 
@@ -1376,7 +1384,15 @@ class EffortHighlighter():
 
         return styler
 
-    def apply(self, df : DataFrame, style : EFFORTSTYLE, mode : EFFORTMODE, color : COLORNAME = COLORNAME.skyblue, tokens : Tuple[str, str] = ("[[ ", " ]]")) -> Union[Styler, DataFrame]:
+    def apply(
+        self, 
+        df : DataFrame, 
+        style : EFFORTSTYLE, 
+        mode : EFFORTMODE, 
+        color : COLORNAME = COLORNAME.skyblue, 
+        tokens : Tuple[str, str] = ("[[ ", " ]]"),
+        column_names : list[str] = []
+        ) -> Union[Styler, DataFrame]:
 
         '''
             Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
@@ -1386,6 +1402,8 @@ class EffortHighlighter():
         self.__validate(df = df, style = style)
 
         tmp_df : DataFrame = df.copy(deep = True)
+        self.__try_filter_by_column_names(df = tmp_df, column_names = column_names)
+
         effort_cells : list[EffortCell] = self.__calculate_effort_cells(df = df, mode = mode)
 
         if style == EFFORTSTYLE.color_highlight:
