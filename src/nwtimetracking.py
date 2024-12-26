@@ -1192,37 +1192,21 @@ class BYMSplitter():
 
 
 
-class CSSGREEN(StrEnum):
+class COLORNAME(StrEnum):
 
-	lightgreen = auto()
-	palegreen = auto()
-	lime = auto()
-	limegreen = auto()
-	green = auto()
-	darkgreen = auto()
-	forestgreen = auto()
-	seagreen = auto()
-	chartreuse = auto()
-	greenyellow = auto()
-	yellowgreen = auto()
-	mediumseagreen = auto()
-	mediumspringgreen = auto()
-	springgreen = auto()
-	olivedrab = auto()
-	olive = auto()
-	lawngreen = auto()
-	darkolivegreen = auto()
+    skyblue = auto()
+    lightgreen = auto()
 class EFFORTSTYLE(StrEnum):
 
-    '''Represents a collection of styles for EffortHighlighter.'''
+    '''Represents a collection of highlight styles for EffortHighlighter.'''
 
-    markdown_bold = auto()
-    background_color = auto()
+    textual_highlight = auto()
+    color_highlight = auto()
 class EFFORTMODE(StrEnum):
 
     '''Represents a collection of modes for EffortHighlighter.'''
 
-    top_effort_per_row = auto()
+    top_one_effort_per_row = auto()
     top_three_efforts = auto()
 @dataclass(frozen = True)
 class EffortCell():
@@ -1247,6 +1231,21 @@ class EffortHighlighter():
         '''Checks if the DataFrame has duplicate column names.'''
 
         return bool(df.columns.duplicated().any())
+    def __validate(self, df : DataFrame, style : EFFORTSTYLE) -> None: 
+
+        '''
+            | EFFORTSTYLE       | HAS_DUPLICATE_COLUMN_NAMES | OUTCOME   |
+            |-------------------|----------------------------|-----------|
+            | textual_highlight | True                       | OK        |
+            | textual_highlight | False                      | OK        |
+            | color_highlight   | True                       | EXCEPTION |
+            | color_highlight   | FALSE                      | OK        |
+        '''
+
+        flag : bool = self.__has_duplicate_column_names(df = df)
+
+        if flag == True and style == EFFORTSTYLE.color_highlight:
+            raise Exception(f"The provided df has duplicate column names, therefore '{style}' is not supported.")
 
     def __is_effort(self, cell_content : str) -> bool :
 
@@ -1289,7 +1288,7 @@ class EffortHighlighter():
 
         '''Extracts n from mode.'''
 
-        if mode == EFFORTMODE.top_effort_per_row:
+        if mode == EFFORTMODE.top_one_effort_per_row:
             return 1
         elif mode == EFFORTMODE.top_three_efforts:
             return 3
@@ -1303,7 +1302,7 @@ class EffortHighlighter():
         top_n : list[EffortCell] = sorted_cells[:n]
 
         return top_n
-    def __create_styled_dataframe(self, df : DataFrame, effort_cells : list[EffortCell], color : CSSGREEN) -> DataFrame:
+    def __create_styled_dataframe(self, df : DataFrame, effort_cells : list[EffortCell], color : COLORNAME) -> DataFrame:
         
         '''Creates a styled_df out of df in which all the effort_cells have been highlighted.'''
 
@@ -1317,7 +1316,7 @@ class EffortHighlighter():
                 styled_df.iloc[row, col] = f"background-color: {color}"
 
         return styled_df
-    def __add_background_color(self, df : DataFrame, effort_cells : list[EffortCell], color : CSSGREEN) -> Styler:
+    def __add_background_color(self, df : DataFrame, effort_cells : list[EffortCell], color : COLORNAME) -> Styler:
 
         '''Highlights effort_cells in df.'''
 
@@ -1344,7 +1343,7 @@ class EffortHighlighter():
         df : DataFrame, 
         mode : EFFORTMODE, 
         style : EFFORTSTYLE, 
-        color : CSSGREEN = CSSGREEN.lightgreen
+        color : COLORNAME = COLORNAME.lightgreen
         ) -> Union[Styler, DataFrame]:
 
         '''
@@ -1364,7 +1363,7 @@ class EffortHighlighter():
         last_row_idx : int = len(tmp_df)
         n : int = self.__extract_n(mode = mode)
 
-        if mode == EFFORTMODE.top_effort_per_row:
+        if mode == EFFORTMODE.top_one_effort_per_row:
 
             for row_idx in range(last_row_idx):
                 current : list[EffortCell] = self.__extract_row(df = tmp_df, row_idx = row_idx)
@@ -1382,12 +1381,12 @@ class EffortHighlighter():
         else:
             raise Exception(f"The provided mode is not supported: '{mode}'.")
 
-        if style == EFFORTSTYLE.background_color:
+        if style == EFFORTSTYLE.color_highlight:
 
             styler : Styler = self.__add_background_color(df = tmp_df , effort_cells = effort_cells, color = color)
 
             return styler
-        elif style == EFFORTSTYLE.markdown_bold:
+        elif style == EFFORTSTYLE.textual_highlight:
             return self.__add_markdown_bold(df = tmp_df, effort_cells = effort_cells)
         else:
             raise Exception(f"The provided style is not supported: '{style}'.")
