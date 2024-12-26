@@ -2118,27 +2118,19 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         self.effort_highlighter : EffortHighlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
 
-        data_01 : dict[str, list] = {
-            "Month": ["Jan", "Feb"],
-            "2015": [100, 200],
-            "↕": [300, 400],
-            "2016": [500, 600],
-            "↕_duplicate_1": [700, 800],
-            "2017": [900, 1000]
+        data : dict[str, list] = {
+            "Month": ["1", "2"],
+            "2015": ["00h 00m", "00h 00m"],
+            "↕": ["↑", "↑"],
+            "2016": ["18h 00m", "45h 30m"],
+            "↕_duplicate_1": ["↑", "↑"],
+            "2017": ["88h 30m", "65h 30m"]
         }
         columns_01 : list[str] = ["Month", "2015", "↕", "2016", "↕", "2017"]
-        self.df_with_duplicates : DataFrame = DataFrame(data_01, columns = columns_01)
+        self.df_with_duplicates : DataFrame = DataFrame(data, columns = columns_01)
 
-        data_02 : dict[str, list] = {
-            "Month": ["Jan", "Feb"],
-            "2015": [100, 200],
-            "↕": [300, 400],
-            "2016": [500, 600],
-            "↕_duplicate_1": [700, 800],
-            "2017": [900, 1000]
-        }
         columns_02 : list[str] = ["Month", "2015", "↕", "2016", "↕_duplicate_1", "2017"]
-        self.df_without_duplicates : DataFrame = DataFrame(data_02, columns = columns_02)
+        self.df_without_duplicates : DataFrame = DataFrame(data, columns = columns_02)
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
