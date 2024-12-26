@@ -6,6 +6,7 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from numpy import int64, uint
 from pandas import DataFrame
+from pandas.io.formats.style import Styler
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
@@ -16,10 +17,12 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import CRITERIA, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, SettingSubset, TTLogger, TTSequencer, TimeTrackingProcessor
+from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION
+from nwtimetracking import _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
-from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag
-from nwtimetracking import TTDataFrameHelper, TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
+from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
+from nwtimetracking import TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
+from nwtimetracking import TTLogger, TTSequencer, TimeTrackingProcessor
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -671,11 +674,11 @@ class MessageCollectionTestCase(unittest.TestCase):
         # Arrange
         column_list : list[str] = ["Month", "2015"]
         expected : str = (
-            f"The provided df has an invalid column list ('{column_list}')."
+            f"The provided df has an invalid BYM column list ('{column_list}')."
         )
 
         # Act
-        actual : str = _MessageCollection.provided_df_invalid_column_list(column_list = column_list)
+        actual : str = _MessageCollection.provided_df_invalid_bym_column_list(column_list = column_list)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -703,6 +706,41 @@ class MessageCollectionTestCase(unittest.TestCase):
         # Arrange
         # Act
         actual : str = _MessageCollection.variable_cant_be_less_than_one(variable_name = variable_name)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [EFFORTSTYLE.color_highlight, "The provided df has duplicate column names, therefore 'color_highlight' is not supported."]
+    ])
+    def test_provideddfhasduplicatecolumnnames_shouldreturnexpectedmessage_wheninvoked(self, style : EFFORTSTYLE, expected : str):
+
+        # Arrange
+        # Act
+        actual : str = _MessageCollection.provided_df_has_duplicate_column_names(style = style)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_providedmodenotsupported_shouldreturnexpectedmessage_wheninvalidmode(self) -> None:
+
+        # Arrange
+        invalid_mode : EFFORTMODE = cast(EFFORTMODE, "invalid")
+        expected : str = f"The provided mode is not supported: '{invalid_mode}'."
+
+        # Act
+        actual : str = _MessageCollection.provided_mode_not_supported(mode = invalid_mode)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_providedstylenotsupported_shouldreturnexpectedmessage_wheninvalidstyle(self) -> None:
+
+        # Arrange
+        invalid_style : EFFORTSTYLE = cast(EFFORTSTYLE, "invalid")
+        expected : str = f"The provided style is not supported: '{invalid_style}'."
+
+        # Act
+        actual : str = _MessageCollection.provided_style_not_supported(style = invalid_style)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -1043,25 +1081,26 @@ class SettingBagTestCase(unittest.TestCase):
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
-        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                       # type: ignore
-        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]   # type: ignore
-        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
-        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]                        # type: ignore
-        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]                   # type: ignore
-        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                         # type: ignore
-        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]       # type: ignore
-        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]   # type: ignore
-        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]                           # type: ignore
-        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                      # type: ignore
-        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
-        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                # type: ignore
-        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot]] = [OPTION.display, OPTION.plot] # type: ignore
-        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot]] = [OPTION.display, OPTION.plot] # type: ignore
-        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                              # type: ignore
+        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                                   # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]               # type: ignore
+        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                                          # type: ignore
+        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]                                    # type: ignore
+        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
+        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                                     # type: ignore
+        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]                   # type: ignore
+        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]               # type: ignore
+        options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display]                           # type: ignore
+        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                                  # type: ignore
+        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                                           # type: ignore
+        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                            # type: ignore
+        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.log]] = [OPTION.display, OPTION.plot] # type: ignore
+        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.log]] = [OPTION.display, OPTION.plot] # type: ignore
+        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                                          # type: ignore
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
         tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
         tts_by_spn_spv_display_only_spn : Optional[str] = "SPN3"
+
         working_folder_path : str = "/home/nwtimetracking/"
         excel_path : str = "/workspaces/nwtimetracking/"
         excel_skiprows : int = 0
@@ -1074,12 +1113,35 @@ class SettingBagTestCase(unittest.TestCase):
         tt_head_n : uint = uint(5)
         tt_display_head_n_with_tail : bool = True
         tt_hide_index : bool = True
+        tts_by_month_effort_highlight : bool = True
+        tts_by_month_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
+        tts_by_month_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        tts_by_year_effort_highlight : bool = True
+        tts_by_year_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
+        tts_by_year_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_year_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_year_month_display_only_years : Optional[list[int]] = [2022]
         tts_by_year_month_spnv_formatters : dict[str, str] = {"%_DME" : "{:.2f}", "%_TME" : "{:.2f}"}
+        tts_by_year_month_spnv_effort_highlight : bool = True
+        tts_by_year_month_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
+        tts_by_year_month_spnv_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_year_month_spnv_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_year_spnv_formatters : dict[str, str] = {"%_DYE" : "{:.2f}", "%_TYE" : "{:.2f}"}
+        tts_by_year_spnv_effort_highlight : bool = True
+        tts_by_year_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
+        tts_by_year_spnv_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_year_spnv_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_spn_formatters : dict[str, str] = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
         tts_by_spn_remove_untagged : bool = True
+        tts_by_spn_effort_highlight : bool = True
+        tts_by_spn_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
+        tts_by_spn_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_spn_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_hashtag_formatters : dict[str, str] = {"Effort%" : "{:.2f}"}
+        tts_by_hashtag_year_enable_pivot : bool = False
+        tts_by_hashtag_year_effort_highlight : bool = True
+        tts_by_hashtag_year_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        tts_by_hashtag_year_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
         tts_by_efs_is_correct : bool = False
         tts_by_efs_n : uint = uint(25)
         tts_by_tr_unknown_id : str = "Unknown"
@@ -1142,12 +1204,35 @@ class SettingBagTestCase(unittest.TestCase):
             tt_head_n = tt_head_n,
             tt_display_head_n_with_tail = tt_display_head_n_with_tail,
             tt_hide_index = tt_hide_index,
+            tts_by_month_effort_highlight = tts_by_month_effort_highlight,
+            tts_by_month_effort_highlight_style = tts_by_month_effort_highlight_style,
+            tts_by_month_effort_highlight_mode = tts_by_month_effort_highlight_mode,
+            tts_by_year_effort_highlight = tts_by_year_effort_highlight,
+            tts_by_year_effort_highlight_column_names = tts_by_year_effort_highlight_column_names,
+            tts_by_year_effort_highlight_style = tts_by_year_effort_highlight_style,
+            tts_by_year_effort_highlight_mode = tts_by_year_effort_highlight_mode,
             tts_by_year_month_display_only_years = tts_by_year_month_display_only_years,
             tts_by_year_month_spnv_formatters = tts_by_year_month_spnv_formatters,
+            tts_by_year_month_spnv_effort_highlight = tts_by_year_month_spnv_effort_highlight,
+            tts_by_year_month_spnv_effort_highlight_column_names = tts_by_year_month_spnv_effort_highlight_column_names,
+            tts_by_year_month_spnv_effort_highlight_style = tts_by_year_month_spnv_effort_highlight_style,
+            tts_by_year_month_spnv_effort_highlight_mode = tts_by_year_month_spnv_effort_highlight_mode,
             tts_by_year_spnv_formatters = tts_by_year_spnv_formatters,
+            tts_by_year_spnv_effort_highlight = tts_by_year_spnv_effort_highlight,
+            tts_by_year_spnv_effort_highlight_column_names = tts_by_year_spnv_effort_highlight_column_names,
+            tts_by_year_spnv_effort_highlight_style = tts_by_year_spnv_effort_highlight_style,
+            tts_by_year_spnv_effort_highlight_mode = tts_by_year_spnv_effort_highlight_mode,
             tts_by_spn_formatters = tts_by_spn_formatters,
             tts_by_spn_remove_untagged = tts_by_spn_remove_untagged,
+            tts_by_spn_effort_highlight = tts_by_spn_effort_highlight,
+            tts_by_spn_effort_highlight_column_names = tts_by_spn_effort_highlight_column_names,
+            tts_by_spn_effort_highlight_style = tts_by_spn_effort_highlight_style,
+            tts_by_spn_effort_highlight_mode = tts_by_spn_effort_highlight_mode,
             tts_by_hashtag_formatters = tts_by_hashtag_formatters,
+            tts_by_hashtag_year_enable_pivot = tts_by_hashtag_year_enable_pivot,
+            tts_by_hashtag_year_effort_highlight = tts_by_hashtag_year_effort_highlight,
+            tts_by_hashtag_year_effort_highlight_style = tts_by_hashtag_year_effort_highlight_style,
+            tts_by_hashtag_year_effort_highlight_mode = tts_by_hashtag_year_effort_highlight_mode,
             tts_by_efs_is_correct = tts_by_efs_is_correct,
             tts_by_efs_n = tts_by_efs_n,
             tts_by_tr_unknown_id = tts_by_tr_unknown_id,
@@ -1210,12 +1295,35 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tt_head_n, tt_head_n)
         self.assertEqual(actual.tt_display_head_n_with_tail, tt_display_head_n_with_tail)
         self.assertEqual(actual.tt_hide_index, tt_hide_index)
+        self.assertEqual(actual.tts_by_month_effort_highlight, tts_by_month_effort_highlight)
+        self.assertEqual(actual.tts_by_month_effort_highlight_style, tts_by_month_effort_highlight_style)
+        self.assertEqual(actual.tts_by_month_effort_highlight_mode, tts_by_month_effort_highlight_mode)
+        self.assertEqual(actual.tts_by_year_effort_highlight, tts_by_year_effort_highlight)
+        self.assertEqual(actual.tts_by_year_effort_highlight_column_names, tts_by_year_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_year_effort_highlight_style, tts_by_year_effort_highlight_style)
+        self.assertEqual(actual.tts_by_year_effort_highlight_mode, tts_by_year_effort_highlight_mode)
         self.assertEqual(actual.tts_by_year_month_display_only_years, tts_by_year_month_display_only_years)
         self.assertEqual(actual.tts_by_year_month_spnv_formatters, tts_by_year_month_spnv_formatters)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight, tts_by_year_month_spnv_effort_highlight)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_column_names, tts_by_year_month_spnv_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_style, tts_by_year_month_spnv_effort_highlight_style)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_mode, tts_by_year_month_spnv_effort_highlight_mode)
         self.assertEqual(actual.tts_by_year_spnv_formatters, tts_by_year_spnv_formatters)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight, tts_by_year_spnv_effort_highlight)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_column_names, tts_by_year_spnv_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_style, tts_by_year_spnv_effort_highlight_style)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_mode, tts_by_year_spnv_effort_highlight_mode)
         self.assertEqual(actual.tts_by_spn_formatters, tts_by_spn_formatters)
         self.assertEqual(actual.tts_by_spn_remove_untagged, tts_by_spn_remove_untagged)
+        self.assertEqual(actual.tts_by_spn_effort_highlight, tts_by_spn_effort_highlight)
+        self.assertEqual(actual.tts_by_spn_effort_highlight_column_names, tts_by_spn_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_spn_effort_highlight_style, tts_by_spn_effort_highlight_style)
+        self.assertEqual(actual.tts_by_spn_effort_highlight_mode, tts_by_spn_effort_highlight_mode)
         self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)
+        self.assertEqual(actual.tts_by_hashtag_year_enable_pivot, tts_by_hashtag_year_enable_pivot)
+        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight, tts_by_hashtag_year_effort_highlight)
+        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight_style, tts_by_hashtag_year_effort_highlight_style)
+        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight_mode, tts_by_hashtag_year_effort_highlight_mode)
         self.assertEqual(actual.tts_by_efs_is_correct, tts_by_efs_is_correct)
         self.assertEqual(actual.tts_by_efs_n, tts_by_efs_n)
         self.assertEqual(actual.tts_by_tr_unknown_id, tts_by_tr_unknown_id)
@@ -1273,11 +1381,25 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         
         # Assert
         self.assertEqual(expected, actual)
-    def test_unboxeffort_shouldreturnexpectedtimedelta_whenproperstring(self):
+    def test_unboxeffort_shouldreturnexpectedtimedelta_whennosingorplussign(self):
 
         # Arrange
-        effort_str : str = "5h 30m"
+        effort_str_1 : str = "5h 30m"
+        effort_str_2 : str = "+5h 30m"
         expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
+
+        # Act
+        actual_td_1 : timedelta = self.df_helper.unbox_effort(effort_str = effort_str_1)
+        actual_td_2 : timedelta = self.df_helper.unbox_effort(effort_str = effort_str_2)
+
+        # Assert
+        self.assertEqual(expected_td, actual_td_1)
+        self.assertEqual(expected_td, actual_td_2)
+    def test_unboxeffort_shouldreturnexpectedtimedelta_whenminussing(self):
+
+        # Arrange
+        effort_str : str = "-5h 30m"
+        expected_td : timedelta = pd.Timedelta(hours = -5, minutes = -30).to_pytimedelta()
 
         # Act
         actual_td : timedelta = self.df_helper.unbox_effort(effort_str = effort_str)
@@ -1742,6 +1864,114 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(TTCN.EFFORTSTATUS in df.columns)
+
+    @parameterized.expand([
+        (2024, True),
+        (1000, True),
+        (9999, True),
+        (999, False),
+        (10000, False),
+        ("year", False)
+    ])
+    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.df_helper.is_year(value = value)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (2, True),
+        (0, True),
+        (-4, True),
+        (3, False),
+        (-5, False),
+    ])
+    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.df_helper.is_even(number = number)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        [["Month", "2015"], True],
+        [["Month", "2015", "↕", "2016"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
+        [[], False],
+        [["Month"], False],
+        [["Month", "2015", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
+        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
+        [["Month", "↕"], False],
+        [["Month", "↕", "↕"], False],
+        [["Month", "2015", "2015"], False],
+        [["Month", "2015", "↕", "↕"], False]
+    ])
+    def test_isbym_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.df_helper.is_bym(column_list = column_list) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_unboxbymcolumnlist_shouldrenamecolumnnamesprogressively_wheninvoked(self) -> None:
+
+        # Arrange
+        boxed_data : dict[str, list[Any]] = {
+            TTCN.MONTH: [1, 2],
+            "2015": [100, 200],
+            TTCN.TREND: ["↑", "↓"],
+            "2016": [500, 600],
+            TTCN.TREND: ["=", "↑"],
+            "2017": [900, 1000]
+        }
+        boxed_columns : list[str] = [TTCN.MONTH, "2015", TTCN.TREND, "2016", TTCN.TREND, "2017"]
+        boxed_df : DataFrame = DataFrame(boxed_data, columns = boxed_columns)
+
+        expected : list[str] = [TTCN.MONTH, "2015", f"{TTCN.TREND}1", "2016", f"{TTCN.TREND}2", "2017"]
+
+        # Act
+        actual : DataFrame = self.df_helper.unbox_bym_column_list(df = boxed_df)
+
+        # Assert
+        self.assertEqual(list(actual.columns), expected)
+    def test_boxbymcolumnlist_shouldrevertcolumnnames_wheninvoked(self) -> None:
+
+        # Arrange
+        unboxed_data : dict[str, list[Any]] = {
+            TTCN.MONTH: [1, 2],
+            "2015": [100, 200],
+            f"{TTCN.TREND}1": ["↑", "↓"],
+            "2016": [500, 600],
+            f"{TTCN.TREND}2": ["=", "↑"],
+            "2017": [900, 1000]
+        }
+        unboxed_columns : list[str] = [TTCN.MONTH, "2015", f"{TTCN.TREND}1", "2016", f"{TTCN.TREND}2", "2017"]
+        unboxed_df : DataFrame = DataFrame(unboxed_data, columns = unboxed_columns)
+
+        expected : list[str] = [TTCN.MONTH, "2015", TTCN.TREND, "2016", TTCN.TREND, "2017"]
+
+        # Act
+        actual : DataFrame = self.df_helper.box_bym_column_list(df = unboxed_df)
+
+        # Assert
+        self.assertEqual(list(actual.columns), expected)
 class BYMFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1805,72 +2035,18 @@ class BYMFactoryTestCase(unittest.TestCase):
 class BYMSplitterTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.bym_splitter = BYMSplitter()
+        self.bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
     
-    @parameterized.expand([
-        (2024, True),
-        (1000, True),
-        (9999, True),
-        (999, False),
-        (10000, False),
-        ("year", False)
-    ])
-    def test_isyear_shouldreturnexpectedbool_wheninvoked(self, value : Any, expected : bool) -> None:
-        
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
         # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+
         # Act
-        actual : bool = self.bym_splitter._BYMSplitter__is_year(value = value)  # type: ignore
+        bym_splitter : BYMSplitter = BYMSplitter(df_helper = df_helper)
 
         # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (2, True),
-        (0, True),
-        (-4, True),
-        (3, False),
-        (-5, False),
-    ])
-    def test_iseven_shouldreturnexpectedbool_wheninvoked(self, number : int, expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bym_splitter._BYMSplitter__is_even(number = number)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [["Month", "2015"], True],
-        [["Month", "2015", "↕", "2016"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
-        [[], False],
-        [["Month"], False],
-        [["Month", "2015", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
-        [["Month", "↕"], False],
-        [["Month", "↕", "↕"], False],
-        [["Month", "2015", "2015"], False],
-        [["Month", "2015", "↕", "↕"], False]
-    ])
-    def test_isvalid_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.bym_splitter._BYMSplitter__is_valid(column_list = column_list) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
+        self.assertIsInstance(bym_splitter, BYMSplitter)
 
     @parameterized.expand([
         (1, True),
@@ -1999,6 +2175,349 @@ class BYMSplitterTestCase(unittest.TestCase):
         # Act & Assert
         with self.assertRaises(Exception):
             self.bym_splitter.create_sub_dfs(df = df)
+class EffortCellTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_whenvalidarguments(self) -> None:
+
+        # Arrange
+        coordinate_pair : Tuple[int, int] = (5, 10)
+        effort_str : str = "10h 00m"
+        effort_td : timedelta = timedelta(hours = 10)
+
+        # Act
+        effort_cell : EffortCell = EffortCell(
+            coordinate_pair = coordinate_pair,
+            effort_str = effort_str,
+            effort_td = effort_td
+        )
+
+        # Assert
+        self.assertEqual(effort_cell.coordinate_pair, coordinate_pair)
+        self.assertEqual(effort_cell.effort_str, effort_str)
+        self.assertEqual(effort_cell.effort_td, effort_td)
+class EffortHighlighterTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.effort_highlighter : EffortHighlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
+
+        data : dict[str, list] = {
+            "Month": ["1", "2"],
+            "2015": ["00h 00m", "00h 00m"],
+            "↕": ["↑", "↑"],
+            "2016": ["18h 00m", "45h 30m"],
+            "↕_duplicate_1": ["↑", "↑"],
+            "2017": ["88h 30m", "65h 30m"]
+        }
+        columns_01 : list[str] = ["Month", "2015", "↕", "2016", "↕", "2017"]
+        self.df_with_duplicates : DataFrame = DataFrame(data, columns = columns_01)
+
+        columns_02 : list[str] = ["Month", "2015", "↕", "2016", "↕_duplicate_1", "2017"]
+        self.df_without_duplicates : DataFrame = DataFrame(data, columns = columns_02)
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+
+        # Act
+        actual : EffortHighlighter = EffortHighlighter(df_helper = df_helper)
+
+        # Assert
+        self.assertIsInstance(actual, EffortHighlighter)
+    def test_hasduplicatecolumnnames_shouldreturntrue_whenduplicatecolumnames(self) -> None:
+
+        # Arrange
+        # Act
+        actual : bool = self.effort_highlighter._EffortHighlighter__has_duplicate_column_names(df = self.df_with_duplicates) # type: ignore
+
+        # Assert
+        self.assertTrue(actual)
+    def test_hasduplicatecolumnnames_shouldreturnfalse_whennoduplicatecolumnames(self) -> None:
+
+        # Arrange
+        # Act
+        actual : bool = self.effort_highlighter._EffortHighlighter__has_duplicate_column_names(df = self.df_without_duplicates) # type: ignore
+
+        # Assert
+        self.assertFalse(actual)
+    def test_validate_shouldraiseexception_whenduplicatecolumnamesandcolorhighlight(self) -> None:
+
+        # Arrange
+        expected : str = _MessageCollection.provided_df_has_duplicate_column_names(EFFORTSTYLE.color_highlight)
+        
+        # Act
+        with self.assertRaises(Exception) as context:
+            self.effort_highlighter._EffortHighlighter__validate(df = self.df_with_duplicates, style = EFFORTSTYLE.color_highlight) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, str(context.exception))
+    
+    @parameterized.expand([
+        ("00h 00m", True),
+        ("10h 45m", True),
+        ("101h 30m", True),
+        ("+71h 00m", True),
+		("+159h 00m", True),
+        ("-79h 30m", True),
+        ("-455h 45m", True),
+        ("invalid", False),
+        ("10h 60m", False),
+        ("h 30m", False),
+        ("-10h m", False),
+        ("+h m", False)
+    ])
+    def test_iseffort_shouldreturnexpectedresult_wheninvoked(self, effort: str, expected: bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.effort_highlighter._EffortHighlighter__is_effort(cell_content = effort)    # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+    def test_appendneweffortcell_shouldappendprovidedcell_wheninvoked(self) -> None:
+        
+        # Arrange
+        effort_cells : list[EffortCell] = []
+        coordinate_pair : Tuple[int, int] = (0, 1)
+        cell_content : str = "5h 30m"
+        effort_td : timedelta = timedelta(hours = 5, minutes = 30)
+
+        # Act
+        self.effort_highlighter._EffortHighlighter__append_new_effort_cell(effort_cells, coordinate_pair, cell_content) # type: ignore
+
+        # Assert
+        self.assertEqual(len(effort_cells), 1)
+        self.assertEqual(effort_cells[0].coordinate_pair, coordinate_pair)
+        self.assertEqual(effort_cells[0].effort_str, cell_content)
+        self.assertEqual(effort_cells[0].effort_td, effort_td)
+    def test_extractrow_shouldreturneffortcells_whenrowhasvalidtimes(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m"], "↕": ["↑"], "2016": ["20h 45m"]})
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__extract_row(df = df, row_idx = 0)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "10h 30m")
+        self.assertEqual(actual[1].effort_str, "20h 45m")
+
+    @parameterized.expand([
+        (EFFORTMODE.top_one_effort_per_row, 1),
+        (EFFORTMODE.top_three_efforts, 3)
+    ])
+    def test_extractn_shouldreturnexpected_whenvalid(self, mode: EFFORTMODE, expected: int) -> None:
+        
+        # Arrange
+        # Act
+        actual : int = self.effort_highlighter._EffortHighlighter__extract_n(mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+    def test_extractn_shouldraiseexception_wheninvalid(self) -> None:
+        
+        # Arrange
+        mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+
+        # Act & Assert
+        with self.assertRaises(Exception):
+            self.effort_highlighter._EffortHighlighter__extract_n(mode = mode)   # type: ignore
+    def test_extracttopneffortcells_shouldreturntopncells_wheninvoked(self) -> None:
+
+        # Arrange
+        effort_cells : list[EffortCell] = [
+            EffortCell(coordinate_pair = (0, 0), effort_str = "10h 00m", effort_td = timedelta(hours = 10)),
+            EffortCell(coordinate_pair = (0, 1), effort_str = "5h 30m", effort_td = timedelta(hours = 5, minutes = 30)),
+            EffortCell(coordinate_pair = (0, 2), effort_str = "20h 45m", effort_td = timedelta(hours = 20, minutes = 45))
+        ]
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__extract_top_n_effort_cells(effort_cells = effort_cells, n = 2)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "10h 00m")
+    def test_calculateeffortcells_shouldreturnexpectedcells_whentoponeeffortperrow(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "20h 00m")
+    def test_calculateeffortcells_shouldreturnexpectedcells_whentopthreeefforts(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 3)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "20h 00m")
+        self.assertEqual(actual[2].effort_str, "15h 45m")
+    def test_calculateeffortcells_shouldraiseexception_wheninvalidmode(self) -> None:
+
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+
+        expected : str = _MessageCollection.provided_mode_not_supported(mode)
+        
+        # Act
+        with self.assertRaises(Exception) as context:
+            self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, str(context.exception))
+    def test_tryfilterbycolumnnames_shouldreturnfiltereddf_whencolumnnamesareprovided(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({
+            "2015" : ["10h 30m", "15h 45m"], 
+            "↕" : ["↑", "↑"], 
+            "2016" : ["20h 45m", "20h 00m"]
+        })        
+        column_names : list[str] = ["2015", "2016"]
+
+        expected : DataFrame = df[column_names]
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__try_filter_by_column_names(df = df, column_names = column_names)   # type: ignore
+
+        # Assert
+        assert_frame_equal(actual, expected)
+    def test_tryfilterbycolumnnames_shouldreturndfasis_whencolumnnamesareempty(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({
+            "2015" : ["10h 30m", "15h 45m"], 
+            "↕" : ["↑", "↑"], 
+            "2016" : ["20h 45m", "20h 00m"]
+        })             
+        column_names : list[str] = []
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__try_filter_by_column_names(df = df, column_names = column_names)   # type: ignore
+
+        # Assert
+        assert_frame_equal(actual, df)
+    def test_applytextualhighlights_shouldsurroundeffortcellsswithtokens_wheninvoked(self) -> None:
+
+        # Arrange
+        effort_cells : list[EffortCell] = [
+            EffortCell((0, 1), "00h 00m", timedelta(hours = 0, minutes = 0)),
+            EffortCell((1, 3), "45h 30m", timedelta(hours = 45, minutes = 30))
+        ]
+        tokens : Tuple[str, str] = ("[[ ", " ]]")
+        expected : DataFrame = self.df_without_duplicates.copy(deep = True)
+        expected.iloc[0, 1] = "[[ 00h 00m ]]"
+        expected.iloc[1, 3] = "[[ 45h 30m ]]"
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__apply_textual_highlights(self.df_without_duplicates, effort_cells, tokens)   # type: ignore
+
+        # Assert
+        self.assertTrue(expected.equals(actual))
+    def test_applycolorhighlights_shouldapplybackgroundtoeffortcells_wheninvoked(self) -> None:
+
+        # Arrange
+        effort_cells : list[EffortCell] = [
+            EffortCell((0, 1), "00h 00m", timedelta(hours = 0, minutes = 0)),
+            EffortCell((1, 3), "45h 30m", timedelta(hours = 45, minutes = 30))
+        ]
+        color : COLORNAME = COLORNAME.skyblue
+
+        expected : dict[Tuple[int, int], list] = {
+            (0, 1): [("background-color", color)],
+            (1, 3): [("background-color", color)]
+        }
+
+        # Act
+        actual : Styler = self.effort_highlighter._EffortHighlighter__apply_color_highlights(self.df_without_duplicates, effort_cells, color)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual._compute().ctx)   # type: ignore
+    def test_highlight_shouldreturnstyledataframe_whentextualhighlight(self) -> None:
+
+        # Arrange
+        style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        tokens : Tuple[str, str] = ("[[ ", " ]]")
+
+        expected : DataFrame = self.df_without_duplicates.copy(deep = True)
+        expected.iloc[0, 5] = "[[ 88h 30m ]]"
+        expected.iloc[1, 5] = "[[ 65h 30m ]]"
+
+        # Act
+        actual : DataFrame = self.effort_highlighter.highlight(self.df_without_duplicates, style, mode, tokens) # type: ignore
+
+        # Assert
+        assert_frame_equal(expected, actual)
+    def test_highlight_shouldreturnstyler_whencolorhighlight(self) -> None:
+
+        # Arrange
+        style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        color : COLORNAME = COLORNAME.skyblue
+
+        expected : dict[Tuple[int, int], list] = {
+            (0, 5): [("background-color", color)],
+            (1, 5): [("background-color", color)]
+        }
+
+        # Act
+        actual : Styler = self.effort_highlighter.highlight(self.df_without_duplicates, style, mode, color = color) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual._compute().ctx)   # type: ignore
+    def test_highlight_shouldraiseexception_wheninvalidstyle(self) -> None:
+
+        # Arrange
+        style : EFFORTSTYLE = cast(EFFORTSTYLE, "Invalid")
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        expected : str = _MessageCollection.provided_style_not_supported(style)
+
+        # Act
+        with self.assertRaises(Exception) as context:
+            self.effort_highlighter.highlight(df = self.df_without_duplicates, style = style, mode = mode)
+
+        # Assert
+        self.assertEqual(expected, str(context.exception))
+    def test_highlight_shouldcalltryfilterbycolumnnames_whencolumnnamesareprovided(self) -> None:
+        
+        # Arrange
+        style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        color : COLORNAME = COLORNAME.skyblue
+        tokens : Tuple[str, str] = ("[[ ", " ]]")
+        column_names : list[str] = ["2015", "2016"]
+
+        # Act, Assert
+        with patch.object(EffortHighlighter, "_EffortHighlighter__try_filter_by_column_names") as try_filter_by_column_names:
+            self.effort_highlighter.highlight(
+                df = self.df_without_duplicates, 
+                style = style, 
+                mode = mode, 
+                color = color, 
+                tokens = tokens, 
+                column_names = column_names
+            )
+
+            try_filter_by_column_names.assert_called()
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -2138,15 +2657,40 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df, actual_df)  
-    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
+    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_whenenablepivotisfalse(self):
 
         # Arrange
-        years : list[int] = [2024]
         tt_df : DataFrame = ObjectMother().get_tt_df()
+        years : list[int] = [2024]
+        enable_pivot : bool = False
         expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_year_df()
 
         # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(tt_df = tt_df, years = years)
+        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(
+            tt_df = tt_df, 
+            years = years, 
+            enable_pivot = enable_pivot
+        )
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
+    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_whenenablepivotistrue(self):
+
+        # Arrange
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+        years : list[int] = [2024]
+        enable_pivot : bool = True
+
+        expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_year_df()
+        expected_df = expected_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).reset_index()
+        expected_df = expected_df.fillna("")
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(
+            tt_df = tt_df, 
+            years = years, 
+            enable_pivot = enable_pivot
+        )
 
         # Assert
         assert_frame_equal(expected_df , actual_df)  
@@ -2201,7 +2745,7 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
 
         self.md_factory : TTMarkdownFactory = TTMarkdownFactory(
             markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bym_splitter = BYMSplitter()
+            bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
         )
         self.paragraph_title : str = "Time Tracking By Month"
         self.last_update : datetime = datetime(2024, 11, 30)
@@ -2350,6 +2894,7 @@ class TTAdapterTestCase(unittest.TestCase):
         self.software_project_names : list[str] = [ "nwshared", "nwpackageversions"]
         self.software_project_names_by_spv : list[str] = [ "nwshared" ]
         self.tts_by_year_month_display_only_years : Optional[list[int]] = [2024]
+        self.tts_by_hashtag_year_enable_pivot = False
         self.tts_by_spn_remove_untagged : bool = True
         self.tts_by_efs_is_correct : bool = True
         self.tts_by_tr_unknown_id : str = "Unknown"
@@ -2369,12 +2914,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         id : TTID = TTID.TTSBYMONTH
@@ -2392,12 +2939,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
         
         id : TTID = TTID.TTSBYMONTH
@@ -2420,12 +2969,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2451,12 +3002,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2481,12 +3034,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2511,12 +3066,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2543,12 +3100,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2575,12 +3134,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2607,12 +3168,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2639,12 +3202,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2665,20 +3230,24 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttsbyhashtagyeardf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
+        # Arrange
         df_factory : TTDataFrameFactory = Mock()
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
         setting_bag.years = self.years
+        setting_bag.tts_by_hashtag_year_enable_pivot = self.tts_by_hashtag_year_enable_pivot
 
         tt_df : Mock = Mock()
 
@@ -2688,7 +3257,8 @@ class TTAdapterTestCase(unittest.TestCase):
         # Assert
         df_factory.create_tts_by_hashtag_year_df.assert_called_once_with(
             tt_df = tt_df,
-            years = self.years
+            years = self.years,
+            enable_pivot = self.tts_by_hashtag_year_enable_pivot
         )
     def test_createttsbyefstpl_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
@@ -2697,12 +3267,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2725,12 +3297,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2755,12 +3329,14 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         tt_sequencer : TTSequencer = Mock()
         md_factory : TTMarkdownFactory = Mock()
+        effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : Mock = Mock()
@@ -2820,11 +3396,14 @@ class TTAdapterTestCase(unittest.TestCase):
         md_factory : TTMarkdownFactory = Mock()
         md_factory.create_tts_by_month_md.return_value = tts_by_month_md
 
+        effort_highlighter : EffortHighlighter = Mock()
+
         tt_adapter : TTAdapter = TTAdapter(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
         )
 
         setting_bag : SettingBag = ObjectMother.get_setting_bag()
@@ -3050,17 +3629,18 @@ class ComponentBagTestCase(unittest.TestCase):
         component_bag : ComponentBag = ComponentBag(
             file_path_manager = FilePathManager(),
             file_manager = FileManager(file_path_manager = FilePathManager()),
+            displayer = Displayer(),
+            tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
             tt_adapter = TTAdapter(
                 df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
                 bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
                 tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
                 md_factory = TTMarkdownFactory(
                     markdown_helper = MarkdownHelper(formatter = Formatter()),
-                    bym_splitter = BYMSplitter())
+                    bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
                 ),
-            tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
-            displayer = Displayer()
-        )
+                effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
+            ))
 
         # Assert
         self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
@@ -3253,7 +3833,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df =tts_by_year_df
+            df = tts_by_year_df
         )
     def test_processttsbyyearmonth_shoulddisplay_whenoptionisdisplay(self) -> None:
         

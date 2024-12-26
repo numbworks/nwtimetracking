@@ -19,8 +19,11 @@ from matplotlib.dates import relativedelta
 from numpy import uint
 from numpy.typing import ArrayLike
 from pandas import DataFrame, Series, NamedAgg
+from pandas import Index
+from pandas.io.formats.style import Styler
+from re import Match
 from types import SimpleNamespace
-from typing import Any, Callable, Literal, Optional, Tuple, cast
+from typing import Any, Callable, Literal, Optional, Tuple, Union, cast
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
 
 # LOCAL MODULES
@@ -98,6 +101,24 @@ class CRITERIA(StrEnum):
     exclude = auto()
     include = auto()
     do_nothing = auto()
+class COLORNAME(StrEnum):
+
+    '''Represents a collection of color names.'''
+
+    skyblue = auto()
+    lightgreen = auto()
+class EFFORTSTYLE(StrEnum):
+
+    '''Represents a collection of highlight styles for EffortHighlighter.'''
+
+    textual_highlight = auto()
+    color_highlight = auto()
+class EFFORTMODE(StrEnum):
+
+    '''Represents a collection of modes for EffortHighlighter.'''
+
+    top_one_effort_per_row = auto()
+    top_three_efforts = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -151,8 +172,8 @@ class _MessageCollection():
         return f"Something failed while saving '{file_path}'."
 
     @staticmethod
-    def provided_df_invalid_column_list(column_list : list[str]) -> str:
-        return f"The provided df has an invalid column list ('{column_list}')."
+    def provided_df_invalid_bym_column_list(column_list : list[str]) -> str:
+        return f"The provided df has an invalid BYM column list ('{column_list}')."
 
     @staticmethod
     def no_strategy_available_for_provided_criteria(criteria : CRITERIA) -> str:
@@ -160,6 +181,16 @@ class _MessageCollection():
     @staticmethod
     def variable_cant_be_less_than_one(variable_name : str) -> str:
         return f"'{variable_name}' can't be < 1."
+
+    @staticmethod
+    def provided_df_has_duplicate_column_names(style : EFFORTSTYLE) -> str:
+        return f"The provided df has duplicate column names, therefore '{style}' is not supported."
+    @staticmethod
+    def provided_mode_not_supported(mode : EFFORTMODE):
+        return f"The provided mode is not supported: '{mode}'."
+    @staticmethod
+    def provided_style_not_supported(style : EFFORTSTYLE):
+        return f"The provided style is not supported: '{style}'."    
 
 # CLASSES
 @dataclass(frozen=True)
@@ -370,12 +401,35 @@ class SettingBag():
     tt_head_n : Optional[uint] = field(default = uint(5))
     tt_display_head_n_with_tail : bool = field(default = True)
     tt_hide_index : bool = field(default = True)
+    tts_by_month_effort_highlight : bool = field(default = True)
+    tts_by_month_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.textual_highlight)
+    tts_by_month_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_one_effort_per_row)    
+    tts_by_year_effort_highlight : bool = field(default = True)
+    tts_by_year_effort_highlight_column_names : list[str] = field(default_factory = lambda : [TTCN.EFFORT])
+    tts_by_year_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.color_highlight)
+    tts_by_year_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_three_efforts)    
     tts_by_year_month_display_only_years : Optional[list[int]] = field(default_factory = lambda : YearProvider().get_most_recent_x_years(x = uint(1)))
     tts_by_year_month_spnv_formatters : dict = field(default_factory = lambda : { "%_DME" : "{:.2f}", "%_TME" : "{:.2f}" })
+    tts_by_year_month_spnv_effort_highlight : bool = field(default = True)
+    tts_by_year_month_spnv_effort_highlight_column_names : list[str] = field(default_factory = lambda : [TTCN.EFFORT])
+    tts_by_year_month_spnv_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.color_highlight)
+    tts_by_year_month_spnv_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_three_efforts)    
     tts_by_year_spnv_formatters : dict = field(default_factory = lambda : { "%_DYE" : "{:.2f}", "%_TYE" : "{:.2f}" })
+    tts_by_year_spnv_effort_highlight : bool = field(default = True)
+    tts_by_year_spnv_effort_highlight_column_names : list[str] = field(default_factory = lambda : [TTCN.EFFORT])
+    tts_by_year_spnv_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.color_highlight)
+    tts_by_year_spnv_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_three_efforts)    
     tts_by_spn_formatters : dict = field(default_factory = lambda : { "%_DE" : "{:.2f}", "%_TE" : "{:.2f}" })
     tts_by_spn_remove_untagged : bool = field(default = True)
+    tts_by_spn_effort_highlight : bool = field(default = True)
+    tts_by_spn_effort_highlight_column_names : list[str] = field(default_factory = lambda : [TTCN.EFFORT])
+    tts_by_spn_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.color_highlight)
+    tts_by_spn_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_three_efforts)
     tts_by_hashtag_formatters : dict = field(default_factory = lambda : { "Effort%" : "{:.2f}" })
+    tts_by_hashtag_year_enable_pivot : bool = field(default = True)
+    tts_by_hashtag_year_effort_highlight : bool = field(default = True)
+    tts_by_hashtag_year_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.color_highlight)
+    tts_by_hashtag_year_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_one_effort_per_row)
     tts_by_efs_is_correct : bool = field(default = False)
     tts_by_efs_n : uint = field(default = uint(25))
     tts_by_tr_unknown_id : str = field(default = "Unknown")
@@ -656,6 +710,100 @@ class TTDataFrameHelper():
             time_range_id = unknown_id
 
         return time_range_id
+
+    def is_year(self, value : Any) -> bool:
+
+        """Returns True if value is a valid year."""
+
+        try:       
+            year : int = int(value)
+            return 1000 <= year <= 9999
+        except:
+            return False
+    def is_even(self, number : int) -> bool:
+        
+        """Returns True if number is even."""
+
+        return number % 2 == 0
+    def is_bym(self, column_list : list[str]) -> bool:
+        
+        """
+            Validates the column names of a certain DataFrame according to the specified pattern.
+            
+            Valid::
+
+                ["Month", "2015"]
+                ["Month", "2015", "↕", "2016"]
+                ["Month", "2015", "↕", "2016", "↕", "2017"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"]
+                ...
+
+            Invalid::
+
+                []
+                ["Month"]
+                ["Month", "2015", "↕"]
+                ["Month", "2015", "↕", "2016", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"]
+                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"]
+                ["Month", "↕"]
+                ["Month", "↕", "↕"]
+                ["Month", "2015", "2015"]
+                ["Month", "2015", "↕", "↕"]
+                ...
+        """
+
+        if len(column_list) < 2 or column_list[0] != TTCN.MONTH:
+            return False
+
+        for i in range(1, len(column_list)):
+            if i % 2 == 1:
+                if not self.is_year(column_list[i]):
+                    return False
+            else:
+                if column_list[i] != TTCN.TREND:
+                    return False
+
+        return self.is_even(number = len(column_list))
+    def unbox_bym_column_list(self, df : DataFrame) -> DataFrame:
+        
+        '''
+            Renames all "↕" column names by suffixing "↕" with a progressive number ["↕1", "↕2", "↕3", ...].
+
+            BYM DataFrames must be 'unboxed' before being piped into certain processing tasks due to a Pandas limitation.
+            Pandas does not support DataFrames with multiple columns sharing the same name.
+        '''
+
+        counter : int = 1
+        new_columns : list[str] = []
+
+        for col in df.columns:
+            if col == TTCN.TREND:
+                new_columns.append(f"{TTCN.TREND}{counter}")
+                counter += 1
+            else:
+                new_columns.append(col)
+
+        df.columns = Index(new_columns)
+        
+        return df
+    def box_bym_column_list(self, df : DataFrame) -> DataFrame:
+        
+        '''
+            Revert back ["↕1", "↕2", "↕3", ...] ('unboxed' column names) to "↕".
+            
+            BYM DataFrames must be 'boxed' before being displayed.
+        '''
+        
+        new_columns : list[str] = [TTCN.TREND if col.startswith(TTCN.TREND) and col[1:].isdigit() else col for col in df.columns.to_list()]
+        df.columns = Index(new_columns)
+        
+        return df
 class BYMFactory():
 
     '''Encapsulates all the logic related to the creation of *_by_month_df dataframes.'''
@@ -978,65 +1126,12 @@ class BYMSplitter():
     
     '''Encapsulates all the logic related to the splitting of *_by_month_df dataframes.'''
 
-    def __is_year(self, value : Any) -> bool:
+    __df_helper : TTDataFrameHelper
 
-        """Returns True if value is a valid year."""
+    def __init__(self, df_helper : TTDataFrameHelper) -> None:
 
-        try:       
-            year : int = int(value)
-            return 1000 <= year <= 9999
-        except:
-            return False
-    def __is_even(self, number : int) -> bool:
-        
-        """Returns True if number is even."""
+        self.__df_helper = df_helper
 
-        return number % 2 == 0
-    def __is_valid(self, column_list : list[str]) -> bool:
-        
-        """
-            Validates the column names of a certain DataFrame according to the specified pattern.
-            
-            Valid::
-
-                ["Month", "2015"]
-                ["Month", "2015", "↕", "2016"]
-                ["Month", "2015", "↕", "2016", "↕", "2017"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"]
-                ...
-
-            Invalid::
-
-                []
-                ["Month"]
-                ["Month", "2015", "↕"]
-                ["Month", "2015", "↕", "2016", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"]
-                ["Month", "↕"]
-                ["Month", "↕", "↕"]
-                ["Month", "2015", "2015"]
-                ["Month", "2015", "↕", "↕"]
-                ...
-        """
-
-        if len(column_list) < 2 or column_list[0] != "Month":
-            return False
-
-        for i in range(1, len(column_list)):
-            if i % 2 == 1:
-                if not self.__is_year(column_list[i]):
-                    return False
-            else:
-                if column_list[i] != '↕':
-                    return False
-
-        return self.__is_even(number = len(column_list))
     def __is_in_sequence(self, number : int) -> bool:
         
         """
@@ -1094,7 +1189,7 @@ class BYMSplitter():
             start_index = tmp.index(start_value)
             index_list.extend(tmp[(start_index + 1):(start_index + 7)])
 
-        if self.__is_even(index_lists[-1][-1]):
+        if self.__df_helper.is_even(index_lists[-1][-1]):
             index_lists[-1].remove(index_lists[-1][-1])
 
         return index_lists
@@ -1134,8 +1229,8 @@ class BYMSplitter():
 
         column_list : list[str] = df.columns.to_list()
 
-        if not self.__is_valid(column_list = column_list):
-            raise Exception(_MessageCollection.provided_df_invalid_column_list(column_list))
+        if not self.__df_helper.is_bym(column_list = column_list):
+            raise Exception(_MessageCollection.provided_df_invalid_bym_column_list(column_list))
         
         if len(column_list) == 2:
             return [df]
@@ -1145,6 +1240,200 @@ class BYMSplitter():
         sub_dfs : list[DataFrame] = self.__filter_by_index_lists(df = df, index_lists = index_lists)
 
         return sub_dfs
+@dataclass(frozen = True)
+class EffortCell():
+    
+    '''Collects all the information related to a DataFrame cell that are required by EffortHighlighter.'''
+
+    coordinate_pair : Tuple[int, int]
+    effort_str : str
+    effort_td : timedelta
+class EffortHighlighter():
+
+    '''Encapsulates all the logic related to highlighting cells in dataframes containing efforts.'''
+
+    __df_helper : TTDataFrameHelper
+
+    def __init__(self, df_helper : TTDataFrameHelper) -> None:
+
+        self.__df_helper = df_helper
+
+    def __has_duplicate_column_names(self, df : DataFrame) -> bool:
+        
+        '''Return True if the DataFrame has duplicate column names.'''
+
+        return bool(df.columns.duplicated().any())
+    def __validate(self, df : DataFrame, style : EFFORTSTYLE) -> None: 
+
+        '''
+            | EFFORTSTYLE       | HAS_DUPLICATE_COLUMN_NAMES | OUTCOME   |
+            |-------------------|----------------------------|-----------|
+            | textual_highlight | True                       | OK        |
+            | textual_highlight | False                      | OK        |
+            | color_highlight   | True                       | EXCEPTION |
+            | color_highlight   | FALSE                      | OK        |
+        '''
+
+        flag : bool = self.__has_duplicate_column_names(df = df)
+
+        if flag == True and style == EFFORTSTYLE.color_highlight:
+            raise Exception(_MessageCollection.provided_df_has_duplicate_column_names(style))
+
+    def __is_effort(self, cell_content : str) -> bool :
+
+        '''Returns True if content in ["00h 00m", "08h 00m", "20h 45m", "101h 30m", "+71h 00m", "-455h 45m", ...].'''
+
+        pattern : str = r"^[+-]?(\d{2,})h (0[0-9]|[1-5][0-9])m$"
+        match : Optional[Match[str]] = re.fullmatch(pattern = pattern, string = cell_content)
+
+        if match is not None:
+            return True
+        else:
+            return False
+    def __append_new_effort_cell(self, effort_cells : list[EffortCell], coordinate_pair : Tuple[int, int], cell_content : str) -> None:
+
+        '''Creates and append new EffortCell object to effort_cells.'''
+
+        effort_cell : EffortCell = EffortCell(
+            coordinate_pair = coordinate_pair,
+            effort_str = cell_content,
+            effort_td = self.__df_helper.unbox_effort(effort_str = cell_content)
+        )
+        
+        effort_cells.append(effort_cell)
+    def __extract_row(self, df : DataFrame, row_idx : int) -> list[EffortCell]:
+
+        '''Returns a collection of EffortCell objects for provided arguments.'''
+
+        effort_cells : list[EffortCell] = []
+
+        for col_idx in range(len(df.columns)):
+
+            coordinate_pair : Tuple[int, int] = (row_idx, col_idx)
+            cell_content : str = str(df.iloc[row_idx, col_idx])
+
+            if self.__is_effort(cell_content = cell_content):
+                self.__append_new_effort_cell(effort_cells, coordinate_pair, cell_content)
+
+        return effort_cells
+    def __extract_n(self, mode : EFFORTMODE) -> int:
+
+        '''Extracts n from mode.'''
+
+        if mode == EFFORTMODE.top_one_effort_per_row:
+            return 1
+        elif mode == EFFORTMODE.top_three_efforts:
+            return 3
+        else:
+            raise Exception(_MessageCollection.provided_mode_not_supported(mode))
+    def __extract_top_n_effort_cells(self, effort_cells : list[EffortCell], n : int) -> list[EffortCell]:
+
+        '''Extracts the n objects in bym_cells with the highest effort_td.'''
+
+        sorted_cells : list[EffortCell] = sorted(effort_cells, key = lambda cell : cell.effort_td, reverse = True)
+        top_n : list[EffortCell] = sorted_cells[:n]
+
+        return top_n
+    def __calculate_effort_cells(self, df : DataFrame, mode : EFFORTMODE) -> list[EffortCell]:
+
+        '''Returns a list of EffortCell objects according to df and mode.'''
+
+        effort_cells : list[EffortCell] = []
+
+        last_row_idx : int = len(df)
+        n : int = self.__extract_n(mode = mode)
+        current : list[EffortCell] = []
+
+        if mode == EFFORTMODE.top_one_effort_per_row:
+            for row_idx in range(last_row_idx):
+
+                current = self.__extract_row(df = df, row_idx = row_idx)
+                current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
+                effort_cells.extend(current)
+                
+        elif mode == EFFORTMODE.top_three_efforts:
+            for row_idx in range(last_row_idx):
+                
+                current = self.__extract_row(df = df, row_idx = row_idx)
+                effort_cells.extend(current)
+
+            effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
+
+        else:
+            raise Exception(_MessageCollection.provided_mode_not_supported(mode))
+
+        return effort_cells
+    def __try_filter_by_column_names(self, df : DataFrame, column_names : list[str]) -> DataFrame:
+
+        '''Filters df to include only the specified column names or returns df as-is.'''
+        
+        if column_names:
+            return df[column_names]
+        
+        return df
+
+    def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell], tokens : Tuple[str, str]) -> DataFrame:
+
+        '''Adds two tokens around the content of the cells listed in effort_cells.'''
+
+        styled_df : DataFrame = df.copy(deep = True)
+
+        left_h : str = tokens[0]
+        right_h : str = tokens[1]
+
+        for effort_cell in effort_cells:
+
+            row, col = effort_cell.coordinate_pair
+
+            if row < len(df) and col < len(df.columns):
+                styled_df.iloc[row, col] = f"{left_h}{str(df.iloc[row, col])}{right_h}"
+            
+        return styled_df
+    def __apply_color_highlights(self, df : DataFrame, effort_cells : list[EffortCell], color : COLORNAME) -> Styler:
+        
+        '''Adds color as background color for the cells listed in effort_cells.'''
+
+        styled_df : DataFrame = DataFrame('', index = df.index, columns = df.columns)
+        
+        for effort_cell in effort_cells:
+
+            row, col = effort_cell.coordinate_pair
+
+            if row < len(df) and col < len(df.columns):
+                styled_df.iloc[row, col] = f"background-color: {color}"
+
+        styler : Styler = df.style.apply(lambda _ : styled_df, axis = None)
+
+        return styler
+
+    def highlight(
+        self, 
+        df : DataFrame, 
+        style : EFFORTSTYLE, 
+        mode : EFFORTMODE, 
+        color : COLORNAME = COLORNAME.skyblue, 
+        tokens : Tuple[str, str] = ("[[ ", " ]]"),
+        column_names : list[str] = []
+        ) -> Union[Styler, DataFrame]:
+
+        '''
+            Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
+            Returns a df with highlighted cells as per arguments. 
+        '''
+
+        self.__validate(df = df, style = style)
+
+        tmp_df : DataFrame = df.copy(deep = True)
+        self.__try_filter_by_column_names(df = tmp_df, column_names = column_names)
+
+        effort_cells : list[EffortCell] = self.__calculate_effort_cells(df = df, mode = mode)
+
+        if style == EFFORTSTYLE.color_highlight:
+            return self.__apply_color_highlights(df = tmp_df, effort_cells = effort_cells, color = color)
+        elif style == EFFORTSTYLE.textual_highlight:
+            return self.__apply_textual_highlights(df = tmp_df, effort_cells = effort_cells, tokens = tokens)
+        else:
+            raise Exception(_MessageCollection.provided_style_not_supported(style))
 class TTDataFrameFactory():
 
     '''Encapsulates all the logic related to dataframe creation out of "Time Tracking.xlsx".'''
@@ -1778,7 +2067,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
 
         return tts_df
-    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
+    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, years : list[int], enable_pivot : bool) -> DataFrame:
 
         '''
                 Year	Hashtag	        Effort
@@ -1790,6 +2079,10 @@ class TTDataFrameFactory():
     
         tts_df : DataFrame = self.__create_raw_tts_by_year_hashtag(tt_df = tt_df, years = years)
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
+
+        if enable_pivot:
+            tts_df = tts_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).reset_index()
+            tts_df = tts_df.fillna("")
 
         return tts_df
     def create_tts_by_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
@@ -2343,19 +2636,22 @@ class TTAdapter():
     __bym_factory : BYMFactory
     __tt_sequencer : TTSequencer
     __md_factory : TTMarkdownFactory
+    __effort_highlighter : EffortHighlighter
 
     def __init__(
             self, 
             df_factory : TTDataFrameFactory, 
             bym_factory : BYMFactory, 
             tt_sequencer : TTSequencer,
-            md_factory : TTMarkdownFactory
+            md_factory : TTMarkdownFactory,
+            effort_highlighter : EffortHighlighter
         ) -> None:
         
         self.__df_factory = df_factory
         self.__bym_factory = bym_factory
         self.__tt_sequencer = tt_sequencer
         self.__md_factory = md_factory
+        self.__effort_highlighter = effort_highlighter
 
     def extract_file_name_and_paragraph_title(self, id : TTID, setting_bag : SettingBag) -> Tuple[str, str]: 
     
@@ -2471,7 +2767,8 @@ class TTAdapter():
 
         tts_by_year_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_year_df(
             tt_df = tt_df,
-            years = setting_bag.years
+            years = setting_bag.years,
+            enable_pivot = setting_bag.tts_by_hashtag_year_enable_pivot
         )
 
         return tts_by_year_hashtag_df
@@ -2566,7 +2863,7 @@ class TTAdapter():
         tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spn_df : DataFrame = self.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spn_spv_df : DataFrame = self.create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_year_hashtag_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_hashtag_year_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_gantt_spnv_df : DataFrame = self.create_tts_gantt_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
@@ -2586,7 +2883,7 @@ class TTAdapter():
             tts_by_year_spnv_tpl = tts_by_year_spnv_tpl,
             tts_by_spn_df = tts_by_spn_df,
             tts_by_spn_spv_df = tts_by_spn_spv_df,
-            tts_by_hashtag_year_df = tts_by_year_hashtag_df,
+            tts_by_hashtag_year_df = tts_by_hashtag_year_df,
             tts_by_hashtag_df = tts_by_hashtag_df,
             tts_by_efs_tpl = tts_by_efs_tpl,
             tts_by_tr_df = tts_by_tr_df,
@@ -2599,6 +2896,101 @@ class TTAdapter():
         )
 
         return tt_summary
+
+    def try_highlight_tts_by_month(self, tts_by_month_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_month_df
+
+        if setting_bag.tts_by_month_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_month_df,
+                style = setting_bag.tts_by_month_effort_highlight_style,
+                mode = setting_bag.tts_by_month_effort_highlight_mode
+            )
+        
+        return styler
+    def try_highlight_tts_by_year(self, tts_by_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_year_df
+
+        if setting_bag.tts_by_year_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_year_df,
+                style = setting_bag.tts_by_month_effort_highlight_style,
+                mode = setting_bag.tts_by_month_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_effort_highlight_column_names
+            )
+        
+        return styler
+    def try_highlight_tts_by_year_month_spnv(self, tts_by_year_month_spnv_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_year_month_spnv_df
+
+        if setting_bag.tts_by_year_month_spnv_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_year_month_spnv_df,
+                style = setting_bag.tts_by_year_month_spnv_effort_highlight_style,
+                mode = setting_bag.tts_by_year_month_spnv_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_month_spnv_effort_highlight_column_names
+            )
+        
+        return styler
+    def try_highlight_tts_by_year_spnv(self, tts_by_year_spnv_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_year_spnv_df
+
+        if setting_bag.tts_by_year_spnv_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_year_spnv_df,
+                style = setting_bag.tts_by_year_spnv_effort_highlight_style,
+                mode = setting_bag.tts_by_year_spnv_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_spnv_effort_highlight_column_names
+            )
+        
+        return styler
+    def try_highlight_tts_by_spn(self, tts_by_spn_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_spn_df
+
+        if setting_bag.tts_by_spn_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_spn_df,
+                style = setting_bag.tts_by_spn_effort_highlight_style,
+                mode = setting_bag.tts_by_spn_effort_highlight_mode,
+                column_names = setting_bag.tts_by_spn_effort_highlight_column_names
+            )
+        
+        return styler
+    def try_highlight_tts_by_hashtag_year(self, tts_by_hashtag_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
+
+        styler : Union[DataFrame, Styler] = tts_by_hashtag_year_df
+
+        if setting_bag.tts_by_hashtag_year_effort_highlight:
+
+            styler = self.__effort_highlighter.highlight(
+                df = tts_by_hashtag_year_df,
+                style = setting_bag.tts_by_hashtag_year_effort_highlight_style,
+                mode = setting_bag.tts_by_hashtag_year_effort_highlight_mode
+            )
+        
+        return styler
 class SettingSubset(SimpleNamespace):
 
     '''A dynamically assigned subset of SettingBag properties with a custom __str__ method that returns them as JSON.'''
@@ -2669,18 +3061,20 @@ class ComponentBag():
 
     file_path_manager : FilePathManager = field(default = FilePathManager())
     file_manager : FileManager = field(default = FileManager(file_path_manager = FilePathManager()))
-
+    displayer : Displayer = field(default = Displayer())
+    
+    tt_logger : TTLogger = field(default = TTLogger(logging_function = LambdaProvider().get_default_logging_function()))
+    
     tt_adapter : TTAdapter = field(default = TTAdapter(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
         bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
         tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
         md_factory = TTMarkdownFactory(
             markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bym_splitter = BYMSplitter())
+            bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
+            ),
+        effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
         ))
-
-    tt_logger : TTLogger = field(default = TTLogger(logging_function = LambdaProvider().get_default_logging_function()))
-    displayer : Displayer = field(default = Displayer())
 class TimeTrackingProcessor():
 
     '''Collects all the logic related to the processing of "Time Tracking.xlsx".'''

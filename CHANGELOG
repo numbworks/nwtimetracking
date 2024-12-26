@@ -1,3 +1,10 @@
+v4.8.0
+- Library:
+	- Feature: added EffortHighlighter.
+	- Feature: it's now possible to pivot tts_by_hashtag_year_df to improve readability.
+- Documentation:
+	- Feature: updated to v4.8.0.
+
 v4.7.0
 - Application:
 	- Maintenance: makefile expanded (commitavg-verbose, check-pythonversion, check-requirements).
