@@ -723,8 +723,8 @@ class MessageCollectionTestCase(unittest.TestCase):
     def test_providedmodenotsupported_shouldreturnexpectedmessage_wheninvalidmode(self) -> None:
 
         # Arrange
-        invalid_mode : EFFORTMODE = EFFORTMODE("invalid")
-        expected : str = f"The provided mode is not supported: '{invalid_mode}'"
+        invalid_mode : EFFORTMODE = cast(EFFORTMODE, "invalid")
+        expected : str = f"The provided mode is not supported: '{invalid_mode}'."
 
         # Act
         actual : str = _MessageCollection.provided_mode_not_supported(mode = invalid_mode)
@@ -734,8 +734,8 @@ class MessageCollectionTestCase(unittest.TestCase):
     def test_providedstylenotsupported_shouldreturnexpectedmessage_wheninvalidstyle(self) -> None:
 
         # Arrange
-        invalid_style : EFFORTSTYLE = EFFORTSTYLE("invalid")
-        expected : str = f"The provided style is not supported: '{invalid_style}'"
+        invalid_style : EFFORTSTYLE = cast(EFFORTSTYLE, "invalid")
+        expected : str = f"The provided style is not supported: '{invalid_style}'."
 
         # Act
         actual : str = _MessageCollection.provided_style_not_supported(style = invalid_style)
