@@ -1314,11 +1314,25 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         
         # Assert
         self.assertEqual(expected, actual)
-    def test_unboxeffort_shouldreturnexpectedtimedelta_whenproperstring(self):
+    def test_unboxeffort_shouldreturnexpectedtimedelta_whennosingorplussign(self):
 
         # Arrange
-        effort_str : str = "5h 30m"
+        effort_str_1 : str = "5h 30m"
+        effort_str_2 : str = "+5h 30m"
         expected_td : timedelta = pd.Timedelta(hours = 5, minutes = 30).to_pytimedelta()
+
+        # Act
+        actual_td_1 : timedelta = self.df_helper.unbox_effort(effort_str = effort_str_1)
+        actual_td_2 : timedelta = self.df_helper.unbox_effort(effort_str = effort_str_2)
+
+        # Assert
+        self.assertEqual(expected_td, actual_td_1)
+        self.assertEqual(expected_td, actual_td_2)
+    def test_unboxeffort_shouldreturnexpectedtimedelta_whenminussing(self):
+
+        # Arrange
+        effort_str : str = "-5h 30m"
+        expected_td : timedelta = pd.Timedelta(hours = -5, minutes = -30).to_pytimedelta()
 
         # Act
         actual_td : timedelta = self.df_helper.unbox_effort(effort_str = effort_str)
