@@ -1225,8 +1225,6 @@ class EffortCell():
     coordinate_pair : Tuple[int, int]
     effort_str : str
     effort_td : timedelta
-
-
 class EffortHighlighter():
 
     '''Encapsulates all the logic related to highlighting cells in dataframes containing efforts.'''
@@ -1394,8 +1392,6 @@ class EffortHighlighter():
             return self.__apply_textual_highlights(df = tmp_df, effort_cells = effort_cells, tokens = tokens)
         else:
             raise Exception(_MessageCollection.provided_style_not_supported(style))
-
-
 class TTDataFrameFactory():
 
     '''Encapsulates all the logic related to dataframe creation out of "Time Tracking.xlsx".'''

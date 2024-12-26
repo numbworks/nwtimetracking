@@ -17,7 +17,8 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION, _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
+from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION
+from nwtimetracking import _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
 from nwtimetracking import TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
@@ -2373,8 +2374,6 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, str(context.exception))
-
-
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
