@@ -2233,6 +2233,63 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Act & Assert
         with self.assertRaises(Exception):
             self.effort_highlighter._EffortHighlighter__extract_n(mode = mode)   # type: ignore
+    def test_extracttopneffortcells_shouldreturntopncells_wheninvoked(self) -> None:
+
+        # Arrange
+        effort_cells : list[EffortCell] = [
+            EffortCell(coordinate_pair = (0, 0), effort_str = "10h 00m", effort_td = timedelta(hours = 10)),
+            EffortCell(coordinate_pair = (0, 1), effort_str = "5h 30m", effort_td = timedelta(hours = 5, minutes = 30)),
+            EffortCell(coordinate_pair = (0, 2), effort_str = "20h 45m", effort_td = timedelta(hours = 20, minutes = 45))
+        ]
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__extract_top_n_effort_cells(effort_cells = effort_cells, n = 2)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "10h 00m")
+    def test_calculateeffortcells_shouldreturnexpectedcells_whentoponeeffortperrow(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "20h 00m")
+    def test_calculateeffortcells_shouldreturnexpectedcells_whentopthreeefforts(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 3)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "20h 00m")
+        self.assertEqual(actual[2].effort_str, "15h 45m")
+    def test_calculateeffortcells_shouldraiseexception_wheninvalidmode(self) -> None:
+
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+
+        expected : str = _MessageCollection.provided_mode_not_supported(mode)
+        
+        # Act
+        with self.assertRaises(Exception) as context:
+            self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, str(context.exception))
 
 
 class TTDataFrameFactoryTestCase(unittest.TestCase):
