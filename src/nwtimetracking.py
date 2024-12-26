@@ -24,7 +24,6 @@ from re import Match
 from types import SimpleNamespace
 from typing import Any, Callable, Literal, Optional, Tuple, Union, cast
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
-import plotly.graph_objects as go
 
 # LOCAL MODULES
 # CONSTANTS
@@ -1244,6 +1243,12 @@ class EffortHighlighter():
 
         self.__df_helper = df_helper
 
+    def __has_duplicate_column_names(self, df : DataFrame) -> bool:
+        
+        '''Checks if the DataFrame has duplicate column names.'''
+
+        return bool(df.columns.duplicated().any())
+
     def __is_effort(self, cell_content : str) -> bool :
 
         '''Returns True if content in ["00h 00m", "08h 00m", "20h 45m", "101h 30m", ...].'''
@@ -1351,7 +1356,10 @@ class EffortHighlighter():
         tmp_df : DataFrame = df.copy(deep = True)
 
         if self.__df_helper.is_bym(column_list = tmp_df.columns.tolist()):
-            tmp_df = self.__df_helper.unbox_bym_column_list(df = tmp_df)
+            # tmp_df = self.__df_helper.unbox_bym_column_list(df = tmp_df)
+            tmp_df.columns = pd.MultiIndex.from_tuples([(name, i) for i, name in enumerate(df.columns)])
+            # tmp_df.style.set_table_styles([{'selector': 'thead th', 'props': [('display', 'none')]}])
+            tmp_df.columns = ['_'.join(map(str, col)) for col in tmp_df.columns]
 
         effort_cells : list[EffortCell] = []
         last_row_idx : int = len(tmp_df)
