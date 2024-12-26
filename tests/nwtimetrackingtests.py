@@ -2169,7 +2169,36 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, str(context.exception))
+    
+    @parameterized.expand([
+        ("10h 45m", True),
+        ("invalid", False)
+    ])
+    def test_iseffort_shouldreturnexpectedresult_wheninvoked(self, effort: str, expected: bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.effort_highlighter._EffortHighlighter__is_effort(cell_content = effort)    # type: ignore
 
+        # Assert
+        self.assertEqual(actual, expected)
+
+    def test_appendneweffortcell_shouldappendprovidedcell_wheninvoked(self) -> None:
+        
+        # Arrange
+        effort_cells : list[EffortCell] = []
+        coordinate_pair : Tuple[int, int] = (0, 1)
+        cell_content : str = "5h 30m"
+        effort_td : timedelta = timedelta(hours = 5, minutes = 30)
+
+        # Act
+        self.effort_highlighter._EffortHighlighter__append_new_effort_cell(effort_cells, coordinate_pair, cell_content) # type: ignore
+
+        # Assert
+        self.assertEqual(len(effort_cells), 1)
+        self.assertEqual(effort_cells[0].coordinate_pair, coordinate_pair)
+        self.assertEqual(effort_cells[0].effort_str, cell_content)
+        self.assertEqual(effort_cells[0].effort_td, effort_td)
 
 
 class TTDataFrameFactoryTestCase(unittest.TestCase):

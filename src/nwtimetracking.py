@@ -1269,7 +1269,7 @@ class EffortHighlighter():
             return True
         else:
             return False
-    def __append_new_effort_cell(self, effort_cells : list[EffortCell], coordinate_pair : Tuple[int, int], cell_content : str):
+    def __append_new_effort_cell(self, effort_cells : list[EffortCell], coordinate_pair : Tuple[int, int], cell_content : str) -> None:
 
         '''Creates and append new EffortCell object to effort_cells.'''
 
