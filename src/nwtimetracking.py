@@ -1259,9 +1259,9 @@ class EffortHighlighter():
 
     def __is_effort(self, cell_content : str) -> bool :
 
-        '''Returns True if content in ["00h 00m", "08h 00m", "20h 45m", "101h 30m", ...].'''
+        '''Returns True if content in ["00h 00m", "08h 00m", "20h 45m", "101h 30m", "+71h 00m", "-455h 45m", ...].'''
 
-        pattern : str = r"^(\d{2,})h (0[0-9]|[1-5][0-9])m$"
+        pattern : str = r"^[+-]?(\d{2,})h (0[0-9]|[1-5][0-9])m$"
         match : Optional[Match[str]] = re.fullmatch(pattern = pattern, string = cell_content)
 
         if match is not None:

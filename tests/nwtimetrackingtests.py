@@ -2173,8 +2173,18 @@ class EffortHighlighterTestCase(unittest.TestCase):
         self.assertEqual(expected, str(context.exception))
     
     @parameterized.expand([
+        ("00h 00m", True),
         ("10h 45m", True),
-        ("invalid", False)
+        ("101h 30m", True),
+        ("+71h 00m", True),
+		("+159h 00m", True),
+        ("-79h 30m", True),
+        ("-455h 45m", True),
+        ("invalid", False),
+        ("10h 60m", False),
+        ("h 30m", False),
+        ("-10h m", False),
+        ("+h m", False)
     ])
     def test_iseffort_shouldreturnexpectedresult_wheninvoked(self, effort: str, expected: bool) -> None:
         
