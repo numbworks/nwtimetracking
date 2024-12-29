@@ -2799,11 +2799,15 @@ class TTAdapter():
         return tts_by_year_month_spnv_tpl
     def create_tts_by_year_month_spnv_styler(self, tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
-        '''Creates the expected Styler object out of the provided arguments.'''
+        '''
+            tts_by_year_month_spnv_tpl is made of (tts_by_year_month_spnv_df, tts_by_year_month_spnv_flt_df).
+
+            This method decides which one of the two DataFrame is to be displayed according to setting_bag.tts_by_year_month_spnv_display_only_spn.
+        '''
 
         tts_by_year_month_spnv_df : DataFrame = tts_by_year_month_spnv_tpl[0]
 
-        if setting_bag.tts_by_year_month_spnv_display_only_spn:
+        if setting_bag.tts_by_year_month_spnv_display_only_spn is not None:
             tts_by_year_month_spnv_df = tts_by_year_month_spnv_tpl[1]
 
         tts_by_year_month_spnv_styler : Union[DataFrame, Styler] = tts_by_year_month_spnv_df
@@ -2832,11 +2836,15 @@ class TTAdapter():
         return tts_by_year_spnv_tpl
     def create_tts_by_year_spnv_styler(self, tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
-        '''Creates the expected Styler object out of the provided arguments.'''
+        '''
+            tts_by_year_spnv_tpl is made of (tts_by_year_spnv_df, tts_by_year_spnv_flt_df).
+
+            This method decides which one of the two DataFrame is to be displayed according to setting_bag.tts_by_year_spnv_display_only_spn.
+        '''
 
         tts_by_year_spnv_df : DataFrame = tts_by_year_spnv_tpl[0]
 
-        if setting_bag.tts_by_year_spnv_display_only_spn:
+        if setting_bag.tts_by_year_spnv_display_only_spn is not None:
             tts_by_year_spnv_df = tts_by_year_spnv_tpl[1]
 
         tts_by_year_spnv_styler : Union[DataFrame, Styler] = tts_by_year_spnv_df
@@ -3191,30 +3199,6 @@ class TimeTrackingProcessor():
             head_n = self.__setting_bag.tt_head_n, 
             display_head_n_with_tail = self.__setting_bag.tt_display_head_n_with_tail
         )
-    def __optimize_tts_by_year_month_spnv_for_display(self, tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame]) -> DataFrame:
-
-        '''
-            tts_by_year_month_spnv_tpl is made of (tts_by_year_month_spnv_df, tts_by_year_month_spnv_flt_df).
-
-            This method decides which one of the two DataFrame is to be displayed according to __setting_bag.tts_by_year_month_spnv_display_only_spn.
-        '''
-
-        if self.__setting_bag.tts_by_year_month_spnv_display_only_spn is None:
-            return tts_by_year_month_spnv_tpl[0]
-
-        return tts_by_year_month_spnv_tpl[1]
-    def __optimize_tts_by_year_spnv_for_display(self, tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame]) -> DataFrame:
-
-        '''
-            tts_by_year_spnv_tpl is made of (tts_by_year_spnv_df, tts_by_year_spnv_flt_df).
-
-            This method decides which one of the two DataFrame is to be displayed according to __setting_bag.tts_by_year_spnv_display_only_spn.
-        '''
-
-        if self.__setting_bag.tts_by_year_spnv_display_only_spn is None:
-            return tts_by_year_spnv_tpl[0]
-
-        return tts_by_year_spnv_tpl[1]
     def __optimize_tts_by_tr_for_display(self, tts_by_tr_df : DataFrame) -> DataFrame:
 
         return self.__orchestrate_head_n(
@@ -3306,11 +3290,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_month_spnv
-        df : DataFrame = self.__optimize_tts_by_year_month_spnv_for_display(tts_by_year_month_spnv_tpl = self.__tt_summary.tts_by_year_month_spnv_tpl)
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_year_month_spnv_styler
         formatters : dict = self.__setting_bag.tts_by_year_month_spnv_formatters
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
     def process_tts_by_year_spnv(self) -> None:
 
         '''
@@ -3322,11 +3306,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_spnv
-        df : DataFrame = self.__optimize_tts_by_year_spnv_for_display(tts_by_year_spnv_tpl = self.__tt_summary.tts_by_year_spnv_tpl)
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_year_spnv_styler
         formatters : dict = self.__setting_bag.tts_by_year_spnv_formatters
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
     def process_tts_by_spn(self) -> None:
 
         '''
@@ -3339,11 +3323,12 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_spn
         df : DataFrame = self.__tt_summary.tts_by_spn_df
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_spn_styler
         formatters : dict = self.__setting_bag.tts_by_spn_formatters
         definitions_df : DataFrame = self.__tt_summary.definitions_df
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
 
         if OPTION.log in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
@@ -3362,7 +3347,7 @@ class TimeTrackingProcessor():
         definitions_df : DataFrame = self.__tt_summary.definitions_df        
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(obj = df)
 
         if OPTION.log in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
@@ -3382,7 +3367,7 @@ class TimeTrackingProcessor():
         definitions_df : DataFrame = self.__tt_summary.definitions_df
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = df, formatters = formatters)
 
         if OPTION.log in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
@@ -3397,10 +3382,10 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_hashtag_year
-        df : DataFrame = self.__tt_summary.tts_by_hashtag_year_df
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_hashtag_year_styler
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(obj = styler)
     def process_tts_by_efs(self) -> None:
 
         '''
