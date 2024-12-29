@@ -92,8 +92,10 @@ class OPTION(StrEnum):
 
     display = auto()
     save = auto()
-    log = auto()
     plot = auto()
+    logdef = auto()
+    logterm = auto()
+    logset = auto()
 class CRITERIA(StrEnum):
 
     '''Represents a collection of criterias.'''
@@ -177,15 +179,9 @@ class _MessageCollection():
         return f"'{variable_name}' can't be < 1."
 
     @staticmethod
-    def provided_df_has_duplicate_column_names(style : EFFORTSTYLE) -> str:
-        return f"The provided df has duplicate column names, therefore '{style}' is not supported."
-    @staticmethod
     def provided_mode_not_supported(mode : EFFORTMODE):
         return f"The provided mode is not supported: '{mode}'."
-    @staticmethod
-    def provided_style_not_supported(style : EFFORTSTYLE):
-        return f"The provided style is not supported: '{style}'."    
-
+ 
 # CLASSES
 @dataclass(frozen=True)
 class YearlyTarget():
@@ -388,14 +384,14 @@ class SettingBag():
     options_tts_by_year_month : list[Literal[OPTION.display]]
     options_tts_by_year_month_spnv : list[Literal[OPTION.display]]
     options_tts_by_year_spnv : list[Literal[OPTION.display]]    
-    options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]]
-    options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]]
-    options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.log]]
+    options_tts_by_spn : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]]
+    options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]]
+    options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]]
     options_tts_by_hashtag_year : list[Literal[OPTION.display]]
     options_tts_by_efs : list[Literal[OPTION.display]]
     options_tts_by_tr : list[Literal[OPTION.display]]
-    options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.log]]
-    options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.log]]
+    options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef, OPTION.logterm, OPTION.logset]]
+    options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef, OPTION.logterm, OPTION.logset]]
     options_definitions : list[Literal[OPTION.display]]
     excel_nrows : int
     tts_by_year_month_spnv_display_only_spn : Optional[str]
@@ -3202,6 +3198,15 @@ class TimeTrackingProcessor():
         if OPTION.plot in options:
             cast(Callable[[]], plot_function)()
 
+        if OPTION.logdef in options:
+            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
+
+        if OPTION.logterm in options:
+            self.__component_bag.tt_logger.try_log_term_definition(term = cast(str, term), definitions = definitions_df)
+
+        if OPTION.logset in options:
+            self.__component_bag.tt_logger.try_log_settings(setting_bag = setting_bag, setting_names = cast(list[str], setting_names))
+
     def initialize(self) -> None:
 
         '''Creates a TTSummary object and assign it to __tt_summary.'''
@@ -3324,7 +3329,7 @@ class TimeTrackingProcessor():
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = styler, formatters = formatters)
 
-        if OPTION.log in options:
+        if OPTION.logdef in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
     def process_tts_by_spn_spv(self) -> None:
 
@@ -3343,7 +3348,7 @@ class TimeTrackingProcessor():
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = styler)
 
-        if OPTION.log in options:
+        if OPTION.logdef in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
     def process_tts_by_hashtag(self) -> None:
 
@@ -3363,7 +3368,7 @@ class TimeTrackingProcessor():
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = styler, formatters = formatters)
 
-        if OPTION.log in options:
+        if OPTION.logdef in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
     def process_tts_by_hashtag_year(self) -> None:
 
@@ -3434,9 +3439,13 @@ class TimeTrackingProcessor():
         if OPTION.plot in options:
             plot_function()
            
-        if OPTION.log in options:
-            self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
+        if OPTION.logdef in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
+
+        if OPTION.logterm in options:
+            self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
+
+        if OPTION.logset in options:
             self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
     def process_tts_gantt_hseq(self) -> None:
 
@@ -3462,9 +3471,13 @@ class TimeTrackingProcessor():
         if OPTION.plot in options:
             plot_function()
 
-        if OPTION.log in options:
-            self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
+        if OPTION.logdef in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
+
+        if OPTION.logterm in options:
+            self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
+
+        if OPTION.logset in options:
             self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
     def process_definitions(self) -> None:
 

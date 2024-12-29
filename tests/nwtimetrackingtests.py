@@ -106,7 +106,7 @@ class ObjectMother():
             options_tts_by_year_month = [OPTION.display],           # type: ignore
             options_tts_by_year_month_spnv = [OPTION.display],      # type: ignore
             options_tts_by_year_spnv = [OPTION.display],            # type: ignore
-            options_tts_by_spn = [OPTION.display, OPTION.log],      # type: ignore
+            options_tts_by_spn = [OPTION.display, OPTION.logdef],      # type: ignore
             options_tts_by_spn_spv = [],
             options_tts_by_hashtag = [OPTION.display],              # type: ignore
             options_tts_by_hashtag_year = [OPTION.display],         # type: ignore
@@ -1087,14 +1087,14 @@ class SettingBagTestCase(unittest.TestCase):
         options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]                                    # type: ignore
         options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
         options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                                     # type: ignore
-        options_tts_by_spn : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]                   # type: ignore
-        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display, OPTION.log]               # type: ignore
-        options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.log]] = [OPTION.display]                           # type: ignore
+        options_tts_by_spn : list[Literal[OPTION.display, OPTION.logdef]] = [OPTION.display, OPTION.logdef]                   # type: ignore
+        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.logdef]] = [OPTION.display, OPTION.logdef]               # type: ignore
+        options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.logdef]] = [OPTION.display]                           # type: ignore
         options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                                  # type: ignore
         options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                                           # type: ignore
         options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                            # type: ignore
-        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.log]] = [OPTION.display, OPTION.plot] # type: ignore
-        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.log]] = [OPTION.display, OPTION.plot] # type: ignore
+        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef]] = [OPTION.display, OPTION.plot] # type: ignore
+        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef]] = [OPTION.display, OPTION.plot] # type: ignore
         options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                                          # type: ignore
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
@@ -3975,7 +3975,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_logger.try_log_column_definitions = Mock()
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn = [OPTION.log]  # type: ignore
+        setting_bag.options_tts_by_spn = [OPTION.logdef]  # type: ignore
 
         # Act, 
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -4036,7 +4036,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_logger.try_log_column_definitions = Mock()
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn_spv = [OPTION.log]  # type: ignore
+        setting_bag.options_tts_by_spn_spv = [OPTION.logdef]  # type: ignore
 
         # Act, 
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -4097,7 +4097,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_logger.try_log_column_definitions = Mock()
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_hashtag = [OPTION.log]  # type: ignore
+        setting_bag.options_tts_by_hashtag = [OPTION.logdef]  # type: ignore
 
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
