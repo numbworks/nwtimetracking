@@ -394,14 +394,14 @@ class SettingBag():
     # WITHOUT DEFAULTS
     options_tt : list[Literal[OPTION.display]]
     options_tts_by_month : list[Literal[OPTION.display, OPTION.save, OPTION.logset]]
-    options_tts_by_year : list[Literal[OPTION.display]]
-    options_tts_by_year_month : list[Literal[OPTION.display]]
-    options_tts_by_year_month_spnv : list[Literal[OPTION.display]]
+    options_tts_by_year : list[Literal[OPTION.display, OPTION.logset]]
+    options_tts_by_year_month : list[Literal[OPTION.display, OPTION.logset]]
+    options_tts_by_year_month_spnv : list[Literal[OPTION.display, OPTION.logset]]
     options_tts_by_year_spnv : list[Literal[OPTION.display]]    
     options_tts_by_spn : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]]
     options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]]
     options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]]
-    options_tts_by_hashtag_year : list[Literal[OPTION.display]]
+    options_tts_by_hashtag_year : list[Literal[OPTION.display, OPTION.logset]]
     options_tts_by_efs : list[Literal[OPTION.display]]
     options_tts_by_tr : list[Literal[OPTION.display]]
     options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef, OPTION.logterm, OPTION.logset]]
@@ -3285,7 +3285,9 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_year
         kwargs : dict = { 
-            TTKWARG.styler: self.__tt_summary.tts_by_year_styler
+            TTKWARG.styler: self.__tt_summary.tts_by_year_styler,
+            TTKWARG.setting_bag: self.__setting_bag,
+            TTKWARG.setting_names: [ "tts_by_year_effort_highlight", "tts_by_year_effort_highlight_mode" ]
         }
 
         self.__process(options = options, kwargs = kwargs)
@@ -3301,7 +3303,9 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_year_month
         kwargs : dict = { 
-            TTKWARG.styler: self.__tt_summary.tts_by_year_month_styler
+            TTKWARG.styler: self.__tt_summary.tts_by_year_month_styler,
+            TTKWARG.setting_bag: self.__setting_bag,
+            TTKWARG.setting_names: [ "tts_by_year_month_effort_highlight", "tts_by_year_month_effort_highlight_mode" ]
         }
 
         self.__process(options = options, kwargs = kwargs)
@@ -3318,7 +3322,9 @@ class TimeTrackingProcessor():
         options : list = self.__setting_bag.options_tts_by_year_month_spnv
         kwargs : dict = { 
             TTKWARG.styler: self.__tt_summary.tts_by_year_month_spnv_styler,
-            TTKWARG.formatters: self.__setting_bag.tts_by_year_month_spnv_formatters
+            TTKWARG.formatters: self.__setting_bag.tts_by_year_month_spnv_formatters,
+            TTKWARG.setting_bag: self.__setting_bag,
+            TTKWARG.setting_names: [ "tts_by_year_month_spnv_effort_highlight", "tts_by_year_month_spnv_effort_highlight_mode" ]
         }
 
         self.__process(options = options, kwargs = kwargs)
@@ -3353,7 +3359,9 @@ class TimeTrackingProcessor():
         kwargs : dict = { 
             TTKWARG.styler: self.__tt_summary.tts_by_spn_styler,
             TTKWARG.formatters: self.__setting_bag.tts_by_spn_formatters,
-            TTKWARG.definitions: self.__tt_summary.definitions_df
+            TTKWARG.definitions: self.__tt_summary.definitions_df,
+            TTKWARG.setting_bag: self.__setting_bag,
+            TTKWARG.setting_names: [ "tts_by_spn_effort_highlight", "tts_by_spn_effort_highlight_mode" ]
         }
 
         self.__process(options = options, kwargs = kwargs)
@@ -3404,7 +3412,9 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_hashtag_year
         kwargs : dict = { 
-            TTKWARG.styler: self.__tt_summary.tts_by_hashtag_year_styler
+            TTKWARG.styler: self.__tt_summary.tts_by_hashtag_year_styler,
+            TTKWARG.setting_bag: self.__setting_bag,
+            TTKWARG.setting_names: [ "tts_by_hashtag_year_effort_highlight", "tts_by_hashtag_year_effort_highlight_mode" ]
         }
 
         self.__process(options = options, kwargs = kwargs)
