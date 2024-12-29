@@ -231,9 +231,10 @@ class MDInfo():
 @dataclass(frozen = True)
 class TTSummary():
 
-    '''Collects all the dataframes and markdowns.'''
+    '''Collects all the dataframes, stylers and markdowns.'''
 
     tt_df : DataFrame
+    tt_styler : Union[DataFrame, Styler]
 
     tts_by_month_tpl : Tuple[DataFrame, DataFrame]
     tts_by_month_styler : Union[DataFrame, Styler]
@@ -261,10 +262,14 @@ class TTSummary():
     tts_by_hashtag_year_styler : Union[DataFrame, Styler]
 
     tts_by_efs_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_efs_styler : Union[DataFrame, Styler]
+
     tts_by_tr_df : DataFrame
+    tts_by_tr_styler : Union[DataFrame, Styler]
     
     tts_gantt_spnv_df : DataFrame
     tts_gantt_spnv_plot_function : Callable[[], None]
+
     tts_gantt_hseq_df : DataFrame
     tts_gantt_hseq_plot_function : Callable[[], None]
 
@@ -2667,16 +2672,17 @@ class TTAdapter():
         self.__md_factory = md_factory
         self.__effort_highlighter = effort_highlighter
 
-    def extract_file_name_and_paragraph_title(self, id : TTID, setting_bag : SettingBag) -> Tuple[str, str]: 
-    
-        '''Returns (file_name, paragraph_title) for the provided id or raise an Exception.'''
+    def __orchestrate_head_n(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
 
-        for md_info in setting_bag.md_infos:
-            if md_info.id == id: 
-                return (md_info.file_name, md_info.paragraph_title)
+        '''Orchestrates head()-related settings.'''
 
-        raise Exception(_MessageCollection.no_mdinfo_found(id = id))
-    
+        if head_n is None:
+            return df
+        elif head_n is not None and display_head_n_with_tail == True:
+            return df.tail(n = int(head_n))
+        else:
+            return df.head(n = int(head_n))
+
     def create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2689,6 +2695,16 @@ class TTAdapter():
             )
 
         return tt_df
+    def create_tt_styler(self, tt_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+
+        tt_styler : Union[DataFrame, Styler] = self.__orchestrate_head_n(
+            df = tt_df, 
+            head_n = setting_bag.tt_head_n, 
+            display_head_n_with_tail = setting_bag.tt_display_head_n_with_tail
+        )
+
+        return tt_styler
+
     def create_tts_by_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2945,7 +2961,16 @@ class TTAdapter():
         )
 
         return tts_by_tr_df
-    
+    def create_tts_by_tr_styler(self, tts_by_tr_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+
+        tts_by_tr_styler : Union[DataFrame, Styler] = self.__orchestrate_head_n(
+            df = tts_by_tr_df, 
+            head_n = setting_bag.tts_by_tr_head_n, 
+            display_head_n_with_tail = setting_bag.tts_by_tr_display_head_n_with_tail
+        )    
+
+        return tts_by_tr_styler
+
     def create_tts_gantt_spnv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2998,6 +3023,7 @@ class TTAdapter():
         '''Creates a TTSummary object out of setting_bag.'''
 
         tt_df : DataFrame = self.create_tt_df(setting_bag = setting_bag)
+        tt_styler : Union[DataFrame, Styler] = self.create_tt_styler(tt_df = tt_df, setting_bag = setting_bag)
         
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_month_styler : Union[DataFrame, Styler] = self.create_tts_by_month_styler(tts_by_month_df = tts_by_month_tpl[1], setting_bag = setting_bag)
@@ -3025,7 +3051,10 @@ class TTAdapter():
         tts_by_hashtag_year_styler : Union[DataFrame, Styler] = self.create_tts_by_hashtag_year_styler(tts_by_hashtag_year_df = tts_by_hashtag_year_df, setting_bag = setting_bag)
         
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_efs_styler : Union[DataFrame, Styler] = tts_by_efs_tpl[1]
+
         tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_tr_styler : Union[DataFrame, Styler] = self.create_tts_by_tr_styler(tts_by_tr_df = tts_by_tr_df, setting_bag = setting_bag)
 
         tts_gantt_spnv_df : DataFrame = self.create_tts_gantt_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_gantt_spnv_plot_function : Callable[[], None] = self.create_tts_gantt_spnv_plot_function(gantt_df = tts_gantt_spnv_df, setting_bag = setting_bag)
@@ -3036,6 +3065,7 @@ class TTAdapter():
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
+            tt_styler = tt_styler,
             tts_by_month_tpl = tts_by_month_tpl,
             tts_by_month_styler = tts_by_month_styler,
             tts_by_month_sub_dfs = tts_by_month_sub_dfs,
@@ -3055,7 +3085,9 @@ class TTAdapter():
             tts_by_hashtag_year_df = tts_by_hashtag_year_df,
             tts_by_hashtag_year_styler = tts_by_hashtag_year_styler,
             tts_by_efs_tpl = tts_by_efs_tpl,
+            tts_by_efs_styler = tts_by_efs_styler,
             tts_by_tr_df = tts_by_tr_df,
+            tts_by_tr_styler = tts_by_tr_styler,
             tts_gantt_spnv_df = tts_gantt_spnv_df,
             tts_gantt_spnv_plot_function = tts_gantt_spnv_plot_function,
             tts_gantt_hseq_df = tts_gantt_hseq_df,
@@ -3064,6 +3096,15 @@ class TTAdapter():
         )
 
         return tt_summary
+    def extract_file_name_and_paragraph_title(self, id : TTID, setting_bag : SettingBag) -> Tuple[str, str]: 
+    
+        '''Returns (file_name, paragraph_title) for the provided id or raise an Exception.'''
+
+        for md_info in setting_bag.md_infos:
+            if md_info.id == id: 
+                return (md_info.file_name, md_info.paragraph_title)
+
+        raise Exception(_MessageCollection.no_mdinfo_found(id = id))
 class SettingSubset(SimpleNamespace):
 
     '''A dynamically assigned subset of SettingBag properties with a custom __str__ method that returns them as JSON.'''
@@ -3182,31 +3223,6 @@ class TimeTrackingProcessor():
         except:
             logging_function(_MessageCollection.something_failed_while_saving(file_path = file_path))
 
-    def __orchestrate_head_n(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
-
-        '''Prepares df for display().'''
-
-        if head_n is None:
-            return df
-        elif head_n is not None and display_head_n_with_tail == True:
-            return df.tail(n = int(head_n))
-        else:
-            return df.head(n = int(head_n))
-    def __optimize_tt_for_display(self, tt_df : DataFrame) -> DataFrame:
-
-        return self.__orchestrate_head_n(
-            df = tt_df, 
-            head_n = self.__setting_bag.tt_head_n, 
-            display_head_n_with_tail = self.__setting_bag.tt_display_head_n_with_tail
-        )
-    def __optimize_tts_by_tr_for_display(self, tts_by_tr_df : DataFrame) -> DataFrame:
-
-        return self.__orchestrate_head_n(
-            df = tts_by_tr_df, 
-            head_n = self.__setting_bag.tts_by_tr_head_n, 
-            display_head_n_with_tail = self.__setting_bag.tts_by_tr_display_head_n_with_tail
-        )
-
     def initialize(self) -> None:
 
         '''Creates a TTSummary object and assign it to __tt_summary.'''
@@ -3223,11 +3239,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tt
-        df : DataFrame = self.__optimize_tt_for_display(tt_df = self.__tt_summary.tt_df)
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tt_styler
         hide_index : bool = self.__setting_bag.tt_hide_index
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df, hide_index = hide_index)
+            self.__component_bag.displayer.display(obj = styler, hide_index = hide_index)
     def process_tts_by_month(self) -> None:
 
         '''
@@ -3397,10 +3413,10 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_efs
-        df : DataFrame = self.__tt_summary.tts_by_efs_tpl[1]
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_efs_styler
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(obj = styler)
     def process_tts_by_tr(self) -> None:
 
         '''
@@ -3412,10 +3428,10 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_tr
-        df : DataFrame = self.__optimize_tts_by_tr_for_display(tts_by_tr_df = self.__tt_summary.tts_by_tr_df)
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_tr_styler
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(obj = styler)
     def process_tts_gantt_spnv(self) -> None:
 
         '''
@@ -3434,7 +3450,7 @@ class TimeTrackingProcessor():
         setting_names : list[str] = [ "tts_gantt_spnv_months", "tts_gantt_spnv_min_duration" ]
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = df, formatters = formatters)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_spnv_plot_function()
@@ -3461,7 +3477,7 @@ class TimeTrackingProcessor():
         setting_names : list[str] = [ "tts_gantt_hseq_months", "tts_gantt_hseq_min_duration" ]
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = df, formatters = formatters)
 
         if OPTION.plot in options:
             self.__tt_summary.tts_gantt_hseq_plot_function()
@@ -3484,7 +3500,7 @@ class TimeTrackingProcessor():
         df : DataFrame = self.__tt_summary.definitions_df
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(obj = df)
     def get_summary(self) -> TTSummary:
 
         '''
