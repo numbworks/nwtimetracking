@@ -115,6 +115,20 @@ class EFFORTMODE(StrEnum):
 
     top_one_effort_per_row = auto()
     top_three_efforts = auto()
+class TTKWARG(StrEnum):
+
+    '''Represents a collection of keys for EffortHighlighter.__process().'''
+
+    styler = auto()
+    hide_index = auto()
+    formatters = auto()
+    id = auto()
+    content = auto()
+    plot_function = auto()
+    term = auto()
+    setting_names = auto()
+    definitions = auto()
+    setting_bag = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -3157,7 +3171,7 @@ class TimeTrackingProcessor():
 
         if not hasattr(self, '_TimeTrackingProcessor__tt_summary'):
             raise Exception(_MessageCollection.please_run_initialize_first())
-    def __save_and_log(self, id : TTID, content : str, logging_function : Callable[[str], None]) -> None:
+    def __save_and_log(self, id : TTID, content : str) -> None:
 
         '''Creates the provided Markdown content using __setting_bag.'''
 
@@ -3169,31 +3183,30 @@ class TimeTrackingProcessor():
         try:
            
             self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
-            logging_function(_MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path))
+            self.__component_bag.tt_logger.log(_MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path))
 
         except:
-            logging_function(_MessageCollection.something_failed_while_saving(file_path = file_path))
+            self.__component_bag.tt_logger.log(_MessageCollection.something_failed_while_saving(file_path = file_path))
     def __process(self, options: list, kwargs: dict) -> None:
         
         '''A generic method for handling the actions specified in options.'''
 
-        styler : DataFrame = kwargs["styler"]
-        hide_index : bool = kwargs.get("hide_index", False)
-        formatters : Optional[dict] = kwargs.get("formatters", None)
-        id : Optional[TTID] = kwargs.get("id", None)
-        content : Optional[str] = kwargs.get("content", None)
-        logging_function : Optional[Callable[[str]]] = kwargs.get("logging_function", None)
-        plot_function : Optional[Callable[[]]] = kwargs.get("plot_function", None)
-        term : Optional[str] = kwargs.get("term", None)
-        setting_names : Optional[list[str]] = kwargs.get("setting_names", None)
-        definitions_df : Optional[DataFrame] = kwargs.get("definitions", None)
-        setting_bag : Optional[SettingBag] = kwargs.get("setting_bag", None)
+        styler : DataFrame = kwargs[TTKWARG.styler]
+        hide_index : bool = kwargs.get(TTKWARG.hide_index, False)
+        formatters : Optional[dict] = kwargs.get(TTKWARG.formatters, None)
+        id : Optional[TTID] = kwargs.get(TTKWARG.id, None)
+        content : Optional[str] = kwargs.get(TTKWARG.content, None)
+        plot_function : Optional[Callable[[], None]] = kwargs.get(TTKWARG.plot_function, None)
+        term : Optional[str] = kwargs.get(TTKWARG.term, None)
+        setting_names : Optional[list[str]] = kwargs.get(TTKWARG.setting_names, None)
+        definitions_df : Optional[DataFrame] = kwargs.get(TTKWARG.definitions, None)
+        setting_bag : Optional[SettingBag] = kwargs.get(TTKWARG.setting_bag, None)
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = cast(DataFrame, styler), hide_index = hide_index, formatters = formatters)
 
         if OPTION.plot in options:
-            cast(Callable[[]], plot_function)()
+            cast(Callable[[], None], plot_function)()
 
         if OPTION.logdef in options:
             self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = cast(DataFrame, definitions_df))
@@ -3205,7 +3218,7 @@ class TimeTrackingProcessor():
             self.__component_bag.tt_logger.try_log_settings(setting_bag = cast(SettingBag, setting_bag), setting_names = cast(list[str], setting_names))
 
         if OPTION.save in options:
-            self.__save_and_log(id = cast(TTID, id), content = cast(str, content), logging_function = cast(Callable[[str]], logging_function))
+            self.__save_and_log(id = cast(TTID, id), content = cast(str, content))
 
     def initialize(self) -> None:
 
@@ -3224,8 +3237,8 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tt
         kwargs : dict = { 
-            "styler": self.__tt_summary.tt_styler, 
-            "hide_index": self.__setting_bag.tt_hide_index
+            TTKWARG.styler: self.__tt_summary.tt_styler, 
+            TTKWARG.hide_index: self.__setting_bag.tt_hide_index
         }
 
         self.__process(options = options, kwargs = kwargs)
@@ -3240,20 +3253,15 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_month
-        styler : DataFrame = self.__tt_summary.tts_by_month_styler
-        id : TTID = TTID.TTSBYMONTH
-        content : str = self.__tt_summary.tts_by_month_sub_md
-        logging_function : Callable[[str], None] = lambda msg : self.__component_bag.tt_logger.log(msg)
-        setting_names : list[str] = [ "tts_by_month_effort_highlight", "tts_by_month_effort_highlight_mode" ]
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_month_styler, 
+            TTKWARG.id: TTID.TTSBYMONTH,
+            TTKWARG.content: self.__tt_summary.tts_by_month_sub_md,
+            TTKWARG.setting_bag: self.__setting_bag,
+            TTKWARG.setting_names: [ "tts_by_month_effort_highlight", "tts_by_month_effort_highlight_mode" ]
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler)
-
-        if OPTION.save in options:
-            self.__save_and_log(id = id, content = content, logging_function = logging_function)
-
-        if OPTION.logset in options:
-            self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_year(self) -> None:
 
         '''
@@ -3265,10 +3273,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year
-        styler : DataFrame = self.__tt_summary.tts_by_year_styler
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_year_styler
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_year_month(self) -> None:
 
         '''
@@ -3280,10 +3289,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_month
-        styler : DataFrame = self.__tt_summary.tts_by_year_month_styler
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_year_month_styler
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_year_month_spnv(self) -> None:
 
         '''
@@ -3295,11 +3305,12 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_month_spnv
-        styler : DataFrame = self.__tt_summary.tts_by_year_month_spnv_styler
-        formatters : dict = self.__setting_bag.tts_by_year_month_spnv_formatters
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_year_month_spnv_styler,
+            TTKWARG.formatters: self.__setting_bag.tts_by_year_month_spnv_formatters
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_year_spnv(self) -> None:
 
         '''
@@ -3311,11 +3322,12 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_spnv
-        styler : DataFrame = self.__tt_summary.tts_by_year_spnv_styler
-        formatters : dict = self.__setting_bag.tts_by_year_spnv_formatters
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_year_spnv_styler,
+            TTKWARG.formatters: self.__setting_bag.tts_by_year_spnv_formatters
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_spn(self) -> None:
 
         '''
@@ -3327,15 +3339,13 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_spn
-        styler : DataFrame = self.__tt_summary.tts_by_spn_styler
-        formatters : dict = self.__setting_bag.tts_by_spn_formatters
-        definitions_df : DataFrame = self.__tt_summary.definitions_df
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_spn_styler,
+            TTKWARG.formatters: self.__setting_bag.tts_by_spn_formatters,
+            TTKWARG.definitions: self.__tt_summary.definitions_df
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
-
-        if OPTION.logdef in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_spn_spv(self) -> None:
 
         '''
@@ -3347,14 +3357,12 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_spn_spv
-        styler : DataFrame = self.__tt_summary.tts_by_spn_spv_df
-        definitions_df : DataFrame = self.__tt_summary.definitions_df        
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_spn_spv_df,
+            TTKWARG.definitions: self.__tt_summary.definitions_df
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler)
-
-        if OPTION.logdef in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_hashtag(self) -> None:
 
         '''
@@ -3366,15 +3374,13 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_hashtag
-        styler : DataFrame = self.__tt_summary.tts_by_hashtag_df
-        formatters : dict = self.__setting_bag.tts_by_hashtag_formatters
-        definitions_df : DataFrame = self.__tt_summary.definitions_df
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_hashtag_df,
+            TTKWARG.formatters: self.__setting_bag.tts_by_hashtag_formatters,
+            TTKWARG.definitions: self.__tt_summary.definitions_df
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
-
-        if OPTION.logdef in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_hashtag_year(self) -> None:
 
         '''
@@ -3386,10 +3392,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_hashtag_year
-        styler : DataFrame = self.__tt_summary.tts_by_hashtag_year_styler
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_hashtag_year_styler
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_efs(self) -> None:
 
         '''
@@ -3401,10 +3408,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_efs
-        styler : DataFrame = self.__tt_summary.tts_by_efs_styler
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_efs_styler
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_tr(self) -> None:
 
         '''
@@ -3416,10 +3424,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_tr
-        styler : DataFrame = self.__tt_summary.tts_by_tr_styler
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_by_tr_styler
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_gantt_spnv(self) -> None:
 
         '''
@@ -3431,27 +3440,17 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_gantt_spnv
-        styler : DataFrame = self.__tt_summary.tts_gantt_spnv_df
-        formatters : dict = self.__setting_bag.tts_gantt_spnv_formatters
-        plot_function : Callable[[]] = self.__tt_summary.tts_gantt_spnv_plot_function
-        definitions_df : DataFrame = self.__tt_summary.definitions_df
-        term : str = "tts_gantt_spnv"
-        setting_names : list[str] = [ "tts_gantt_spnv_months", "tts_gantt_spnv_min_duration" ]
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_gantt_spnv_df,
+            TTKWARG.formatters: self.__setting_bag.tts_gantt_spnv_formatters,
+            TTKWARG.plot_function: self.__tt_summary.tts_gantt_spnv_plot_function,
+            TTKWARG.definitions: self.__tt_summary.definitions_df,
+            TTKWARG.setting_bag: self.__setting_bag,
+            TTKWARG.term: "tts_gantt_spnv",
+            TTKWARG.setting_names: [ "tts_gantt_spnv_months", "tts_gantt_spnv_min_duration" ]
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
-
-        if OPTION.plot in options:
-            plot_function()
-           
-        if OPTION.logdef in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
-
-        if OPTION.logterm in options:
-            self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
-
-        if OPTION.logset in options:
-            self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_gantt_hseq(self) -> None:
 
         '''
@@ -3463,27 +3462,17 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_gantt_hseq
-        styler : DataFrame = self.__tt_summary.tts_gantt_hseq_df
-        formatters : dict = self.__setting_bag.tts_gantt_hseq_formatters
-        plot_function : Callable[[]] = self.__tt_summary.tts_gantt_hseq_plot_function
-        definitions_df : DataFrame = self.__tt_summary.definitions_df   
-        term : str = "tts_gantt_hseq"
-        setting_names : list[str] = [ "tts_gantt_hseq_months", "tts_gantt_hseq_min_duration" ]
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.tts_gantt_hseq_df,
+            TTKWARG.formatters: self.__setting_bag.tts_gantt_hseq_formatters,
+            TTKWARG.plot_function: self.__tt_summary.tts_gantt_hseq_plot_function,
+            TTKWARG.definitions: self.__tt_summary.definitions_df,
+            TTKWARG.setting_bag: self.__setting_bag,
+            TTKWARG.term: "tts_gantt_hseq",
+            TTKWARG.setting_names: [ "tts_gantt_hseq_months", "tts_gantt_hseq_min_duration" ]
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
-
-        if OPTION.plot in options:
-            plot_function()
-
-        if OPTION.logdef in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
-
-        if OPTION.logterm in options:
-            self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
-
-        if OPTION.logset in options:
-            self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
+        self.__process(options = options, kwargs = kwargs)
     def process_definitions(self) -> None:
 
         '''
@@ -3495,10 +3484,11 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_definitions
-        styler : DataFrame = self.__tt_summary.definitions_df
+        kwargs : dict = { 
+            TTKWARG.styler: self.__tt_summary.definitions_df
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler)
+        self.__process(options = options, kwargs = kwargs)
     def get_summary(self) -> TTSummary:
 
         '''
