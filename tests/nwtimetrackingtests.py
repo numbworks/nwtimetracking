@@ -2463,7 +2463,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         expected.iloc[1, 5] = "[[ 65h 30m ]]"
 
         # Act
-        actual : DataFrame = self.effort_highlighter.create_styler(self.df_without_duplicates, style, mode, tokens) # type: ignore
+        actual : DataFrame = self.effort_highlighter.create_textual_styler(self.df_without_duplicates, style, mode, tokens) # type: ignore
 
         # Assert
         assert_frame_equal(expected, actual)
@@ -2480,7 +2480,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         }
 
         # Act
-        actual : Styler = self.effort_highlighter.create_styler(self.df_without_duplicates, style, mode, color = color) # type: ignore
+        actual : Styler = self.effort_highlighter.create_textual_styler(self.df_without_duplicates, style, mode, color = color) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual._compute().ctx)   # type: ignore
@@ -2493,7 +2493,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Act
         with self.assertRaises(Exception) as context:
-            self.effort_highlighter.create_styler(df = self.df_without_duplicates, style = style, mode = mode)
+            self.effort_highlighter.create_textual_styler(df = self.df_without_duplicates, style = style, mode = mode)
 
         # Assert
         self.assertEqual(expected, str(context.exception))
@@ -2508,7 +2508,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Act, Assert
         with patch.object(EffortHighlighter, "_EffortHighlighter__try_filter_by_column_names") as try_filter_by_column_names:
-            self.effort_highlighter.create_styler(
+            self.effort_highlighter.create_textual_styler(
                 df = self.df_without_duplicates, 
                 style = style, 
                 mode = mode, 
