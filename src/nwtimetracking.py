@@ -2682,7 +2682,7 @@ class TTAdapter():
         else:
             return df.head(n = int(head_n))
 
-    def create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
+    def __create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
@@ -2694,7 +2694,7 @@ class TTAdapter():
             )
 
         return tt_df
-    def create_tt_styler(self, tt_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tt_styler(self, tt_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
 
         tt_styler : Union[DataFrame, Styler] = self.__orchestrate_head_n(
             df = tt_df, 
@@ -2704,7 +2704,7 @@ class TTAdapter():
 
         return tt_styler
 
-    def create_tts_by_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+    def __create_tts_by_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
@@ -2715,7 +2715,7 @@ class TTAdapter():
         )
 
         return tts_by_month_tpl
-    def create_tts_by_month_styler(self, tts_by_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tts_by_month_styler(self, tts_by_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
         '''Creates the expected Styler object out of the provided arguments.'''
 
@@ -2730,14 +2730,14 @@ class TTAdapter():
             )
         
         return tts_by_month_styler
-    def create_tts_by_month_sub_dfs(self, tts_by_month_styler : Union[DataFrame, Styler]) -> list[DataFrame]:
+    def __create_tts_by_month_sub_dfs(self, tts_by_month_styler : Union[DataFrame, Styler]) -> list[DataFrame]:
 
         '''Creates the expected collection of sub_dfs out of the provided arguments.'''
 
         tts_by_month_sub_dfs : list[DataFrame] = self.__bym_splitter.create_sub_dfs(df = cast(DataFrame, tts_by_month_styler))
 
         return tts_by_month_sub_dfs
-    def create_tts_by_month_sub_md(self, tts_by_month_sub_dfs : list[DataFrame], setting_bag : SettingBag) -> str:
+    def __create_tts_by_month_sub_md(self, tts_by_month_sub_dfs : list[DataFrame], setting_bag : SettingBag) -> str:
 
         '''Creates the expected Markdown content out of the provided arguments.'''
 
@@ -2749,7 +2749,7 @@ class TTAdapter():
 
         return tts_by_month_sub_md
 
-    def create_tts_by_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+    def __create_tts_by_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
@@ -2760,7 +2760,7 @@ class TTAdapter():
         )
 
         return tts_by_year_df
-    def create_tts_by_year_styler(self, tts_by_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tts_by_year_styler(self, tts_by_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
         '''Creates the expected Styler object out of the provided arguments.'''
 
@@ -2776,7 +2776,7 @@ class TTAdapter():
         
         return tts_by_year_styler    
     
-    def create_tts_by_year_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+    def __create_tts_by_year_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
@@ -2793,7 +2793,7 @@ class TTAdapter():
         )
 
         return tts_by_year_month_df
-    def create_tts_by_year_month_styler(self, tts_by_year_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tts_by_year_month_styler(self, tts_by_year_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
 
         '''
             tts_by_year_month_tpl is made of (tts_by_year_month_df, tts_by_year_month_flt_df).
@@ -2808,7 +2808,7 @@ class TTAdapter():
 
         return tts_by_year_month_styler
        
-    def create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+    def __create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
@@ -2820,7 +2820,7 @@ class TTAdapter():
         )
 
         return tts_by_year_month_spnv_tpl
-    def create_tts_by_year_month_spnv_styler(self, tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tts_by_year_month_spnv_styler(self, tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
         '''
             tts_by_year_month_spnv_tpl is made of (tts_by_year_month_spnv_df, tts_by_year_month_spnv_flt_df).
@@ -2845,7 +2845,7 @@ class TTAdapter():
         
         return tts_by_year_month_spnv_styler
     
-    def create_tts_by_year_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+    def __create_tts_by_year_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
@@ -2857,7 +2857,7 @@ class TTAdapter():
         )
 
         return tts_by_year_spnv_tpl
-    def create_tts_by_year_spnv_styler(self, tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tts_by_year_spnv_styler(self, tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
         '''
             tts_by_year_spnv_tpl is made of (tts_by_year_spnv_df, tts_by_year_spnv_flt_df).
@@ -2882,7 +2882,7 @@ class TTAdapter():
         
         return tts_by_year_spnv_styler
     
-    def create_tts_by_spn_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+    def __create_tts_by_spn_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
@@ -2894,7 +2894,7 @@ class TTAdapter():
         )
 
         return tts_by_spn_df
-    def create_tts_by_spn_styler(self, tts_by_spn_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tts_by_spn_styler(self, tts_by_spn_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
         '''Creates the expected Styler object out of the provided arguments.'''
 
@@ -2910,7 +2910,7 @@ class TTAdapter():
         
         return tts_by_spn_styler
     
-    def create_tts_by_spn_spv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+    def __create_tts_by_spn_spv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
@@ -2921,7 +2921,7 @@ class TTAdapter():
         )
 
         return tts_by_spn_spv_df
-    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+    def __create_tts_by_hashtag_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
@@ -2932,7 +2932,7 @@ class TTAdapter():
         )
 
         return tts_by_year_hashtag_df
-    def create_tts_by_hashtag_year_styler(self, tts_by_hashtag_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tts_by_hashtag_year_styler(self, tts_by_hashtag_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
         '''Creates the expected Styler object out of the provided arguments.'''
 
@@ -2947,7 +2947,7 @@ class TTAdapter():
         
         return tts_by_hashtag_year_styler    
     
-    def create_tts_by_efs_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+    def __create_tts_by_efs_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
@@ -2957,7 +2957,7 @@ class TTAdapter():
         )
 
         return tts_by_efs_tpl
-    def create_tts_by_tr_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+    def __create_tts_by_tr_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
@@ -2968,7 +2968,7 @@ class TTAdapter():
         )
 
         return tts_by_tr_df
-    def create_tts_by_tr_styler(self, tts_by_tr_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def __create_tts_by_tr_styler(self, tts_by_tr_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
 
         tts_by_tr_styler : Union[DataFrame, Styler] = self.__orchestrate_head_n(
             df = tts_by_tr_df, 
@@ -2978,7 +2978,7 @@ class TTAdapter():
 
         return tts_by_tr_styler
 
-    def create_tts_gantt_spnv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+    def __create_tts_gantt_spnv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
@@ -2990,7 +2990,7 @@ class TTAdapter():
             months = setting_bag.tts_gantt_spnv_months,
             min_duration = setting_bag.tts_gantt_spnv_min_duration
         )
-    def create_tts_gantt_spnv_plot_function(self, gantt_df : DataFrame, setting_bag : SettingBag) -> Callable[[], None]:
+    def __create_tts_gantt_spnv_plot_function(self, gantt_df : DataFrame, setting_bag : SettingBag) -> Callable[[], None]:
 
         '''Creates the expected function out of the provided arguments.'''
 
@@ -3001,7 +3001,7 @@ class TTAdapter():
             x_label = setting_bag.tts_gantt_spnv_x_label,
             y_label = setting_bag.tts_gantt_spnv_y_label
         )
-    def create_tts_gantt_hseq_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+    def __create_tts_gantt_hseq_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
 
@@ -3013,7 +3013,7 @@ class TTAdapter():
             months = setting_bag.tts_gantt_hseq_months,
             min_duration = setting_bag.tts_gantt_hseq_min_duration
         )
-    def create_tts_gantt_hseq_plot_function(self, gantt_df : DataFrame, setting_bag : SettingBag) -> Callable[[], None]:
+    def __create_tts_gantt_hseq_plot_function(self, gantt_df : DataFrame, setting_bag : SettingBag) -> Callable[[], None]:
 
         '''Creates the expected function out of the provided arguments.'''
 
@@ -3029,44 +3029,44 @@ class TTAdapter():
 
         '''Creates a TTSummary object out of setting_bag.'''
 
-        tt_df : DataFrame = self.create_tt_df(setting_bag = setting_bag)
-        tt_styler : Union[DataFrame, Styler] = self.create_tt_styler(tt_df = tt_df, setting_bag = setting_bag)
+        tt_df : DataFrame = self.__create_tt_df(setting_bag = setting_bag)
+        tt_styler : Union[DataFrame, Styler] = self.__create_tt_styler(tt_df = tt_df, setting_bag = setting_bag)
         
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_month_styler : Union[DataFrame, Styler] = self.create_tts_by_month_styler(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
-        tts_by_month_sub_dfs : list[DataFrame] = self.create_tts_by_month_sub_dfs(tts_by_month_styler = tts_by_month_styler)
-        tts_by_month_sub_md : str = self.create_tts_by_month_sub_md(tts_by_month_sub_dfs = tts_by_month_sub_dfs, setting_bag = setting_bag)
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_month_styler : Union[DataFrame, Styler] = self.__create_tts_by_month_styler(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
+        tts_by_month_sub_dfs : list[DataFrame] = self.__create_tts_by_month_sub_dfs(tts_by_month_styler = tts_by_month_styler)
+        tts_by_month_sub_md : str = self.__create_tts_by_month_sub_md(tts_by_month_sub_dfs = tts_by_month_sub_dfs, setting_bag = setting_bag)
 
-        tts_by_year_df : DataFrame = self.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_year_styler : Union[DataFrame, Styler] = self.create_tts_by_year_styler(tts_by_year_df = tts_by_year_df, setting_bag = setting_bag)
+        tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_styler : Union[DataFrame, Styler] = self.__create_tts_by_year_styler(tts_by_year_df = tts_by_year_df, setting_bag = setting_bag)
         
-        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_year_month_styler : Union[DataFrame, Styler] = self.create_tts_by_year_month_styler(tts_by_year_month_tpl = tts_by_year_month_tpl, setting_bag = setting_bag)
+        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_month_styler : Union[DataFrame, Styler] = self.__create_tts_by_year_month_styler(tts_by_year_month_tpl = tts_by_year_month_tpl, setting_bag = setting_bag)
         
-        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_year_month_spnv_styler : Union[DataFrame, Styler] = self.create_tts_by_year_month_spnv_styler(tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl, setting_bag = setting_bag)
+        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_month_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_month_spnv_styler : Union[DataFrame, Styler] = self.__create_tts_by_year_month_spnv_styler(tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl, setting_bag = setting_bag)
         
-        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_year_spnv_styler : Union[DataFrame, Styler] = self.create_tts_by_year_spnv_styler(tts_by_year_spnv_tpl = tts_by_year_spnv_tpl, setting_bag = setting_bag)
+        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_spnv_styler : Union[DataFrame, Styler] = self.__create_tts_by_year_spnv_styler(tts_by_year_spnv_tpl = tts_by_year_spnv_tpl, setting_bag = setting_bag)
 
-        tts_by_spn_df : DataFrame = self.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_spn_styler : Union[DataFrame, Styler] = self.create_tts_by_spn_styler(tts_by_spn_df = tts_by_spn_df, setting_bag = setting_bag)
+        tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_spn_styler : Union[DataFrame, Styler] = self.__create_tts_by_spn_styler(tts_by_spn_df = tts_by_spn_df, setting_bag = setting_bag)
 
-        tts_by_spn_spv_df : DataFrame = self.create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_spn_spv_df : DataFrame = self.__create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
-        tts_by_hashtag_year_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_hashtag_year_styler : Union[DataFrame, Styler] = self.create_tts_by_hashtag_year_styler(tts_by_hashtag_year_df = tts_by_hashtag_year_df, setting_bag = setting_bag)
+        tts_by_hashtag_year_df : DataFrame = self.__create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_hashtag_year_styler : Union[DataFrame, Styler] = self.__create_tts_by_hashtag_year_styler(tts_by_hashtag_year_df = tts_by_hashtag_year_df, setting_bag = setting_bag)
         
-        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_efs_styler : Union[DataFrame, Styler] = tts_by_efs_tpl[1]
 
-        tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_tr_styler : Union[DataFrame, Styler] = self.create_tts_by_tr_styler(tts_by_tr_df = tts_by_tr_df, setting_bag = setting_bag)
+        tts_by_tr_df : DataFrame = self.__create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_tr_styler : Union[DataFrame, Styler] = self.__create_tts_by_tr_styler(tts_by_tr_df = tts_by_tr_df, setting_bag = setting_bag)
 
-        tts_gantt_spnv_df : DataFrame = self.create_tts_gantt_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_gantt_spnv_plot_function : Callable[[], None] = self.create_tts_gantt_spnv_plot_function(gantt_df = tts_gantt_spnv_df, setting_bag = setting_bag)
-        tts_gantt_hseq_df : DataFrame = self.create_tts_gantt_hseq_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_gantt_hseq_plot_function : Callable[[], None] = self.create_tts_gantt_hseq_plot_function(gantt_df = tts_gantt_hseq_df, setting_bag = setting_bag)       
+        tts_gantt_spnv_df : DataFrame = self.__create_tts_gantt_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_gantt_spnv_plot_function : Callable[[], None] = self.__create_tts_gantt_spnv_plot_function(gantt_df = tts_gantt_spnv_df, setting_bag = setting_bag)
+        tts_gantt_hseq_df : DataFrame = self.__create_tts_gantt_hseq_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_gantt_hseq_plot_function : Callable[[], None] = self.__create_tts_gantt_hseq_plot_function(gantt_df = tts_gantt_hseq_df, setting_bag = setting_bag)       
         
         definitions_df : DataFrame = self.__df_factory.create_definitions_df()
 
