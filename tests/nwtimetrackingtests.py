@@ -905,7 +905,7 @@ class TTSummaryTestCase(unittest.TestCase):
             tts_gantt_hseq_df = empty_df,
             tts_gantt_hseq_plot_function = empty_func,
             definitions_df = empty_df,
-            tts_by_month_md = markdown,
+            tts_by_month_sub_md = markdown,
         )
 
         # Assert
@@ -926,8 +926,8 @@ class TTSummaryTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_gantt_hseq_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_gantt_hseq_plot_function, empty_func)
         self.assertEqual(actual.definitions_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_month_md, markdown)
-        self.assertIsInstance(actual.tts_by_month_md, str)
+        self.assertEqual(actual.tts_by_month_sub_md, markdown)
+        self.assertIsInstance(actual.tts_by_month_sub_md, str)
 class DefaultPathProviderTestCase(unittest.TestCase):
 
     def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
@@ -2463,7 +2463,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         expected.iloc[1, 5] = "[[ 65h 30m ]]"
 
         # Act
-        actual : DataFrame = self.effort_highlighter.highlight(self.df_without_duplicates, style, mode, tokens) # type: ignore
+        actual : DataFrame = self.effort_highlighter.create_styler(self.df_without_duplicates, style, mode, tokens) # type: ignore
 
         # Assert
         assert_frame_equal(expected, actual)
@@ -2480,7 +2480,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         }
 
         # Act
-        actual : Styler = self.effort_highlighter.highlight(self.df_without_duplicates, style, mode, color = color) # type: ignore
+        actual : Styler = self.effort_highlighter.create_styler(self.df_without_duplicates, style, mode, color = color) # type: ignore
 
         # Assert
         self.assertEqual(expected, actual._compute().ctx)   # type: ignore
@@ -2493,7 +2493,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Act
         with self.assertRaises(Exception) as context:
-            self.effort_highlighter.highlight(df = self.df_without_duplicates, style = style, mode = mode)
+            self.effort_highlighter.create_styler(df = self.df_without_duplicates, style = style, mode = mode)
 
         # Assert
         self.assertEqual(expected, str(context.exception))
@@ -2508,7 +2508,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Act, Assert
         with patch.object(EffortHighlighter, "_EffortHighlighter__try_filter_by_column_names") as try_filter_by_column_names:
-            self.effort_highlighter.highlight(
+            self.effort_highlighter.create_styler(
                 df = self.df_without_duplicates, 
                 style = style, 
                 mode = mode, 
@@ -2758,7 +2758,7 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
         expected_newlines : int = (9 + 14)
 
         # Act
-        actual : str = self.md_factory.create_tts_by_month_md(
+        actual : str = self.md_factory.create_tts_by_month_sub_md(
             paragraph_title = self.paragraph_title, 
             last_update = self.last_update, 
             tts_by_month_upd_df = tts_by_month_upd_df,
@@ -2777,7 +2777,7 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
         expected_newlines : int = (9 + 14 + 14 + 14 + 2)
 
         # Act
-        actual : str = self.md_factory.create_tts_by_month_md(
+        actual : str = self.md_factory.create_tts_by_month_sub_md(
             paragraph_title = self.paragraph_title, 
             last_update = self.last_update, 
             tts_by_month_upd_df = tts_by_month_upd_df,
@@ -3347,7 +3347,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tts_by_month_tpl : Tuple[Mock, Mock] = (Mock(), Mock())
 
         # Act
-        tt_adapter.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
+        tt_adapter.create_tts_by_month_sub_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
 
         # Assert
         md_factory.create_tts_by_month_md.assert_called_once_with(
@@ -3430,7 +3430,7 @@ class TTAdapterTestCase(unittest.TestCase):
         # assert_frame_equal(actual.tts_by_efs_tpl[1], tts_by_efs_tpl[1])
         assert_frame_equal(actual.tts_by_tr_df, tts_by_tr_df)
         assert_frame_equal(actual.definitions_df, definitions_df)
-        self.assertEqual(actual.tts_by_month_md, tts_by_month_md)
+        self.assertEqual(actual.tts_by_month_sub_md, tts_by_month_md)
 class SettingSubsetTestCase(unittest.TestCase):
 
     def setUp(self) -> None:

@@ -233,27 +233,42 @@ class TTSummary():
 
     '''Collects all the dataframes and markdowns.'''
 
-    # Dataframes
     tt_df : DataFrame
+
     tts_by_month_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_month_styler : Union[DataFrame, Styler]
+    tts_by_month_sub_dfs : list[DataFrame]
+    tts_by_month_sub_md : str
+
     tts_by_year_df : DataFrame
+    tts_by_year_styler : Union[DataFrame, Styler]
+
     tts_by_year_month_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_year_month_styler : Union[DataFrame, Styler]
+
     tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_year_month_spnv_styler : Union[DataFrame, Styler]
+
     tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_year_spnv_styler : Union[DataFrame, Styler]
+
     tts_by_spn_df : DataFrame
+    tts_by_spn_styler : Union[DataFrame, Styler]
+
     tts_by_spn_spv_df : DataFrame
     tts_by_hashtag_df : DataFrame
     tts_by_hashtag_year_df : DataFrame
+    tts_by_hashtag_year_styler : Union[DataFrame, Styler]
+
     tts_by_efs_tpl : Tuple[DataFrame, DataFrame]
     tts_by_tr_df : DataFrame
+    
     tts_gantt_spnv_df : DataFrame
     tts_gantt_spnv_plot_function : Callable[[], None]
     tts_gantt_hseq_df : DataFrame
     tts_gantt_hseq_plot_function : Callable[[], None]
-    definitions_df : DataFrame
 
-    # Markdowns
-    tts_by_month_md : str
+    definitions_df : DataFrame
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -1406,7 +1421,7 @@ class EffortHighlighter():
 
         return styler
 
-    def highlight(
+    def create_styler(
         self, 
         df : DataFrame, 
         style : EFFORTSTYLE, 
@@ -2195,37 +2210,33 @@ class TTMarkdownFactory():
     '''Encapsulates all the logic related to Markdown creation out of Time Tracking dataframes.'''
 
     __markdown_helper : MarkdownHelper
-    __bym_splitter : BYMSplitter
 
-    def __init__(self, markdown_helper : MarkdownHelper, bym_splitter : BYMSplitter) -> None:
+    def __init__(self, markdown_helper : MarkdownHelper) -> None:
 
         self.__markdown_helper = markdown_helper
-        self.__bym_splitter = bym_splitter
 
-    def __convert_sub_dfs(self, smaller_dfs : list[DataFrame]) -> str:
+    def __convert_sub_dfs(self, sub_dfs : list[DataFrame]) -> str:
 
-        smaller_mds : list[str] = []
+        '''Converts sub_dfs to sub_mds and joins them.'''
 
-        for smaller_df in smaller_dfs:
-            smaller_md : str = smaller_df.to_markdown(index = False)
-            smaller_mds.append(smaller_md)
+        sub_mds : list[str] = []
 
-        return "\n\n".join(smaller_mds)
+        for sub_df in sub_dfs:
+            sub_md : str = sub_df.to_markdown(index = False)
+            sub_mds.append(sub_md)
+
+        return "\n\n".join(sub_mds)
     
-    def create_tts_by_month_md(self, paragraph_title : str, last_update : datetime, tts_by_month_upd_df : DataFrame, enable_github_optimizations : bool) -> str:
+    def create_tts_by_month_sub_md(self, paragraph_title : str, last_update : datetime, sub_dfs : list[DataFrame]) -> str:
 
         '''Creates the expected Markdown content for the provided arguments.'''
 
         markdown_header : str = self.__markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = paragraph_title)
-        tts_by_month_upd_md : str = tts_by_month_upd_df.to_markdown(index = False)
-
-        if enable_github_optimizations:
-            sub_dfs : list[DataFrame] = self.__bym_splitter.create_sub_dfs(df = tts_by_month_upd_df)
-            tts_by_month_upd_md = self.__convert_sub_dfs(smaller_dfs = sub_dfs) 
+        tts_by_month_sub_md = self.__convert_sub_dfs(sub_dfs = sub_dfs)           
 
         md_content : str = markdown_header
         md_content += "\n"
-        md_content += tts_by_month_upd_md
+        md_content += tts_by_month_sub_md
         md_content += "\n"
 
         return md_content
@@ -2634,6 +2645,7 @@ class TTAdapter():
 
     __df_factory : TTDataFrameFactory
     __bym_factory : BYMFactory
+    __bym_splitter : BYMSplitter
     __tt_sequencer : TTSequencer
     __md_factory : TTMarkdownFactory
     __effort_highlighter : EffortHighlighter
@@ -2641,7 +2653,8 @@ class TTAdapter():
     def __init__(
             self, 
             df_factory : TTDataFrameFactory, 
-            bym_factory : BYMFactory, 
+            bym_factory : BYMFactory,
+            bym_splitter : BYMSplitter,
             tt_sequencer : TTSequencer,
             md_factory : TTMarkdownFactory,
             effort_highlighter : EffortHighlighter
@@ -2649,6 +2662,7 @@ class TTAdapter():
         
         self.__df_factory = df_factory
         self.__bym_factory = bym_factory
+        self.__bym_splitter = bym_splitter
         self.__tt_sequencer = tt_sequencer
         self.__md_factory = md_factory
         self.__effort_highlighter = effort_highlighter
@@ -2686,6 +2700,32 @@ class TTAdapter():
         )
 
         return tts_by_month_tpl
+    def create_tts_by_month_styler(self, tts_by_month_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Creates the expected Styler object out of the provided arguments.'''
+
+        tts_by_month_styler : Union[DataFrame, Styler] = tts_by_month_df
+
+        if setting_bag.tts_by_month_effort_highlight:
+            tts_by_month_styler = self.__effort_highlighter.create_styler(
+                df = tts_by_month_df,
+                style = setting_bag.tts_by_month_effort_highlight_style,
+                mode = setting_bag.tts_by_month_effort_highlight_mode
+            )
+        
+        return tts_by_month_styler
+    def create_tts_by_month_sub_md(self, tts_by_month_sub_dfs : list[DataFrame], setting_bag : SettingBag) -> str:
+
+        '''Creates the expected Markdown content out of the provided arguments.'''
+
+        tts_by_month_sub_md : str = self.__md_factory.create_tts_by_month_sub_md(
+            paragraph_title = self.extract_file_name_and_paragraph_title(id = TTID.TTSBYMONTH, setting_bag = setting_bag)[1],
+            last_update = setting_bag.md_last_update,
+            sub_dfs = tts_by_month_sub_dfs
+        )
+
+        return tts_by_month_sub_md
+
     def create_tts_by_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2697,6 +2737,22 @@ class TTAdapter():
         )
 
         return tts_by_year_df
+    def create_tts_by_year_styler(self, tts_by_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Creates the expected Styler object out of the provided arguments.'''
+
+        tts_by_year_styler : Union[DataFrame, Styler] = tts_by_year_df
+
+        if setting_bag.tts_by_year_effort_highlight:
+            tts_by_year_styler = self.__effort_highlighter.create_styler(
+                df = tts_by_year_df,
+                style = setting_bag.tts_by_month_effort_highlight_style,
+                mode = setting_bag.tts_by_month_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_effort_highlight_column_names
+            )
+        
+        return tts_by_year_styler    
+    
     def create_tts_by_year_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2714,6 +2770,21 @@ class TTAdapter():
         )
 
         return tts_by_year_month_df
+    def create_tts_by_year_month_styler(self, tts_by_year_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+
+        '''
+            tts_by_year_month_tpl is made of (tts_by_year_month_df, tts_by_year_month_flt_df).
+
+            This method decides which one of the two DataFrame is to be displayed according to setting_bag.tts_by_year_month_display_only_years.
+        '''
+
+        tts_by_year_month_styler : Union[DataFrame, Styler] = tts_by_year_month_tpl[0]
+
+        if setting_bag.tts_by_year_month_display_only_years is not None:
+            tts_by_year_month_styler = tts_by_year_month_tpl[1]
+
+        return tts_by_year_month_styler
+       
     def create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2726,6 +2797,27 @@ class TTAdapter():
         )
 
         return tts_by_year_month_spnv_tpl
+    def create_tts_by_year_month_spnv_styler(self, tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Creates the expected Styler object out of the provided arguments.'''
+
+        tts_by_year_month_spnv_df : DataFrame = tts_by_year_month_spnv_tpl[0]
+
+        if setting_bag.tts_by_year_month_spnv_display_only_spn:
+            tts_by_year_month_spnv_df = tts_by_year_month_spnv_tpl[1]
+
+        tts_by_year_month_spnv_styler : Union[DataFrame, Styler] = tts_by_year_month_spnv_df
+
+        if setting_bag.tts_by_year_month_spnv_effort_highlight:
+            tts_by_year_month_spnv_styler = self.__effort_highlighter.create_styler(
+                df = tts_by_year_month_spnv_df,
+                style = setting_bag.tts_by_year_month_spnv_effort_highlight_style,
+                mode = setting_bag.tts_by_year_month_spnv_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_month_spnv_effort_highlight_column_names
+            )
+        
+        return tts_by_year_month_spnv_styler
+    
     def create_tts_by_year_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2738,6 +2830,27 @@ class TTAdapter():
         )
 
         return tts_by_year_spnv_tpl
+    def create_tts_by_year_spnv_styler(self, tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Creates the expected Styler object out of the provided arguments.'''
+
+        tts_by_year_spnv_df : DataFrame = tts_by_year_spnv_tpl[0]
+
+        if setting_bag.tts_by_year_spnv_display_only_spn:
+            tts_by_year_spnv_df = tts_by_year_spnv_tpl[1]
+
+        tts_by_year_spnv_styler : Union[DataFrame, Styler] = tts_by_year_spnv_df
+
+        if setting_bag.tts_by_year_spnv_effort_highlight:
+            tts_by_year_spnv_styler = self.__effort_highlighter.create_styler(
+                df = tts_by_year_spnv_df,
+                style = setting_bag.tts_by_year_spnv_effort_highlight_style,
+                mode = setting_bag.tts_by_year_spnv_effort_highlight_mode,
+                column_names = setting_bag.tts_by_year_spnv_effort_highlight_column_names
+            )
+        
+        return tts_by_year_spnv_styler
+    
     def create_tts_by_spn_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2750,6 +2863,22 @@ class TTAdapter():
         )
 
         return tts_by_spn_df
+    def create_tts_by_spn_styler(self, tts_by_spn_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Creates the expected Styler object out of the provided arguments.'''
+
+        tts_by_spn_styler : Union[DataFrame, Styler] = tts_by_spn_df
+
+        if setting_bag.tts_by_spn_effort_highlight:
+            tts_by_spn_styler = self.__effort_highlighter.create_styler(
+                df = tts_by_spn_df,
+                style = setting_bag.tts_by_spn_effort_highlight_style,
+                mode = setting_bag.tts_by_spn_effort_highlight_mode,
+                column_names = setting_bag.tts_by_spn_effort_highlight_column_names
+            )
+        
+        return tts_by_spn_styler
+    
     def create_tts_by_spn_spv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2772,6 +2901,21 @@ class TTAdapter():
         )
 
         return tts_by_year_hashtag_df
+    def create_tts_by_hashtag_year_styler(self, tts_by_hashtag_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+        
+        '''Creates the expected Styler object out of the provided arguments.'''
+
+        tts_by_hashtag_year_styler : Union[DataFrame, Styler] = tts_by_hashtag_year_df
+
+        if setting_bag.tts_by_hashtag_year_effort_highlight:
+            tts_by_hashtag_year_styler = self.__effort_highlighter.create_styler(
+                df = tts_by_hashtag_year_df,
+                style = setting_bag.tts_by_hashtag_year_effort_highlight_style,
+                mode = setting_bag.tts_by_hashtag_year_effort_highlight_mode
+            )
+        
+        return tts_by_hashtag_year_styler    
+    
     def create_tts_by_efs_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2793,6 +2937,7 @@ class TTAdapter():
         )
 
         return tts_by_tr_df
+    
     def create_tts_gantt_spnv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2839,158 +2984,78 @@ class TTAdapter():
             x_label = setting_bag.tts_gantt_hseq_x_label,
             y_label = setting_bag.tts_gantt_hseq_y_label
         )   
-    def create_tts_by_month_md(self, tts_by_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> str:
 
-        '''Creates the expected Markdown content out of the provided arguments.'''
-
-        tts_by_month_md : str = self.__md_factory.create_tts_by_month_md(
-            paragraph_title = self.extract_file_name_and_paragraph_title(id = TTID.TTSBYMONTH, setting_bag = setting_bag)[1],
-            last_update = setting_bag.md_last_update,
-            tts_by_month_upd_df = tts_by_month_tpl[1],
-            enable_github_optimizations = setting_bag.md_enable_github_optimizations
-        )
-
-        return tts_by_month_md
     def create_summary(self, setting_bag : SettingBag) -> TTSummary:
 
         '''Creates a TTSummary object out of setting_bag.'''
 
         tt_df : DataFrame = self.create_tt_df(setting_bag = setting_bag)
+        
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_month_styler : Union[DataFrame, Styler] = self.create_tts_by_month_styler(tts_by_month_df = tts_by_month_tpl[1], setting_bag = setting_bag)
+        tts_by_month_sub_dfs : list[DataFrame] = self.__bym_splitter.create_sub_dfs(df = tt_df)
+        tts_by_month_sub_md : str = self.create_tts_by_month_sub_md(tts_by_month_sub_dfs = tts_by_month_sub_dfs, setting_bag = setting_bag)
+
         tts_by_year_df : DataFrame = self.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_styler : Union[DataFrame, Styler] = self.create_tts_by_year_styler(tts_by_year_df = tts_by_year_df, setting_bag = setting_bag)
+        
         tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_month_styler : Union[DataFrame, Styler] = self.create_tts_by_year_month_styler(tts_by_year_month_tpl = tts_by_year_month_tpl, setting_bag = setting_bag)
+        
         tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_month_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_month_spnv_styler : Union[DataFrame, Styler] = self.create_tts_by_year_month_spnv_styler(tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl, setting_bag = setting_bag)
+        
         tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_year_spnv_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_year_spnv_styler : Union[DataFrame, Styler] = self.create_tts_by_year_spnv_styler(tts_by_year_spnv_tpl = tts_by_year_spnv_tpl, setting_bag = setting_bag)
+
         tts_by_spn_df : DataFrame = self.create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_spn_styler : Union[DataFrame, Styler] = self.create_tts_by_spn_styler(tts_by_spn_df = tts_by_spn_df, setting_bag = setting_bag)
+
         tts_by_spn_spv_df : DataFrame = self.create_tts_by_spn_spv_df(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_hashtag_year_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
+        tts_by_hashtag_year_df : DataFrame = self.create_tts_by_hashtag_year_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_hashtag_year_styler : Union[DataFrame, Styler] = self.create_tts_by_hashtag_year_styler(tts_by_hashtag_year_df = tts_by_hashtag_year_df, setting_bag = setting_bag)
+        
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_efs_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
+
         tts_gantt_spnv_df : DataFrame = self.create_tts_gantt_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_gantt_spnv_plot_function : Callable[[], None] = self.create_tts_gantt_spnv_plot_function(gantt_df = tts_gantt_spnv_df, setting_bag = setting_bag)
         tts_gantt_hseq_df : DataFrame = self.create_tts_gantt_hseq_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_gantt_hseq_plot_function : Callable[[], None] = self.create_tts_gantt_hseq_plot_function(gantt_df = tts_gantt_hseq_df, setting_bag = setting_bag)       
-        tts_by_tr_df : DataFrame = self.create_tts_by_tr_df(tt_df = tt_df, setting_bag = setting_bag)
+        
         definitions_df : DataFrame = self.__df_factory.create_definitions_df()
-        tts_by_month_md : str = self.create_tts_by_month_md(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
             tts_by_month_tpl = tts_by_month_tpl,
+            tts_by_month_styler = tts_by_month_styler,
+            tts_by_month_sub_dfs = tts_by_month_sub_dfs,
+            tts_by_month_sub_md = tts_by_month_sub_md,
             tts_by_year_df = tts_by_year_df,
+            tts_by_year_styler = tts_by_year_styler,
             tts_by_year_month_tpl = tts_by_year_month_tpl,
+            tts_by_year_month_styler = tts_by_year_month_styler,
             tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl,
+            tts_by_year_month_spnv_styler = tts_by_year_month_spnv_styler,
             tts_by_year_spnv_tpl = tts_by_year_spnv_tpl,
+            tts_by_year_spnv_styler = tts_by_year_spnv_styler,
             tts_by_spn_df = tts_by_spn_df,
+            tts_by_spn_styler = tts_by_spn_styler,
             tts_by_spn_spv_df = tts_by_spn_spv_df,
-            tts_by_hashtag_year_df = tts_by_hashtag_year_df,
             tts_by_hashtag_df = tts_by_hashtag_df,
+            tts_by_hashtag_year_df = tts_by_hashtag_year_df,
+            tts_by_hashtag_year_styler = tts_by_hashtag_year_styler,
             tts_by_efs_tpl = tts_by_efs_tpl,
             tts_by_tr_df = tts_by_tr_df,
             tts_gantt_spnv_df = tts_gantt_spnv_df,
             tts_gantt_spnv_plot_function = tts_gantt_spnv_plot_function,
             tts_gantt_hseq_df = tts_gantt_hseq_df,
             tts_gantt_hseq_plot_function = tts_gantt_hseq_plot_function,
-            definitions_df = definitions_df,
-            tts_by_month_md = tts_by_month_md
+            definitions_df = definitions_df
         )
 
         return tt_summary
-
-    def try_highlight_tts_by_month(self, tts_by_month_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
-        
-        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
-
-        styler : Union[DataFrame, Styler] = tts_by_month_df
-
-        if setting_bag.tts_by_month_effort_highlight:
-
-            styler = self.__effort_highlighter.highlight(
-                df = tts_by_month_df,
-                style = setting_bag.tts_by_month_effort_highlight_style,
-                mode = setting_bag.tts_by_month_effort_highlight_mode
-            )
-        
-        return styler
-    def try_highlight_tts_by_year(self, tts_by_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
-        
-        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
-
-        styler : Union[DataFrame, Styler] = tts_by_year_df
-
-        if setting_bag.tts_by_year_effort_highlight:
-
-            styler = self.__effort_highlighter.highlight(
-                df = tts_by_year_df,
-                style = setting_bag.tts_by_month_effort_highlight_style,
-                mode = setting_bag.tts_by_month_effort_highlight_mode,
-                column_names = setting_bag.tts_by_year_effort_highlight_column_names
-            )
-        
-        return styler
-    def try_highlight_tts_by_year_month_spnv(self, tts_by_year_month_spnv_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
-        
-        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
-
-        styler : Union[DataFrame, Styler] = tts_by_year_month_spnv_df
-
-        if setting_bag.tts_by_year_month_spnv_effort_highlight:
-
-            styler = self.__effort_highlighter.highlight(
-                df = tts_by_year_month_spnv_df,
-                style = setting_bag.tts_by_year_month_spnv_effort_highlight_style,
-                mode = setting_bag.tts_by_year_month_spnv_effort_highlight_mode,
-                column_names = setting_bag.tts_by_year_month_spnv_effort_highlight_column_names
-            )
-        
-        return styler
-    def try_highlight_tts_by_year_spnv(self, tts_by_year_spnv_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
-        
-        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
-
-        styler : Union[DataFrame, Styler] = tts_by_year_spnv_df
-
-        if setting_bag.tts_by_year_spnv_effort_highlight:
-
-            styler = self.__effort_highlighter.highlight(
-                df = tts_by_year_spnv_df,
-                style = setting_bag.tts_by_year_spnv_effort_highlight_style,
-                mode = setting_bag.tts_by_year_spnv_effort_highlight_mode,
-                column_names = setting_bag.tts_by_year_spnv_effort_highlight_column_names
-            )
-        
-        return styler
-    def try_highlight_tts_by_spn(self, tts_by_spn_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
-        
-        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
-
-        styler : Union[DataFrame, Styler] = tts_by_spn_df
-
-        if setting_bag.tts_by_spn_effort_highlight:
-
-            styler = self.__effort_highlighter.highlight(
-                df = tts_by_spn_df,
-                style = setting_bag.tts_by_spn_effort_highlight_style,
-                mode = setting_bag.tts_by_spn_effort_highlight_mode,
-                column_names = setting_bag.tts_by_spn_effort_highlight_column_names
-            )
-        
-        return styler
-    def try_highlight_tts_by_hashtag_year(self, tts_by_hashtag_year_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
-        
-        '''Highlights the provided DataFrame or passes it through according to setting_bag.'''
-
-        styler : Union[DataFrame, Styler] = tts_by_hashtag_year_df
-
-        if setting_bag.tts_by_hashtag_year_effort_highlight:
-
-            styler = self.__effort_highlighter.highlight(
-                df = tts_by_hashtag_year_df,
-                style = setting_bag.tts_by_hashtag_year_effort_highlight_style,
-                mode = setting_bag.tts_by_hashtag_year_effort_highlight_mode
-            )
-        
-        return styler
 class SettingSubset(SimpleNamespace):
 
     '''A dynamically assigned subset of SettingBag properties with a custom __str__ method that returns them as JSON.'''
@@ -3068,11 +3133,9 @@ class ComponentBag():
     tt_adapter : TTAdapter = field(default = TTAdapter(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
         bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
+        bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()),
         tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
-        md_factory = TTMarkdownFactory(
-            markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
-            ),
+        md_factory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())),
         effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
         ))
 class TimeTrackingProcessor():
@@ -3128,18 +3191,6 @@ class TimeTrackingProcessor():
             head_n = self.__setting_bag.tt_head_n, 
             display_head_n_with_tail = self.__setting_bag.tt_display_head_n_with_tail
         )
-    def __optimize_tts_by_year_month_for_display(self, tts_by_year_month_tpl : Tuple[DataFrame, DataFrame]) -> DataFrame:
-
-        '''
-            tts_by_year_month_tpl is made of (tts_by_year_month_df, tts_by_year_month_flt_df).
-
-            This method decides which one of the two DataFrame is to be displayed according to __setting_bag.tts_by_year_month_display_only_years.
-        '''
-
-        if self.__setting_bag.tts_by_year_month_display_only_years is None:
-            return tts_by_year_month_tpl[0]
-
-        return tts_by_year_month_tpl[1]
     def __optimize_tts_by_year_month_spnv_for_display(self, tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame]) -> DataFrame:
 
         '''
@@ -3204,13 +3255,13 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_month
-        df : DataFrame = self.__tt_summary.tts_by_month_tpl[1]
-        content : str = self.__tt_summary.tts_by_month_md
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_month_styler
+        content : str = self.__tt_summary.tts_by_month_sub_md
         id : TTID = TTID.TTSBYMONTH
         logging_function : Callable[[str], None] = lambda msg : self.__component_bag.tt_logger.log(msg)
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(obj = styler)
 
         if OPTION.save in options:
             self.__save_and_log(id = id, content = content, logging_function = logging_function)
@@ -3225,10 +3276,10 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year
-        df : DataFrame = self.__tt_summary.tts_by_year_df
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_year_styler
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(obj = styler)
     def process_tts_by_year_month(self) -> None:
 
         '''
@@ -3240,10 +3291,10 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_year_month
-        df : DataFrame = self.__optimize_tts_by_year_month_for_display(tts_by_year_month_tpl = self.__tt_summary.tts_by_year_month_tpl)
+        styler : Union[DataFrame, Styler] = self.__tt_summary.tts_by_year_month_styler
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(df = df)
+            self.__component_bag.displayer.display(obj = styler)
     def process_tts_by_year_month_spnv(self) -> None:
 
         '''
