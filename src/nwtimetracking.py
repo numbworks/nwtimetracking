@@ -379,7 +379,7 @@ class SettingBag():
 
     # WITHOUT DEFAULTS
     options_tt : list[Literal[OPTION.display]]
-    options_tts_by_month : list[Literal[OPTION.display, OPTION.save]]
+    options_tts_by_month : list[Literal[OPTION.display, OPTION.save, OPTION.logset]]
     options_tts_by_year : list[Literal[OPTION.display]]
     options_tts_by_year_month : list[Literal[OPTION.display]]
     options_tts_by_year_month_spnv : list[Literal[OPTION.display]]
@@ -3112,7 +3112,7 @@ class TTLogger():
 
         if len(setting_names) > 0:
             setting_subset : SettingSubset = self.__create_setting_subset(setting_bag = setting_bag, setting_names = setting_names)
-            self.__logging_function(f"Settings: {str(setting_subset)}")
+            self.__logging_function(f"Relevant Settings: {str(setting_subset)}")
     def log(self, msg : str) -> None:
 
         '''Logs the provided msg. Does nothing if msg is empty'''
@@ -3186,26 +3186,26 @@ class TimeTrackingProcessor():
         plot_function : Optional[Callable[[]]] = kwargs.get("plot_function", None)
         term : Optional[str] = kwargs.get("term", None)
         setting_names : Optional[list[str]] = kwargs.get("setting_names", None)
-        definitions_df : DataFrame = kwargs["definitions"]
-        setting_bag : SettingBag = kwargs["setting_bag"]
+        definitions_df : Optional[DataFrame] = kwargs.get("definitions", None)
+        setting_bag : Optional[SettingBag] = kwargs.get("setting_bag", None)
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = cast(DataFrame, styler), hide_index = hide_index, formatters = formatters)
-
-        if OPTION.save in options:
-            self.__save_and_log(id = cast(TTID, id), content = cast(str, content), logging_function = cast(Callable[[str]], logging_function))
 
         if OPTION.plot in options:
             cast(Callable[[]], plot_function)()
 
         if OPTION.logdef in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = cast(DataFrame, definitions_df))
 
         if OPTION.logterm in options:
-            self.__component_bag.tt_logger.try_log_term_definition(term = cast(str, term), definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_term_definition(term = cast(str, term), definitions = cast(DataFrame, definitions_df))
 
         if OPTION.logset in options:
-            self.__component_bag.tt_logger.try_log_settings(setting_bag = setting_bag, setting_names = cast(list[str], setting_names))
+            self.__component_bag.tt_logger.try_log_settings(setting_bag = cast(SettingBag, setting_bag), setting_names = cast(list[str], setting_names))
+
+        if OPTION.save in options:
+            self.__save_and_log(id = cast(TTID, id), content = cast(str, content), logging_function = cast(Callable[[str]], logging_function))
 
     def initialize(self) -> None:
 
@@ -3223,11 +3223,12 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tt
-        styler : DataFrame = self.__tt_summary.tt_styler
-        hide_index : bool = self.__setting_bag.tt_hide_index
+        kwargs : dict = { 
+            "styler": self.__tt_summary.tt_styler, 
+            "hide_index": self.__setting_bag.tt_hide_index
+        }
 
-        if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = styler, hide_index = hide_index)
+        self.__process(options = options, kwargs = kwargs)
     def process_tts_by_month(self) -> None:
 
         '''
@@ -3240,15 +3241,19 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_month
         styler : DataFrame = self.__tt_summary.tts_by_month_styler
-        content : str = self.__tt_summary.tts_by_month_sub_md
         id : TTID = TTID.TTSBYMONTH
+        content : str = self.__tt_summary.tts_by_month_sub_md
         logging_function : Callable[[str], None] = lambda msg : self.__component_bag.tt_logger.log(msg)
+        setting_names : list[str] = [ "tts_by_month_effort_highlight", "tts_by_month_effort_highlight_mode" ]
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = styler)
 
         if OPTION.save in options:
             self.__save_and_log(id = id, content = content, logging_function = logging_function)
+
+        if OPTION.logset in options:
+            self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
     def process_tts_by_year(self) -> None:
 
         '''
