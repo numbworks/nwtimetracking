@@ -3177,6 +3177,27 @@ class TimeTrackingProcessor():
 
         except:
             logging_function(_MessageCollection.something_failed_while_saving(file_path = file_path))
+    def __process(self, options: list, kwargs: dict) -> None:
+        
+        '''A generic method for handling the actions specified in options.'''
+
+        styler : DataFrame = kwargs["styler"]
+        hide_index : bool = kwargs.get("hide_index", False)
+        formatters : Optional[dict] = kwargs.get("formatters", None)
+        id : Optional[TTID] = kwargs.get("id", None)
+        content : Optional[str] = kwargs.get("content", None)
+        logging_function : Optional[Callable[[str]]] = kwargs.get("logging_function", None)
+        plot_function : Optional[Callable[[]]] = kwargs.get("plot_function", None)
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = cast(DataFrame, styler), hide_index = hide_index, formatters = formatters)
+
+        if OPTION.save in options:
+            self.__save_and_log(id = cast(TTID, id), content = cast(str, content), logging_function = cast(Callable[[str]], logging_function))
+
+        if OPTION.plot in options:
+            cast(Callable[[]], plot_function)()
+
 
     def initialize(self) -> None:
 
@@ -3293,7 +3314,6 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_spn
-        df : DataFrame = self.__tt_summary.tts_by_spn_df
         styler : DataFrame = self.__tt_summary.tts_by_spn_styler
         formatters : dict = self.__setting_bag.tts_by_spn_formatters
         definitions_df : DataFrame = self.__tt_summary.definitions_df
@@ -3302,7 +3322,7 @@ class TimeTrackingProcessor():
             self.__component_bag.displayer.display(obj = styler, formatters = formatters)
 
         if OPTION.log in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
     def process_tts_by_spn_spv(self) -> None:
 
         '''
@@ -3314,14 +3334,14 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_spn_spv
-        df : DataFrame = self.__tt_summary.tts_by_spn_spv_df
+        styler : DataFrame = self.__tt_summary.tts_by_spn_spv_df
         definitions_df : DataFrame = self.__tt_summary.definitions_df        
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = df)
+            self.__component_bag.displayer.display(obj = styler)
 
         if OPTION.log in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
     def process_tts_by_hashtag(self) -> None:
 
         '''
@@ -3333,15 +3353,15 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_hashtag
-        df : DataFrame = self.__tt_summary.tts_by_hashtag_df
+        styler : DataFrame = self.__tt_summary.tts_by_hashtag_df
         formatters : dict = self.__setting_bag.tts_by_hashtag_formatters
         definitions_df : DataFrame = self.__tt_summary.definitions_df
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
 
         if OPTION.log in options:
-            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
     def process_tts_by_hashtag_year(self) -> None:
 
         '''
@@ -3398,21 +3418,22 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_gantt_spnv
-        df : DataFrame = self.__tt_summary.tts_gantt_spnv_df
+        styler : DataFrame = self.__tt_summary.tts_gantt_spnv_df
         formatters : dict = self.__setting_bag.tts_gantt_spnv_formatters
+        plot_function : Callable[[]] = self.__tt_summary.tts_gantt_spnv_plot_function
         definitions_df : DataFrame = self.__tt_summary.definitions_df
         term : str = "tts_gantt_spnv"
         setting_names : list[str] = [ "tts_gantt_spnv_months", "tts_gantt_spnv_min_duration" ]
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
 
         if OPTION.plot in options:
-            self.__tt_summary.tts_gantt_spnv_plot_function()
-
+            plot_function()
+           
         if OPTION.log in options:
             self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
-            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
             self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
     def process_tts_gantt_hseq(self) -> None:
 
@@ -3425,21 +3446,22 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_gantt_hseq
-        df : DataFrame = self.__tt_summary.tts_gantt_hseq_df
+        styler : DataFrame = self.__tt_summary.tts_gantt_hseq_df
         formatters : dict = self.__setting_bag.tts_gantt_hseq_formatters
+        plot_function : Callable[[]] = self.__tt_summary.tts_gantt_hseq_plot_function
         definitions_df : DataFrame = self.__tt_summary.definitions_df   
         term : str = "tts_gantt_hseq"
         setting_names : list[str] = [ "tts_gantt_hseq_months", "tts_gantt_hseq_min_duration" ]
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = df, formatters = formatters)
+            self.__component_bag.displayer.display(obj = styler, formatters = formatters)
 
         if OPTION.plot in options:
-            self.__tt_summary.tts_gantt_hseq_plot_function()
+            plot_function()
 
         if OPTION.log in options:
             self.__component_bag.tt_logger.try_log_term_definition(term = term, definitions = definitions_df)
-            self.__component_bag.tt_logger.try_log_column_definitions(df = df, definitions = definitions_df)
+            self.__component_bag.tt_logger.try_log_column_definitions(df = styler, definitions = definitions_df)
             self.__component_bag.tt_logger.try_log_settings(setting_bag = self.__setting_bag, setting_names = setting_names)
     def process_definitions(self) -> None:
 
@@ -3452,10 +3474,10 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_definitions
-        df : DataFrame = self.__tt_summary.definitions_df
+        styler : DataFrame = self.__tt_summary.definitions_df
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = df)
+            self.__component_bag.displayer.display(obj = styler)
     def get_summary(self) -> TTSummary:
 
         '''
