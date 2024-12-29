@@ -3116,7 +3116,7 @@ class TTLogger():
 
         if len(setting_names) > 0:
             setting_subset : SettingSubset = self.__create_setting_subset(setting_bag = setting_bag, setting_names = setting_names)
-            self.__logging_function(str(setting_subset))
+            self.__logging_function(f"Settings: {str(setting_subset)}")
     def log(self, msg : str) -> None:
 
         '''Logs the provided msg. Does nothing if msg is empty'''
@@ -3188,6 +3188,10 @@ class TimeTrackingProcessor():
         content : Optional[str] = kwargs.get("content", None)
         logging_function : Optional[Callable[[str]]] = kwargs.get("logging_function", None)
         plot_function : Optional[Callable[[]]] = kwargs.get("plot_function", None)
+        term : Optional[str] = kwargs.get("term", None)
+        setting_names : Optional[list[str]] = kwargs.get("setting_names", None)
+        definitions_df : DataFrame = kwargs["definitions"]
+        setting_bag : SettingBag = kwargs["setting_bag"]
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = cast(DataFrame, styler), hide_index = hide_index, formatters = formatters)
@@ -3197,7 +3201,6 @@ class TimeTrackingProcessor():
 
         if OPTION.plot in options:
             cast(Callable[[]], plot_function)()
-
 
     def initialize(self) -> None:
 
