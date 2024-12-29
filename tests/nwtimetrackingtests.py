@@ -106,7 +106,7 @@ class ObjectMother():
             options_tts_by_year_month = [OPTION.display],           # type: ignore
             options_tts_by_year_month_spnv = [OPTION.display],      # type: ignore
             options_tts_by_year_spnv = [OPTION.display],            # type: ignore
-            options_tts_by_spn = [OPTION.display, OPTION.logdef],      # type: ignore
+            options_tts_by_spn = [OPTION.display, OPTION.logdef],   # type: ignore
             options_tts_by_spn_spv = [],
             options_tts_by_hashtag = [OPTION.display],              # type: ignore
             options_tts_by_hashtag_year = [OPTION.display],         # type: ignore
@@ -511,7 +511,7 @@ class ObjectMother():
         return definitions_df
 
     @staticmethod
-    def get_tts_by_month_md() -> str:
+    def get_tts_by_month_sub_md() -> str:
 
         lines: list[str] = [
             "## Revision History",
@@ -2766,7 +2766,7 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
 		# Arrange
         enable_github_optimizations : bool = False
         tts_by_month_upd_df : DataFrame = ObjectMother().get_tts_by_month_tpl()[0]
-        expected : str = ObjectMother().get_tts_by_month_md()
+        expected : str = ObjectMother().get_tts_by_month_sub_md()
         expected_newlines : int = (9 + 14)
 
         # Act
@@ -3384,7 +3384,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = Mock()                           # TO UPDATE
         tts_by_tr_df : DataFrame = ObjectMother.get_tts_by_tr_df()
         definitions_df : DataFrame = ObjectMother.get_definitions_df()
-        tts_by_month_md : str = ObjectMother.get_tts_by_month_md()
+        tts_by_month_md : str = ObjectMother.get_tts_by_month_sub_md()
 
         df_factory : TTDataFrameFactory = Mock()
         df_factory.create_tt_df.return_value = tt_df
