@@ -67,7 +67,7 @@ check-pythonversion:
 check-requirements:
 	@clear; \
 	file_path="$(ROOT_DIR)/.devcontainer/Dockerfile"; \
-	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = False))"; \
+	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = True, sort_requirement_details = True))"; \
 	python -c "$$code";
 update-codecoverage:
 	@clear; \
