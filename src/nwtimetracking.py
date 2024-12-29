@@ -423,7 +423,7 @@ class SettingBag():
     tt_hide_index : bool = field(default = True)
     tts_by_month_effort_highlight : bool = field(default = True)
     tts_by_month_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.textual_highlight)
-    tts_by_month_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_one_effort_per_row)    
+    tts_by_month_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_three_efforts)
     tts_by_year_effort_highlight : bool = field(default = True)
     tts_by_year_effort_highlight_column_names : list[str] = field(default_factory = lambda : [TTCN.EFFORT])
     tts_by_year_effort_highlight_style : EFFORTSTYLE = field(default = EFFORTSTYLE.color_highlight)
@@ -477,7 +477,6 @@ class SettingBag():
     tts_gantt_hseq_formatters : dict = field(default_factory = lambda : { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" })
     md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
-    md_enable_github_optimizations : bool = field(default = False)
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -1385,14 +1384,14 @@ class EffortHighlighter():
 
         return effort_cells
 
-    def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell], tokens : Tuple[str, str]) -> DataFrame:
+    def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell], tags : Tuple[str, str]) -> DataFrame:
 
-        '''Adds two tokens around the content of the cells listed in effort_cells.'''
+        '''Adds two HTML tags around the content of the cells listed in effort_cells.'''
 
         styled_df : DataFrame = df.copy(deep = True)
 
-        left_h : str = tokens[0]
-        right_h : str = tokens[1]
+        left_h : str = tags[0]
+        right_h : str = tags[1]
 
         for effort_cell in effort_cells:
 
@@ -1425,7 +1424,7 @@ class EffortHighlighter():
         style : EFFORTSTYLE, 
         mode : EFFORTMODE, 
         color : COLORNAME = COLORNAME.skyblue, 
-        tokens : Tuple[str, str] = ("[[ ", " ]]"),
+        tags : Tuple[str, str] = ("<mark style='background-color: skyblue'>", "</mark>"),
         column_names : list[str] = []
         ) -> Union[Styler, DataFrame]:
 
@@ -1450,7 +1449,7 @@ class EffortHighlighter():
         if style == EFFORTSTYLE.color_highlight:
             return self.__apply_color_highlights(df = tmp_df, effort_cells = effort_cells, color = color)
         elif style == EFFORTSTYLE.textual_highlight:
-            return self.__apply_textual_highlights(df = tmp_df, effort_cells = effort_cells, tokens = tokens)
+            return self.__apply_textual_highlights(df = tmp_df, effort_cells = effort_cells, tags = tags)
         else:
             raise Exception(_MessageCollection.provided_style_not_supported(style))
 class TTDataFrameFactory():

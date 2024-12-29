@@ -2513,7 +2513,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
                 style = style, 
                 mode = mode, 
                 color = color, 
-                tokens = tokens, 
+                tags = tokens, 
                 column_names = column_names
             )
 
