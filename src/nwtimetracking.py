@@ -475,6 +475,8 @@ class SettingBag():
     tts_gantt_hseq_x_label : Optional[str] = field(default = None)
     tts_gantt_hseq_y_label : Optional[str] = field(default = None)
     tts_gantt_hseq_formatters : dict = field(default_factory = lambda : { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" })
+    effort_highlighter_color : COLORNAME = field(default = COLORNAME.skyblue)
+    effort_highlighter_tags : Tuple[str, str] = field(default = (f"<mark style='background-color: {COLORNAME.skyblue}'>", "</mark>"))
     md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
     md_last_update : datetime = field(default = datetime.now())
 class TTDataFrameHelper():
@@ -1423,8 +1425,8 @@ class EffortHighlighter():
         df : DataFrame, 
         style : EFFORTSTYLE, 
         mode : EFFORTMODE, 
-        color : COLORNAME = COLORNAME.skyblue, 
-        tags : Tuple[str, str] = ("<mark style='background-color: skyblue'>", "</mark>"),
+        color : COLORNAME, 
+        tags : Tuple[str, str], 
         column_names : list[str] = []
         ) -> Union[Styler, DataFrame]:
 
@@ -2680,7 +2682,6 @@ class TTAdapter():
             return df.tail(n = int(head_n))
         else:
             return df.head(n = int(head_n))
-
     def __create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2702,7 +2703,6 @@ class TTAdapter():
         )
 
         return tt_styler
-
     def __create_tts_by_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2725,7 +2725,9 @@ class TTAdapter():
             tts_by_month_styler = self.__effort_highlighter.create_styler(
                 df = tts_by_month_df,
                 style = setting_bag.tts_by_month_effort_highlight_style,
-                mode = setting_bag.tts_by_month_effort_highlight_mode
+                mode = setting_bag.tts_by_month_effort_highlight_mode,
+                color = setting_bag.effort_highlighter_color,
+                tags = setting_bag.effort_highlighter_tags
             )
         
         return tts_by_month_styler
@@ -2747,7 +2749,6 @@ class TTAdapter():
         )
 
         return tts_by_month_sub_md
-
     def __create_tts_by_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2770,11 +2771,12 @@ class TTAdapter():
                 df = tts_by_year_df,
                 style = setting_bag.tts_by_year_effort_highlight_style,
                 mode = setting_bag.tts_by_year_effort_highlight_mode,
+                color = setting_bag.effort_highlighter_color,
+                tags = setting_bag.effort_highlighter_tags,                
                 column_names = setting_bag.tts_by_year_effort_highlight_column_names
             )
         
-        return tts_by_year_styler    
-    
+        return tts_by_year_styler     
     def __create_tts_by_year_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2805,8 +2807,7 @@ class TTAdapter():
         if setting_bag.tts_by_year_month_display_only_years is not None:
             tts_by_year_month_styler = tts_by_year_month_tpl[1]
 
-        return tts_by_year_month_styler
-       
+        return tts_by_year_month_styler  
     def __create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2839,11 +2840,12 @@ class TTAdapter():
                 df = tts_by_year_month_spnv_df,
                 style = setting_bag.tts_by_year_month_spnv_effort_highlight_style,
                 mode = setting_bag.tts_by_year_month_spnv_effort_highlight_mode,
+                color = setting_bag.effort_highlighter_color,
+                tags = setting_bag.effort_highlighter_tags,
                 column_names = setting_bag.tts_by_year_month_spnv_effort_highlight_column_names
             )
         
         return tts_by_year_month_spnv_styler
-    
     def __create_tts_by_year_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2876,11 +2878,12 @@ class TTAdapter():
                 df = tts_by_year_spnv_df,
                 style = setting_bag.tts_by_year_spnv_effort_highlight_style,
                 mode = setting_bag.tts_by_year_spnv_effort_highlight_mode,
+                color = setting_bag.effort_highlighter_color,
+                tags = setting_bag.effort_highlighter_tags,
                 column_names = setting_bag.tts_by_year_spnv_effort_highlight_column_names
             )
         
         return tts_by_year_spnv_styler
-    
     def __create_tts_by_spn_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2904,11 +2907,12 @@ class TTAdapter():
                 df = tts_by_spn_df,
                 style = setting_bag.tts_by_spn_effort_highlight_style,
                 mode = setting_bag.tts_by_spn_effort_highlight_mode,
+                color = setting_bag.effort_highlighter_color,
+                tags = setting_bag.effort_highlighter_tags,
                 column_names = setting_bag.tts_by_spn_effort_highlight_column_names
             )
         
         return tts_by_spn_styler
-    
     def __create_tts_by_spn_spv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -2941,11 +2945,12 @@ class TTAdapter():
             tts_by_hashtag_year_styler = self.__effort_highlighter.create_styler(
                 df = tts_by_hashtag_year_df,
                 style = setting_bag.tts_by_hashtag_year_effort_highlight_style,
-                mode = setting_bag.tts_by_hashtag_year_effort_highlight_mode
+                mode = setting_bag.tts_by_hashtag_year_effort_highlight_mode,
+                color = setting_bag.effort_highlighter_color,
+                tags = setting_bag.effort_highlighter_tags
             )
         
         return tts_by_hashtag_year_styler    
-    
     def __create_tts_by_efs_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -2976,7 +2981,6 @@ class TTAdapter():
         )    
 
         return tts_by_tr_styler
-
     def __create_tts_gantt_spnv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
