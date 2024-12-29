@@ -262,6 +262,7 @@ class TTSummary():
 
     tts_by_spn_spv_df : DataFrame
     tts_by_hashtag_df : DataFrame
+    
     tts_by_hashtag_year_df : DataFrame
     tts_by_hashtag_year_styler : DataFrame
 

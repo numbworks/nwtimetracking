@@ -17,7 +17,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, EFFORTSTYLE, TTCN, TTID, DEFINITIONSCN, OPTION
+from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, TTCN, TTID, DEFINITIONSCN, OPTION
 from nwtimetracking import _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
@@ -884,50 +884,85 @@ class TTSummaryTestCase(unittest.TestCase):
         empty_df : DataFrame = DataFrame()
         empty_tuple : Tuple[DataFrame, DataFrame] = (empty_df, empty_df)
         empty_func : Callable[[], None] = lambda : None
-        markdown : str = ""
+        empty_sub_dfs : list[DataFrame] = []
+        empty_md : str = ""
 
         # Act
-        actual  =  TTSummary(
+        actual = TTSummary(
             tt_df = empty_df,
+            tt_styler = empty_df,
             tts_by_month_tpl = empty_tuple,
+            tts_by_month_styler = empty_df,
+            tts_by_month_sub_dfs = empty_sub_dfs,
+            tts_by_month_sub_md = empty_md,
             tts_by_year_df = empty_df,
+            tts_by_year_styler = empty_df,
             tts_by_year_month_tpl = empty_tuple,
+            tts_by_year_month_styler = empty_df,
             tts_by_year_month_spnv_tpl = empty_tuple,
+            tts_by_year_month_spnv_styler = empty_df,
             tts_by_year_spnv_tpl = empty_tuple,
+            tts_by_year_spnv_styler = empty_df,
             tts_by_spn_df = empty_df,
+            tts_by_spn_styler = empty_df,
             tts_by_spn_spv_df = empty_df,
             tts_by_hashtag_df = empty_df,
             tts_by_hashtag_year_df = empty_df,
+            tts_by_hashtag_year_styler = empty_df,
             tts_by_efs_tpl = empty_tuple,
+            tts_by_efs_styler = empty_df,
             tts_by_tr_df = empty_df,
+            tts_by_tr_styler = empty_df,
             tts_gantt_spnv_df = empty_df,
             tts_gantt_spnv_plot_function = empty_func,
             tts_gantt_hseq_df = empty_df,
             tts_gantt_hseq_plot_function = empty_func,
-            definitions_df = empty_df,
-            tts_by_month_sub_md = markdown,
+            definitions_df = empty_df
         )
 
         # Assert
         self.assertEqual(actual.tt_df.shape, empty_df.shape)
+        self.assertEqual(actual.tt_styler.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_by_month_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_month_styler.shape, empty_df.shape)
+        self.assertEqual(len(actual.tts_by_month_sub_dfs), len(empty_sub_dfs))
+        self.assertEqual(actual.tts_by_month_sub_md, empty_md)
+
         self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_year_styler.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_by_year_month_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_year_month_styler.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_by_year_month_spnv_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_year_month_spnv_styler.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_by_year_spnv_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_year_spnv_styler.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_by_spn_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_spn_styler.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_by_spn_spv_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_hashtag_df.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_by_hashtag_year_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_hashtag_year_styler.shape, empty_df.shape)
+    
         self.assertEqual(actual.tts_by_efs_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_efs_styler.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_by_tr_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_tr_styler.shape, empty_df.shape)
+
         self.assertEqual(actual.tts_gantt_spnv_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_gantt_spnv_plot_function, empty_func)
+
         self.assertEqual(actual.tts_gantt_hseq_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_gantt_hseq_plot_function, empty_func)
+        
         self.assertEqual(actual.definitions_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_month_sub_md, markdown)
-        self.assertIsInstance(actual.tts_by_month_sub_md, str)
 class DefaultPathProviderTestCase(unittest.TestCase):
 
     def test_getdefaulttimetrackingpath_shouldreturnexpectedpath_wheninvoked(self):
