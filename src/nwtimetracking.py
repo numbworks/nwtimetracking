@@ -387,7 +387,7 @@ class SettingBag():
 
     '''Represents a collection of settings.'''
 
-    # Without Defaults
+    # WITHOUT DEFAULTS
     options_tt : list[Literal[OPTION.display]]
     options_tts_by_month : list[Literal[OPTION.display, OPTION.save]]
     options_tts_by_year : list[Literal[OPTION.display]]
@@ -408,7 +408,7 @@ class SettingBag():
     tts_by_year_spnv_display_only_spn : Optional[str]
     tts_by_spn_spv_display_only_spn : Optional[str]
 
-    # With Defaults
+    # WITH DEFAULTS
     working_folder_path : str = field(default = "/home/nwtimetracking/")
     excel_path : str = field(default = DefaultPathProvider().get_default_time_tracking_path())
     excel_skiprows : int = field(default = 0)
@@ -1321,13 +1321,14 @@ class EffortHighlighter():
         )
         
         effort_cells.append(effort_cell)
-    def __extract_row(self, df : DataFrame, row_idx : int) -> list[EffortCell]:
+    def __extract_row(self, df : DataFrame, row_idx : int, column_names : list[str]) -> list[EffortCell]:
 
         '''Returns a collection of EffortCell objects for provided arguments.'''
 
         effort_cells : list[EffortCell] = []
+        col_indices : list = [df.columns.get_loc(column_name) for column_name in column_names if column_name in df.columns]
 
-        for col_idx in range(len(df.columns)):
+        for col_idx in col_indices:
 
             coordinate_pair : Tuple[int, int] = (row_idx, col_idx)
             cell_content : str = str(df.iloc[row_idx, col_idx])
@@ -1354,7 +1355,7 @@ class EffortHighlighter():
         top_n : list[EffortCell] = sorted_cells[:n]
 
         return top_n
-    def __calculate_effort_cells(self, df : DataFrame, mode : EFFORTMODE) -> list[EffortCell]:
+    def __calculate_effort_cells(self, df : DataFrame, mode : EFFORTMODE, column_names : list[str]) -> list[EffortCell]:
 
         '''Returns a list of EffortCell objects according to df and mode.'''
 
@@ -1367,14 +1368,14 @@ class EffortHighlighter():
         if mode == EFFORTMODE.top_one_effort_per_row:
             for row_idx in range(last_row_idx):
 
-                current = self.__extract_row(df = df, row_idx = row_idx)
+                current = self.__extract_row(df = df, row_idx = row_idx, column_names = column_names)
                 current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
                 effort_cells.extend(current)
                 
         elif mode == EFFORTMODE.top_three_efforts:
             for row_idx in range(last_row_idx):
                 
-                current = self.__extract_row(df = df, row_idx = row_idx)
+                current = self.__extract_row(df = df, row_idx = row_idx, column_names = column_names)
                 effort_cells.extend(current)
 
             effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
@@ -1383,14 +1384,6 @@ class EffortHighlighter():
             raise Exception(_MessageCollection.provided_mode_not_supported(mode))
 
         return effort_cells
-    def __try_filter_by_column_names(self, df : DataFrame, column_names : list[str]) -> DataFrame:
-
-        '''Filters df to include only the specified column names or returns df as-is.'''
-        
-        if column_names:
-            return df[column_names]
-        
-        return df
 
     def __apply_textual_highlights(self, df : DataFrame, effort_cells : list[EffortCell], tokens : Tuple[str, str]) -> DataFrame:
 
@@ -1444,9 +1437,15 @@ class EffortHighlighter():
         self.__validate(df = df, style = style)
 
         tmp_df : DataFrame = df.copy(deep = True)
-        self.__try_filter_by_column_names(df = tmp_df, column_names = column_names)
 
-        effort_cells : list[EffortCell] = self.__calculate_effort_cells(df = df, mode = mode)
+        if len(column_names) == 0:
+            column_names = tmp_df.columns.to_list()
+
+        effort_cells : list[EffortCell] = self.__calculate_effort_cells(
+            df = tmp_df, 
+            mode = mode,
+            column_names = column_names
+        )
 
         if style == EFFORTSTYLE.color_highlight:
             return self.__apply_color_highlights(df = tmp_df, effort_cells = effort_cells, color = color)
@@ -2762,8 +2761,8 @@ class TTAdapter():
         if setting_bag.tts_by_year_effort_highlight:
             tts_by_year_styler = self.__effort_highlighter.create_styler(
                 df = tts_by_year_df,
-                style = setting_bag.tts_by_month_effort_highlight_style,
-                mode = setting_bag.tts_by_month_effort_highlight_mode,
+                style = setting_bag.tts_by_year_effort_highlight_style,
+                mode = setting_bag.tts_by_year_effort_highlight_mode,
                 column_names = setting_bag.tts_by_year_effort_highlight_column_names
             )
         
@@ -3027,7 +3026,7 @@ class TTAdapter():
         
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_month_styler : Union[DataFrame, Styler] = self.create_tts_by_month_styler(tts_by_month_df = tts_by_month_tpl[1], setting_bag = setting_bag)
-        tts_by_month_sub_dfs : list[DataFrame] = self.__bym_splitter.create_sub_dfs(df = tt_df)
+        tts_by_month_sub_dfs : list[DataFrame] = self.__bym_splitter.create_sub_dfs(df = tts_by_month_tpl[1])
         tts_by_month_sub_md : str = self.create_tts_by_month_sub_md(tts_by_month_sub_dfs = tts_by_month_sub_dfs, setting_bag = setting_bag)
 
         tts_by_year_df : DataFrame = self.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
