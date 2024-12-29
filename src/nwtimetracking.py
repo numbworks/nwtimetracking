@@ -2715,10 +2715,11 @@ class TTAdapter():
         )
 
         return tts_by_month_tpl
-    def create_tts_by_month_styler(self, tts_by_month_df : DataFrame, setting_bag : SettingBag) -> Union[DataFrame, Styler]:
+    def create_tts_by_month_styler(self, tts_by_month_tpl : Tuple[DataFrame, DataFrame], setting_bag : SettingBag) -> Union[DataFrame, Styler]:
         
         '''Creates the expected Styler object out of the provided arguments.'''
 
+        tts_by_month_df : DataFrame = tts_by_month_tpl[1]
         tts_by_month_styler : Union[DataFrame, Styler] = tts_by_month_df
 
         if setting_bag.tts_by_month_effort_highlight:
@@ -2729,6 +2730,13 @@ class TTAdapter():
             )
         
         return tts_by_month_styler
+    def create_tts_by_month_sub_dfs(self, tts_by_month_styler : Union[DataFrame, Styler]) -> list[DataFrame]:
+
+        '''Creates the expected collection of sub_dfs out of the provided arguments.'''
+
+        tts_by_month_sub_dfs : list[DataFrame] = self.__bym_splitter.create_sub_dfs(df = cast(DataFrame, tts_by_month_styler))
+
+        return tts_by_month_sub_dfs
     def create_tts_by_month_sub_md(self, tts_by_month_sub_dfs : list[DataFrame], setting_bag : SettingBag) -> str:
 
         '''Creates the expected Markdown content out of the provided arguments.'''
@@ -3025,8 +3033,8 @@ class TTAdapter():
         tt_styler : Union[DataFrame, Styler] = self.create_tt_styler(tt_df = tt_df, setting_bag = setting_bag)
         
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
-        tts_by_month_styler : Union[DataFrame, Styler] = self.create_tts_by_month_styler(tts_by_month_df = tts_by_month_tpl[1], setting_bag = setting_bag)
-        tts_by_month_sub_dfs : list[DataFrame] = self.__bym_splitter.create_sub_dfs(df = tts_by_month_tpl[1])
+        tts_by_month_styler : Union[DataFrame, Styler] = self.create_tts_by_month_styler(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
+        tts_by_month_sub_dfs : list[DataFrame] = self.create_tts_by_month_sub_dfs(tts_by_month_styler = tts_by_month_styler)
         tts_by_month_sub_md : str = self.create_tts_by_month_sub_md(tts_by_month_sub_dfs = tts_by_month_sub_dfs, setting_bag = setting_bag)
 
         tts_by_year_df : DataFrame = self.create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
