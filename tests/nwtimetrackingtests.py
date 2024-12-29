@@ -1093,21 +1093,21 @@ class SettingBagTestCase(unittest.TestCase):
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
-        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                                   # type: ignore
-        options_tts_by_month : list[Literal[OPTION.display, OPTION.save]] = [OPTION.display, OPTION.save]               # type: ignore
-        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                                          # type: ignore
-        options_tts_by_year_month : list[Literal[OPTION.display]] = [OPTION.display]                                    # type: ignore
-        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]                               # type: ignore
-        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                                     # type: ignore
-        options_tts_by_spn : list[Literal[OPTION.display, OPTION.logdef]] = [OPTION.display, OPTION.logdef]                   # type: ignore
-        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.logdef]] = [OPTION.display, OPTION.logdef]               # type: ignore
-        options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.logdef]] = [OPTION.display]                           # type: ignore
-        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]                                  # type: ignore
-        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                                           # type: ignore
-        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                            # type: ignore
-        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef]] = [OPTION.display, OPTION.plot] # type: ignore
-        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef]] = [OPTION.display, OPTION.plot] # type: ignore
-        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                                          # type: ignore
+        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                                                           # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display, OPTION.save, OPTION.logset]] = [OPTION.display, OPTION.save]                        # type: ignore
+        options_tts_by_year : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                                   # type: ignore
+        options_tts_by_year_month : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                             # type: ignore
+        options_tts_by_year_month_spnv : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                        # type: ignore
+        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                                                             # type: ignore
+        options_tts_by_spn : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display, OPTION.logdef]      # type: ignore
+        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display, OPTION.logdef]  # type: ignore
+        options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display]                 # type: ignore
+        options_tts_by_hashtag_year : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                           # type: ignore
+        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                                                                   # type: ignore
+        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                                                    # type: ignore
+        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display]    # type: ignore
+        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display]    # type: ignore
+        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                                                                  # type: ignore
         excel_nrows : int = 100
         tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
         tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
@@ -1126,33 +1126,30 @@ class SettingBagTestCase(unittest.TestCase):
         tt_display_head_n_with_tail : bool = True
         tt_hide_index : bool = True
         tts_by_month_effort_highlight : bool = True
-        tts_by_month_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
-        tts_by_month_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        tts_by_month_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_year_effort_highlight : bool = True
-        tts_by_year_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_year_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
         tts_by_year_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        tts_by_year_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
         tts_by_year_month_display_only_years : Optional[list[int]] = [2022]
+        tts_by_year_month_effort_highlight : bool = True
+        tts_by_year_month_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        tts_by_year_month_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
         tts_by_year_month_spnv_formatters : dict[str, str] = {"%_DME" : "{:.2f}", "%_TME" : "{:.2f}"}
         tts_by_year_month_spnv_effort_highlight : bool = True
-        tts_by_year_month_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_year_month_spnv_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
         tts_by_year_month_spnv_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        tts_by_year_month_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
         tts_by_year_spnv_formatters : dict[str, str] = {"%_DYE" : "{:.2f}", "%_TYE" : "{:.2f}"}
         tts_by_year_spnv_effort_highlight : bool = True
-        tts_by_year_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_year_spnv_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
         tts_by_year_spnv_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        tts_by_year_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
         tts_by_spn_formatters : dict[str, str] = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
         tts_by_spn_remove_untagged : bool = True
         tts_by_spn_effort_highlight : bool = True
         tts_by_spn_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_spn_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
         tts_by_spn_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
         tts_by_hashtag_formatters : dict[str, str] = {"Effort%" : "{:.2f}"}
         tts_by_hashtag_year_enable_pivot : bool = False
         tts_by_hashtag_year_effort_highlight : bool = True
-        tts_by_hashtag_year_effort_highlight_style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
         tts_by_hashtag_year_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
         tts_by_efs_is_correct : bool = False
         tts_by_efs_n : uint = uint(25)
@@ -1179,9 +1176,9 @@ class SettingBagTestCase(unittest.TestCase):
         tts_gantt_hseq_x_label : Optional[str] = None
         tts_gantt_hseq_y_label : Optional[str] = None
         tts_gantt_hseq_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
+        effort_highlighter_tags : Tuple[str, str] = (f"<mark style='background-color: {COLORNAME.skyblue}'>", "</mark>"))
         md_infos : list = []
         md_last_update : datetime = datetime.now()
-        md_enable_github_optimizations : bool = True
 
 		# Act
         actual : SettingBag = SettingBag(
@@ -1217,33 +1214,30 @@ class SettingBagTestCase(unittest.TestCase):
             tt_display_head_n_with_tail = tt_display_head_n_with_tail,
             tt_hide_index = tt_hide_index,
             tts_by_month_effort_highlight = tts_by_month_effort_highlight,
-            tts_by_month_effort_highlight_style = tts_by_month_effort_highlight_style,
             tts_by_month_effort_highlight_mode = tts_by_month_effort_highlight_mode,
             tts_by_year_effort_highlight = tts_by_year_effort_highlight,
-            tts_by_year_effort_highlight_column_names = tts_by_year_effort_highlight_column_names,
-            tts_by_year_effort_highlight_style = tts_by_year_effort_highlight_style,
             tts_by_year_effort_highlight_mode = tts_by_year_effort_highlight_mode,
+            tts_by_year_effort_highlight_column_names = tts_by_year_effort_highlight_column_names,
             tts_by_year_month_display_only_years = tts_by_year_month_display_only_years,
+            tts_by_year_month_effort_highlight = tts_by_year_month_effort_highlight,
+            tts_by_year_month_effort_highlight_mode = tts_by_year_month_effort_highlight_mode,
+            tts_by_year_month_effort_highlight_column_names = tts_by_year_month_effort_highlight_column_names,
             tts_by_year_month_spnv_formatters = tts_by_year_month_spnv_formatters,
             tts_by_year_month_spnv_effort_highlight = tts_by_year_month_spnv_effort_highlight,
-            tts_by_year_month_spnv_effort_highlight_column_names = tts_by_year_month_spnv_effort_highlight_column_names,
-            tts_by_year_month_spnv_effort_highlight_style = tts_by_year_month_spnv_effort_highlight_style,
             tts_by_year_month_spnv_effort_highlight_mode = tts_by_year_month_spnv_effort_highlight_mode,
+            tts_by_year_month_spnv_effort_highlight_column_names = tts_by_year_month_spnv_effort_highlight_column_names,
             tts_by_year_spnv_formatters = tts_by_year_spnv_formatters,
             tts_by_year_spnv_effort_highlight = tts_by_year_spnv_effort_highlight,
-            tts_by_year_spnv_effort_highlight_column_names = tts_by_year_spnv_effort_highlight_column_names,
-            tts_by_year_spnv_effort_highlight_style = tts_by_year_spnv_effort_highlight_style,
             tts_by_year_spnv_effort_highlight_mode = tts_by_year_spnv_effort_highlight_mode,
+            tts_by_year_spnv_effort_highlight_column_names = tts_by_year_spnv_effort_highlight_column_names,
             tts_by_spn_formatters = tts_by_spn_formatters,
             tts_by_spn_remove_untagged = tts_by_spn_remove_untagged,
             tts_by_spn_effort_highlight = tts_by_spn_effort_highlight,
-            tts_by_spn_effort_highlight_column_names = tts_by_spn_effort_highlight_column_names,
-            tts_by_spn_effort_highlight_style = tts_by_spn_effort_highlight_style,
             tts_by_spn_effort_highlight_mode = tts_by_spn_effort_highlight_mode,
+            tts_by_spn_effort_highlight_column_names = tts_by_spn_effort_highlight_column_names,
             tts_by_hashtag_formatters = tts_by_hashtag_formatters,
             tts_by_hashtag_year_enable_pivot = tts_by_hashtag_year_enable_pivot,
             tts_by_hashtag_year_effort_highlight = tts_by_hashtag_year_effort_highlight,
-            tts_by_hashtag_year_effort_highlight_style = tts_by_hashtag_year_effort_highlight_style,
             tts_by_hashtag_year_effort_highlight_mode = tts_by_hashtag_year_effort_highlight_mode,
             tts_by_efs_is_correct = tts_by_efs_is_correct,
             tts_by_efs_n = tts_by_efs_n,
@@ -1270,9 +1264,9 @@ class SettingBagTestCase(unittest.TestCase):
             tts_gantt_hseq_x_label = tts_gantt_hseq_x_label,
             tts_gantt_hseq_y_label = tts_gantt_hseq_y_label,
             tts_gantt_hseq_formatters = tts_gantt_hseq_formatters,
+            effort_highlighter_tags = effort_highlighter_tags
             md_infos = md_infos,
-            md_last_update = md_last_update,
-            md_enable_github_optimizations = md_enable_github_optimizations
+            md_last_update = md_last_update
         )
 
 		# Assert
@@ -1295,6 +1289,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_year_month_spnv_display_only_spn, tts_by_year_month_spnv_display_only_spn)
         self.assertEqual(actual.tts_by_year_spnv_display_only_spn, tts_by_year_spnv_display_only_spn)
         self.assertEqual(actual.tts_by_spn_spv_display_only_spn, tts_by_spn_spv_display_only_spn)
+
         self.assertEqual(actual.working_folder_path, working_folder_path)
         self.assertEqual(actual.excel_path, excel_path)
         self.assertEqual(actual.excel_skiprows, excel_skiprows)
@@ -1308,34 +1303,31 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tt_display_head_n_with_tail, tt_display_head_n_with_tail)
         self.assertEqual(actual.tt_hide_index, tt_hide_index)
         self.assertEqual(actual.tts_by_month_effort_highlight, tts_by_month_effort_highlight)
-        self.assertEqual(actual.tts_by_month_effort_highlight_style, tts_by_month_effort_highlight_style)
         self.assertEqual(actual.tts_by_month_effort_highlight_mode, tts_by_month_effort_highlight_mode)
         self.assertEqual(actual.tts_by_year_effort_highlight, tts_by_year_effort_highlight)
-        self.assertEqual(actual.tts_by_year_effort_highlight_column_names, tts_by_year_effort_highlight_column_names)
-        self.assertEqual(actual.tts_by_year_effort_highlight_style, tts_by_year_effort_highlight_style)
         self.assertEqual(actual.tts_by_year_effort_highlight_mode, tts_by_year_effort_highlight_mode)
+        self.assertEqual(actual.tts_by_year_effort_highlight_column_names, tts_by_year_effort_highlight_column_names)
         self.assertEqual(actual.tts_by_year_month_display_only_years, tts_by_year_month_display_only_years)
+        self.assertEqual(actual.tts_by_year_month_effort_highlight, tts_by_year_month_effort_highlight)
+        self.assertEqual(actual.tts_by_year_month_effort_highlight_mode, tts_by_year_month_effort_highlight_mode)
+        self.assertEqual(actual.tts_by_year_month_effort_highlight_column_names, tts_by_year_month_effort_highlight_column_names)
         self.assertEqual(actual.tts_by_year_month_spnv_formatters, tts_by_year_month_spnv_formatters)
         self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight, tts_by_year_month_spnv_effort_highlight)
-        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_column_names, tts_by_year_month_spnv_effort_highlight_column_names)
-        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_style, tts_by_year_month_spnv_effort_highlight_style)
         self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_mode, tts_by_year_month_spnv_effort_highlight_mode)
+        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_column_names, tts_by_year_month_spnv_effort_highlight_column_names)
         self.assertEqual(actual.tts_by_year_spnv_formatters, tts_by_year_spnv_formatters)
         self.assertEqual(actual.tts_by_year_spnv_effort_highlight, tts_by_year_spnv_effort_highlight)
-        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_column_names, tts_by_year_spnv_effort_highlight_column_names)
-        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_style, tts_by_year_spnv_effort_highlight_style)
         self.assertEqual(actual.tts_by_year_spnv_effort_highlight_mode, tts_by_year_spnv_effort_highlight_mode)
+        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_column_names, tts_by_year_spnv_effort_highlight_column_names)
         self.assertEqual(actual.tts_by_spn_formatters, tts_by_spn_formatters)
         self.assertEqual(actual.tts_by_spn_remove_untagged, tts_by_spn_remove_untagged)
         self.assertEqual(actual.tts_by_spn_effort_highlight, tts_by_spn_effort_highlight)
-        self.assertEqual(actual.tts_by_spn_effort_highlight_column_names, tts_by_spn_effort_highlight_column_names)
-        self.assertEqual(actual.tts_by_spn_effort_highlight_style, tts_by_spn_effort_highlight_style)
         self.assertEqual(actual.tts_by_spn_effort_highlight_mode, tts_by_spn_effort_highlight_mode)
+        self.assertEqual(actual.tts_by_spn_effort_highlight_column_names, tts_by_spn_effort_highlight_column_names)
         self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)
         self.assertEqual(actual.tts_by_hashtag_year_enable_pivot, tts_by_hashtag_year_enable_pivot)
-        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight, tts_by_hashtag_year_effort_highlight)
-        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight_style, tts_by_hashtag_year_effort_highlight_style)
         self.assertEqual(actual.tts_by_hashtag_year_effort_highlight_mode, tts_by_hashtag_year_effort_highlight_mode)
+        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight, tts_by_hashtag_year_effort_highlight)
         self.assertEqual(actual.tts_by_efs_is_correct, tts_by_efs_is_correct)
         self.assertEqual(actual.tts_by_efs_n, tts_by_efs_n)
         self.assertEqual(actual.tts_by_tr_unknown_id, tts_by_tr_unknown_id)
@@ -1361,9 +1353,9 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_gantt_hseq_x_label, tts_gantt_hseq_x_label)
         self.assertEqual(actual.tts_gantt_hseq_y_label, tts_gantt_hseq_y_label)
         self.assertEqual(actual.tts_gantt_hseq_formatters, tts_gantt_hseq_formatters)
+        self.assertEqual(actual.effort_highlighter_tags, effort_highlighter_tags)
         self.assertEqual(actual.md_infos, md_infos)
         self.assertEqual(actual.md_last_update, md_last_update)
-        self.assertEqual(actual.md_enable_github_optimizations, md_enable_github_optimizations)
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
