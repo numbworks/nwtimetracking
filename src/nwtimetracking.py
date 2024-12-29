@@ -431,6 +431,9 @@ class SettingBag():
     tts_by_year_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_three_efforts)      
     tts_by_year_effort_highlight_column_names : list[str] = field(default_factory = lambda : [TTCN.EFFORT]) 
     tts_by_year_month_display_only_years : Optional[list[int]] = field(default_factory = lambda : YearProvider().get_most_recent_x_years(x = uint(1)))
+    tts_by_year_month_effort_highlight : bool = field(default = True)
+    tts_by_year_month_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_three_efforts)
+    tts_by_year_month_effort_highlight_column_names : list[str] = field(default_factory = lambda : [TTCN.EFFORT])
     tts_by_year_month_spnv_formatters : dict = field(default_factory = lambda : { "%_DME" : "{:.2f}", "%_TME" : "{:.2f}" })
     tts_by_year_month_spnv_effort_highlight : bool = field(default = True)
     tts_by_year_month_spnv_effort_highlight_mode : EFFORTMODE = field(default = EFFORTMODE.top_three_efforts)
@@ -2769,6 +2772,14 @@ class TTAdapter():
 
         if setting_bag.tts_by_year_month_display_only_years is not None:
             tts_by_year_month_styler = tts_by_year_month_tpl[1]
+
+        if setting_bag.tts_by_year_month_effort_highlight:
+            tts_by_year_month_styler = self.__effort_highlighter.create_textual_styler(
+                df = tts_by_year_month_styler,
+                mode = setting_bag.tts_by_year_month_effort_highlight_mode,
+                tags = setting_bag.effort_highlighter_tags,                
+                column_names = setting_bag.tts_by_year_month_effort_highlight_column_names
+            )
 
         return tts_by_year_month_styler  
     def __create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
