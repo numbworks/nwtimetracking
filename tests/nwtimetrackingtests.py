@@ -710,18 +710,6 @@ class MessageCollectionTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected, actual)
 
-    @parameterized.expand([
-        [EFFORTSTYLE.color_highlight, "The provided df has duplicate column names, therefore 'color_highlight' is not supported."]
-    ])
-    def test_provideddfhasduplicatecolumnnames_shouldreturnexpectedmessage_wheninvoked(self, style : EFFORTSTYLE, expected : str):
-
-        # Arrange
-        # Act
-        actual : str = _MessageCollection.provided_df_has_duplicate_column_names(style = style)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
     def test_providedmodenotsupported_shouldreturnexpectedmessage_wheninvalidmode(self) -> None:
 
         # Arrange
@@ -730,17 +718,6 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Act
         actual : str = _MessageCollection.provided_mode_not_supported(mode = invalid_mode)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_providedstylenotsupported_shouldreturnexpectedmessage_wheninvalidstyle(self) -> None:
-
-        # Arrange
-        invalid_style : EFFORTSTYLE = cast(EFFORTSTYLE, "invalid")
-        expected : str = f"The provided style is not supported: '{invalid_style}'."
-
-        # Act
-        actual : str = _MessageCollection.provided_style_not_supported(style = invalid_style)
 
         # Assert
         self.assertEqual(expected, actual)
