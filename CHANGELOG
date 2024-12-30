@@ -1,10 +1,10 @@
 v5.0.0
-- Library:
-	- Maintenance: dependency update (nwshared, nwpackageversions v1.8.0 => v1.8.1).
 - Notebook:
 	- Feature: integrated EffortHighlighter in the data analysis flow.
+- Library:
+	- Maintenance: dependency update (nwshared, nwpackageversions v1.8.0 => v1.8.1).
 - Documentation:
-	- Feature: updated to v4.8.0.
+	- Feature: updated to v5.0.0.
 
 v4.8.0
 - Library:
