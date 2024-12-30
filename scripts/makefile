@@ -3,7 +3,7 @@
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
-MODULE_VERSION = "4.8.0"
+MODULE_VERSION = "5.0.0"
 COVERAGE_THRESHOLD = 70
 
 # TARGETS (VERBOSE)
@@ -67,7 +67,7 @@ check-pythonversion:
 check-requirements:
 	@clear; \
 	file_path="$(ROOT_DIR)/.devcontainer/Dockerfile"; \
-	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = False))"; \
+	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = True, sort_requirement_details = True))"; \
 	python -c "$$code";
 update-codecoverage:
 	@clear; \
