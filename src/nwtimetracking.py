@@ -90,6 +90,7 @@ class OPTION(StrEnum):
     '''Represents a collection of options.'''
 
     display = auto()
+    display_c = auto()
     save = auto()
     plot = auto()
     logdef = auto()
@@ -119,6 +120,7 @@ class TTKWARG(StrEnum):
     '''Represents a collection of keys for EffortHighlighter.__process().'''
 
     styler = auto()
+    sub_dfs = auto()
     hide_index = auto()
     formatters = auto()
     id = auto()
@@ -393,7 +395,7 @@ class SettingBag():
 
     # WITHOUT DEFAULTS
     options_tt : list[Literal[OPTION.display]]
-    options_tts_by_month : list[Literal[OPTION.display, OPTION.save, OPTION.logset]]
+    options_tts_by_month : list[Literal[OPTION.display, OPTION.display_c, OPTION.save, OPTION.logset]]
     options_tts_by_year : list[Literal[OPTION.display, OPTION.logset]]
     options_tts_by_year_month : list[Literal[OPTION.display, OPTION.logset]]
     options_tts_by_year_month_spnv : list[Literal[OPTION.display, OPTION.logset]]
@@ -3203,6 +3205,7 @@ class TimeTrackingProcessor():
         '''A generic method for handling the actions specified in options.'''
 
         styler : DataFrame = kwargs[TTKWARG.styler]
+        sub_dfs : Optional[list[DataFrame]] = kwargs.get(TTKWARG.sub_dfs, None)
         hide_index : bool = kwargs.get(TTKWARG.hide_index, False)
         formatters : Optional[dict] = kwargs.get(TTKWARG.formatters, None)
         id : Optional[TTID] = kwargs.get(TTKWARG.id, None)
@@ -3215,6 +3218,9 @@ class TimeTrackingProcessor():
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = cast(DataFrame, styler), hide_index = hide_index, formatters = formatters)
+
+        if OPTION.display_c in options:
+            self.__component_bag.displayer.display_cascade(objs = cast(list[DataFrame | Styler], sub_dfs), hide_index = hide_index, formatters = formatters)
 
         if OPTION.plot in options:
             cast(Callable[[], None], plot_function)()
@@ -3265,7 +3271,8 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_month
         kwargs : dict = { 
-            TTKWARG.styler: self.__tt_summary.tts_by_month_styler, 
+            TTKWARG.styler: self.__tt_summary.tts_by_month_styler,
+            TTKWARG.sub_dfs: self.__tt_summary.tts_by_month_sub_dfs,
             TTKWARG.id: TTID.TTSBYMONTH,
             TTKWARG.content: self.__tt_summary.tts_by_month_sub_md,
             TTKWARG.setting_bag: self.__setting_bag,

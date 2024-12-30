@@ -1093,7 +1093,7 @@ class SettingBagTestCase(unittest.TestCase):
 
         # Arrange
         options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                                                           # type: ignore
-        options_tts_by_month : list[Literal[OPTION.display, OPTION.save, OPTION.logset]] = [OPTION.display, OPTION.save]                        # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display, OPTION.display_c, OPTION.save, OPTION.logset]] = [OPTION.display, OPTION.save]      # type: ignore
         options_tts_by_year : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                                   # type: ignore
         options_tts_by_year_month : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                             # type: ignore
         options_tts_by_year_month_spnv : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                        # type: ignore
@@ -2812,7 +2812,7 @@ class TTAdapterTestCase(unittest.TestCase):
 
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
         head_n : Optional[uint] = uint(2)
-        expected : DataFrame = df.tail(n = cast(int, head_n))
+        expected : DataFrame = df.tail(n = 2)
 
         # Act
         actual : DataFrame = tt_adapter._TTAdapter__orchestrate_head_n(df = df, head_n = head_n, display_head_n_with_tail = True)    # type: ignore
