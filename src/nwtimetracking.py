@@ -18,8 +18,7 @@ from enum import StrEnum, auto
 from matplotlib.dates import relativedelta
 from numpy import uint
 from numpy.typing import ArrayLike
-from pandas import DataFrame, Series, NamedAgg
-from pandas import Index
+from pandas import DataFrame, Series, NamedAgg, Index
 from pandas.io.formats.style import Styler
 from re import Match
 from types import SimpleNamespace

@@ -6,7 +6,6 @@ import pandas as pd
 from datetime import datetime, date, timedelta
 from numpy import int64, uint
 from pandas import DataFrame
-from pandas.io.formats.style import Styler
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
