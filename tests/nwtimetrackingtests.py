@@ -2811,8 +2811,8 @@ class TTAdapterTestCase(unittest.TestCase):
         )
 
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
-        head_n : Optional[int] = 2
-        expected : DataFrame = df.tail(n = int(head_n))
+        head_n : Optional[uint] = uint(2)
+        expected : DataFrame = df.tail(n = cast(int, head_n))
 
         # Act
         actual : DataFrame = tt_adapter._TTAdapter__orchestrate_head_n(df = df, head_n = head_n, display_head_n_with_tail = True)    # type: ignore
@@ -2832,8 +2832,8 @@ class TTAdapterTestCase(unittest.TestCase):
         )
 
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
-        head_n : Optional[int] = 2
-        expected : DataFrame = df.head(n = int(head_n))
+        head_n : Optional[uint] = uint(2)
+        expected : DataFrame = df.head(n = cast(int, head_n))
 
         # Act
         actual : DataFrame = tt_adapter._TTAdapter__orchestrate_head_n(df = df, head_n = head_n, display_head_n_with_tail = False)    # type: ignore
