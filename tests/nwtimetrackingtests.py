@@ -3545,10 +3545,9 @@ class ComponentBagTestCase(unittest.TestCase):
             tt_adapter = TTAdapter(
                 df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
                 bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
+                bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()),
                 tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
-                md_factory = TTMarkdownFactory(
-                    markdown_helper = MarkdownHelper(formatter = Formatter()),
-                    bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
+                md_factory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())
                 ),
                 effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
             ))
@@ -3556,9 +3555,9 @@ class ComponentBagTestCase(unittest.TestCase):
         # Assert
         self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
         self.assertIsInstance(component_bag.file_manager, FileManager)
-        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
-        self.assertIsInstance(component_bag.tt_logger, TTLogger)
         self.assertIsInstance(component_bag.displayer, Displayer)
+        self.assertIsInstance(component_bag.tt_logger, TTLogger)
+        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
 class TimeTrackingProcessorTestCase(unittest.TestCase):
 
     @parameterized.expand([
