@@ -1176,7 +1176,7 @@ class SettingBagTestCase(unittest.TestCase):
         tts_gantt_hseq_x_label : Optional[str] = None
         tts_gantt_hseq_y_label : Optional[str] = None
         tts_gantt_hseq_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
-        effort_highlighter_tags : Tuple[str, str] = (f"<mark style='background-color: {COLORNAME.skyblue}'>", "</mark>"))
+        effort_highlighter_tags : Tuple[str, str] = (f"<mark style='background-color: {COLORNAME.skyblue}'>", "</mark>")
         md_infos : list = []
         md_last_update : datetime = datetime.now()
 
@@ -1264,7 +1264,7 @@ class SettingBagTestCase(unittest.TestCase):
             tts_gantt_hseq_x_label = tts_gantt_hseq_x_label,
             tts_gantt_hseq_y_label = tts_gantt_hseq_y_label,
             tts_gantt_hseq_formatters = tts_gantt_hseq_formatters,
-            effort_highlighter_tags = effort_highlighter_tags
+            effort_highlighter_tags = effort_highlighter_tags,
             md_infos = md_infos,
             md_last_update = md_last_update
         )
@@ -3579,18 +3579,18 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter.extract_file_name_and_paragraph_title = Mock()
         component_bag.tt_adapter.extract_file_name_and_paragraph_title.return_value = (paragraph_title, None)
         component_bag.file_manager.save_content = Mock()
+        component_bag.tt_logger.log = Mock()
 
         setting_bag : SettingBag = ObjectMother().get_setting_bag()
-        logging_function : Mock = Mock(spec = Callable[[str], None])
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content, logging_function = logging_function)  # type: ignore
+        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content)  # type: ignore
 
         # Assert
         component_bag.file_path_manager.create_file_path.assert_called()
         component_bag.file_manager.save_content.assert_called()
-        logging_function.assert_called_with(expected)
+        component_bag.tt_logger.log.assert_called_once_with(expected)
 
     @parameterized.expand([
         ("content.md", "/home/nwtimetracking/"),
@@ -3613,9 +3613,9 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter.extract_file_name_and_paragraph_title.return_value = (paragraph_title, None)
         component_bag.file_manager.save_content = Mock()
         component_bag.file_manager.save_content.side_effect = Exception(error_message)
+        component_bag.tt_logger.log = Mock()
 
         setting_bag : SettingBag = ObjectMother().get_setting_bag()
-        logging_function : Mock = Mock(spec = Callable[[str], None])
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -3624,7 +3624,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         component_bag.file_path_manager.create_file_path.assert_called()
         component_bag.file_manager.save_content.assert_called()
-        logging_function.assert_called_with(expected)
+        component_bag.tt_logger.log.assert_called_once_with(expected)
 
     def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
         
@@ -3776,10 +3776,10 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
     def test_processttsbyyearmonthspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = (Mock(), Mock())
+        tts_by_year_month_spnv_styler : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_year_month_spnv_tpl = tts_by_year_month_spnv_tpl
+        summary.tts_by_year_month_spnv_styler = tts_by_year_month_spnv_styler
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -3800,16 +3800,17 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_year_month_spnv_tpl[1],
+            obj = tts_by_year_month_spnv_styler,
+            hide_index = False, 
             formatters = setting_bag.tts_by_year_month_spnv_formatters
         )
     def test_processttsbyyearspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = (Mock(), Mock())
+        tts_by_year_spnv_styler : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_year_spnv_tpl = tts_by_year_spnv_tpl
+        summary.tts_by_year_spnv_styler = tts_by_year_spnv_styler
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -3830,7 +3831,8 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_year_spnv_tpl[1],
+            obj = tts_by_year_spnv_styler[1],
+            hide_index = False,
             formatters = setting_bag.tts_by_year_spnv_formatters
         )
     def test_processttsbyspn_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -4074,7 +4076,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_tr_df.head(10)
+            obj = tts_by_tr_df.head(10)
         )
     def test_processttsganttspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
@@ -4103,7 +4105,8 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_gantt_spnv_df,
+            obj = tts_gantt_spnv_df,
+            hide_index = False,
             formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         )
     def test_processttsganttspnv_shouldplot_whenoptionisplot(self) -> None:
@@ -4159,7 +4162,8 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_gantt_hseq_df,
+            obj = tts_gantt_hseq_df,
+            hide_index = False,
             formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         )
     def test_processttsgantthseq_shouldplot_whenoptionisplot(self) -> None:
