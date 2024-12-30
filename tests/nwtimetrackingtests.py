@@ -2780,6 +2780,153 @@ class TTAdapterTestCase(unittest.TestCase):
         # Other
         self.paragraph_title : str = "Time Tracking By Month"
 
+    def test_orchestrateheadn_shouldreturnoriginaldataframe_whenheadnisnone(self) -> None:
+
+        # Arrange
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = Mock(), 
+            bym_factory = Mock(), 
+            bym_splitter = Mock(),
+            tt_sequencer = Mock(),
+            md_factory = Mock(),
+            effort_highlighter = Mock()
+        )
+
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+
+        # Act
+        actual : DataFrame = tt_adapter._TTAdapter__orchestrate_head_n(df = df, head_n = None, display_head_n_with_tail = False)    # type: ignore
+
+        # Assert
+        self.assertTrue(actual.equals(df))
+    def test_orchestrateheadn_shouldreturntail_whenheadnisnotnoneanddisplayheadnwithtailistrue(self) -> None:
+
+        # Arrange
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = Mock(), 
+            bym_factory = Mock(), 
+            bym_splitter = Mock(),
+            tt_sequencer = Mock(),
+            md_factory = Mock(),
+            effort_highlighter = Mock()
+        )
+
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        head_n : Optional[int] = 2
+        expected : DataFrame = df.tail(n = int(head_n))
+
+        # Act
+        actual : DataFrame = tt_adapter._TTAdapter__orchestrate_head_n(df = df, head_n = head_n, display_head_n_with_tail = True)    # type: ignore
+
+        # Assert
+        self.assertTrue(actual.equals(expected))
+    def test_orchestrateheadn_shouldreturnhead_whenheadnisnotnoneanddisplayheadnwithtailisfalse(self) -> None:
+
+        # Arrange
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = Mock(), 
+            bym_factory = Mock(), 
+            bym_splitter = Mock(),
+            tt_sequencer = Mock(),
+            md_factory = Mock(),
+            effort_highlighter = Mock()
+        )
+
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        head_n : Optional[int] = 2
+        expected : DataFrame = df.head(n = int(head_n))
+
+        # Act
+        actual : DataFrame = tt_adapter._TTAdapter__orchestrate_head_n(df = df, head_n = head_n, display_head_n_with_tail = False)    # type: ignore
+
+        # Assert
+        self.assertTrue(actual.equals(expected))
+    def test_deleteduplicatetextualhighlighting_shouldreturnoriginalsubdfs_whenlessthan2dataframes(self) -> None:
+
+        # Arrange
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = Mock(), 
+            bym_factory = Mock(), 
+            bym_splitter = Mock(),
+            tt_sequencer = Mock(),
+            md_factory = Mock(),
+            effort_highlighter = Mock()
+        )
+
+        sub_dfs : list[DataFrame] = [
+            DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        ]
+        tags : Tuple[str, str] = ("<mark style='background-color: COLORNAME.skyblue'>", "</mark>")
+
+        # Act
+        actual : List[DataFrame] = tt_adapter._TTAdapter__delete_duplicate_textual_highlighting(sub_dfs = sub_dfs, tags = tags)    # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), len(sub_dfs))
+        self.assertTrue(actual[0].equals(sub_dfs[0]))
+    def test_deleteduplicatetextualhighlighting_shouldremovetagsfromseconddataframeonward_whenmorethan1dataframe(self) -> None:
+
+        # Arrange
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = Mock(), 
+            bym_factory = Mock(), 
+            bym_splitter = Mock(),
+            tt_sequencer = Mock(),
+            md_factory = Mock(),
+            effort_highlighter = Mock()
+        )
+
+        dict1 : dict = {
+            "Month": [1, 2],
+            "2021": ["00h 00m", "<tag>3h 00m</tag>"],
+            "↕": ["↓", "↓"],
+            "2022": ["00h 00m", "00h 00m"],
+            "↕": ["↓", "↓"],
+            "2023": ["00h 00m", "00h 00m"],
+            "↕": ["↓", "↓"],
+            "2024": ["<tag>01h 00m</tag>", "00h 00m"]
+        }
+        dict2 : dict = {
+            "Month": [1, 2],
+            "2024": ["<tag>01h 00m</tag>", "00h 00m"],
+            "↕": ["↓", "↓"],
+            "2025": ["00h 00m", "00h 00m"]
+        }
+
+        sub_dfs : list[DataFrame] = [
+            DataFrame(dict1),
+            DataFrame(dict2)
+        ]
+        tags : Tuple[str, str] = ("<tag>", "</tag>")
+        
+        expected1 : dict = {
+            "Month": [1, 2],
+            "2021": ["00h 00m", "<tag>3h 00m</tag>"],
+            "↕": ["↓", "↓"],
+            "2022": ["00h 00m", "00h 00m"],
+            "↕": ["↓", "↓"],
+            "2023": ["00h 00m", "00h 00m"],
+            "↕": ["↓", "↓"],
+            "2024": ["<tag>01h 00m</tag>", "00h 00m"]
+        }
+        expected2 : dict = {
+            "Month": [1, 2],
+            "2024": ["01h 00m", "00h 00m"],
+            "↕": ["↓", "↓"],
+            "2025": ["00h 00m", "00h 00m"]
+        }
+        expected : list[DataFrame] = [
+            DataFrame(expected1),
+            DataFrame(expected2)
+        ]        
+        # Act
+        actual : list[DataFrame] = tt_adapter._TTAdapter__delete_duplicate_textual_highlighting(sub_dfs = sub_dfs, tags = tags)    # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), len(sub_dfs))
+        assert_frame_equal(actual[0], expected[0])
+        assert_frame_equal(actual[1], expected[1])
+
     def test_createttdf_shouldcalldffactorywithexpectedarguments_wheninvoked(self) -> None:
         
         # Arrange
