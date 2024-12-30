@@ -2229,34 +2229,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertIsInstance(actual, EffortHighlighter)
-    def test_hasduplicatecolumnnames_shouldreturntrue_whenduplicatecolumnames(self) -> None:
 
-        # Arrange
-        # Act
-        actual : bool = self.effort_highlighter._EffortHighlighter__has_duplicate_column_names(df = self.df_with_duplicates) # type: ignore
-
-        # Assert
-        self.assertTrue(actual)
-    def test_hasduplicatecolumnnames_shouldreturnfalse_whennoduplicatecolumnames(self) -> None:
-
-        # Arrange
-        # Act
-        actual : bool = self.effort_highlighter._EffortHighlighter__has_duplicate_column_names(df = self.df_without_duplicates) # type: ignore
-
-        # Assert
-        self.assertFalse(actual)
-    def test_validate_shouldraiseexception_whenduplicatecolumnamesandcolorhighlight(self) -> None:
-
-        # Arrange
-        expected : str = _MessageCollection.provided_df_has_duplicate_column_names(EFFORTSTYLE.color_highlight)
-        
-        # Act
-        with self.assertRaises(Exception) as context:
-            self.effort_highlighter._EffortHighlighter__validate(df = self.df_with_duplicates, style = EFFORTSTYLE.color_highlight) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, str(context.exception))
-    
     @parameterized.expand([
         ("00h 00m", True),
         ("10h 45m", True),
@@ -2351,9 +2324,10 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Arrange
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
         mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        column_names : list[str] = ["2015", "2016"]
 
         # Act
-        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode, column_names = column_names)   # type: ignore
 
         # Assert
         self.assertEqual(len(actual), 2)
@@ -2364,9 +2338,10 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Arrange
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
         mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        column_names : list[str] = ["2015", "2016"]
 
         # Act
-        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode, column_names = column_names)   # type: ignore
 
         # Assert
         self.assertEqual(len(actual), 3)
@@ -2378,47 +2353,16 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Arrange
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
         mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+        column_names : list[str] = ["2015", "2016"]
 
         expected : str = _MessageCollection.provided_mode_not_supported(mode)
         
         # Act
         with self.assertRaises(Exception) as context:
-            self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode)   # type: ignore
+            self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode, column_names = column_names)   # type: ignore
 
         # Assert
         self.assertEqual(expected, str(context.exception))
-    def test_tryfilterbycolumnnames_shouldreturnfiltereddf_whencolumnnamesareprovided(self) -> None:
-        
-        # Arrange
-        df : DataFrame = DataFrame({
-            "2015" : ["10h 30m", "15h 45m"], 
-            "↕" : ["↑", "↑"], 
-            "2016" : ["20h 45m", "20h 00m"]
-        })        
-        column_names : list[str] = ["2015", "2016"]
-
-        expected : DataFrame = df[column_names]
-
-        # Act
-        actual : DataFrame = self.effort_highlighter._EffortHighlighter__try_filter_by_column_names(df = df, column_names = column_names)   # type: ignore
-
-        # Assert
-        assert_frame_equal(actual, expected)
-    def test_tryfilterbycolumnnames_shouldreturndfasis_whencolumnnamesareempty(self) -> None:
-        
-        # Arrange
-        df : DataFrame = DataFrame({
-            "2015" : ["10h 30m", "15h 45m"], 
-            "↕" : ["↑", "↑"], 
-            "2016" : ["20h 45m", "20h 00m"]
-        })             
-        column_names : list[str] = []
-
-        # Act
-        actual : DataFrame = self.effort_highlighter._EffortHighlighter__try_filter_by_column_names(df = df, column_names = column_names)   # type: ignore
-
-        # Assert
-        assert_frame_equal(actual, df)
     def test_applytextualhighlights_shouldsurroundeffortcellsswithtokens_wheninvoked(self) -> None:
 
         # Arrange
@@ -2426,102 +2370,36 @@ class EffortHighlighterTestCase(unittest.TestCase):
             EffortCell((0, 1), "00h 00m", timedelta(hours = 0, minutes = 0)),
             EffortCell((1, 3), "45h 30m", timedelta(hours = 45, minutes = 30))
         ]
-        tokens : Tuple[str, str] = ("[[ ", " ]]")
+        tags : Tuple[str, str] = ("[[ ", " ]]")
         expected : DataFrame = self.df_without_duplicates.copy(deep = True)
         expected.iloc[0, 1] = "[[ 00h 00m ]]"
         expected.iloc[1, 3] = "[[ 45h 30m ]]"
 
         # Act
-        actual : DataFrame = self.effort_highlighter._EffortHighlighter__apply_textual_highlights(self.df_without_duplicates, effort_cells, tokens)   # type: ignore
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__apply_textual_highlights(self.df_without_duplicates, effort_cells, tags)   # type: ignore
 
         # Assert
         self.assertTrue(expected.equals(actual))
-    def test_applycolorhighlights_shouldapplybackgroundtoeffortcells_wheninvoked(self) -> None:
+
+    @parameterized.expand([
+        [],
+        ["2015", "2016"]
+    ])
+    def test_createtextualstyler_shouldhighlightexpectedcells_wheninvoked(self, column_names : list[str]) -> None:
 
         # Arrange
-        effort_cells : list[EffortCell] = [
-            EffortCell((0, 1), "00h 00m", timedelta(hours = 0, minutes = 0)),
-            EffortCell((1, 3), "45h 30m", timedelta(hours = 45, minutes = 30))
-        ]
-        color : COLORNAME = COLORNAME.skyblue
-
-        expected : dict[Tuple[int, int], list] = {
-            (0, 1): [("background-color", color)],
-            (1, 3): [("background-color", color)]
-        }
-
-        # Act
-        actual : Styler = self.effort_highlighter._EffortHighlighter__apply_color_highlights(self.df_without_duplicates, effort_cells, color)   # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual._compute().ctx)   # type: ignore
-    def test_highlight_shouldreturnstyledataframe_whentextualhighlight(self) -> None:
-
-        # Arrange
-        style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
         mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
-        tokens : Tuple[str, str] = ("[[ ", " ]]")
+        tags : Tuple[str, str] = ("[[ ", " ]]")
 
         expected : DataFrame = self.df_without_duplicates.copy(deep = True)
         expected.iloc[0, 5] = "[[ 88h 30m ]]"
         expected.iloc[1, 5] = "[[ 65h 30m ]]"
 
         # Act
-        actual : DataFrame = self.effort_highlighter.create_textual_styler(self.df_without_duplicates, style, mode, tokens) # type: ignore
+        actual : DataFrame = self.effort_highlighter.create_textual_styler(self.df_without_duplicates, mode, tags, column_names) # type: ignore
 
         # Assert
         assert_frame_equal(expected, actual)
-    def test_highlight_shouldreturnstyler_whencolorhighlight(self) -> None:
-
-        # Arrange
-        style : EFFORTSTYLE = EFFORTSTYLE.color_highlight
-        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
-        color : COLORNAME = COLORNAME.skyblue
-
-        expected : dict[Tuple[int, int], list] = {
-            (0, 5): [("background-color", color)],
-            (1, 5): [("background-color", color)]
-        }
-
-        # Act
-        actual : Styler = self.effort_highlighter.create_textual_styler(self.df_without_duplicates, style, mode, color = color) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual._compute().ctx)   # type: ignore
-    def test_highlight_shouldraiseexception_wheninvalidstyle(self) -> None:
-
-        # Arrange
-        style : EFFORTSTYLE = cast(EFFORTSTYLE, "Invalid")
-        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
-        expected : str = _MessageCollection.provided_style_not_supported(style)
-
-        # Act
-        with self.assertRaises(Exception) as context:
-            self.effort_highlighter.create_textual_styler(df = self.df_without_duplicates, style = style, mode = mode)
-
-        # Assert
-        self.assertEqual(expected, str(context.exception))
-    def test_highlight_shouldcalltryfilterbycolumnnames_whencolumnnamesareprovided(self) -> None:
-        
-        # Arrange
-        style : EFFORTSTYLE = EFFORTSTYLE.textual_highlight
-        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
-        color : COLORNAME = COLORNAME.skyblue
-        tokens : Tuple[str, str] = ("[[ ", " ]]")
-        column_names : list[str] = ["2015", "2016"]
-
-        # Act, Assert
-        with patch.object(EffortHighlighter, "_EffortHighlighter__try_filter_by_column_names") as try_filter_by_column_names:
-            self.effort_highlighter.create_textual_styler(
-                df = self.df_without_duplicates, 
-                style = style, 
-                mode = mode, 
-                color = color, 
-                tags = tokens, 
-                column_names = column_names
-            )
-
-            try_filter_by_column_names.assert_called()
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
