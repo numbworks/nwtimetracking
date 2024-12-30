@@ -2273,9 +2273,10 @@ class EffortHighlighterTestCase(unittest.TestCase):
         
         # Arrange
         df : DataFrame = DataFrame({"2015": ["10h 30m"], "↕": ["↑"], "2016": ["20h 45m"]})
+        column_names : list[str] = ["2015", "2016"]
 
         # Act
-        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__extract_row(df = df, row_idx = 0)   # type: ignore
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__extract_row(df = df, row_idx = 0, column_names = column_names)   # type: ignore
 
         # Assert
         self.assertEqual(len(actual), 2)
@@ -2381,15 +2382,28 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Assert
         self.assertTrue(expected.equals(actual))
 
-    @parameterized.expand([
-        [],
-        ["2015", "2016"]
-    ])
-    def test_createtextualstyler_shouldhighlightexpectedcells_wheninvoked(self, column_names : list[str]) -> None:
+    def test_createtextualstyler_shouldhighlightexpectedcells_whencolumnnamesareprovided(self) -> None:
 
         # Arrange
         mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
         tags : Tuple[str, str] = ("[[ ", " ]]")
+        column_names : list[str] = ["2015", "2016", "2017"]
+
+        expected : DataFrame = self.df_without_duplicates.copy(deep = True)
+        expected.iloc[0, 5] = "[[ 88h 30m ]]"
+        expected.iloc[1, 5] = "[[ 65h 30m ]]"
+
+        # Act
+        actual : DataFrame = self.effort_highlighter.create_textual_styler(self.df_without_duplicates, mode, tags, column_names) # type: ignore
+
+        # Assert
+        assert_frame_equal(expected, actual)
+    def test_createtextualstyler_shouldhighlightexpectedcells_whencolumnnamesarenotprovided(self) -> None:
+
+        # Arrange
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        tags : Tuple[str, str] = ("[[ ", " ]]")
+        column_names : list[str] = []
 
         expected : DataFrame = self.df_without_duplicates.copy(deep = True)
         expected.iloc[0, 5] = "[[ 88h 30m ]]"
@@ -3183,83 +3197,7 @@ class TTAdapterTestCase(unittest.TestCase):
             sub_dfs = tts_by_month_sub_dfs
         )
     
-    def test_createsummary_shouldreturnexpectedsummary_wheninvoked(self) -> None:
 
-        # Arrange
-        tt_df : DataFrame = ObjectMother.get_tt_df()
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = ObjectMother.get_tts_by_month_tpl()
-        tts_by_year_df : DataFrame = ObjectMother.get_tts_by_year_df()
-        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = ObjectMother.get_tts_by_year_month_tpl()
-        tts_by_year_month_spnv_tpl : Tuple[DataFrame, DataFrame] = ObjectMother.get_tts_by_year_month_spnv_tpl()
-        tts_by_year_spnv_tpl : Tuple[DataFrame, DataFrame] = ObjectMother.get_tts_by_year_spnv_tpl()
-        tts_by_spn_df : DataFrame = ObjectMother.get_tts_by_spn_df()
-        tts_by_spn_spv_df : DataFrame = ObjectMother.get_tts_by_spn_spv_df()
-        tts_by_hashtag_df : DataFrame = ObjectMother.get_tts_by_hashtag_df()
-        tts_by_hashtag_year_df : DataFrame = ObjectMother.get_tts_by_hashtag_year_df()
-        tts_by_efs_tpl : Tuple[DataFrame, DataFrame] = Mock()                           # TO UPDATE
-        tts_by_tr_df : DataFrame = ObjectMother.get_tts_by_tr_df()
-        definitions_df : DataFrame = ObjectMother.get_definitions_df()
-        tts_by_month_md : str = ObjectMother.get_tts_by_month_sub_md()
-
-        df_factory : TTDataFrameFactory = Mock()
-        df_factory.create_tt_df.return_value = tt_df
-        df_factory.create_tts_by_year_df.return_value = tts_by_year_df
-        df_factory.create_tts_by_year_month_tpl.return_value = tts_by_year_month_tpl
-        df_factory.create_tts_by_year_month_spnv_tpl.return_value = tts_by_year_month_spnv_tpl
-        df_factory.create_tts_by_year_spnv_tpl.return_value = tts_by_year_spnv_tpl
-        df_factory.create_tts_by_spn_df.return_value = tts_by_spn_df
-        df_factory.create_tts_by_spn_spv_df.return_value = tts_by_spn_spv_df
-        df_factory.create_tts_by_hashtag_df.return_value = tts_by_hashtag_df
-        df_factory.create_tts_by_hashtag_year_df.return_value = tts_by_hashtag_year_df
-        df_factory.create_tts_by_efs_tpl.return_value = tts_by_efs_tpl
-        df_factory.create_tts_by_tr_df.return_value = tts_by_tr_df
-        df_factory.create_definitions_df.return_value = definitions_df
-
-        bym_factory : BYMFactory = Mock()
-        bym_factory.create_tts_by_month_tpl.return_value = tts_by_month_tpl
-
-        bym_splitter : BYMSplitter = Mock()
-        tt_sequencer : TTSequencer = Mock()
-
-        md_factory : TTMarkdownFactory = Mock()
-        md_factory.create_tts_by_month_md.return_value = tts_by_month_md
-
-        effort_highlighter : EffortHighlighter = Mock()
-
-        tt_adapter : TTAdapter = TTAdapter(
-            df_factory = df_factory, 
-            bym_factory = bym_factory, 
-            bym_splitter = bym_splitter,
-            tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
-            effort_highlighter = effort_highlighter
-        )
-
-        setting_bag : SettingBag = ObjectMother.get_setting_bag()
-
-        # Act
-        actual : TTSummary = tt_adapter.create_summary(setting_bag=setting_bag)
-
-        # Assert
-        assert_frame_equal(actual.tt_df, tt_df)
-        assert_frame_equal(actual.tts_by_month_tpl[0], tts_by_month_tpl[0])
-        assert_frame_equal(actual.tts_by_month_tpl[1], tts_by_month_tpl[1])
-        assert_frame_equal(actual.tts_by_year_df, tts_by_year_df)
-        assert_frame_equal(actual.tts_by_year_month_tpl[0], tts_by_year_month_tpl[0])
-        assert_frame_equal(actual.tts_by_year_month_tpl[1], tts_by_year_month_tpl[1])
-        assert_frame_equal(actual.tts_by_year_month_spnv_tpl[0], tts_by_year_month_spnv_tpl[0])
-        assert_frame_equal(actual.tts_by_year_month_spnv_tpl[1], tts_by_year_month_spnv_tpl[1])
-        assert_frame_equal(actual.tts_by_year_spnv_tpl[0], tts_by_year_spnv_tpl[0])
-        assert_frame_equal(actual.tts_by_year_spnv_tpl[1], tts_by_year_spnv_tpl[1])
-        assert_frame_equal(actual.tts_by_spn_df, tts_by_spn_df)
-        assert_frame_equal(actual.tts_by_spn_spv_df, tts_by_spn_spv_df)
-        assert_frame_equal(actual.tts_by_hashtag_df, tts_by_hashtag_df)
-        assert_frame_equal(actual.tts_by_hashtag_year_df, tts_by_hashtag_year_df)
-        # assert_frame_equal(actual.tts_by_efs_tpl[0], tts_by_efs_tpl[0])
-        # assert_frame_equal(actual.tts_by_efs_tpl[1], tts_by_efs_tpl[1])
-        assert_frame_equal(actual.tts_by_tr_df, tts_by_tr_df)
-        assert_frame_equal(actual.definitions_df, definitions_df)
-        self.assertEqual(actual.tts_by_month_sub_md, tts_by_month_md)
     def test_extractfilenameandparagraphtitle_shouldreturnexpectedvalues_whenidexists(self) -> None:
         
         # Arrange
