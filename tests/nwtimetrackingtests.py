@@ -2625,17 +2625,13 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
 
-        self.md_factory : TTMarkdownFactory = TTMarkdownFactory(
-            markdown_helper = MarkdownHelper(formatter = Formatter()),
-            bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper())
-        )
+        self.md_factory : TTMarkdownFactory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter()))
         self.paragraph_title : str = "Time Tracking By Month"
         self.last_update : datetime = datetime(2024, 11, 30)
-    def test_createttsbymonthmd_shouldreturnexpectedstring_whenenablegithuboptimizationsisfalse(self) -> None:
+    def test_createttsbymonthsubmd_shouldreturnexpectedstring_wheninvoked(self) -> None:
 
 		# Arrange
-        enable_github_optimizations : bool = False
-        tts_by_month_upd_df : DataFrame = ObjectMother().get_tts_by_month_tpl()[0]
+        tts_by_month_sub_dfs : list[DataFrame] = [ ObjectMother().get_tts_by_month_tpl()[0] ]
         expected : str = ObjectMother().get_tts_by_month_sub_md()
         expected_newlines : int = (9 + 14)
 
@@ -2643,31 +2639,12 @@ class TTMarkdownFactoryTestCase(unittest.TestCase):
         actual : str = self.md_factory.create_tts_by_month_sub_md(
             paragraph_title = self.paragraph_title, 
             last_update = self.last_update, 
-            tts_by_month_upd_df = tts_by_month_upd_df,
-            enable_github_optimizations = enable_github_optimizations
+            sub_dfs = tts_by_month_sub_dfs
         )
         actual_newlines : int = actual.count("\n")
 
         # Assert
         self.assertEqual(expected, actual)
-        self.assertEqual(expected_newlines, actual_newlines)
-    def test_createttsbymonthmd_shouldreturnexpectedstring_whenenablegithuboptimizationsistrue(self) -> None:
-
-		# Arrange
-        enable_github_optimizations : bool = True
-        tts_by_month_upd_df : DataFrame = ObjectMother().get_tts_by_month_df()
-        expected_newlines : int = (9 + 14 + 14 + 14 + 2)
-
-        # Act
-        actual : str = self.md_factory.create_tts_by_month_sub_md(
-            paragraph_title = self.paragraph_title, 
-            last_update = self.last_update, 
-            tts_by_month_upd_df = tts_by_month_upd_df,
-            enable_github_optimizations = enable_github_optimizations
-        )
-        actual_newlines : int = actual.count("\n")
-
-        # Assert
         self.assertEqual(expected_newlines, actual_newlines)
 class TTSequencerTestCase(unittest.TestCase):
 
@@ -3619,7 +3596,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content, logging_function = logging_function)  # type: ignore
+        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content)  # type: ignore
 
         # Assert
         component_bag.file_path_manager.create_file_path.assert_called()
@@ -3629,10 +3606,10 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
     def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tt_df : DataFrame = Mock()
+        tt_styler : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tt_df = tt_df
+        summary.tt_styler = tt_styler
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -3655,16 +3632,17 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tt_df.head(5), 
-            hide_index = True
+            obj = tt_styler, 
+            hide_index = True,
+            formatters = None
         )
     def test_processttsbymonth_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = (Mock(), Mock())
+        tts_by_month_styler : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_month_tpl = tts_by_month_tpl
+        summary.tts_by_month_styler = tts_by_month_styler
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -3684,7 +3662,9 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_month_tpl[1]
+            obj = tts_by_month_styler, 
+            hide_index = False, 
+            formatters = None
         )
     def test_processttsbymonth_shouldsaveandlog_whenoptionissave(self) -> None:
         
@@ -3720,10 +3700,10 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
     def test_processttsbyyear_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_year_df : DataFrame = Mock()
+        tts_by_year_styler : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_year_df = tts_by_year_df
+        summary.tts_by_year_styler = tts_by_year_styler
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -3743,15 +3723,17 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_year_df
+            obj = tts_by_year_styler,
+            hide_index = False,
+            formatters = None
         )
     def test_processttsbyyearmonth_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_year_month_tpl : Tuple[DataFrame, DataFrame] = (Mock(), Mock())
+        tts_by_year_month_styler : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_year_month_tpl = tts_by_year_month_tpl
+        summary.tts_by_year_month_styler = tts_by_year_month_styler
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -3771,7 +3753,9 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_year_month_tpl[1]
+            obj = tts_by_year_month_styler,
+            hide_index = False, 
+            formatters = None
         )
     def test_processttsbyyearmonthspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
@@ -3831,18 +3815,18 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            obj = tts_by_year_spnv_styler[1],
+            obj = tts_by_year_spnv_styler,
             hide_index = False,
             formatters = setting_bag.tts_by_year_spnv_formatters
         )
     def test_processttsbyspn_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_spn_df : DataFrame = Mock()
+        tts_by_spn_styler : DataFrame = Mock()
         definitions_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_spn_df = tts_by_spn_df
+        summary.tts_by_spn_styler = tts_by_spn_styler
         summary.definitions_df = definitions_df
 
         displayer : Mock = Mock()
@@ -3864,17 +3848,18 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_spn_df, 
+            obj = tts_by_spn_styler, 
+            hide_index = False, 
             formatters = setting_bag.tts_by_spn_formatters
         )
     def test_processttsbyspn_shouldlog_whenoptionislog(self) -> None:
         
         # Arrange
-        tts_by_spn_df : DataFrame = Mock()
+        tts_by_spn_styler : DataFrame = Mock()
         definitions_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_spn_df = tts_by_spn_df
+        summary.tts_by_spn_styler = tts_by_spn_styler
         summary.definitions_df = definitions_df
 
         displayer : Mock = Mock()
@@ -3896,7 +3881,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
-            df = tts_by_spn_df, 
+            df = tts_by_spn_styler, 
             definitions = definitions_df)
     def test_processttsbyspnspv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
@@ -3926,7 +3911,9 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_spn_spv_df
+            obj = tts_by_spn_spv_df, 
+            hide_index = False, 
+            formatters = None
         )
     def test_processttsbyspnspv_shouldlog_whenoptionislog(self) -> None:
         
@@ -3986,7 +3973,8 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_hashtag_df, 
+            obj = tts_by_hashtag_df, 
+            hide_index = False, 
             formatters = setting_bag.tts_by_hashtag_formatters
         )
     def test_processttsbyhashtag_shouldlog_whenoptionislog(self) -> None:
@@ -4023,11 +4011,10 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
     def test_processttsbyefs_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_efs_tpl : tuple = (Mock(), Mock())
-        tts_by_efs_df : DataFrame = tts_by_efs_tpl[1]
+        tts_by_efs_styler : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_efs_tpl = tts_by_efs_tpl
+        summary.tts_by_efs_styler = tts_by_efs_styler
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -4047,15 +4034,17 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = tts_by_efs_df
+            obj = tts_by_efs_styler, 
+            hide_index = False, 
+            formatters = None
         )
     def test_processttsbytr_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_tr_df : DataFrame = Mock()
+        tts_by_tr_styler : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_tr_df = tts_by_tr_df
+        summary.tts_by_tr_styler = tts_by_tr_styler
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -4076,7 +4065,9 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            obj = tts_by_tr_df.head(10)
+            obj = tts_by_tr_styler,
+            hide_index = False, 
+            formatters = None
         )
     def test_processttsganttspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
@@ -4218,7 +4209,9 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            df = definitions_df
+            obj = definitions_df, 
+            hide_index = False, 
+            formatters = None
         )
     def test_getsummary_shouldreturnttsummaryobject_wheninvoked(self):
         
