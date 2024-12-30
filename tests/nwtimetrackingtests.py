@@ -11,7 +11,7 @@ from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from types import FunctionType
 from typing import Any, Callable, Literal, Optional, Tuple, cast
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer, LambdaProvider
 
 # LOCAL MODULES
@@ -3197,6 +3197,64 @@ class TTAdapterTestCase(unittest.TestCase):
             sub_dfs = tts_by_month_sub_dfs
         )
     
+    @parameterized.expand([
+        ("_TTAdapter__create_tt_df"),
+        ("_TTAdapter__create_tt_styler"),
+        ("_TTAdapter__create_tts_by_month_tpl"),
+        ("_TTAdapter__create_tts_by_month_styler"),
+        ("_TTAdapter__create_tts_by_month_sub_dfs"),
+        ("_TTAdapter__create_tts_by_month_sub_md"),
+        ("_TTAdapter__create_tts_by_year_df"),
+        ("_TTAdapter__create_tts_by_year_styler"),
+        ("_TTAdapter__create_tts_by_year_month_tpl"),
+        ("_TTAdapter__create_tts_by_year_month_styler"),
+        ("_TTAdapter__create_tts_by_year_month_spnv_tpl"),
+        ("_TTAdapter__create_tts_by_year_month_spnv_styler"),
+        ("_TTAdapter__create_tts_by_year_spnv_tpl"),
+        ("_TTAdapter__create_tts_by_year_spnv_styler"),
+        ("_TTAdapter__create_tts_by_spn_df"),
+        ("_TTAdapter__create_tts_by_spn_styler"),
+        ("_TTAdapter__create_tts_by_spn_spv_df"),
+        ("_TTAdapter__create_tts_by_hashtag_year_df"),
+        ("_TTAdapter__create_tts_by_hashtag_year_styler"),
+        ("_TTAdapter__create_tts_by_efs_tpl"),
+        ("_TTAdapter__create_tts_by_tr_df"),
+        ("_TTAdapter__create_tts_by_tr_styler"),
+        ("_TTAdapter__create_tts_gantt_spnv_df"),
+        ("_TTAdapter__create_tts_gantt_spnv_plot_function"),
+        ("_TTAdapter__create_tts_gantt_hseq_df"),
+        ("_TTAdapter__create_tts_gantt_hseq_plot_function")
+    ])    
+    def test_createsummary_shouldcallprivatemethod_wheninvoked(self, method_name : str) -> None:
+        
+        # This method uses MagicMock instead of Mock to avoid the "TypeError: Mock object is not subscriptable" error.
+
+        # Arrange
+        df_factory : MagicMock = MagicMock()
+        bym_factory : MagicMock = MagicMock()
+        bym_splitter : MagicMock = MagicMock()
+        tt_sequencer : MagicMock = MagicMock()
+        md_factory : MagicMock = MagicMock()
+        effort_highlighter : MagicMock = MagicMock()
+
+        setting_bag : SettingBag = ObjectMother.get_setting_bag()
+
+        tt_adapter : TTAdapter = TTAdapter(
+            df_factory = df_factory,
+            bym_factory = bym_factory,
+            bym_splitter = bym_splitter,
+            tt_sequencer = tt_sequencer,
+            md_factory = md_factory,
+            effort_highlighter = effort_highlighter
+        )
+
+        # Act, Assert
+        with patch.object(TTAdapter, method_name) as mocked_method:
+                   
+            tt_summary : TTSummary = tt_adapter.create_summary(setting_bag = setting_bag)
+
+            # Assert
+            mocked_method.assert_called_once()
 
     def test_extractfilenameandparagraphtitle_shouldreturnexpectedvalues_whenidexists(self) -> None:
         
