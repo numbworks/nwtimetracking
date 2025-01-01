@@ -959,7 +959,7 @@ class YearProviderTestCase(unittest.TestCase):
     def test_getallyears_shouldreturnexpectedlist_wheninvoked(self):
 
         # Arrange
-        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
 
         # Act
         actual : list[int] = YearProvider().get_all_years()
@@ -979,7 +979,8 @@ class YearProviderTestCase(unittest.TestCase):
             YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
             YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
             YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 500))
+            YearlyTarget(year = 2024, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2025, hours = timedelta(hours = 500))
         ]
 
         # Act
@@ -991,7 +992,7 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Arrange
         x : uint = uint(5)
-        expected : list[int] = [2020, 2021, 2022, 2023, 2024]
+        expected : list[int] = [2021, 2022, 2023, 2024, 2025]
         
         # Act
         actual : list[int] = YearProvider().get_most_recent_x_years(x)
@@ -1002,7 +1003,7 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Arrange
         x : uint = uint(15)
-        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
         
         # Act
         actual : list[int] = YearProvider().get_most_recent_x_years(x)
@@ -3805,7 +3806,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_month_styler, 
-            hide_index = False, 
+            hide_index = True, 
             formatters = None
         )
     def test_processttsbymonth_shouldsaveandlog_whenoptionissave(self) -> None:
@@ -3866,7 +3867,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_year_styler,
-            hide_index = False,
+            hide_index = True,
             formatters = None
         )
     def test_processttsbyyearmonth_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -3896,7 +3897,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_year_month_styler,
-            hide_index = False, 
+            hide_index = True, 
             formatters = None
         )
     def test_processttsbyyearmonthspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -3927,7 +3928,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_year_month_spnv_styler,
-            hide_index = False, 
+            hide_index = True, 
             formatters = setting_bag.tts_by_year_month_spnv_formatters
         )
     def test_processttsbyyearspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -3958,7 +3959,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_year_spnv_styler,
-            hide_index = False,
+            hide_index = True,
             formatters = setting_bag.tts_by_year_spnv_formatters
         )
     def test_processttsbyspn_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -3991,7 +3992,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_spn_styler, 
-            hide_index = False, 
+            hide_index = True, 
             formatters = setting_bag.tts_by_spn_formatters
         )
     def test_processttsbyspn_shouldlog_whenoptionislog(self) -> None:
@@ -4054,7 +4055,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_spn_spv_df, 
-            hide_index = False, 
+            hide_index = True, 
             formatters = None
         )
     def test_processttsbyspnspv_shouldlog_whenoptionislog(self) -> None:
@@ -4116,7 +4117,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_hashtag_df, 
-            hide_index = False, 
+            hide_index = True, 
             formatters = setting_bag.tts_by_hashtag_formatters
         )
     def test_processttsbyhashtag_shouldlog_whenoptionislog(self) -> None:
@@ -4177,7 +4178,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_efs_styler, 
-            hide_index = False, 
+            hide_index = True, 
             formatters = None
         )
     def test_processttsbytr_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -4208,7 +4209,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_tr_styler,
-            hide_index = False, 
+            hide_index = True, 
             formatters = None
         )
     def test_processttsganttspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -4239,7 +4240,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_gantt_spnv_df,
-            hide_index = False,
+            hide_index = True,
             formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         )
     def test_processttsganttspnv_shouldplot_whenoptionisplot(self) -> None:
@@ -4296,7 +4297,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_gantt_hseq_df,
-            hide_index = False,
+            hide_index = True,
             formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         )
     def test_processttsgantthseq_shouldplot_whenoptionisplot(self) -> None:
@@ -4352,7 +4353,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = definitions_df, 
-            hide_index = False, 
+            hide_index = True, 
             formatters = None
         )
     def test_getsummary_shouldreturnttsummaryobject_wheninvoked(self):

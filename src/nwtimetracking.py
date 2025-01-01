@@ -302,7 +302,7 @@ class YearProvider():
 
         '''Returns a list of years.'''
 
-        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
 
         return years
     def get_all_yearly_targets(self) -> list[YearlyTarget]:
@@ -319,7 +319,8 @@ class YearProvider():
             YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
             YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
             YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 500))
+            YearlyTarget(year = 2024, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2025, hours = timedelta(hours = 500))
         ]
 
         return yearly_targets    
@@ -3206,7 +3207,7 @@ class TimeTrackingProcessor():
 
         styler : DataFrame = kwargs[TTKWARG.styler]
         sub_dfs : Optional[list[DataFrame]] = kwargs.get(TTKWARG.sub_dfs, None)
-        hide_index : bool = kwargs.get(TTKWARG.hide_index, False)
+        hide_index : bool = kwargs.get(TTKWARG.hide_index, True)
         formatters : Optional[dict] = kwargs.get(TTKWARG.formatters, None)
         id : Optional[TTID] = kwargs.get(TTKWARG.id, None)
         content : Optional[str] = kwargs.get(TTKWARG.content, None)
