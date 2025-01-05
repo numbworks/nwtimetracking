@@ -119,7 +119,7 @@ update-codecoverage:
 	echo "$$url" > $(ROOT_DIR)/codecoverage.txt; \
 	curl -s $$url -o $(ROOT_DIR)/codecoverage.svg; \
 	if [ $$? -eq 0 ]; then echo "[OK] $@: coverage badge updated successfully!"; else echo "[ERROR] $@: failed to update coverage badge."; fi;
-classdiagram-basic:
+create-classdiagram:
 	@clear; \
 	pyreverse $(ROOT_DIR)/src/$(MODULE_NAME).py -o mmd -d /home/$(MODULE_NAME)/; \
 	md_file="/home/$(MODULE_NAME)/classes.mmd"; \

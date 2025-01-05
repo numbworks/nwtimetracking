@@ -1,6 +1,6 @@
 v5.0.1
 - Library:
-	- Maintenance: makefile, added "classdiagram-basic" target.
+	- Maintenance: makefile, added "create-classdiagram" target.
 - Documentation:
 	- Feature: updated to v5.0.1.
 

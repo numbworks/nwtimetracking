@@ -150,11 +150,11 @@ The avalaible target names are:
 | compilenotebook-verbose | Runs "python -m py_compile" command against the notebook file. |
 | unittest-verbose | Runs "python" command against the test files. |
 | codemetrics-verbose | Runs a cyclomatic complexity analysis against all the nw*.py files in /src. |
-| commitavg-verbose | Shows the daily average time between commits, grouped by year and month. |
+| calculate-commitavg | Shows the daily average time between commits, grouped by year and month. |
 | check-pythonversion | Checks if the installed Python version is the expected one and logs a message. |
 | check-requirements | Checks if the required dependencies match with the most recent releases on PyPi. |
 | update-codecoverage | Updates the codecoverage.txt/.svg files according to the total unit test coverage. |
-| classdiagram-basic | Creates a class diagram in Mermaid format that shows only relationships. |
+| create-classdiagram | Creates a class diagram in Mermaid format that shows only relationships. |
 | all-concise | Runs a batch of verification tasks and logs one summary line for each of them. |
 
 The expected outcome for `all-concise` is:
