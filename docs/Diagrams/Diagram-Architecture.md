@@ -1,24 +1,18 @@
 ```mermaid
 classDiagram
-    %% Relationships
-    TimeTrackingProcessor --> ComponentBag
-    TimeTrackingProcessor --> SettingBag
-    TimeTrackingProcessor --> TTSummary
-    ComponentBag --> TTAdapter
-    ComponentBag --> TTLogger
-    TTLogger --> SettingSubset
-    TTMarkdownFactory --> MarkdownHelper
-    TTMarkdownFactory --> BYMSplitter
-
-    BYMFactory --> TTDataFrameHelper
-    BYMSplitter --> TTDataFrameHelper
-    TTDataFrameFactory --> TTDataFrameHelper
-    TTSequencer --> TTDataFrameHelper
-    EffortHighlighter --> TTDataFrameHelper
-
-    TTAdapter --> TTMarkdownFactory
-    TTAdapter --> BYMFactory
-    TTAdapter --> TTDataFrameFactory
-    TTAdapter --> TTSequencer
-    TTAdapter --> EffortHighlighter
+  BYMFactory --* TTAdapter
+  BYMSplitter --* TTAdapter
+  ComponentBag --* TimeTrackingProcessor
+  EffortHighlighter --* TTAdapter
+  SettingBag --* TimeTrackingProcessor
+  TTAdapter --* ComponentBag
+  TTDataFrameFactory --* TTAdapter
+  TTDataFrameHelper --* BYMFactory
+  TTDataFrameHelper --* BYMSplitter
+  TTDataFrameHelper --* EffortHighlighter
+  TTDataFrameHelper --* TTDataFrameFactory
+  TTDataFrameHelper --* TTSequencer
+  TTLogger --* ComponentBag
+  TTMarkdownFactory --* TTAdapter
+  TTSequencer --* TTAdapter
 ```
