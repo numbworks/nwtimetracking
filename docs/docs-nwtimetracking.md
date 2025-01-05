@@ -21,6 +21,7 @@ Contact: numbworks@gmail.com
 | 2024-12-24 | numbworks | Updated to v4.7.0. |
 | 2024-12-26 | numbworks | Updated to v4.8.0. |
 | 2024-12-29 | numbworks | Updated to v5.0.0. |
+| 2025-01-05 | numbworks | Updated to v5.0.1. |
 
 ## Introduction
 
@@ -153,13 +154,14 @@ The avalaible target names are:
 | check-pythonversion | Checks if the installed Python version is the expected one and logs a message. |
 | check-requirements | Checks if the required dependencies match with the most recent releases on PyPi. |
 | update-codecoverage | Updates the codecoverage.txt/.svg files according to the total unit test coverage. |
+| classdiagram-basic | Creates a class diagram in Mermaid format that shows only relationships. |
 | all-concise | Runs a batch of verification tasks and logs one summary line for each of them. |
 
 The expected outcome for `all-concise` is:
 
 ```
 MODULE_NAME: nwtimetracking
-MODULE_VERSION: 5.0.0
+MODULE_VERSION: 5.0.1
 COVERAGE_THRESHOLD: 70%
 [OK] type-concise: passed!
 [OK] changelog-concise: 'CHANGELOG' updated to current version!

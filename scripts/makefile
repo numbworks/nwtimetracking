@@ -3,7 +3,7 @@
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
-MODULE_VERSION = "5.0.0"
+MODULE_VERSION = "5.0.1"
 COVERAGE_THRESHOLD = 70
 
 # TARGETS (VERBOSE)
@@ -119,7 +119,7 @@ codemetrics-concise:
 	if [[ "$$value" == *"A"* ]]; then echo "[OK] $@: the cyclomatic complexity is excellent ('$$value')."; else echo "[WARNING] $@: the cyclomatic complexity is not excellent ('$$value')"; fi;
 
 # TARGETS (UTILITY)
-createclassdiagram:
+classdiagram-basic:
 	@clear; \
 	pyreverse $(ROOT_DIR)/src/$(MODULE_NAME).py -o mmd -d /home/$(MODULE_NAME)/; \
 	md_file="/home/$(MODULE_NAME)/classes.mmd"; \
