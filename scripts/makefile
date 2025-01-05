@@ -118,5 +118,19 @@ codemetrics-concise:
 	@value=$$(radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py  | grep -oP "Average complexity: \K[A-F]"); \
 	if [[ "$$value" == *"A"* ]]; then echo "[OK] $@: the cyclomatic complexity is excellent ('$$value')."; else echo "[WARNING] $@: the cyclomatic complexity is not excellent ('$$value')"; fi;
 
+# TARGETS (UTILITY)
+createclassdiagram:
+	@clear; \
+	pyreverse $(ROOT_DIR)/src/$(MODULE_NAME).py -o mmd -d /home/$(MODULE_NAME)/; \
+	md_file="/home/$(MODULE_NAME)/classes.mmd"; \
+	tmp_file="/home/$(MODULE_NAME)/temp.mmd"; \
+	final_file="/home/$(MODULE_NAME)/Diagram-Architecture.md"; \
+	awk '/classDiagram|--\*/ { print }' $$md_file > $$tmp_file; \
+	echo '```mermaid' > $$md_file; \
+	cat $$tmp_file >> $$md_file; \
+	echo '```' >> $$md_file; \
+	rm $$tmp_file; \
+	mv $$md_file $$final_file
+
 # TARGETS (AGGREGATE)
 all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise tryinstall-concise
