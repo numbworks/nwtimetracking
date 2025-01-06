@@ -2055,7 +2055,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
 
         if enable_pivot:
-            tts_df = tts_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).reset_index()
+            tts_df = tts_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).rename_axis(None, axis=1).reset_index()
             tts_df = tts_df.fillna("")
 
         return tts_df
