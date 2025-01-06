@@ -1,5 +1,5 @@
 # SETTINGS
-.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise all-concise 
+.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise docstrings-concise all-concise 
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
@@ -100,6 +100,11 @@ unittest-concise:
 codemetrics-concise:
 	@value=$$(radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py  | grep -oP "Average complexity: \K[A-F]"); \
 	if [[ "$$value" == *"A"* ]]; then echo "[OK] $@: the cyclomatic complexity is excellent ('$$value')."; else echo "[WARNING] $@: the cyclomatic complexity is not excellent ('$$value')"; fi;
+docstrings-concise:
+	@checker=$(ROOT_DIR)/scripts/docstringchecker.py; \
+	file_path=$(ROOT_DIR)/src/$(MODULE_NAME).py; \
+	value=$$(python $$checker -fp $$file_path -e MessageCollection -e init -e str -e repr); \
+	if [[ "$$value" == *"All methods have docstrings."* ]]; then echo "[OK] $@: all methods have docstrings."; else echo "[WARNING] $@: not all methods have docstrings."; fi;
 
 # TARGETS (UTILITY)
 calculate-commitavg:
@@ -138,4 +143,4 @@ create-classdiagram:
 	mv $$md_file $$final_file
 
 # TARGETS (AGGREGATE)
-all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise tryinstall-concise
+all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise docstrings-concise
