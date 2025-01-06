@@ -685,6 +685,8 @@ class TTDataFrameHelper():
         return None
     def is_yearly_target_met(self, effort : timedelta, yearly_target : timedelta) -> bool:
 
+        '''Returns True if effort >= yearly_target.'''
+
         if effort >= yearly_target:
             return True
 
@@ -2209,6 +2211,8 @@ class TTSequencer():
 
     def __convert_criteria_to_value(self, criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude]) -> Optional[bool]:
 
+        '''Converts criteria to True, False or None.'''
+
         if criteria == CRITERIA.do_nothing:
             return None
         elif criteria == CRITERIA.include:
@@ -2664,6 +2668,8 @@ class TTAdapter():
         return tt_df
     def __create_tt_styler(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
+        '''Returns a tt_styler object.'''
+
         tt_styler : DataFrame = self.__orchestrate_head_n(
             df = tt_df, 
             head_n = setting_bag.tt_head_n, 
@@ -2942,6 +2948,8 @@ class TTAdapter():
 
         return tts_by_tr_df
     def __create_tts_by_tr_styler(self, tts_by_tr_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Returns a tts_by_tr_styler object.'''
 
         tts_by_tr_styler : DataFrame = self.__orchestrate_head_n(
             df = tts_by_tr_df, 
