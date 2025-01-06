@@ -1,5 +1,7 @@
 # SETTINGS
-.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise docstrings-concise all-concise 
+.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise \
+		compile-concise compilenotebook-concise unittest-concise codemetrics-concise docstrings-concise \
+		all-concise
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
@@ -143,4 +145,5 @@ create-classdiagram:
 	mv $$md_file $$final_file
 
 # TARGETS (AGGREGATE)
-all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise docstrings-concise
+all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise \
+				compile-concise compilenotebook-concise unittest-concise codemetrics-concise docstrings-concise
