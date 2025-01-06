@@ -1,4 +1,4 @@
-'''A script to check which methods in a Python files lack of docstrings.'''
+'''A script to check which methods in a Python file lack of docstrings.'''
 
 # IMPORTS
 import ast
