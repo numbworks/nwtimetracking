@@ -150,6 +150,7 @@ The avalaible target names are:
 | compilenotebook-verbose | Runs "python -m py_compile" command against the notebook file. |
 | unittest-verbose | Runs "python" command against the test files. |
 | codemetrics-verbose | Runs a cyclomatic complexity analysis against all the nw*.py files in /src. |
+| docstrings-verbose | Lists all the methods that lack of docstring. |
 | calculate-commitavg | Shows the daily average time between commits, grouped by year and month. |
 | check-pythonversion | Checks if the installed Python version is the expected one and logs a message. |
 | check-requirements | Checks if the required dependencies match with the most recent releases on PyPi. |
@@ -167,11 +168,12 @@ COVERAGE_THRESHOLD: 70%
 [OK] changelog-concise: 'CHANGELOG' updated to current version!
 [OK] setup-concise: 'setup.py' updated to current version!
 [OK] coverage-concise: unit test coverage >= 70%.
+[OK] tryinstall-concise: installation process works.
 [OK] compile-concise: compiling the library throws no issues.
 [OK] compilenotebook-concise: compiling the notebook throws no issues.
-[OK] unittest-concise: '315' tests found and run.
+[OK] unittest-concise: '376' tests found and run.
 [OK] codemetrics-concise: the cyclomatic complexity is excellent ('A').
-[OK] tryinstall-concise: installation process works.
+[OK] docstrings-concise: all methods have docstrings.
 ```
 
 Considering the old-fashioned syntax adopted by both `make` and `bash`, here a summary of its less intuitive aspects:
