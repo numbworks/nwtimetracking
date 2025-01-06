@@ -57,6 +57,11 @@ unittest-verbose:
 codemetrics-verbose:
 	@clear; \
 	radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py | grep -e '^[ ]*[CFM].*' | grep -v ' - A';
+docstrings-verbose:
+	@clear; \
+	checker=$(ROOT_DIR)/scripts/docstringchecker.py; \
+	file_path=$(ROOT_DIR)/src/$(MODULE_NAME).py; \
+	python $$checker -fp $$file_path -e MessageCollection -e init -e str -e repr;
 
 # TARGETS (CONCISE)
 type-concise:

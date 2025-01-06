@@ -36,8 +36,8 @@ class ArgumentParser():
 
         try:
             parser = argparse.ArgumentParser(description = _MessageCollection.parser_description())
-            parser.add_argument("--file_path", required = True, help = _MessageCollection.file_path_to_the_python_file())
-            parser.add_argument("--exclude", required = False, nargs = "*", default = [], help = _MessageCollection.exclude_substrings())
+            parser.add_argument("--file_path", "-fp", required = True, help = _MessageCollection.file_path_to_the_python_file())
+            parser.add_argument("--exclude", "-e", required = False, action = "append", default = [], help = _MessageCollection.exclude_substrings())
 
             args: Namespace = parser.parse_args()
 
@@ -107,16 +107,11 @@ class DocStringChecker():
         file_path, exclude = self.__argument_parser.parse_arguments()
 
         if file_path is None:
-            sys.exit(0)
+            sys.exit()
 
         source : str = self.__docstring_manager.load_source(file_path = cast(str, file_path))
         missing : list[str] = self.__docstring_manager.get_missing_docstrings(source = source, exclude = exclude)
         self.__docstring_manager.print_docstrings(missing = missing)
-
-        if len(missing) > 0:
-            sys.exit(0)
-        else:
-            sys.exit(1)
 
 # MAIN
 if __name__ == "__main__":
