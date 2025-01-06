@@ -1,4 +1,4 @@
-'''A script to calculate some custom averages related to the current git repository..'''
+'''A script to calculate some custom averages related to the current git repository.'''
 
 # IMPORTS
 import subprocess

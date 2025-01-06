@@ -1,9 +1,11 @@
 # SETTINGS
-.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise all-concise 
+.PHONY: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise \
+		compile-concise compilenotebook-concise unittest-concise codemetrics-concise docstrings-concise \
+		all-concise
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
-MODULE_VERSION = "5.0.0"
+MODULE_VERSION = "5.0.1"
 COVERAGE_THRESHOLD = 70
 
 # TARGETS (VERBOSE)
@@ -57,28 +59,11 @@ unittest-verbose:
 codemetrics-verbose:
 	@clear; \
 	radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py | grep -e '^[ ]*[CFM].*' | grep -v ' - A';
-commitavg-verbose:
+docstrings-verbose:
 	@clear; \
-	python $(ROOT_DIR)/scripts/commitavgcalculator.py;
-check-pythonversion:
-	@clear; \
-	code="from nwpackageversions import LanguageChecker; print(LanguageChecker().get_version_status(required=(3, 12, 5)))"; \
-	python -c "$$code"
-check-requirements:
-	@clear; \
-	file_path="$(ROOT_DIR)/.devcontainer/Dockerfile"; \
-	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = True, sort_requirement_details = True))"; \
-	python -c "$$code";
-update-codecoverage:
-	@clear; \
-	cd $(ROOT_DIR)/tests/; \
-	coverage run -m unittest $(MODULE_NAME)tests.py > /dev/null 2>&1; \
-	value=$$(coverage report --include=$(MODULE_NAME).py | grep -oP 'TOTAL\s+\d+\s+\d+\s+\K\d+(?=%)'); \
-	if [ $$value -le 39 ]; then color="red"; elif [ $$value -le 69 ]; then color="orange"; else color="green"; fi; \
-	url="https://img.shields.io/badge/coverage-$${value}.0%25-$${color}"; \
-	echo "$$url" > $(ROOT_DIR)/codecoverage.txt; \
-	curl -s $$url -o $(ROOT_DIR)/codecoverage.svg; \
-	if [ $$? -eq 0 ]; then echo "[OK] $@: coverage badge updated successfully!"; else echo "[ERROR] $@: failed to update coverage badge."; fi;
+	checker=$(ROOT_DIR)/scripts/docstringchecker.py; \
+	file_path=$(ROOT_DIR)/src/$(MODULE_NAME).py; \
+	python $$checker -fp $$file_path -e MessageCollection -e init -e str -e repr;
 
 # TARGETS (CONCISE)
 type-concise:
@@ -117,6 +102,48 @@ unittest-concise:
 codemetrics-concise:
 	@value=$$(radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py  | grep -oP "Average complexity: \K[A-F]"); \
 	if [[ "$$value" == *"A"* ]]; then echo "[OK] $@: the cyclomatic complexity is excellent ('$$value')."; else echo "[WARNING] $@: the cyclomatic complexity is not excellent ('$$value')"; fi;
+docstrings-concise:
+	@checker=$(ROOT_DIR)/scripts/docstringchecker.py; \
+	file_path=$(ROOT_DIR)/src/$(MODULE_NAME).py; \
+	value=$$(python $$checker -fp $$file_path -e MessageCollection -e init -e str -e repr); \
+	if [[ "$$value" == *"All methods have docstrings."* ]]; then echo "[OK] $@: all methods have docstrings."; else echo "[WARNING] $@: not all methods have docstrings."; fi;
+
+# TARGETS (UTILITY)
+calculate-commitavg:
+	@clear; \
+	python $(ROOT_DIR)/scripts/commitavgcalculator.py;
+check-pythonversion:
+	@clear; \
+	code="from nwpackageversions import LanguageChecker; print(LanguageChecker().get_version_status(required=(3, 12, 5)))"; \
+	python -c "$$code"
+check-requirements:
+	@clear; \
+	file_path="$(ROOT_DIR)/.devcontainer/Dockerfile"; \
+	code="from nwpackageversions import RequirementChecker; print(RequirementChecker().try_check(file_path = '$$file_path', only_stable_releases = True, sort_requirement_details = True))"; \
+	python -c "$$code";
+update-codecoverage:
+	@clear; \
+	cd $(ROOT_DIR)/tests/; \
+	coverage run -m unittest $(MODULE_NAME)tests.py > /dev/null 2>&1; \
+	value=$$(coverage report --include=$(MODULE_NAME).py | grep -oP 'TOTAL\s+\d+\s+\d+\s+\K\d+(?=%)'); \
+	if [ $$value -le 39 ]; then color="red"; elif [ $$value -le 69 ]; then color="orange"; else color="green"; fi; \
+	url="https://img.shields.io/badge/coverage-$${value}.0%25-$${color}"; \
+	echo "$$url" > $(ROOT_DIR)/codecoverage.txt; \
+	curl -s $$url -o $(ROOT_DIR)/codecoverage.svg; \
+	if [ $$? -eq 0 ]; then echo "[OK] $@: coverage badge updated successfully!"; else echo "[ERROR] $@: failed to update coverage badge."; fi;
+create-classdiagram:
+	@clear; \
+	pyreverse $(ROOT_DIR)/src/$(MODULE_NAME).py -o mmd -d /home/$(MODULE_NAME)/; \
+	md_file="/home/$(MODULE_NAME)/classes.mmd"; \
+	tmp_file="/home/$(MODULE_NAME)/temp.mmd"; \
+	final_file="/home/$(MODULE_NAME)/Diagram-Architecture.md"; \
+	awk '/classDiagram|--\*/ { print }' $$md_file > $$tmp_file; \
+	echo '```mermaid' > $$md_file; \
+	cat $$tmp_file >> $$md_file; \
+	echo '```' >> $$md_file; \
+	rm $$tmp_file; \
+	mv $$md_file $$final_file
 
 # TARGETS (AGGREGATE)
-all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise compile-concise compilenotebook-concise unittest-concise codemetrics-concise tryinstall-concise
+all-concise: clear makefile-info type-concise changelog-concise setup-concise coverage-concise tryinstall-concise \
+				compile-concise compilenotebook-concise unittest-concise codemetrics-concise docstrings-concise

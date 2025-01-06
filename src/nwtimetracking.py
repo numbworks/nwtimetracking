@@ -302,7 +302,7 @@ class YearProvider():
 
         '''Returns a list of years.'''
 
-        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
 
         return years
     def get_all_yearly_targets(self) -> list[YearlyTarget]:
@@ -319,7 +319,8 @@ class YearProvider():
             YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
             YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
             YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 500))
+            YearlyTarget(year = 2024, hours = timedelta(hours = 500)),
+            YearlyTarget(year = 2025, hours = timedelta(hours = 500))
         ]
 
         return yearly_targets    
@@ -683,6 +684,8 @@ class TTDataFrameHelper():
             
         return None
     def is_yearly_target_met(self, effort : timedelta, yearly_target : timedelta) -> bool:
+
+        '''Returns True if effort >= yearly_target.'''
 
         if effort >= yearly_target:
             return True
@@ -2052,7 +2055,7 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
 
         if enable_pivot:
-            tts_df = tts_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).reset_index()
+            tts_df = tts_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).rename_axis(None, axis=1).reset_index()
             tts_df = tts_df.fillna("")
 
         return tts_df
@@ -2207,6 +2210,8 @@ class TTSequencer():
         self.__df_helper = df_helper
 
     def __convert_criteria_to_value(self, criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude]) -> Optional[bool]:
+
+        '''Converts criteria to True, False or None.'''
 
         if criteria == CRITERIA.do_nothing:
             return None
@@ -2663,6 +2668,8 @@ class TTAdapter():
         return tt_df
     def __create_tt_styler(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
+        '''Returns a tt_styler object.'''
+
         tt_styler : DataFrame = self.__orchestrate_head_n(
             df = tt_df, 
             head_n = setting_bag.tt_head_n, 
@@ -2942,6 +2949,8 @@ class TTAdapter():
         return tts_by_tr_df
     def __create_tts_by_tr_styler(self, tts_by_tr_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
+        '''Returns a tts_by_tr_styler object.'''
+
         tts_by_tr_styler : DataFrame = self.__orchestrate_head_n(
             df = tts_by_tr_df, 
             head_n = setting_bag.tts_by_tr_head_n, 
@@ -3206,7 +3215,7 @@ class TimeTrackingProcessor():
 
         styler : DataFrame = kwargs[TTKWARG.styler]
         sub_dfs : Optional[list[DataFrame]] = kwargs.get(TTKWARG.sub_dfs, None)
-        hide_index : bool = kwargs.get(TTKWARG.hide_index, False)
+        hide_index : bool = kwargs.get(TTKWARG.hide_index, True)
         formatters : Optional[dict] = kwargs.get(TTKWARG.formatters, None)
         id : Optional[TTID] = kwargs.get(TTKWARG.id, None)
         content : Optional[str] = kwargs.get(TTKWARG.content, None)

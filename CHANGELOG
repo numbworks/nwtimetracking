@@ -1,3 +1,9 @@
+v5.0.1
+- Library:
+	- Maintenance: makefile, added "create-classdiagram", "docstrings-verbose" and "docstrings-concise".
+- Documentation:
+	- Feature: updated to v5.0.1.
+
 v5.0.0
 - Notebook:
 	- Feature: integrated EffortHighlighter in the data analysis flow.

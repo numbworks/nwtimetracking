@@ -7,13 +7,12 @@ RUN pip install openpyxl==3.1.5
 RUN pip install pandas==2.2.3
 RUN pip install requests==2.32.3
 RUN pip install tabulate==0.9.0
-RUN pip install 'git+https://github.com/numbworks/nwshared.git@v1.8.1#egg=nwshared&subdirectory=src'
 RUN pip install matplotlib==3.9.2
+RUN pip install 'git+https://github.com/numbworks/nwshared.git@v1.8.1#egg=nwshared&subdirectory=src'
 
 # JUPYTER NOTEBOOK
 RUN pip install ipykernel==6.29.5
 RUN pip install jupyter==1.1.0
-RUN pip install 'git+https://github.com/numbworks/nwpackageversions.git@v1.8.1#egg=nwpackageversions&subdirectory=src'
 
 # UNIT TESTING
 RUN pip install coverage==7.6.4
@@ -28,6 +27,8 @@ RUN pip install pandas-stubs==2.2.3.241009
 RUN pip install types-openpyxl==3.1.5.20241126
 RUN pip install types-requests==2.32.0.20241016
 RUN pip install radon==6.0.1
+RUN pip install pylint==3.3.3
+RUN pip install 'git+https://github.com/numbworks/nwpackageversions.git@v1.8.1#egg=nwpackageversions&subdirectory=src'
 
 # OTHERS
 RUN pip install --upgrade pip==24.3.1
