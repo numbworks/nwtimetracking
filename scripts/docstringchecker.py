@@ -1,3 +1,6 @@
+'''A script to check which methods in a Python files lack of docstrings.'''
+
+# IMPORTS
 import ast
 import argparse
 import sys
