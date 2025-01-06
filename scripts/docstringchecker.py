@@ -82,23 +82,42 @@ class DocStringManager():
                 print(method)
         else:
             print(_MessageCollection.all_methods_have_docstrings())
+class DocStringChecker():
+
+    '''Collects all the logic related to docstrings checking.'''
+
+    __argument_parser : ArgumentParser
+    __docstring_manager : DocStringManager
+
+    def __init__(
+        self, 
+        argument_parser : ArgumentParser = ArgumentParser(), 
+        docstring_manager : DocStringManager = DocStringManager()) -> None:
+
+        self.__argument_parser = argument_parser
+        self.__docstring_manager = docstring_manager
+
+    def run(self) -> None:
+
+        '''Runs the docstring check.'''
+
+        file_path, exclude = self.__argument_parser.parse_arguments()
+
+        if file_path is None:
+            sys.exit(0)
+
+        source : str = self.__docstring_manager.load_source(file_path = cast(str, file_path))
+        missing : list[str] = self.__docstring_manager.get_missing_docstrings(source = source, exclude = exclude)
+        self.__docstring_manager.print_docstrings(missing = missing)
+
+        if len(missing) > 0:
+            sys.exit(0)
+        else:
+            sys.exit(1)
 
 # MAIN
 if __name__ == "__main__":
+    DocStringChecker().run()
 
-    argument_parser : ArgumentParser = ArgumentParser()
-    docstring_manager : DocStringManager = DocStringManager()
 
-    file_path, exclude = argument_parser.parse_arguments()
 
-    if file_path is None:
-        sys.exit(0)
-
-    source : str = docstring_manager.load_source(file_path = cast(str, file_path))
-    missing : list[str] = docstring_manager.get_missing_docstrings(source = source, exclude = exclude)
-    docstring_manager.print_docstrings(missing = missing)
-
-    if len(missing) > 0:
-        sys.exit(0)
-    else:
-        sys.exit(1)
