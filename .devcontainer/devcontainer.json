@@ -14,7 +14,8 @@
 			]
 		}
 	},
-    "mounts": [
-        "source=${localEnv:USERPROFILE}/Desktop/nwtimetracking/,target=/home/nwtimetracking/,type=bind,consistency=cached"
-    ]	
+	"mounts": [
+        	"source=${localEnv:USERPROFILE}/Desktop/nwtimetracking/,target=/home/nwtimetracking/,type=bind,consistency=cached",
+        	"source=${localEnv:HOME}/Documents/nwtimetracking,target=/home/nwtimetracking/,type=bind,consistency=cached"
+    ]
 }
