@@ -76,6 +76,12 @@ To run this application on Windows and Linux:
 13. Click on <ins>Run All</ins>;
 14. Done!
 
+Note: the mount point in `devcointainer.json` is meant to be used on Windows. If you are running VSCode on Linux, please change the current mount point with the following one:
+
+```
+"source=${localEnv:HOME}/Documents/nwtimetracking,target=/home/nwtimetracking/,type=bind,consistency=cached"
+```
+
 ## Unit Tests
 
 To run the unit tests in Visual Studio Code (while still connected to the Dev Container):
