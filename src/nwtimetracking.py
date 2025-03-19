@@ -353,7 +353,8 @@ class SoftwareProjectNameProvider():
             "nwtimetracking",
             "nwtraderaanalytics",
             "nwshared",
-            "nwpackageversions"
+            "nwpackageversions",
+            "nwapolloanalytics"
         ]
 
         return software_project_names
@@ -372,7 +373,8 @@ class SoftwareProjectNameProvider():
             "nwtimetracking",
             "nwtraderaanalytics",
             "nwshared",
-            "nwpackageversions"
+            "nwpackageversions",
+            "nwapolloanalytics"
         ]
 
         return software_project_names_by_spv
