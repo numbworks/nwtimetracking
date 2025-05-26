@@ -22,6 +22,7 @@ Contact: numbworks@gmail.com
 | 2024-12-26 | numbworks | Updated to v4.8.0. |
 | 2024-12-29 | numbworks | Updated to v5.0.0. |
 | 2025-01-05 | numbworks | Updated to v5.0.1. |
+| 2025-05-26 | numbworks | Updated to v5.0.2. |
 
 ## Introduction
 
@@ -168,7 +169,7 @@ The expected outcome for `all-concise` is:
 
 ```
 MODULE_NAME: nwtimetracking
-MODULE_VERSION: 5.0.1
+MODULE_VERSION: 5.0.2
 COVERAGE_THRESHOLD: 70%
 [OK] type-concise: passed!
 [OK] changelog-concise: 'CHANGELOG' updated to current version!

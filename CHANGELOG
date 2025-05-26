@@ -1,3 +1,11 @@
+v5.0.2
+- Library:
+	- Maintenance: Dockerfile, added support for nwcommitaverages v1.0.0 and nwdocstringchecking v1.0.0.
+	- Maintenance: Dockerfile, upgraded pip to 25.1.1.
+	- Maintenance: makefile, updated "docstrings-verbose", "docstrings-concise", "calculate-commitavg".
+- Documentation:
+	- Feature: updated to v5.0.2.
+
 v5.0.1
 - Library:
 	- Maintenance: makefile, added "create-classdiagram", "docstrings-verbose" and "docstrings-concise".

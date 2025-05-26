@@ -6,7 +6,7 @@ from setuptools import setup
 # INFORMATION
 MODULE_ALIAS : str = "nwtt"
 MODULE_NAME : str = "nwtimetracking"
-MODULE_VERSION : str = "5.0.1"
+MODULE_VERSION : str = "5.0.2"
 
 # SETUP
 if __name__ == "__main__":
@@ -23,7 +23,7 @@ if __name__ == "__main__":
             "pandas>=2.2.3",
             "requests>=2.32.3",
             "tabulate>=0.9.0",
-            "nwshared @ git+https://github.com/numbworks/nwshared.git@v1.8.0#egg=nwshared&subdirectory=src",
+            "nwshared @ git+https://github.com/numbworks/nwshared.git@v1.8.1#egg=nwshared&subdirectory=src",
             "matplotlib>=3.9.2"
         ],
         python_requires = ">=3.12",
