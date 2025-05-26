@@ -11,7 +11,7 @@ RUN pip install matplotlib==3.9.2
 RUN pip install 'git+https://github.com/numbworks/nwshared.git@v1.8.1#egg=nwshared&subdirectory=src'
 
 # JUPYTER NOTEBOOK
-RUN pip install ipykernel==6.29.5
+RUN pip install ipykernel==6.29.5 ipython==7.23.1
 RUN pip install jupyter==1.1.0
 
 # UNIT TESTING
