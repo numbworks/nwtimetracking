@@ -5,7 +5,7 @@
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && pwd)
 MODULE_NAME = "nwtimetracking"
-MODULE_VERSION = "5.0.1"
+MODULE_VERSION = "5.0.2"
 COVERAGE_THRESHOLD = 70
 
 # TARGETS (VERBOSE)
@@ -61,9 +61,8 @@ codemetrics-verbose:
 	radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py | grep -e '^[ ]*[CFM].*' | grep -v ' - A';
 docstrings-verbose:
 	@clear; \
-	checker=$(ROOT_DIR)/scripts/docstringchecker.py; \
 	file_path=$(ROOT_DIR)/src/$(MODULE_NAME).py; \
-	python $$checker -fp $$file_path -e MessageCollection -e init -e str -e repr;
+	python -m nwdocstringchecking -fp $$file_path -e MessageCollection -e init -e str -e repr;
 
 # TARGETS (CONCISE)
 type-concise:
@@ -103,15 +102,14 @@ codemetrics-concise:
 	@value=$$(radon cc -a -s $(ROOT_DIR)/src/$(MODULE_NAME)*.py  | grep -oP "Average complexity: \K[A-F]"); \
 	if [[ "$$value" == *"A"* ]]; then echo "[OK] $@: the cyclomatic complexity is excellent ('$$value')."; else echo "[WARNING] $@: the cyclomatic complexity is not excellent ('$$value')"; fi;
 docstrings-concise:
-	@checker=$(ROOT_DIR)/scripts/docstringchecker.py; \
-	file_path=$(ROOT_DIR)/src/$(MODULE_NAME).py; \
-	value=$$(python $$checker -fp $$file_path -e MessageCollection -e init -e str -e repr); \
+	@file_path=$(ROOT_DIR)/src/$(MODULE_NAME).py; \
+	value=$$(python -m nwdocstringchecking -fp $$file_path -e MessageCollection -e init -e str -e repr); \
 	if [[ "$$value" == *"All methods have docstrings."* ]]; then echo "[OK] $@: all methods have docstrings."; else echo "[WARNING] $@: not all methods have docstrings."; fi;
 
 # TARGETS (UTILITY)
 calculate-commitavg:
 	@clear; \
-	python $(ROOT_DIR)/scripts/commitavgcalculator.py;
+	python -m nwcommitaverages;
 check-pythonversion:
 	@clear; \
 	code="from nwpackageversions import LanguageChecker; print(LanguageChecker().get_version_status(required=(3, 12, 5)))"; \
