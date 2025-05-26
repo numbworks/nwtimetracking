@@ -22,6 +22,7 @@ Contact: numbworks@gmail.com
 | 2024-12-26 | numbworks | Updated to v4.8.0. |
 | 2024-12-29 | numbworks | Updated to v5.0.0. |
 | 2025-01-05 | numbworks | Updated to v5.0.1. |
+| 2025-05-26 | numbworks | Updated to v5.0.2. |
 
 ## Introduction
 
@@ -75,6 +76,12 @@ To run this application on Windows and Linux:
 12. Edit the `SettingBag` object according to your needs;
 13. Click on <ins>Run All</ins>;
 14. Done!
+
+Note: the mount point in `devcointainer.json` is meant to be used on Windows. If you are running VSCode on Linux, please change the current mount point with the following one:
+
+```
+"source=${localEnv:HOME}/Documents/nwtimetracking,target=/home/nwtimetracking/,type=bind,consistency=cached"
+```
 
 ## Unit Tests
 
@@ -162,7 +169,7 @@ The expected outcome for `all-concise` is:
 
 ```
 MODULE_NAME: nwtimetracking
-MODULE_VERSION: 5.0.1
+MODULE_VERSION: 5.0.2
 COVERAGE_THRESHOLD: 70%
 [OK] type-concise: passed!
 [OK] changelog-concise: 'CHANGELOG' updated to current version!
