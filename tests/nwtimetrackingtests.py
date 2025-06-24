@@ -1037,7 +1037,10 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwtimetracking",
             "nwtraderaanalytics",
             "nwshared",
-            "nwpackageversions"
+            "nwpackageversions",
+            "nwapolloanalytics",
+            "nwbuild",
+            "nwdatamarkadanalytics"
         ]
 
         # Act
@@ -1059,7 +1062,10 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwtimetracking",
             "nwtraderaanalytics",
             "nwshared",
-            "nwpackageversions"
+            "nwpackageversions",
+            "nwapolloanalytics",
+            "nwbuild",
+            "nwdatamarkadanalytics"
         ]
 
         # Act

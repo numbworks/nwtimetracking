@@ -354,7 +354,9 @@ class SoftwareProjectNameProvider():
             "nwtraderaanalytics",
             "nwshared",
             "nwpackageversions",
-            "nwapolloanalytics"
+            "nwapolloanalytics",
+            "nwbuild",
+            "nwdatamarkadanalytics"
         ]
 
         return software_project_names
@@ -374,7 +376,9 @@ class SoftwareProjectNameProvider():
             "nwtraderaanalytics",
             "nwshared",
             "nwpackageversions",
-            "nwapolloanalytics"
+            "nwapolloanalytics",
+            "nwbuild",
+            "nwdatamarkadanalytics"
         ]
 
         return software_project_names_by_spv
