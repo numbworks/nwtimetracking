@@ -356,7 +356,7 @@ class SoftwareProjectNameProvider():
             "nwpackageversions",
             "nwapolloanalytics",
             "nwbuild",
-            "nwdatamarkadanalytics"
+            "nwrefurbishedanalytics"
         ]
 
         return software_project_names
@@ -378,7 +378,7 @@ class SoftwareProjectNameProvider():
             "nwpackageversions",
             "nwapolloanalytics",
             "nwbuild",
-            "nwdatamarkadanalytics"
+            "nwrefurbishedanalytics"
         ]
 
         return software_project_names_by_spv
