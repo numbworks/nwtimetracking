@@ -227,14 +227,6 @@ class EffortStatus():
     is_correct : bool
     message : str 
 @dataclass(frozen = True)
-class MDInfo():
-
-    '''Represents a collection of information related to a Markdown file.'''
-
-    id : TTID
-    file_name : str
-    paragraph_title : str
-@dataclass(frozen = True)
 class TTSummary():
 
     '''Collects all the dataframes, stylers and markdowns.'''
@@ -245,7 +237,6 @@ class TTSummary():
     tts_by_month_tpl : Tuple[DataFrame, DataFrame]
     tts_by_month_styler : DataFrame
     tts_by_month_sub_dfs : list[DataFrame]
-    tts_by_month_sub_md : str
 
     tts_by_year_df : DataFrame
     tts_by_year_styler : DataFrame
@@ -385,19 +376,6 @@ class SoftwareProjectNameProvider():
         ]
 
         return software_project_names_by_spv
-class MDInfoProvider():
-
-    '''Collects all the logic related to the retrieval of MDInfo objects.'''
-
-    def get_all(self) -> list[MDInfo]:
-
-        '''Returns a list of MDInfo objects.'''
-
-        md_infos : list[MDInfo] = [
-                MDInfo(id = TTID.TTSBYMONTH, file_name = "TIMETRACKINGBYMONTH.md", paragraph_title = "Time Tracking By Month")
-            ]
-        
-        return md_infos
 @dataclass(frozen=True)
 class SettingBag():
 
@@ -405,7 +383,7 @@ class SettingBag():
 
     # WITHOUT DEFAULTS
     options_tt : list[Literal[OPTION.display]]
-    options_tts_by_month : list[Literal[OPTION.display, OPTION.display_c, OPTION.save, OPTION.logset]]
+    options_tts_by_month : list[Literal[OPTION.display, OPTION.display_c, OPTION.logset]]
     options_tts_by_year : list[Literal[OPTION.display, OPTION.logset]]
     options_tts_by_year_month : list[Literal[OPTION.display, OPTION.logset]]
     options_tts_by_year_month_spnv : list[Literal[OPTION.display, OPTION.logset]]
@@ -489,8 +467,6 @@ class SettingBag():
     tts_gantt_hseq_y_label : Optional[str] = field(default = None)
     tts_gantt_hseq_formatters : dict = field(default_factory = lambda : { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" })
     effort_highlighter_tags : Tuple[str, str] = field(default = (f"<mark style='background-color: {COLORNAME.skyblue}'>", "</mark>"))
-    md_infos : list[MDInfo] = field(default_factory = lambda : MDInfoProvider().get_all())
-    md_last_update : datetime = field(default = datetime.now())
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -2173,41 +2149,6 @@ class TTDataFrameFactory():
         )
 
         return definitions_df
-class TTMarkdownFactory():
-
-    '''Encapsulates all the logic related to Markdown creation out of Time Tracking dataframes.'''
-
-    __markdown_helper : MarkdownHelper
-
-    def __init__(self, markdown_helper : MarkdownHelper) -> None:
-
-        self.__markdown_helper = markdown_helper
-
-    def __convert_sub_dfs(self, sub_dfs : list[DataFrame]) -> str:
-
-        '''Converts sub_dfs to sub_mds and joins them.'''
-
-        sub_mds : list[str] = []
-
-        for sub_df in sub_dfs:
-            sub_md : str = sub_df.to_markdown(index = False)
-            sub_mds.append(sub_md)
-
-        return "\n\n".join(sub_mds)
-    
-    def create_tts_by_month_sub_md(self, paragraph_title : str, last_update : datetime, sub_dfs : list[DataFrame]) -> str:
-
-        '''Creates the expected Markdown content for the provided arguments.'''
-
-        markdown_header : str = self.__markdown_helper.get_markdown_header(last_update = last_update, paragraph_title = paragraph_title)
-        tts_by_month_sub_md = self.__convert_sub_dfs(sub_dfs = sub_dfs)           
-
-        md_content : str = markdown_header
-        md_content += "\n"
-        md_content += tts_by_month_sub_md
-        md_content += "\n"
-
-        return md_content
 class TTSequencer():
 
     '''Encapsulates all the logic related to sequencing tt_df.'''
@@ -2617,7 +2558,6 @@ class TTAdapter():
     __bym_factory : BYMFactory
     __bym_splitter : BYMSplitter
     __tt_sequencer : TTSequencer
-    __md_factory : TTMarkdownFactory
     __effort_highlighter : EffortHighlighter
 
     def __init__(
@@ -2626,7 +2566,6 @@ class TTAdapter():
             bym_factory : BYMFactory,
             bym_splitter : BYMSplitter,
             tt_sequencer : TTSequencer,
-            md_factory : TTMarkdownFactory,
             effort_highlighter : EffortHighlighter
         ) -> None:
         
@@ -2634,7 +2573,6 @@ class TTAdapter():
         self.__bym_factory = bym_factory
         self.__bym_splitter = bym_splitter
         self.__tt_sequencer = tt_sequencer
-        self.__md_factory = md_factory
         self.__effort_highlighter = effort_highlighter
 
     def __orchestrate_head_n(self, df : DataFrame, head_n : Optional[uint], display_head_n_with_tail : bool) -> DataFrame:
@@ -2724,17 +2662,6 @@ class TTAdapter():
         )
 
         return tts_by_month_sub_dfs
-    def __create_tts_by_month_sub_md(self, tts_by_month_sub_dfs : list[DataFrame], setting_bag : SettingBag) -> str:
-
-        '''Creates the expected Markdown content out of the provided arguments.'''
-
-        tts_by_month_sub_md : str = self.__md_factory.create_tts_by_month_sub_md(
-            paragraph_title = self.extract_file_name_and_paragraph_title(id = TTID.TTSBYMONTH, setting_bag = setting_bag)[1],
-            last_update = setting_bag.md_last_update,
-            sub_dfs = tts_by_month_sub_dfs
-        )
-
-        return tts_by_month_sub_md
     def __create_tts_by_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -3024,7 +2951,6 @@ class TTAdapter():
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_month_styler : DataFrame = self.__create_tts_by_month_styler(tts_by_month_tpl = tts_by_month_tpl, setting_bag = setting_bag)
         tts_by_month_sub_dfs : list[DataFrame] = self.__create_tts_by_month_sub_dfs(tts_by_month_styler = tts_by_month_styler, setting_bag = setting_bag)
-        tts_by_month_sub_md : str = self.__create_tts_by_month_sub_md(tts_by_month_sub_dfs = tts_by_month_sub_dfs, setting_bag = setting_bag)
 
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_year_styler : DataFrame = self.__create_tts_by_year_styler(tts_by_year_df = tts_by_year_df, setting_bag = setting_bag)
@@ -3065,7 +2991,6 @@ class TTAdapter():
             tts_by_month_tpl = tts_by_month_tpl,
             tts_by_month_styler = tts_by_month_styler,
             tts_by_month_sub_dfs = tts_by_month_sub_dfs,
-            tts_by_month_sub_md = tts_by_month_sub_md,
             tts_by_year_df = tts_by_year_df,
             tts_by_year_styler = tts_by_year_styler,
             tts_by_year_month_tpl = tts_by_year_month_tpl,
@@ -3092,15 +3017,6 @@ class TTAdapter():
         )
 
         return tt_summary
-    def extract_file_name_and_paragraph_title(self, id : TTID, setting_bag : SettingBag) -> Tuple[str, str]: 
-    
-        '''Returns (file_name, paragraph_title) for the provided id or raise an Exception.'''
-
-        for md_info in setting_bag.md_infos:
-            if md_info.id == id: 
-                return (md_info.file_name, md_info.paragraph_title)
-
-        raise Exception(_MessageCollection.no_mdinfo_found(id = id))
 class SettingSubset(SimpleNamespace):
 
     '''A dynamically assigned subset of SettingBag properties with a custom __str__ method that returns them as JSON.'''
@@ -3180,7 +3096,6 @@ class ComponentBag():
         bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
         bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()),
         tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
-        md_factory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())),
         effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
         ))
 class TimeTrackingProcessor():
@@ -3202,22 +3117,6 @@ class TimeTrackingProcessor():
 
         if not hasattr(self, '_TimeTrackingProcessor__tt_summary'):
             raise Exception(_MessageCollection.please_run_initialize_first())
-    def __save_and_log(self, id : TTID, content : str) -> None:
-
-        '''Creates the provided Markdown content using __setting_bag.'''
-
-        file_path : str = self.__component_bag.file_path_manager.create_file_path(
-            folder_path = self.__setting_bag.working_folder_path,
-            file_name = self.__component_bag.tt_adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = self.__setting_bag)[0]
-        )
-
-        try:
-           
-            self.__component_bag.file_manager.save_content(content = content, file_path = file_path)
-            self.__component_bag.tt_logger.log(_MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path))
-
-        except:
-            self.__component_bag.tt_logger.log(_MessageCollection.something_failed_while_saving(file_path = file_path))
     def __process(self, options: list, kwargs: dict) -> None:
         
         '''A generic method for handling the actions specified in options.'''
@@ -3226,8 +3125,6 @@ class TimeTrackingProcessor():
         sub_dfs : Optional[list[DataFrame]] = kwargs.get(TTKWARG.sub_dfs, None)
         hide_index : bool = kwargs.get(TTKWARG.hide_index, True)
         formatters : Optional[dict] = kwargs.get(TTKWARG.formatters, None)
-        id : Optional[TTID] = kwargs.get(TTKWARG.id, None)
-        content : Optional[str] = kwargs.get(TTKWARG.content, None)
         plot_function : Optional[Callable[[], None]] = kwargs.get(TTKWARG.plot_function, None)
         term : Optional[str] = kwargs.get(TTKWARG.term, None)
         setting_names : Optional[list[str]] = kwargs.get(TTKWARG.setting_names, None)
@@ -3251,9 +3148,6 @@ class TimeTrackingProcessor():
 
         if OPTION.logset in options:
             self.__component_bag.tt_logger.try_log_settings(setting_bag = cast(SettingBag, setting_bag), setting_names = cast(list[str], setting_names))
-
-        if OPTION.save in options:
-            self.__save_and_log(id = cast(TTID, id), content = cast(str, content))
 
     def initialize(self) -> None:
 
@@ -3292,7 +3186,6 @@ class TimeTrackingProcessor():
             TTKWARG.styler: self.__tt_summary.tts_by_month_styler,
             TTKWARG.sub_dfs: self.__tt_summary.tts_by_month_sub_dfs,
             TTKWARG.id: TTID.TTSBYMONTH,
-            TTKWARG.content: self.__tt_summary.tts_by_month_sub_md,
             TTKWARG.setting_bag: self.__setting_bag,
             TTKWARG.setting_names: [ "tts_by_month_effort_highlight", "tts_by_month_effort_highlight_mode" ]
         }

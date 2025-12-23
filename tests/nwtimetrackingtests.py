@@ -11,16 +11,16 @@ from parameterized import parameterized
 from types import FunctionType
 from typing import Any, Callable, Literal, Optional, Tuple, cast
 from unittest.mock import MagicMock, Mock, patch
-from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Displayer, LambdaProvider
+from nwshared import FilePathManager, FileManager, Displayer, LambdaProvider
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, TTCN, TTID, DEFINITIONSTR, OPTION
 from nwtimetracking import _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
-from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
-from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
-from nwtimetracking import TTDataFrameFactory, TTMarkdownFactory, TTAdapter, BYMFactory
+from nwtimetracking import YearlyTarget, EffortStatus, TTSummary, DefaultPathProvider, YearProvider
+from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
+from nwtimetracking import TTDataFrameFactory, TTAdapter, BYMFactory
 from nwtimetracking import TTLogger, TTSequencer, TimeTrackingProcessor
 
 # SUPPORT METHODS
@@ -833,25 +833,6 @@ class EffortStatusTestCase(unittest.TestCase):
         self.assertIsNone(actual.expected_str)
         self.assertEqual(actual.is_correct, is_correct)
         self.assertEqual(actual.message, message)
-class MDInfoTestCase(unittest.TestCase):
-
-    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
-        
-        # Arrange
-        id : TTID = TTID.TTSBYMONTH
-        file_name : str = "TIMETRACKINGBYMONTH.md"
-        paragraph_title : str = "Time Tracking By Month"
-
-        # Act
-        actual : MDInfo = MDInfo(id = id, file_name = file_name, paragraph_title = paragraph_title)
-
-        # Assert
-        self.assertEqual(actual.id, id)
-        self.assertEqual(actual.file_name, file_name)
-        self.assertEqual(actual.paragraph_title, paragraph_title)
-        self.assertIsInstance(actual.id, TTID)
-        self.assertIsInstance(actual.file_name, str)
-        self.assertIsInstance(actual.paragraph_title, str)
 class TTSummaryTestCase(unittest.TestCase):
     
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
@@ -861,7 +842,6 @@ class TTSummaryTestCase(unittest.TestCase):
         empty_tuple : Tuple[DataFrame, DataFrame] = (empty_df, empty_df)
         empty_func : Callable[[], None] = lambda : None
         empty_sub_dfs : list[DataFrame] = []
-        empty_md : str = ""
 
         # Act
         actual = TTSummary(
@@ -870,7 +850,6 @@ class TTSummaryTestCase(unittest.TestCase):
             tts_by_month_tpl = empty_tuple,
             tts_by_month_styler = empty_df,
             tts_by_month_sub_dfs = empty_sub_dfs,
-            tts_by_month_sub_md = empty_md,
             tts_by_year_df = empty_df,
             tts_by_year_styler = empty_df,
             tts_by_year_month_tpl = empty_tuple,
@@ -903,7 +882,6 @@ class TTSummaryTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_month_tpl, empty_tuple)
         self.assertEqual(actual.tts_by_month_styler.shape, empty_df.shape)
         self.assertEqual(len(actual.tts_by_month_sub_dfs), len(empty_sub_dfs))
-        self.assertEqual(actual.tts_by_month_sub_md, empty_md)
 
         self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_year_styler.shape, empty_df.shape)
@@ -1040,7 +1018,8 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwpackageversions",
             "nwapolloanalytics",
             "nwbuild",
-            "nwdatamarkadanalytics"
+            "nwrefurbishedanalytics",
+            "nwknowledgebase"
         ]
 
         # Act
@@ -1065,7 +1044,8 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwpackageversions",
             "nwapolloanalytics",
             "nwbuild",
-            "nwdatamarkadanalytics"
+            "nwrefurbishedanalytics",
+            "nwknowledgebase"
         ]
 
         # Act
@@ -1073,34 +1053,13 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-class MDInfoProviderTestCase(unittest.TestCase):
-    
-    def test_getall_shouldreturnexpectedlist_wheninvoked(self):
-        
-        # Arrange
-        expected : list[MDInfo] = [
-            MDInfo(
-                id = TTID.TTSBYMONTH,
-                file_name="TIMETRACKINGBYMONTH.md",
-                paragraph_title="Time Tracking By Month",
-            )
-        ]
-
-        # Act
-        actual : list[MDInfo] = MDInfoProvider().get_all()
-
-        # Assert
-        self.assertEqual(expected, actual)
-        self.assertEqual(expected[0].id, actual[0].id)
-        self.assertEqual(expected[0].file_name, actual[0].file_name)
-        self.assertEqual(expected[0].paragraph_title, actual[0].paragraph_title)
 class SettingBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
         options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                                                           # type: ignore
-        options_tts_by_month : list[Literal[OPTION.display, OPTION.display_c, OPTION.save, OPTION.logset]] = [OPTION.display, OPTION.save]      # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display, OPTION.display_c, OPTION.logset]] = [OPTION.display, OPTION.save]                   # type: ignore
         options_tts_by_year : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                                   # type: ignore
         options_tts_by_year_month : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                             # type: ignore
         options_tts_by_year_month_spnv : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                        # type: ignore
@@ -1183,8 +1142,6 @@ class SettingBagTestCase(unittest.TestCase):
         tts_gantt_hseq_y_label : Optional[str] = None
         tts_gantt_hseq_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
         effort_highlighter_tags : Tuple[str, str] = (f"<mark style='background-color: {COLORNAME.skyblue}'>", "</mark>")
-        md_infos : list = []
-        md_last_update : datetime = datetime.now()
 
 		# Act
         actual : SettingBag = SettingBag(
@@ -1270,9 +1227,7 @@ class SettingBagTestCase(unittest.TestCase):
             tts_gantt_hseq_x_label = tts_gantt_hseq_x_label,
             tts_gantt_hseq_y_label = tts_gantt_hseq_y_label,
             tts_gantt_hseq_formatters = tts_gantt_hseq_formatters,
-            effort_highlighter_tags = effort_highlighter_tags,
-            md_infos = md_infos,
-            md_last_update = md_last_update
+            effort_highlighter_tags = effort_highlighter_tags
         )
 
 		# Assert
@@ -1360,8 +1315,6 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_gantt_hseq_y_label, tts_gantt_hseq_y_label)
         self.assertEqual(actual.tts_gantt_hseq_formatters, tts_gantt_hseq_formatters)
         self.assertEqual(actual.effort_highlighter_tags, effort_highlighter_tags)
-        self.assertEqual(actual.md_infos, md_infos)
-        self.assertEqual(actual.md_last_update, md_last_update)
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -2641,31 +2594,6 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-class TTMarkdownFactoryTestCase(unittest.TestCase):
-
-    def setUp(self) -> None:
-
-        self.md_factory : TTMarkdownFactory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter()))
-        self.paragraph_title : str = "Time Tracking By Month"
-        self.last_update : datetime = datetime(2024, 11, 30)
-    def test_createttsbymonthsubmd_shouldreturnexpectedstring_wheninvoked(self) -> None:
-
-		# Arrange
-        tts_by_month_sub_dfs : list[DataFrame] = [ ObjectMother().get_tts_by_month_tpl()[0] ]
-        expected : str = ObjectMother().get_tts_by_month_sub_md()
-        expected_newlines : int = (9 + 14)
-
-        # Act
-        actual : str = self.md_factory.create_tts_by_month_sub_md(
-            paragraph_title = self.paragraph_title, 
-            last_update = self.last_update, 
-            sub_dfs = tts_by_month_sub_dfs
-        )
-        actual_newlines : int = actual.count("\n")
-
-        # Assert
-        self.assertEqual(expected, actual)
-        self.assertEqual(expected_newlines, actual_newlines)
 class TTSequencerTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
@@ -2778,10 +2706,6 @@ class TTAdapterTestCase(unittest.TestCase):
         self.tts_by_efs_is_correct : bool = True
         self.tts_by_tr_unknown_id : str = "Unknown"
         self.tts_by_tr_remove_unknown_occurrences : bool = True
-        self.md_infos : list[MDInfo] = [
-                MDInfo(id = TTID.TTSBYMONTH, file_name = "TIMETRACKINGBYMONTH.md", paragraph_title = "Time Tracking By Month")
-            ]
-        self.md_last_update : datetime = datetime(2023, 11, 25)
 
         # Other
         self.paragraph_title : str = "Time Tracking By Month"
@@ -2794,7 +2718,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = Mock(), 
             bym_splitter = Mock(),
             tt_sequencer = Mock(),
-            md_factory = Mock(),
             effort_highlighter = Mock()
         )
 
@@ -2813,7 +2736,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = Mock(), 
             bym_splitter = Mock(),
             tt_sequencer = Mock(),
-            md_factory = Mock(),
             effort_highlighter = Mock()
         )
 
@@ -2834,7 +2756,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = Mock(), 
             bym_splitter = Mock(),
             tt_sequencer = Mock(),
-            md_factory = Mock(),
             effort_highlighter = Mock()
         )
 
@@ -2855,7 +2776,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = Mock(), 
             bym_splitter = Mock(),
             tt_sequencer = Mock(),
-            md_factory = Mock(),
             effort_highlighter = Mock()
         )
 
@@ -2878,7 +2798,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = Mock(), 
             bym_splitter = Mock(),
             tt_sequencer = Mock(),
-            md_factory = Mock(),
             effort_highlighter = Mock()
         )
 
@@ -2940,7 +2859,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -2948,7 +2866,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -2975,7 +2892,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -2983,7 +2899,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3009,7 +2924,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3017,7 +2931,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3043,7 +2956,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3051,7 +2963,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3079,7 +2990,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3087,7 +2997,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3115,7 +3024,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3123,7 +3031,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3151,7 +3058,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3159,7 +3065,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3187,7 +3092,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3195,7 +3099,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3222,7 +3125,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3230,7 +3132,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3256,7 +3157,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3264,7 +3164,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3288,7 +3187,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : BYMFactory = Mock()
         bym_splitter : BYMSplitter = Mock()
         tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
         tt_adapter : TTAdapter = TTAdapter(
@@ -3296,7 +3194,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3315,48 +3212,13 @@ class TTAdapterTestCase(unittest.TestCase):
             unknown_id = self.tts_by_tr_unknown_id,
             remove_unknown_occurrences = self.tts_by_tr_remove_unknown_occurrences
         )
-    def test_createttsbymonthmd_shouldcallmdfactorywithexpectedarguments_wheninvoked(self) -> None:
-        
-        # Arrange
-        df_factory : TTDataFrameFactory = Mock()
-        bym_factory : BYMFactory = Mock()
-        bym_splitter : BYMSplitter = Mock()
-        tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
-        effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
-            df_factory = df_factory, 
-            bym_factory = bym_factory, 
-            bym_splitter = bym_splitter,
-            tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
-            effort_highlighter = effort_highlighter
-        )
-
-        setting_bag : Mock = Mock()
-        setting_bag.md_infos = self.md_infos
-        setting_bag.md_last_update = self.md_last_update
-
-        tts_by_month_sub_dfs : list[DataFrame] = [Mock(), Mock()]
-
-        # Act
-        tt_adapter._TTAdapter__create_tts_by_month_sub_md(tts_by_month_sub_dfs = tts_by_month_sub_dfs, setting_bag = setting_bag)   # type: ignore
-
-        # Assert
-        md_factory.create_tts_by_month_sub_md.assert_called_once_with(
-            paragraph_title = self.md_infos[0].paragraph_title,
-            last_update = self.md_last_update,
-            sub_dfs = tts_by_month_sub_dfs
-        )
-    
     @parameterized.expand([
         ("_TTAdapter__create_tt_df"),
         ("_TTAdapter__create_tt_styler"),
         ("_TTAdapter__create_tts_by_month_tpl"),
         ("_TTAdapter__create_tts_by_month_styler"),
         ("_TTAdapter__create_tts_by_month_sub_dfs"),
-        ("_TTAdapter__create_tts_by_month_sub_md"),
         ("_TTAdapter__create_tts_by_year_df"),
         ("_TTAdapter__create_tts_by_year_styler"),
         ("_TTAdapter__create_tts_by_year_month_tpl"),
@@ -3387,7 +3249,6 @@ class TTAdapterTestCase(unittest.TestCase):
         bym_factory : MagicMock = MagicMock()
         bym_splitter : MagicMock = MagicMock()
         tt_sequencer : MagicMock = MagicMock()
-        md_factory : MagicMock = MagicMock()
         effort_highlighter : MagicMock = MagicMock()
 
         setting_bag : SettingBag = ObjectMother.get_setting_bag()
@@ -3397,7 +3258,6 @@ class TTAdapterTestCase(unittest.TestCase):
             bym_factory = bym_factory,
             bym_splitter = bym_splitter,
             tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
             effort_highlighter = effort_highlighter
         )
 
@@ -3408,66 +3268,6 @@ class TTAdapterTestCase(unittest.TestCase):
 
             # Assert
             mocked_method.assert_called_once()
-
-    def test_extractfilenameandparagraphtitle_shouldreturnexpectedvalues_whenidexists(self) -> None:
-        
-        # Arrange
-        df_factory : TTDataFrameFactory = Mock()
-        bym_factory : BYMFactory = Mock()
-        bym_splitter : BYMSplitter = Mock()
-        tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
-        effort_highlighter : EffortHighlighter = Mock()
-
-        tt_adapter : TTAdapter = TTAdapter(
-            df_factory = df_factory, 
-            bym_factory = bym_factory, 
-            bym_splitter = bym_splitter,
-            tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
-            effort_highlighter = effort_highlighter
-        )
-
-        id : TTID = TTID.TTSBYMONTH
-        setting_bag : SettingBag = Mock(md_infos = self.md_infos)
-
-        # Act
-        actual : Tuple[str, str] = tt_adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = setting_bag)
-
-        # Assert
-        self.assertEqual(actual, ("TIMETRACKINGBYMONTH.md", "Time Tracking By Month"))
-    def test_extractfilenameandparagraphtitle_shouldraiseexception_wheniddoesnotexist(self) -> None:
-        
-        # Arrange
-        df_factory : TTDataFrameFactory = Mock()
-        bym_factory : BYMFactory = Mock()
-        bym_splitter : BYMSplitter = Mock()
-        tt_sequencer : TTSequencer = Mock()
-        md_factory : TTMarkdownFactory = Mock()
-        effort_highlighter : EffortHighlighter = Mock()
-
-        tt_adapter : TTAdapter = TTAdapter(
-            df_factory = df_factory, 
-            bym_factory = bym_factory, 
-            bym_splitter = bym_splitter,
-            tt_sequencer = tt_sequencer,
-            md_factory = md_factory,
-            effort_highlighter = effort_highlighter
-        )
-        
-        id : TTID = TTID.TTSBYMONTH
-
-        md_infos : list[MDInfo] = [
-            MDInfo(id = Mock(id = "other_id"), file_name = "OTHERFILE.md", paragraph_title = "Other Title")
-        ]
-        setting_bag : SettingBag = Mock(md_infos = md_infos)
-
-        # Act
-        with self.assertRaises(Exception) as context:
-            tt_adapter.extract_file_name_and_paragraph_title(id = id, setting_bag = setting_bag)
-        
-        # Assert
-        self.assertEqual(str(context.exception), _MessageCollection.no_mdinfo_found(id = id))   
 class SettingSubsetTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -3673,8 +3473,6 @@ class ComponentBagTestCase(unittest.TestCase):
                 bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
                 bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()),
                 tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
-                md_factory = TTMarkdownFactory(markdown_helper = MarkdownHelper(formatter = Formatter())
-                ),
                 effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
             ))
 
@@ -3685,72 +3483,6 @@ class ComponentBagTestCase(unittest.TestCase):
         self.assertIsInstance(component_bag.tt_logger, TTLogger)
         self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
 class TimeTrackingProcessorTestCase(unittest.TestCase):
-
-    @parameterized.expand([
-        ("content.md", "/home/nwtimetracking/"),
-    ])
-    def test_saveandlog_shouldcallexpecteddependenciesandlogexpectedmessage_wheninvoked(self, file_name : str, folder_path : str) -> None:
-
-        # Arrange
-        id : TTID = TTID.TTSBYMONTH
-        content : str = "Some Content"
-        paragraph_title : str = "Some paragraph title"
-
-        file_path : str = f"{folder_path}/{file_name}"
-        expected : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
-
-        component_bag : Mock = Mock()
-        component_bag.file_path_manager.create_file_path = Mock()
-        component_bag.file_path_manager.create_file_path.return_value = file_path
-        component_bag.tt_adapter.extract_file_name_and_paragraph_title = Mock()
-        component_bag.tt_adapter.extract_file_name_and_paragraph_title.return_value = (paragraph_title, None)
-        component_bag.file_manager.save_content = Mock()
-        component_bag.tt_logger.log = Mock()
-
-        setting_bag : SettingBag = ObjectMother().get_setting_bag()
-
-        # Act
-        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content)  # type: ignore
-
-        # Assert
-        component_bag.file_path_manager.create_file_path.assert_called()
-        component_bag.file_manager.save_content.assert_called()
-        component_bag.tt_logger.log.assert_called_once_with(expected)
-
-    @parameterized.expand([
-        ("content.md", "/home/nwtimetracking/"),
-    ])
-    def test_saveandlog_shouldlogexpectedmessage_whenexceptionisraised(self, file_name : str, folder_path : str) -> None:
-
-        # Arrange
-        id : TTID = TTID.TTSBYMONTH
-        content : str = "Some Content"
-        paragraph_title : str = "Some paragraph title"
-        error_message : str = "Some saving issue happened."
-
-        file_path : str = f"{folder_path}/{file_name}"
-        expected : str = _MessageCollection.something_failed_while_saving(file_path = file_path)
-
-        component_bag : Mock = Mock()
-        component_bag.file_path_manager.create_file_path = Mock()
-        component_bag.file_path_manager.create_file_path.return_value = file_path
-        component_bag.tt_adapter.extract_file_name_and_paragraph_title = Mock()
-        component_bag.tt_adapter.extract_file_name_and_paragraph_title.return_value = (paragraph_title, None)
-        component_bag.file_manager.save_content = Mock()
-        component_bag.file_manager.save_content.side_effect = Exception(error_message)
-        component_bag.tt_logger.log = Mock()
-
-        setting_bag : SettingBag = ObjectMother().get_setting_bag()
-
-        # Act
-        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor._TimeTrackingProcessor__save_and_log(id = id, content = content)  # type: ignore
-
-        # Assert
-        component_bag.file_path_manager.create_file_path.assert_called()
-        component_bag.file_manager.save_content.assert_called()
-        component_bag.tt_logger.log.assert_called_once_with(expected)
 
     def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
         
@@ -3815,37 +3547,6 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             hide_index = True, 
             formatters = None
         )
-    def test_processttsbymonth_shouldsaveandlog_whenoptionissave(self) -> None:
-        
-        # Arrange
-        tts_by_month_tpl: Tuple[DataFrame, DataFrame] = (Mock(), Mock())
-
-        summary: Mock = Mock()
-        summary.tts_by_month_tpl = tts_by_month_tpl
-
-        displayer: Mock = Mock()
-        tt_adapter: Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag: Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-
-        setting_bag: Mock = Mock()
-        setting_bag.options_tts_by_month = [OPTION.save]  # type: ignore
-
-		# Act, Assert
-        with patch("nwtimetracking.TimeTrackingProcessor._TimeTrackingProcessor__save_and_log") as save_and_log:
-
-            tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(
-                component_bag = component_bag, 
-                setting_bag = setting_bag
-            )
-            tt_processor.initialize()		
-            tt_processor.process_tts_by_month()
-
-            # Assert
-            save_and_log.assert_called()
     def test_processttsbyyear_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
