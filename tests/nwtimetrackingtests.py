@@ -16,7 +16,7 @@ from nwshared import MarkdownHelper, Formatter, FilePathManager, FileManager, Di
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, TTCN, TTID, DEFINITIONSCN, OPTION
+from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, TTCN, TTID, DEFINITIONSTR, OPTION
 from nwtimetracking import _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, MDInfo, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, MDInfoProvider, SettingBag, ComponentBag, TTDataFrameHelper
@@ -479,7 +479,7 @@ class ObjectMother():
     @staticmethod
     def get_definitions_df() -> DataFrame:
 
-        columns : list[str] = [DEFINITIONSCN.TERM, DEFINITIONSCN.DEFINITION]
+        columns : list[str] = [DEFINITIONSTR.TERM, DEFINITIONSTR.DEFINITION]
 
         definitions : dict[str, str] = { 
             TTCN.DME: "Total Development Monthly Effort",

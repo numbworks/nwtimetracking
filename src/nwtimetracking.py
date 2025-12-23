@@ -23,9 +23,10 @@ from pandas.io.formats.style import Styler
 from re import Match
 from types import SimpleNamespace
 from typing import Any, Callable, Literal, Optional, Tuple, Union, cast
+
+# LOCAL/NW MODULES
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
 
-# LOCAL MODULES
 # CONSTANTS
 class TTCN(StrEnum):
     
@@ -79,7 +80,7 @@ class TTID(StrEnum):
     '''Collects all the ids that identify the dataframes created by TTDataFrameFactory.'''
 
     TTSBYMONTH = "tts_by_month"
-class DEFINITIONSCN(StrEnum):
+class DEFINITIONSTR(StrEnum):
     
     '''Collects all the column names used by definitions.'''
 
@@ -2143,7 +2144,7 @@ class TTDataFrameFactory():
 
         '''Creates a dataframe containing all the definitions in use in this application.'''
 
-        columns : list[str] = [DEFINITIONSCN.TERM, DEFINITIONSCN.DEFINITION]
+        columns : list[str] = [DEFINITIONSTR.TERM, DEFINITIONSTR.DEFINITION]
 
         definitions : dict[str, str] = { 
             TTCN.DME: "Total Development Monthly Effort",
@@ -3137,7 +3138,7 @@ class TTLogger():
         
         """Logs the definitions for matching column names in the DataFrame."""
 
-        definitions_dict : dict = definitions.set_index(DEFINITIONSCN.TERM)[DEFINITIONSCN.DEFINITION].to_dict()
+        definitions_dict : dict = definitions.set_index(DEFINITIONSTR.TERM)[DEFINITIONSTR.DEFINITION].to_dict()
         
         for column_name in df.columns:
             if column_name in definitions_dict:
@@ -3146,7 +3147,7 @@ class TTLogger():
 
         """Logs the definitions for matching term in the DataFrame."""
 
-        definitions_dict : dict = definitions.set_index(DEFINITIONSCN.TERM)[DEFINITIONSCN.DEFINITION].to_dict()
+        definitions_dict : dict = definitions.set_index(DEFINITIONSTR.TERM)[DEFINITIONSTR.DEFINITION].to_dict()
 
         if term in definitions_dict:
             self.__logging_function(f"{term}: {definitions_dict[term]}")        
