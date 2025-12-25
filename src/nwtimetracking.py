@@ -241,6 +241,7 @@ class TTSummary():
     tts_by_year_df : DataFrame
     tts_by_range_df : DataFrame
     tts_by_spn_df : DataFrame
+    tts_by_spv_df : DataFrame
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -299,7 +300,7 @@ class SoftwareProjectNameProvider():
 
     '''Collects all the logic related to the retrieval of software project names.'''
 
-    def get_all_software_project_names(self) -> list[str]:
+    def get_all(self) -> list[str]:
 
         '''Returns a list of software project names.'''
 
@@ -322,29 +323,20 @@ class SoftwareProjectNameProvider():
         ]
 
         return software_project_names
-    def get_all_software_project_names_by_spv(self) -> list[str]:
+    def get_latest_three(self) -> list[str]:
 
-        '''Returns a list of software project names to breakdown by version.'''
+        '''Returns a list of software project names.'''
 
-        software_project_names_by_spv : list[str] = [
-            "NW.MarkdownTables",
-            "NW.NGramTextClassification",
-            "NW.UnivariateForecasting",
-            "NW.Shared.Files",        
-            "NW.Shared.Serialization",
-            "NW.Shared.Validation",
-            "nwreadinglist",
-            "nwtimetracking",
-            "nwtraderaanalytics",
-            "nwshared",
-            "nwpackageversions",
-            "nwapolloanalytics",
-            "nwbuild",
-            "nwrefurbishedanalytics",
-            "nwknowledgebase"
-        ]
+        software_project_names : list[str] = self.get_all()[-3:]
 
-        return software_project_names_by_spv
+        return software_project_names
+    def get_latest(self) -> list[str]:
+
+        '''Returns a list of software project names.'''
+
+        software_project_names : list[str] = self.get_all()[-1:]
+
+        return software_project_names
 @dataclass(frozen=True)
 class SettingBag():
 
@@ -357,6 +349,7 @@ class SettingBag():
     options_tts_by_year : list[Literal[OPTION.display]]
     options_tts_by_range : list[Literal[OPTION.display]]
     options_tts_by_spn : list[Literal[OPTION.display]]
+    options_tts_by_spv : list[Literal[OPTION.display]]
     excel_nrows : int
 
     # WITH DEFAULTS
@@ -366,9 +359,8 @@ class SettingBag():
     excel_tabname : str = field(default = "Sessions")
     years : list[int] = field(default_factory = lambda : YearProvider().get_all_years())
     now : datetime = field(default = datetime.now())
-    software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all_software_project_names())
-    software_project_names_by_spv : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all_software_project_names_by_spv())
-
+    tts_by_spn_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all())
+    tts_by_spv_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_latest_three())
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -1484,6 +1476,24 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False)) 
 
         return tts_df
+    def create_tts_by_spv_df(self, tt_df : DataFrame, software_project_names : list[str]) -> DataFrame:
+
+        '''
+                ProjectName	                ProjectVersion	Effort
+            0	NW.MarkdownTables	        1.0.0	        15h 15m
+            1	NW.MarkdownTables	        1.0.1	        02h 30m
+            2	NW.NGramTextClassification	1.0.0	        74h 15m
+            ...    
+        '''
+
+        years : list[int] = self.__extract_years(tt_df = tt_df)
+
+        tts_df : DataFrame = self.__create_raw_tts_by_spn_spv(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
+
+        return tts_df
+
+
 
 
     def create_tts_by_year_month_tpl(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget], display_only_years : list[int]) -> Tuple[DataFrame, DataFrame]:
@@ -1640,20 +1650,6 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_software_project_name(df = tts_df, software_project_name = software_project_name)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_spn_spv_df(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
-
-        '''
-                ProjectName	                ProjectVersion	Effort
-            0	NW.MarkdownTables	        1.0.0	        15h 15m
-            1	NW.MarkdownTables	        1.0.1	        02h 30m
-            2	NW.NGramTextClassification	1.0.0	        74h 15m
-            ...    
-        '''
-
-        tts_df : DataFrame = self.__create_raw_tts_by_spn_spv(tt_df = tt_df, years = years, software_project_names = software_project_names)
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
-
-        return tts_df
     def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, years : list[int], enable_pivot : bool) -> DataFrame:
 
         '''
@@ -1838,10 +1834,20 @@ class TTAdapter():
 
         tts_by_spn_df : DataFrame = self.__df_factory.create_tts_by_spn_df(
             tt_df = tt_df,
-            software_project_names = setting_bag.software_project_names
+            software_project_names = setting_bag.tts_by_spn_software_project_names
         )
 
         return tts_by_spn_df
+    def __create_tts_by_spv_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_spn_spv_df : DataFrame = self.__df_factory.create_tts_by_spv_df(
+            tt_df = tt_df,
+            software_project_names = setting_bag.tts_by_spv_software_project_names
+        )
+
+        return tts_by_spn_spv_df
 
     def create_summary(self, setting_bag : SettingBag) -> TTSummary:
 
@@ -1853,6 +1859,7 @@ class TTAdapter():
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
         tts_by_range_df : DataFrame = self.__create_tts_by_range_df(tt_df = tt_df)
         tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_spv_df : DataFrame = self.__create_tts_by_spv_df(tt_df = tt_df, setting_bag = setting_bag)
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
@@ -1860,7 +1867,8 @@ class TTAdapter():
             tts_by_month_tpl = tts_by_month_tpl,
             tts_by_year_df = tts_by_year_df,
             tts_by_range_df = tts_by_range_df,
-            tts_by_spn_df = tts_by_spn_df
+            tts_by_spn_df = tts_by_spn_df,
+            tts_by_spv_df = tts_by_spv_df
         )
 
         return tt_summary
@@ -2056,6 +2064,21 @@ class TimeTrackingProcessor():
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)
+    def process_tts_by_spv(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_spn_spv.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_spv
+        df : DataFrame = self.__tt_summary.tts_by_spv_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df)
 
     def get_summary(self) -> TTSummary:
 
@@ -2081,9 +2104,9 @@ if __name__ == "__main__":
         excel_tabname = "Sessions"
     )
 
-    software_project_names = SoftwareProjectNameProvider().get_all_software_project_names()
+    software_project_names = SoftwareProjectNameProvider().get_all()
 
-    tts_df : DataFrame = df_factory.create_tts_by_spn_df(tt_df = tt_df, software_project_names = software_project_names)
+    tts_df : DataFrame = df_factory.create_tts_by_spv_df(tt_df = tt_df, software_project_names = software_project_names)
 
     print(tts_df)
 

@@ -104,7 +104,7 @@ class ObjectMother():
             options_tts_by_year_month_spnv = [OPTION.display],      # type: ignore
             options_tts_by_year_spnv = [OPTION.display],            # type: ignore
             options_tts_by_spn = [OPTION.display, OPTION.logdef],   # type: ignore
-            options_tts_by_spn_spv = [],
+            options_tts_by_spv = [],
             options_tts_by_hashtag = [OPTION.display],              # type: ignore
             options_tts_by_hashtag_year = [OPTION.display],         # type: ignore
             options_tts_by_efs = [OPTION.display],                  # type: ignore
@@ -858,7 +858,7 @@ class TTSummaryTestCase(unittest.TestCase):
             tts_by_year_spnv_styler = empty_df,
             tts_by_spn_df = empty_df,
             tts_by_spn_styler = empty_df,
-            tts_by_spn_spv_df = empty_df,
+            tts_by_spv_df = empty_df,
             tts_by_hashtag_df = empty_df,
             tts_by_hashtag_year_df = empty_df,
             tts_by_hashtag_year_styler = empty_df,
@@ -896,7 +896,7 @@ class TTSummaryTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_spn_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_spn_styler.shape, empty_df.shape)
 
-        self.assertEqual(actual.tts_by_spn_spv_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_spv_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_hashtag_df.shape, empty_df.shape)
 
         self.assertEqual(actual.tts_by_hashtag_year_df.shape, empty_df.shape)
@@ -1021,7 +1021,7 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
         ]
 
         # Act
-        actual : list[str] = SoftwareProjectNameProvider().get_all_software_project_names()
+        actual : list[str] = SoftwareProjectNameProvider().get_all()
 
         # Assert
         self.assertEqual(expected, actual)
@@ -1047,7 +1047,7 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
         ]
 
         # Act
-        actual : list[str] = SoftwareProjectNameProvider().get_all_software_project_names_by_spv()
+        actual : list[str] = SoftwareProjectNameProvider().get_latest_three()
 
         # Assert
         self.assertEqual(expected, actual)
@@ -1150,7 +1150,7 @@ class SettingBagTestCase(unittest.TestCase):
             options_tts_by_year_month_spnv = options_tts_by_year_month_spnv,
             options_tts_by_year_spnv = options_tts_by_year_spnv,
             options_tts_by_spn = options_tts_by_spn,
-            options_tts_by_spn_spv = options_tts_by_spn_spv,
+            options_tts_by_spv = options_tts_by_spn_spv,
             options_tts_by_hashtag = options_tts_by_hashtag,
             options_tts_by_hashtag_year = options_tts_by_hashtag_year,
             options_tts_by_efs = options_tts_by_efs,
@@ -1169,8 +1169,8 @@ class SettingBagTestCase(unittest.TestCase):
             years = years,
             yearly_targets = yearly_targets,
             now = now,
-            software_project_names = software_project_names,
-            software_project_names_by_spv = software_project_names_by_spv,
+            tts_by_spn_software_project_names = software_project_names,
+            tts_by_spv_software_project_names = software_project_names_by_spv,
             tt_head_n = tt_head_n,
             tt_display_head_n_with_tail = tt_display_head_n_with_tail,
             tt_hide_index = tt_hide_index,
@@ -1236,7 +1236,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.options_tts_by_year_month_spnv, options_tts_by_year_month_spnv)
         self.assertEqual(actual.options_tts_by_year_spnv, options_tts_by_year_spnv)
         self.assertEqual(actual.options_tts_by_spn, options_tts_by_spn)
-        self.assertEqual(actual.options_tts_by_spn_spv, options_tts_by_spn_spv)
+        self.assertEqual(actual.options_tts_by_spv, options_tts_by_spn_spv)
         self.assertEqual(actual.options_tts_by_hashtag, options_tts_by_hashtag)
         self.assertEqual(actual.options_tts_by_hashtag_year, options_tts_by_hashtag_year)
         self.assertEqual(actual.options_tts_by_efs, options_tts_by_efs)
@@ -1256,8 +1256,8 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.years, years)
         self.assertEqual(actual.yearly_targets, yearly_targets)
         self.assertEqual(actual.now, now)
-        self.assertEqual(actual.software_project_names, software_project_names)
-        self.assertEqual(actual.software_project_names_by_spv, software_project_names_by_spv)
+        self.assertEqual(actual.tts_by_spn_software_project_names, software_project_names)
+        self.assertEqual(actual.tts_by_spv_software_project_names, software_project_names_by_spv)
         self.assertEqual(actual.tt_head_n, tt_head_n)
         self.assertEqual(actual.tt_display_head_n_with_tail, tt_display_head_n_with_tail)
         self.assertEqual(actual.tt_hide_index, tt_hide_index)
@@ -2041,7 +2041,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().get_tts_by_spn_spv_df()
 
         # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_spn_spv_df(
+        actual_df : DataFrame  = self.df_factory.create_tts_by_spv_df(
             tt_df = tt_df, 
             years = years, 
             software_project_names = software_project_names
@@ -2641,7 +2641,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()
-        tt_processor.process_tts_by_spn_spv()
+        tt_processor.process_tts_by_spv()
 
         # Assert
         displayer.display.assert_called_once_with(
@@ -2674,7 +2674,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Act, 
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()
-        tt_processor.process_tts_by_spn_spv()
+        tt_processor.process_tts_by_spv()
 
         # Assert
         component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
