@@ -43,13 +43,16 @@ class TTCN(StrEnum):
     ISRELEASEDAY = "IsReleaseDay"
     YEAR = "Year"
     MONTH = "Month"
+    TREND = "↕"
     SOFTWAREPROJECTNAME = "SoftwareProjectName"
     SOFTWAREPROJECTVERSION = "SoftwareProjectVersion"
+    HASHTAGS = "Hashtags"
+
+
     DME = "DME"
     TME = "TME"
     DYE = "DYE"
     TYE = "TYE"
-    TREND = "↕"
     EFFORTPERC = "Effort%"
     YEARLYTARGET = "YearlyTarget"
     TARGETDIFF = "TargetDiff"
@@ -1467,11 +1470,16 @@ class TTDataFrameFactory():
           
         tts_df = tts_df[[TTCN.SOFTWAREPROJECTNAME, TTCN.EFFORT, TTCN.HASHTAG]]
 
-        hashtags_df : DataFrame = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.EFFORT], ascending = [True, False]).groupby(by = [TTCN.SOFTWAREPROJECTNAME])[TTCN.HASHTAG].agg(lambda s : ", ".join(dict.fromkeys(s.astype(str)))).reset_index(name = "Hashtags")
+        hashtags_df : DataFrame = (
+            tts_df
+                .sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.EFFORT], ascending = [True, False])
+                .groupby(by = [TTCN.SOFTWAREPROJECTNAME])[TTCN.HASHTAG].agg(lambda s : ", ".join(dict.fromkeys(s.astype(str))))
+                .reset_index(name = TTCN.HASHTAGS))
+
         effort_df : DataFrame = tts_df.groupby(by = [TTCN.SOFTWAREPROJECTNAME])[TTCN.EFFORT].sum().reset_index(name = TTCN.EFFORT)
         tts_df = effort_df.merge(right = hashtags_df, on = TTCN.SOFTWAREPROJECTNAME, how = "left")
         tts_df = tts_df.sort_values(by = [TTCN.EFFORT], ascending = [False]).reset_index(drop = True)
-        tts_df = tts_df[[TTCN.SOFTWAREPROJECTNAME, TTCN.EFFORT, "Hashtags"]]
+        tts_df = tts_df[[TTCN.SOFTWAREPROJECTNAME, TTCN.EFFORT, TTCN.HASHTAGS]]
 
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False)) 
 
