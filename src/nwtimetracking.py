@@ -19,10 +19,11 @@ from matplotlib.dates import relativedelta
 from numpy import uint
 from numpy.typing import ArrayLike
 from pandas import DataFrame, Series, NamedAgg, Index
+from pandas import Timedelta
 from pandas.io.formats.style import Styler
 from re import Match
 from types import SimpleNamespace
-from typing import Any, Callable, Literal, Optional, Tuple, Union, cast
+from typing import Any, Callable, Literal, Optional, Protocol, Tuple, Union, cast
 
 # LOCAL/NW MODULES
 from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
@@ -1781,52 +1782,81 @@ class TTDataFrameFactory():
         tt_df = self.__enforce_dataframe_definition_for_tt_df(tt_df = tt_df)
 
         return tt_df
-    def create_tts_by_year_df(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget]) -> DataFrame:
+    def create_tt_latest_five_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Returns latest five rows of tt_df'''
+
+        tt_latest_five_df : DataFrame = tt_df.copy(deep = True)
+        tt_latest_five_df = tt_latest_five_df.tail(5)
+
+        return tt_latest_five_df
+    def create_tts_by_year_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''
-            [0]
-                    Date	    StartTime	EndTime	Effort	    Hashtag	    Descriptor IsSoftwareProject    IsReleaseDay	Year	Month
-                0	2015-10-31	nan	        nan	    8h 00m	    #untagged	nan	       nan	                nan	            2015	10
-                1	2015-11-30	nan	        nan	    10h 00m	    #untagged	nan	       nan	                nan	            2015	11            
-                ...
-
-            [1]
-                    Year	Effort
-                0	2016	25 days 15:15:00
-
-            [2] 
-                    Year	Effort	            YearlyTarget        TargetDiff	    IsTargetMet	
-                0	2015	0 days 18:00:00	    0 days 00:00:00	    0 days 18:00:00 True
-                1	2016	25 days 15:15:00	20 days 20:00:00	4 days 19:15:00 True
-                ...
-
-            [3]
-                    Year	Effort	    YearlyTarget	TargetDiff	IsTargetMet
-                0	2015	18h 00m	    00h 00m	        +18h 00m	True
-                1	2016	615h 15m	500h 00m	    +115h 15m	True
-                ...
+                2015    ↕   2016        ↕   2017        ↕   2018        ↕   2019        ↕   ...
+            0  18h 00m  ↑   615h 15m    ↑   762h 45m    ↑   829h 45m    ↓   515h 15m    ↓   ...
         '''
 
-        tts_df : DataFrame = tt_df.copy(deep = True)
+        year_list : list[int] = pd.Series(tt_df[TTCN.YEAR]).dropna().astype(int).sort_values().unique().tolist()
 
-        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
-        tts_df = tts_df.loc[condition]
-
+        tts_df: DataFrame = tt_df.loc[tt_df[TTCN.YEAR].isin(year_list)].copy(deep = True)
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        tts_df = tts_df.groupby([TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tts_df = tts_df.sort_values(by = TTCN.YEAR).reset_index(drop = True)
+        tts_df[TTCN.EFFORT] = pd.to_timedelta(tts_df[TTCN.EFFORT])
 
-        tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEAR].apply(
-            lambda x : cast(YearlyTarget, self.__df_helper.get_yearly_target(yearly_targets = yearly_targets, year = x)).hours)
-        tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.EFFORT] - tts_df[TTCN.YEARLYTARGET]
-        tts_df[TTCN.ISTARGETMET] = tts_df.apply(
-            lambda x : self.__df_helper.is_yearly_target_met(effort = x[TTCN.EFFORT], yearly_target = x[TTCN.YEARLYTARGET]), axis = 1)    
+        by_year : Series = tts_df.groupby(TTCN.YEAR)[TTCN.EFFORT].sum().reindex(year_list, fill_value = Timedelta(0))
 
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
-        tts_df[TTCN.YEARLYTARGET] = tts_df[TTCN.YEARLYTARGET].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
-        tts_df[TTCN.TARGETDIFF] = tts_df[TTCN.TARGETDIFF].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = True))
+        column_names : list[str] = []
+        row_values : list[Timedelta | str] = []
 
-        return tts_df
+        for i, year in enumerate(year_list):
+
+            column_names.append(str(year))
+            row_values.append(self.__df_helper.box_effort(by_year.loc[year], False))
+
+            if i < len(year_list) - 1:
+
+                next_year : int = year_list[i + 1]
+                current_effort : Timedelta = by_year.loc[year]
+                next_effort : Timedelta = by_year.loc[next_year]
+
+                if next_effort > current_effort:
+                    arrow = "↑"
+                elif next_effort < current_effort:
+                    arrow = "↓"
+                else:
+                    arrow = "="
+
+                column_names.append(TTCN.TREND)
+                row_values.append(arrow)
+
+        tts_by_year_df : DataFrame = pd.DataFrame([row_values], columns = column_names)
+
+        return tts_by_year_df
+    def create_tts_by_range_df(self, tt_df: DataFrame) -> DataFrame:
+
+        '''
+                11 Years
+            0   6485h 30m
+        '''
+
+        year_list : list[int] = pd.Series(tt_df[TTCN.YEAR]).dropna().astype(int).sort_values().unique().tolist()
+
+        tts_df: DataFrame = tt_df.loc[tt_df[TTCN.YEAR].isin(year_list)].copy(deep = True)
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
+        tts_df[TTCN.EFFORT] = pd.to_timedelta(tts_df[TTCN.EFFORT])
+
+        per_year : Series = tts_df.groupby(TTCN.YEAR, as_index = False)[TTCN.EFFORT].sum()
+        years_count : int = int(per_year[TTCN.YEAR].nunique())
+        effort_td : Timedelta = per_year[TTCN.EFFORT].sum()
+        effort_str : str = self.__df_helper.box_effort(effort_td = effort_td, add_plus_sign = False)
+        label : str = f"{years_count} Year" if years_count == 1 else f"{years_count} Years"
+
+        tts_by_range_df : DataFrame = pd.DataFrame({label: [effort_str]})
+
+        return tts_by_range_df
+
+
+
     def create_tts_by_year_month_tpl(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget], display_only_years : list[int]) -> Tuple[DataFrame, DataFrame]:
 
         '''
@@ -2550,7 +2580,12 @@ class TTSequencer():
         )
 
         return func
-class TTAdapter():
+class TTAdapterProtocol(Protocol):
+
+	'''Represents a TTAdapter.'''
+
+	def create_summary(self, setting_bag : SettingBag) -> TTSummary: ...
+class TTAdapterLegacy():
 
     '''Adapts SettingBag properties for use in TT*Factory methods.'''
 
@@ -2667,9 +2702,7 @@ class TTAdapter():
         '''Creates the expected dataframe out of the provided arguments.'''
 
         tts_by_year_df : DataFrame = self.__df_factory.create_tts_by_year_df(
-            tt_df = tt_df,
-            years = setting_bag.years,
-            yearly_targets = setting_bag.yearly_targets,
+            tt_df = tt_df
         )
 
         return tts_by_year_df
@@ -3017,6 +3050,56 @@ class TTAdapter():
         )
 
         return tt_summary
+class TTAdapter():
+
+    '''Adapts SettingBag properties for use in TT*Factory methods.'''
+
+    __df_factory : TTDataFrameFactory
+    __bym_factory : BYMFactory
+
+    def __init__(self, df_factory : TTDataFrameFactory, bym_factory : BYMFactory) -> None:
+        
+        self.__df_factory = df_factory
+        self.__bym_factory = bym_factory
+
+    def __create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tt_df : DataFrame = self.__df_factory.create_tt_df(
+            excel_path = setting_bag.excel_path,
+            excel_skiprows = setting_bag.excel_skiprows,
+            excel_nrows = setting_bag.excel_nrows,
+            excel_tabname = setting_bag.excel_tabname
+            )
+
+        return tt_df
+    def __create_tt_latest_five_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframes out of the provided arguments.'''
+
+        return self.__df_factory.create_tt_latest_five_df(tt_df = tt_df)
+    def __create_tts_by_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+
+        '''Creates the expected dataframes out of the provided arguments.'''
+
+        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__bym_factory.create_tts_by_month_tpl(
+            tt_df = tt_df,
+            years = setting_bag.years,
+            now = setting_bag.now
+        )
+
+        return tts_by_month_tpl
+    def __create_tts_by_year_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_year_df : DataFrame = self.__df_factory.create_tts_by_year_df(
+            tt_df = tt_df
+        )
+
+        return tts_by_year_df
+
 class SettingSubset(SimpleNamespace):
 
     '''A dynamically assigned subset of SettingBag properties with a custom __str__ method that returns them as JSON.'''
@@ -3091,7 +3174,7 @@ class ComponentBag():
     
     tt_logger : TTLogger = field(default = TTLogger(logging_function = LambdaProvider().get_default_logging_function()))
     
-    tt_adapter : TTAdapter = field(default = TTAdapter(
+    tt_adapter : TTAdapterLegacy = field(default = TTAdapterLegacy(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
         bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
         bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()),
@@ -3442,4 +3525,18 @@ class TimeTrackingProcessor():
 
 # MAIN
 if __name__ == "__main__":
-    pass
+
+    df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
+    
+    tt_df : DataFrame = df_factory.create_tt_df(
+        excel_path = DefaultPathProvider().get_default_time_tracking_path(), 
+        excel_skiprows= 0, 
+        excel_nrows = 1804, 
+        excel_tabname = "Sessions"
+    )
+
+    tts_by_range_df : DataFrame = df_factory.create_tts_by_range_df(tt_df)
+
+    print(tts_by_range_df)
+
+    # pass

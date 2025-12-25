@@ -20,7 +20,7 @@ from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, TTCN, TTID, DEFINITI
 from nwtimetracking import _MessageCollection, BYMSplitter, EffortCell, EffortHighlighter, SettingSubset
 from nwtimetracking import YearlyTarget, EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
-from nwtimetracking import TTDataFrameFactory, TTAdapter, BYMFactory
+from nwtimetracking import TTDataFrameFactory, TTAdapterLegacy, BYMFactory
 from nwtimetracking import TTLogger, TTSequencer, TimeTrackingProcessor
 
 # SUPPORT METHODS
@@ -2407,13 +2407,11 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
     def test_createttsbyyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        years : list[int] = [2024]
-        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
         tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_df : DataFrame = ObjectMother().get_tts_by_year_df()
 
         # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_year_df(tt_df = tt_df, years = years, yearly_targets = yearly_targets)
+        actual_df : DataFrame  = self.df_factory.create_tts_by_year_df(tt_df = tt_df)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -2713,7 +2711,7 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_orchestrateheadn_shouldreturnoriginaldataframe_whenheadnisnone(self) -> None:
 
         # Arrange
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = Mock(), 
             bym_factory = Mock(), 
             bym_splitter = Mock(),
@@ -2731,7 +2729,7 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_orchestrateheadn_shouldreturntail_whenheadnisnotnoneanddisplayheadnwithtailistrue(self) -> None:
 
         # Arrange
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = Mock(), 
             bym_factory = Mock(), 
             bym_splitter = Mock(),
@@ -2751,7 +2749,7 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_orchestrateheadn_shouldreturnhead_whenheadnisnotnoneanddisplayheadnwithtailisfalse(self) -> None:
 
         # Arrange
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = Mock(), 
             bym_factory = Mock(), 
             bym_splitter = Mock(),
@@ -2771,7 +2769,7 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_deleteduplicatetextualhighlighting_shouldreturnoriginalsubdfs_whenlessthan2dataframes(self) -> None:
 
         # Arrange
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = Mock(), 
             bym_factory = Mock(), 
             bym_splitter = Mock(),
@@ -2793,7 +2791,7 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_deleteduplicatetextualhighlighting_shouldremovetagsfromseconddataframeonward_whenmorethan1dataframe(self) -> None:
 
         # Arrange
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = Mock(), 
             bym_factory = Mock(), 
             bym_splitter = Mock(),
@@ -2861,7 +2859,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -2894,7 +2892,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -2926,7 +2924,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -2958,7 +2956,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -2992,7 +2990,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -3026,7 +3024,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -3060,7 +3058,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -3094,7 +3092,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -3127,7 +3125,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -3159,7 +3157,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -3189,7 +3187,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_sequencer : TTSequencer = Mock()
         effort_highlighter : EffortHighlighter = Mock()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory, 
             bym_factory = bym_factory, 
             bym_splitter = bym_splitter,
@@ -3253,7 +3251,7 @@ class TTAdapterTestCase(unittest.TestCase):
 
         setting_bag : SettingBag = ObjectMother.get_setting_bag()
 
-        tt_adapter : TTAdapter = TTAdapter(
+        tt_adapter : TTAdapterLegacy = TTAdapterLegacy(
             df_factory = df_factory,
             bym_factory = bym_factory,
             bym_splitter = bym_splitter,
@@ -3262,7 +3260,7 @@ class TTAdapterTestCase(unittest.TestCase):
         )
 
         # Act, Assert
-        with patch.object(TTAdapter, method_name) as mocked_method:
+        with patch.object(TTAdapterLegacy, method_name) as mocked_method:
                    
             tt_summary : TTSummary = tt_adapter.create_summary(setting_bag = setting_bag)
 
@@ -3468,7 +3466,7 @@ class ComponentBagTestCase(unittest.TestCase):
             file_manager = FileManager(file_path_manager = FilePathManager()),
             displayer = Displayer(),
             tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
-            tt_adapter = TTAdapter(
+            tt_adapter = TTAdapterLegacy(
                 df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
                 bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
                 bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()),
@@ -3481,7 +3479,7 @@ class ComponentBagTestCase(unittest.TestCase):
         self.assertIsInstance(component_bag.file_manager, FileManager)
         self.assertIsInstance(component_bag.displayer, Displayer)
         self.assertIsInstance(component_bag.tt_logger, TTLogger)
-        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
+        self.assertIsInstance(component_bag.tt_adapter, TTAdapterLegacy)
 class TimeTrackingProcessorTestCase(unittest.TestCase):
 
     def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
