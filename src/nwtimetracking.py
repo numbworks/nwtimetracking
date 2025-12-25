@@ -242,6 +242,8 @@ class TTSummary():
     tts_by_range_df : DataFrame
     tts_by_spn_df : DataFrame
     tts_by_spv_df : DataFrame
+    tts_by_hashtag_year_df : DataFrame
+    tts_by_hashtag_df : DataFrame
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -350,6 +352,8 @@ class SettingBag():
     options_tts_by_range : list[Literal[OPTION.display]]
     options_tts_by_spn : list[Literal[OPTION.display]]
     options_tts_by_spv : list[Literal[OPTION.display]]
+    options_tts_by_hashtag_year : list[Literal[OPTION.display]]
+    options_tts_by_hashtag : list[Literal[OPTION.display]]
     excel_nrows : int
 
     # WITH DEFAULTS
@@ -361,6 +365,7 @@ class SettingBag():
     now : datetime = field(default = datetime.now())
     tts_by_spn_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all())
     tts_by_spv_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_latest_three())
+    tts_by_hashtag_formatters : dict = field(default_factory = lambda : { TTCN.EFFORTPERC : "{:.2f}" })
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -904,73 +909,6 @@ class TTDataFrameFactory():
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.TYE}, inplace = True)
 
         return tts_df
-    def __create_raw_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
-
-        '''
-                ProjectName	                ProjectVersion	Effort
-            0	NW.MarkdownTables	        1.0.0	        0 days 15:15:00
-            1	NW.MarkdownTables	        1.0.1	        0 days 02:30:00
-            2	NW.NGramTextClassification	1.0.0	        3 days 02:15:00
-            ...
-        '''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-
-        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tts_df = tts_df.loc[condition_one & condition_two]
-
-        tts_df[TTCN.SOFTWAREPROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
-        tts_df[TTCN.SOFTWAREPROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
-
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tts_df = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
-
-        condition_three : Series = (tts_df[TTCN.SOFTWAREPROJECTNAME].isin(values = software_project_names))
-        tts_df = tts_df.loc[condition_three]
-        tts_df = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
-
-        return tts_df
-    def __create_raw_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
-
-        '''
-                Year	Hashtag	        Effort
-            0   2023	#csharp	        0 days 15:15:00
-            1   2023	#maintenance	0 days 02:30:00
-            2   2023	#powershell	    3 days 02:15:00
-            ...   
-        '''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-
-        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
-        tts_df = tts_df.loc[condition]
-
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tts_df = tts_df.sort_values(by = [TTCN.HASHTAG, TTCN.YEAR]).reset_index(drop = True)
-
-        return tts_df
-    def __create_raw_tts_by_hashtag(self, tt_df : DataFrame) -> DataFrame:
-
-        '''
-                Hashtag	        Effort          Effort%
-            0   #csharp	        0 days 15:15:00 56.49
-            1   #maintenance	0 days 02:30:00 23.97
-            2   #powershell	    3 days 02:15:00 6.43
-            ...   
-        '''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-
-        summarized : float = tts_df[TTCN.EFFORT].sum()
-        tts_df[TTCN.EFFORTPERC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)     
-
-        return tts_df
     def __remove_unknown_occurrences(self, tts_by_tr_df : DataFrame, unknown_id : str) -> DataFrame:
 
         '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
@@ -1020,7 +958,6 @@ class TTDataFrameFactory():
         filtered_df = tts_by_efs_df.loc[condition]
 
         return filtered_df
-
 
     def __get_trend_by_timedelta(self, td_1 : timedelta, td_2 : timedelta) -> str:
 
@@ -1297,7 +1234,6 @@ class TTDataFrameFactory():
         tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
 
         return tts_by_month_upd_df
-
     def __extract_years(self, tt_df : DataFrame) -> list[int]:
 
         '''Extract years.'''
@@ -1488,11 +1424,74 @@ class TTDataFrameFactory():
 
         years : list[int] = self.__extract_years(tt_df = tt_df)
 
-        tts_df : DataFrame = self.__create_raw_tts_by_spn_spv(tt_df = tt_df, years = years, software_project_names = software_project_names)
+        tts_df : DataFrame = tt_df.copy(deep = True)
+
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
+
+        tts_df[TTCN.SOFTWAREPROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
+
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
+
+        condition_three : Series = (tts_df[TTCN.SOFTWAREPROJECTNAME].isin(values = software_project_names))
+        tts_df = tts_df.loc[condition_three]
+        tts_df = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
+
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
 
         return tts_df
+    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame) -> DataFrame:
 
+        '''
+                Hashtag     2015    2016    2017    2018    2019    2020    2021    2022    2023    2024    2025
+            0   #adoc                                                                                       327h 45m
+            1   #bash                                                                                       20h 30m
+            ...
+        '''
+
+        years : list[int] = self.__extract_years(tt_df = tt_df)            
+
+        tts_df : DataFrame = tt_df.copy(deep = True)
+
+        condition : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        tts_df = tts_df.loc[condition]
+
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.HASHTAG, TTCN.YEAR]).reset_index(drop = True)
+
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
+
+        tts_df = tts_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).rename_axis(None, axis=1).reset_index()
+        tts_df = tts_df.fillna("")
+
+        return tts_df
+    def create_tts_by_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''
+                Hashtag	        Effort  Effort%
+            0   #csharp	        67h 30m 56.49
+            1   #maintenance	51h 00m 23.97
+            2   #powershell	    04h 30m 6.43
+            ...    
+        '''
+    
+        tts_df : DataFrame = tt_df.copy(deep = True)
+
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+
+        summarized : float = tts_df[TTCN.EFFORT].sum()
+        tts_df[TTCN.EFFORTPERC] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = summarized), axis = 1)
+
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
+        tts_df = tts_df.sort_values(by = TTCN.HASHTAG, ascending = True, kind = "stable").reset_index(drop = True)
+
+        return tts_df
 
 
 
@@ -1562,7 +1561,7 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_year(df = tts_df, years = display_only_years)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], software_project_name : Optional[str]) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_year_month_spnv_tpl(self, tt_df : DataFrame, software_project_names : list[str], software_project_name : Optional[str]) -> Tuple[DataFrame, DataFrame]:
 
         '''
             [0] ...
@@ -1575,6 +1574,8 @@ class TTDataFrameFactory():
 
             Returns (tts_by_year_month_spnv_df, tts_by_year_month_spnv_flt_df).
         '''
+
+        years : list[int] = self.__extract_years(tt_df = tt_df) 
 
         spnv_df : DataFrame = self.__create_raw_tts_by_year_month_spnv(tt_df = tt_df, years = years, software_project_names = software_project_names)
         dme_df : DataFrame = self.__create_raw_tts_by_dme(tt_df = tt_df, years = years)
@@ -1650,38 +1651,6 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_software_project_name(df = tts_df, software_project_name = software_project_name)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_hashtag_year_df(self, tt_df : DataFrame, years : list[int], enable_pivot : bool) -> DataFrame:
-
-        '''
-                Year	Hashtag	        Effort
-            0   2023	#csharp	        67h 30m
-            1   2023	#maintenance	51h 00m
-            2   2023	#powershell	    04h 30m 
-            ...    
-        '''
-    
-        tts_df : DataFrame = self.__create_raw_tts_by_year_hashtag(tt_df = tt_df, years = years)
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
-
-        if enable_pivot:
-            tts_df = tts_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).rename_axis(None, axis=1).reset_index()
-            tts_df = tts_df.fillna("")
-
-        return tts_df
-    def create_tts_by_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
-
-        '''
-                Hashtag	        Effort  Effort%
-            0   #csharp	        67h 30m 56.49
-            1   #maintenance	51h 00m 23.97
-            2   #powershell	    04h 30m 6.43
-            ...    
-        '''
-    
-        tts_df : DataFrame = self.__create_raw_tts_by_hashtag(tt_df = tt_df)
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
-
-        return tts_df
     def create_tts_by_efs_tpl(self, tt_df : DataFrame, is_correct : bool) -> Tuple[DataFrame, DataFrame]:
 
         '''
@@ -1848,6 +1817,20 @@ class TTAdapter():
         )
 
         return tts_by_spn_spv_df
+    def __create_tts_by_hashtag_year_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_hashtag_year_df : DataFrame = self.__df_factory.create_tts_by_hashtag_year_df(tt_df = tt_df)
+
+        return tts_by_hashtag_year_df
+    def __create_tts_by_hashtag_df(self, tt_df : DataFrame) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_hashtag_df : DataFrame = self.__df_factory.create_tts_by_hashtag_df(tt_df = tt_df)
+
+        return tts_by_hashtag_df
 
     def create_summary(self, setting_bag : SettingBag) -> TTSummary:
 
@@ -1860,6 +1843,8 @@ class TTAdapter():
         tts_by_range_df : DataFrame = self.__create_tts_by_range_df(tt_df = tt_df)
         tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_spv_df : DataFrame = self.__create_tts_by_spv_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_hashtag_year_df : DataFrame = self.__create_tts_by_hashtag_year_df(tt_df = tt_df)
+        tts_by_hashtag_df : DataFrame = self.__create_tts_by_hashtag_df(tt_df = tt_df)
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
@@ -1868,7 +1853,9 @@ class TTAdapter():
             tts_by_year_df = tts_by_year_df,
             tts_by_range_df = tts_by_range_df,
             tts_by_spn_df = tts_by_spn_df,
-            tts_by_spv_df = tts_by_spv_df
+            tts_by_spv_df = tts_by_spv_df,
+            tts_by_hashtag_year_df = tts_by_hashtag_year_df,
+            tts_by_hashtag_df = tts_by_hashtag_df
         )
 
         return tt_summary
@@ -2067,7 +2054,7 @@ class TimeTrackingProcessor():
     def process_tts_by_spv(self) -> None:
 
         '''
-            Performs all the actions listed in __setting_bag.options_tts_by_spn_spv.
+            Performs all the actions listed in __setting_bag.options_tts_by_spv.
             
             It raises an exception if the 'initialize' method has not been run yet.
         '''
@@ -2079,6 +2066,37 @@ class TimeTrackingProcessor():
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)
+    def process_tts_by_hashtag_year(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_hashtag_year.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_hashtag_year
+        df : DataFrame = self.__tt_summary.tts_by_hashtag_year_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df)
+    def process_tts_by_hashtag(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_hashtag.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_hashtag
+        df : DataFrame = self.__tt_summary.tts_by_hashtag_df
+        formatters : dict = self.__setting_bag.tts_by_hashtag_formatters
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df, formatters = formatters)
 
     def get_summary(self) -> TTSummary:
 
@@ -2104,9 +2122,7 @@ if __name__ == "__main__":
         excel_tabname = "Sessions"
     )
 
-    software_project_names = SoftwareProjectNameProvider().get_all()
-
-    tts_df : DataFrame = df_factory.create_tts_by_spv_df(tt_df = tt_df, software_project_names = software_project_names)
+    tts_df : DataFrame = df_factory.create_tts_by_hashtag_year_df(tt_df = tt_df)
 
     print(tts_df)
 
