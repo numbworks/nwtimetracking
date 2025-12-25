@@ -43,8 +43,8 @@ class TTCN(StrEnum):
     ISRELEASEDAY = "IsReleaseDay"
     YEAR = "Year"
     MONTH = "Month"
-    PROJECTNAME = "ProjectName"
-    PROJECTVERSION = "ProjectVersion"
+    SOFTWAREPROJECTNAME = "SoftwareProjectName"
+    SOFTWAREPROJECTVERSION = "SoftwareProjectVersion"
     DME = "DME"
     TME = "TME"
     DYE = "DYE"
@@ -237,6 +237,7 @@ class TTSummary():
     tts_by_month_tpl : Tuple[DataFrame, DataFrame]
     tts_by_year_df : DataFrame
     tts_by_range_df : DataFrame
+    tts_by_spn_df : DataFrame
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -352,6 +353,7 @@ class SettingBag():
     options_tts_by_month : list[Literal[OPTION.display]]
     options_tts_by_year : list[Literal[OPTION.display]]
     options_tts_by_range : list[Literal[OPTION.display]]
+    options_tts_by_spn : list[Literal[OPTION.display]]
     excel_nrows : int
 
     # WITH DEFAULTS
@@ -773,14 +775,14 @@ class TTDataFrameFactory():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
 
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH, TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.MONTH, TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
     
-        condition_three : Series = (tts_df[TTCN.PROJECTNAME].isin(values = software_project_names))
+        condition_three : Series = (tts_df[TTCN.SOFTWAREPROJECTNAME].isin(values = software_project_names))
         tts_df = tts_df.loc[condition_three]
 
         return tts_df
@@ -801,8 +803,8 @@ class TTDataFrameFactory():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
 
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.MONTH])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
@@ -847,16 +849,16 @@ class TTDataFrameFactory():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
 
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        tts_df = tts_df.groupby(by = [TTCN.YEAR, TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
     
-        condition_three : Series = (tts_df[TTCN.PROJECTNAME].isin(values = software_project_names))
+        condition_three : Series = (tts_df[TTCN.SOFTWAREPROJECTNAME].isin(values = software_project_names))
         tts_df = tts_df.loc[condition_three]
-        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        tts_df = tts_df.sort_values(by = [TTCN.YEAR, TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
 
         return tts_df
     def __create_raw_tts_by_dye(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
@@ -876,8 +878,8 @@ class TTDataFrameFactory():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
 
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
         tts_df = tts_df.groupby(by = [TTCN.YEAR])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
@@ -907,66 +909,6 @@ class TTDataFrameFactory():
         tts_df.rename(columns = {TTCN.EFFORT : TTCN.TYE}, inplace = True)
 
         return tts_df
-    def __create_raw_tts_by_spn(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame: 
-        
-        '''
-                Hashtag	ProjectName	            Effort
-            0	#python	nwtraderaanalytics	    72h 00m
-            1	#python	nwreadinglistmanager	66h 30m
-            2	#python	nwtimetrackingmanager	18h 45m
-            3	#csharp	NW.WIDJobs	            430h 00m
-            ...
-        '''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-
-        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tts_df = tts_df.loc[condition_one & condition_two]
-
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.PROJECTNAME, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME]).reset_index(drop = True)
-
-        condition_three : Series = (tts_df[TTCN.PROJECTNAME].isin(values = software_project_names))
-        tts_df = tts_df.loc[condition_three] 
-        tts_df = tts_df.sort_values(by = [TTCN.HASHTAG, TTCN.EFFORT], ascending = [False, False]).reset_index(drop = True)
-
-        tts_df = tts_df[[TTCN.HASHTAG, TTCN.PROJECTNAME, TTCN.EFFORT]]
-
-        return tts_df
-    def __create_raw_de(self, tt_df : DataFrame, years : list[int]) -> timedelta:
-        
-        '''3 days 21:15:00'''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-
-        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
-        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
-        tts_df = tts_df.loc[condition_one & condition_two]
-
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        summarized : timedelta = tts_df[TTCN.EFFORT].sum()
-
-        return summarized
-    def __create_raw_te(self, tt_df : DataFrame, years : list[int], remove_untagged : bool) -> timedelta:
-
-        '''186 days 11:15:00'''
-
-        tts_df : DataFrame = tt_df.copy(deep = True)
-
-        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
-        tts_df = tts_df.loc[condition_one]
-
-        if remove_untagged:
-            condition_two : Series = (tt_df[TTCN.HASHTAG] != "#untagged")
-            tts_df = tts_df.loc[condition_two]
-
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        summarized : timedelta = tts_df[TTCN.EFFORT].sum()
-
-        return summarized    
     def __create_raw_tts_by_spn_spv(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
@@ -983,16 +925,16 @@ class TTDataFrameFactory():
         condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
         tts_df = tts_df.loc[condition_one & condition_two]
 
-        tts_df[TTCN.PROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
-        tts_df[TTCN.PROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.SOFTWAREPROJECTVERSION] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_version(descriptor = x))
 
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
-        tts_df = tts_df.groupby(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
-        tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        tts_df = tts_df.groupby(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
 
-        condition_three : Series = (tts_df[TTCN.PROJECTNAME].isin(values = software_project_names))
+        condition_three : Series = (tts_df[TTCN.SOFTWAREPROJECTNAME].isin(values = software_project_names))
         tts_df = tts_df.loc[condition_three]
-        tts_df = tts_df.sort_values(by = [TTCN.PROJECTNAME, TTCN.PROJECTVERSION]).reset_index(drop = True)
+        tts_df = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.SOFTWAREPROJECTVERSION]).reset_index(drop = True)
 
         return tts_df
     def __create_raw_tts_by_year_hashtag(self, tt_df : DataFrame, years : list[int]) -> DataFrame:
@@ -1069,7 +1011,7 @@ class TTDataFrameFactory():
         filtered_df : DataFrame = df.copy(deep = True)
 
         if software_project_name is not None:
-            condition : Series = (filtered_df[TTCN.PROJECTNAME] == software_project_name)
+            condition : Series = (filtered_df[TTCN.SOFTWAREPROJECTNAME] == software_project_name)
             filtered_df = df.loc[condition]
 
         return filtered_df
@@ -1361,6 +1303,13 @@ class TTDataFrameFactory():
 
         return tts_by_month_upd_df
 
+    def __extract_years(self, tt_df : DataFrame) -> list[int]:
+
+        '''Extract years.'''
+
+        year_list : list[int] = pd.Series(tt_df[TTCN.YEAR]).dropna().astype(int).sort_values().unique().tolist()
+
+        return year_list
 
     def create_tt_df(self, excel_path : str, excel_skiprows : int, excel_nrows : int, excel_tabname : str) -> DataFrame:
         
@@ -1386,7 +1335,7 @@ class TTDataFrameFactory():
         tt_latest_five_df = tt_latest_five_df.tail(5)
 
         return tt_latest_five_df
-    def create_tts_by_month_tpl(self, tt_df : DataFrame, years : list, now : datetime) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_month_tpl(self, tt_df : DataFrame, now : datetime) -> Tuple[DataFrame, DataFrame]:
 
         '''
                 Month	2016	↕   2017	    ↕	2018    ...
@@ -1402,6 +1351,7 @@ class TTDataFrameFactory():
             Returns: (tts_by_month_df, tts_by_month_upd_df).
         '''
 
+        years : list[int] = self.__extract_years(tt_df = tt_df)
         tts_df : DataFrame = pd.DataFrame()
 
         for i in range(len(years)):
@@ -1432,25 +1382,25 @@ class TTDataFrameFactory():
             0  18h 00m  ↑   615h 15m    ↑   762h 45m    ↑   829h 45m    ↓   515h 15m    ↓   ...
         '''
 
-        year_list : list[int] = pd.Series(tt_df[TTCN.YEAR]).dropna().astype(int).sort_values().unique().tolist()
+        years : list[int] = self.__extract_years(tt_df = tt_df)
 
-        tts_df: DataFrame = tt_df.loc[tt_df[TTCN.YEAR].isin(year_list)].copy(deep = True)
+        tts_df: DataFrame = tt_df.loc[tt_df[TTCN.YEAR].isin(years)].copy(deep = True)
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
         tts_df[TTCN.EFFORT] = pd.to_timedelta(tts_df[TTCN.EFFORT])
 
-        by_year : Series = tts_df.groupby(TTCN.YEAR)[TTCN.EFFORT].sum().reindex(year_list, fill_value = Timedelta(0))
+        by_year : Series = tts_df.groupby(TTCN.YEAR)[TTCN.EFFORT].sum().reindex(years, fill_value = Timedelta(0))
 
         column_names : list[str] = []
         row_values : list[Timedelta | str] = []
 
-        for i, year in enumerate(year_list):
+        for i, year in enumerate(years):
 
             column_names.append(str(year))
             row_values.append(self.__df_helper.box_effort(by_year.loc[year], False))
 
-            if i < len(year_list) - 1:
+            if i < len(years) - 1:
 
-                next_year : int = year_list[i + 1]
+                next_year : int = years[i + 1]
                 current_effort : Timedelta = by_year.loc[year]
                 next_effort : Timedelta = by_year.loc[next_year]
 
@@ -1474,9 +1424,9 @@ class TTDataFrameFactory():
             0   6485h 30m
         '''
 
-        year_list : list[int] = pd.Series(tt_df[TTCN.YEAR]).dropna().astype(int).sort_values().unique().tolist()
+        years : list[int] = self.__extract_years(tt_df = tt_df)
 
-        tts_df: DataFrame = tt_df.loc[tt_df[TTCN.YEAR].isin(year_list)].copy(deep = True)
+        tts_df: DataFrame = tt_df.loc[tt_df[TTCN.YEAR].isin(years)].copy(deep = True)
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
         tts_df[TTCN.EFFORT] = pd.to_timedelta(tts_df[TTCN.EFFORT])
 
@@ -1489,7 +1439,43 @@ class TTDataFrameFactory():
         tts_df = pd.DataFrame({label: [effort_str]})
 
         return tts_df
+    def create_tts_by_spn_df(self, tt_df : DataFrame, software_project_names : list[str]) -> DataFrame:
 
+        '''
+                SoftwareProjectName     Effort      Hashtags
+            0   nwknowledgebase         337h 15m    #adoc, #python
+            1   nwtraderaanalytics      263h 15m    #python
+            ...
+        '''
+
+        years : list[int] = self.__extract_years(tt_df = tt_df)
+
+        tts_df : DataFrame = tt_df.copy(deep = True)
+
+        condition_one : Series = (tt_df[TTCN.YEAR].isin(values = years))
+        condition_two : Series = (tt_df[TTCN.ISSOFTWAREPROJECT] == True)
+        tts_df = tts_df.loc[condition_one & condition_two]
+
+        tts_df[TTCN.SOFTWAREPROJECTNAME] = tts_df[TTCN.DESCRIPTOR].apply(lambda x : self.__df_helper.extract_software_project_name(descriptor = x))
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.unbox_effort(effort_str = x))
+        tts_df = tts_df.groupby(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.HASHTAG])[TTCN.EFFORT].sum().sort_values(ascending = [False]).reset_index(name = TTCN.EFFORT)
+        tts_df = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME]).reset_index(drop = True)
+
+        condition_three : Series = (tts_df[TTCN.SOFTWAREPROJECTNAME].isin(values = software_project_names))
+        tts_df = tts_df.loc[condition_three] 
+        tts_df = tts_df.sort_values(by = [TTCN.EFFORT], ascending = [False]).reset_index(drop = True)
+          
+        tts_df = tts_df[[TTCN.SOFTWAREPROJECTNAME, TTCN.EFFORT, TTCN.HASHTAG]]
+
+        hashtags_df : DataFrame = tts_df.sort_values(by = [TTCN.SOFTWAREPROJECTNAME, TTCN.EFFORT], ascending = [True, False]).groupby(by = [TTCN.SOFTWAREPROJECTNAME])[TTCN.HASHTAG].agg(lambda s : ", ".join(dict.fromkeys(s.astype(str)))).reset_index(name = "Hashtags")
+        effort_df : DataFrame = tts_df.groupby(by = [TTCN.SOFTWAREPROJECTNAME])[TTCN.EFFORT].sum().reset_index(name = TTCN.EFFORT)
+        tts_df = effort_df.merge(right = hashtags_df, on = TTCN.SOFTWAREPROJECTNAME, how = "left")
+        tts_df = tts_df.sort_values(by = [TTCN.EFFORT], ascending = [False]).reset_index(drop = True)
+        tts_df = tts_df[[TTCN.SOFTWAREPROJECTNAME, TTCN.EFFORT, "Hashtags"]]
+
+        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False)) 
+
+        return tts_df
 
 
     def create_tts_by_year_month_tpl(self, tt_df : DataFrame, years : list[int], yearly_targets : list[YearlyTarget], display_only_years : list[int]) -> Tuple[DataFrame, DataFrame]:
@@ -1646,37 +1632,6 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_software_project_name(df = tts_df, software_project_name = software_project_name)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_spn_df(self, tt_df : DataFrame, years : list[int], software_project_names : list[str], remove_untagged : bool) -> DataFrame:
-
-        '''
-                Hashtag     ProjectName	            Effort	    DE	%_DE	TE	        %_TE
-            0	#python     nwreadinglistmanager	66h 30m	93h 15m	71.31	4475h 15m	1.49
-            1	#python     nwtraderaanalytics	    09h 15m	93h 15m	9.92	4475h 15m	0.21
-            ...
-
-            With remove_untagged = True:
-
-                Hashtag     ProjectName	            Effort	DE	    %_DE	TE	        %_TE
-            0	#python     nwreadinglistmanager	66h 30m	93h 15m	71.31	174h 15m	38.16
-            1	#python     nwtraderaanalytics	    09h 15m	93h 15m	9.92	174h 15m	5.31
-            ...
-        '''
-
-        tts_df : DataFrame = self.__create_raw_tts_by_spn(tt_df = tt_df, years = years, software_project_names = software_project_names)
-        de : timedelta = self.__create_raw_de(tt_df = tt_df, years = years)
-        te : timedelta = self.__create_raw_te(tt_df = tt_df, years = years, remove_untagged = remove_untagged)    
-
-        tts_df[TTCN.DE] = de
-        tts_df[TTCN.PERCDE] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.DE]), axis = 1)      
-
-        tts_df[TTCN.TE] = te
-        tts_df[TTCN.PERCTE] = tts_df.apply(lambda x : self.__df_helper.calculate_percentage(part = x[TTCN.EFFORT], whole = x[TTCN.TE]), axis = 1)     
-
-        tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))   
-        tts_df[TTCN.DE] = tts_df[TTCN.DE].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
-        tts_df[TTCN.TE] = tts_df[TTCN.TE].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
-
-        return tts_df
     def create_tts_by_spn_spv_df(self, tt_df : DataFrame, years : list[int], software_project_names : list[str]) -> DataFrame:
 
         '''
@@ -1847,7 +1802,6 @@ class TTAdapter():
 
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_month_tpl(
             tt_df = tt_df,
-            years = setting_bag.years,
             now = setting_bag.now
         )
 
@@ -1870,6 +1824,16 @@ class TTAdapter():
         )
 
         return tts_by_range_df
+    def __create_tts_by_spn_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_spn_df : DataFrame = self.__df_factory.create_tts_by_spn_df(
+            tt_df = tt_df,
+            software_project_names = setting_bag.software_project_names
+        )
+
+        return tts_by_spn_df
 
     def create_summary(self, setting_bag : SettingBag) -> TTSummary:
 
@@ -1880,13 +1844,15 @@ class TTAdapter():
         tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
         tts_by_range_df : DataFrame = self.__create_tts_by_range_df(tt_df = tt_df)
-        
+        tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
+
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
             tt_latest_five_df = tt_latest_five_df,
             tts_by_month_tpl = tts_by_month_tpl,
             tts_by_year_df = tts_by_year_df,
-            tts_by_range_df = tts_by_range_df
+            tts_by_range_df = tts_by_range_df,
+            tts_by_spn_df = tts_by_spn_df
         )
 
         return tt_summary
@@ -2067,6 +2033,21 @@ class TimeTrackingProcessor():
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)
+    def process_tts_by_spn(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_spn.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_spn
+        df : DataFrame = self.__tt_summary.tts_by_spn_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df)
 
     def get_summary(self) -> TTSummary:
 
@@ -2092,8 +2073,10 @@ if __name__ == "__main__":
         excel_tabname = "Sessions"
     )
 
-    tts_by_range_df : DataFrame = df_factory.create_tts_by_range_df(tt_df)
+    software_project_names = SoftwareProjectNameProvider().get_all_software_project_names()
 
-    print(tts_by_range_df)
+    tts_df : DataFrame = df_factory.create_tts_by_spn_df(tt_df = tt_df, software_project_names = software_project_names)
+
+    print(tts_df)
 
     # pass

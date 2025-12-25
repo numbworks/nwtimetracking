@@ -265,8 +265,8 @@ class ObjectMother():
         df1 : DataFrame = pd.DataFrame({
                 TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
                 TTCN.MONTH: np.array([2, 2, 2, 2], dtype=int64),
-                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
                 TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
                 TTCN.DME: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
                 TTCN.PERCDME: np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
@@ -277,8 +277,8 @@ class ObjectMother():
         df2 : DataFrame = pd.DataFrame({
                 TTCN.YEAR: np.array([2024], dtype=int64),
                 TTCN.MONTH: np.array([2], dtype=int64),
-                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
-                TTCN.PROJECTVERSION: np.array(['4.2.0'], dtype=object),
+                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
+                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0'], dtype=object),
                 TTCN.EFFORT: np.array(['01h 15m'], dtype=object),
                 TTCN.DME: np.array(['08h 45m'], dtype=object),
                 TTCN.PERCDME: np.array([14.29], dtype= np.float64),
@@ -303,8 +303,8 @@ class ObjectMother():
 
         df1 : DataFrame = pd.DataFrame({
                 TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
-                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
                 TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
                 TTCN.DYE: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
                 TTCN.PERCDYE: np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
@@ -314,8 +314,8 @@ class ObjectMother():
 
         df2 : DataFrame = pd.DataFrame({
                 TTCN.YEAR: np.array([2024], dtype=int64),
-                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
-                TTCN.PROJECTVERSION: np.array(['4.2.0'], dtype=object),
+                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
+                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0'], dtype=object),
                 TTCN.EFFORT: np.array(['01h 15m'], dtype=object),
                 TTCN.DYE: np.array(['08h 45m'], dtype=object),
                 TTCN.PERCDYE: np.array([14.29], dtype= np.float64),
@@ -336,8 +336,8 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                TTCN.PROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                TTCN.PROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
                 TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))    
     @staticmethod
@@ -435,7 +435,7 @@ class ObjectMother():
 
         return pd.DataFrame({
                 TTCN.HASHTAG: np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object),
-                TTCN.PROJECTNAME: np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
+                TTCN.SOFTWAREPROJECTNAME: np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
                 TTCN.EFFORT: np.array(['02h 00m', '04h 15m', '01h 15m', '00h 45m'], dtype=object),
                 TTCN.DE: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
                 TTCN.PERCDE: np.array([22.86, 48.57, 14.29, 8.57], dtype= np.float64),
