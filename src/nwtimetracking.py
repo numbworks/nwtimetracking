@@ -53,6 +53,10 @@ class TTCN(StrEnum):
     OCCURRENCES = "Occurrences"
     OCCURRENCEPERC = "Occurrence%"
     OCCURRENCETOTAL = "OccurrenceTotal"
+    EFFORTSTATUS = "EffortStatus"
+    ISCORRECT = "IsCorrect"
+    EXPECTED = "Expected"
+    MESSAGE = "Message"
 
 
 
@@ -61,11 +65,6 @@ class TTCN(StrEnum):
     ISTARGETMET = "IsTargetMet"
     YEARLYTOTAL = "YearlyTotal"
     TOTARGET = "ToTarget"
-    EFFORTSTATUS = "EffortStatus"
-    ESISCORRECT = "ES_IsCorrect"
-    ESEXPECTED = "ES_Expected"
-    ESMESSAGE = "ES_Message"
-
     STARTDATE = "StartDate"
     ENDDATE = "EndDate"
     DURATION = "Duration"
@@ -239,6 +238,7 @@ class TTSummary():
     tts_by_hashtag_df : DataFrame
     tts_by_year_month_spnv_df : DataFrame
     tts_by_timeranges_df : DataFrame
+    ttd_effort_status_df : DataFrame
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -354,6 +354,7 @@ class SettingBag():
     excel_nrows : int
 
     # WITH DEFAULTS
+    options_ttd_effort_status : list[Literal[OPTION.display]] = field(default_factory = list)
     working_folder_path : str = field(default = "/home/nwtimetracking/")
     excel_path : str = field(default = DefaultPathProvider().get_default_time_tracking_path())
     excel_skiprows : int = field(default = 0)
@@ -365,6 +366,7 @@ class SettingBag():
     tts_by_hashtag_formatters : dict = field(default_factory = lambda : { TTCN.EFFORTPERC : "{:.2f}" })
     tts_by_timeranges_min_occurrences : int = field(default = 10)
     tts_by_timeranges_formatters : dict = field(default_factory = lambda : { TTCN.OCCURRENCEPERC : "{:.2f}" })
+    ttd_effort_status_is_correct : bool = field(default = False)
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -980,16 +982,6 @@ class TTDataFrameFactory():
             actual_df = expansion_df
 
         return actual_df
-    def __filter_by_is_correct(self, tts_by_efs_df : DataFrame, is_correct : bool) -> DataFrame:
-
-        '''Returns a DataFrame that contains only rows that match the provided is_correct.'''
-
-        filtered_df : DataFrame = tts_by_efs_df.copy(deep = True)
-
-        condition : Series = (filtered_df[TTCN.ESISCORRECT] == is_correct)
-        filtered_df = tts_by_efs_df.loc[condition]
-
-        return filtered_df
     def __get_trend_by_timedelta(self, td_1 : timedelta, td_2 : timedelta) -> str:
 
         '''
@@ -1390,22 +1382,17 @@ class TTDataFrameFactory():
             tts_df = tts_df[[TTCN.OCCURRENCES, TTCN.OCCURRENCEPERC, TTCN.TIMERANGES]]
 
             return tts_df
-
-
-
-    def create_tts_by_efs_tpl(self, tt_df : DataFrame, is_correct : bool) -> Tuple[DataFrame, DataFrame]:
+    def create_ttd_effort_status_df(self, tt_df : DataFrame, is_correct : bool) -> DataFrame:
 
         '''
-            StartTime	EndTime	Effort	ES_IsCorrect	ES_Expected	ES_Message
-            21:00       23:00   1h 00m  False           2h 00m      ...
+            StartTime	EndTime	Effort	IsCorrect	Expected    Message
+            21:00       23:00   1h 00m  False       2h 00m      ...
             ...
-
-            Returns (tts_by_efs_df, tts_by_efs_flt_df).
         '''
 
-        tts_df : DataFrame = tt_df.copy(deep = True)
+        ttd_df : DataFrame = tt_df.copy(deep = True)
         
-        tts_df[TTCN.EFFORTSTATUS] = tts_df.apply(
+        ttd_df[TTCN.EFFORTSTATUS] = ttd_df.apply(
             lambda x : self.__df_helper.create_effort_status_and_cast_to_any(
                     idx = x.name, 
                     start_time_str = x[TTCN.STARTTIME],
@@ -1413,14 +1400,17 @@ class TTDataFrameFactory():
                     effort_str = x[TTCN.EFFORT]),
             axis = 1)
         
-        tts_df[TTCN.ESISCORRECT] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
-        tts_df[TTCN.ESEXPECTED] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.expected_str)
-        tts_df[TTCN.ESMESSAGE] = tts_df[TTCN.EFFORTSTATUS].apply(lambda x : x.message)
-        tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME, TTCN.EFFORT, TTCN.ESISCORRECT, TTCN.ESEXPECTED, TTCN.ESMESSAGE]]
+        ttd_df[TTCN.ISCORRECT] = ttd_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
+        ttd_df[TTCN.EXPECTED] = ttd_df[TTCN.EFFORTSTATUS].apply(lambda x : x.expected_str)
+        ttd_df[TTCN.MESSAGE] = ttd_df[TTCN.EFFORTSTATUS].apply(lambda x : x.message)
+        ttd_df = ttd_df[[TTCN.STARTTIME, TTCN.ENDTIME, TTCN.EFFORT, TTCN.ISCORRECT, TTCN.EXPECTED, TTCN.MESSAGE]]
 
-        tts_flt_df : DataFrame = self.__filter_by_is_correct(tts_by_efs_df = tts_df, is_correct = is_correct)
+        condition : Series = (ttd_df[TTCN.ISCORRECT] == is_correct)
+        ttd_df = ttd_df.loc[condition]
 
-        return (tts_df, tts_flt_df)
+        return ttd_df
+
+
     def create_definitions_df(self) -> DataFrame:
 
         '''Creates a dataframe containing all the definitions in use in this application.'''
@@ -1551,6 +1541,16 @@ class TTAdapter():
         )
 
         return tts_by_timeranges_df
+    def __create_ttd_effort_status_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
+
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        ttd_effort_status_df : DataFrame = self.__df_factory.create_ttd_effort_status_df(
+            tt_df = tt_df,
+            is_correct = setting_bag.ttd_effort_status_is_correct
+        )
+
+        return ttd_effort_status_df
 
     def create_summary(self, setting_bag : SettingBag) -> TTSummary:
 
@@ -1567,6 +1567,7 @@ class TTAdapter():
         tts_by_hashtag_df : DataFrame = self.__create_tts_by_hashtag_df(tt_df = tt_df)
         tts_by_year_month_spnv_df : DataFrame = self.__create_tts_by_year_month_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_timeranges_df : DataFrame = self.__create_tts_by_timeranges_df(tt_df = tt_df, setting_bag = setting_bag)
+        ttd_effort_status_df : DataFrame = self.__create_ttd_effort_status_df(tt_df = tt_df, setting_bag = setting_bag)
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
@@ -1579,7 +1580,8 @@ class TTAdapter():
             tts_by_hashtag_year_df = tts_by_hashtag_year_df,
             tts_by_hashtag_df = tts_by_hashtag_df,
             tts_by_year_month_spnv_df = tts_by_year_month_spnv_df,
-            tts_by_timeranges_df = tts_by_timeranges_df
+            tts_by_timeranges_df = tts_by_timeranges_df,
+            ttd_effort_status_df = ttd_effort_status_df
         )
 
         return tt_summary
@@ -1852,6 +1854,21 @@ class TimeTrackingProcessor():
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df, formatters = formatters)
+    def process_ttd_effort_status(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_ttd_effort_status.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_ttd_effort_status
+        df : DataFrame = self.__tt_summary.ttd_effort_status_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df)
 
     def get_summary(self) -> TTSummary:
 
@@ -1877,7 +1894,7 @@ if __name__ == "__main__":
         excel_tabname = "Sessions"
     )
 
-    tts_df : DataFrame = df_factory.create_tts_by_timeranges_df(tt_df = tt_df, min_occurrences = 10)
+    tts_df : DataFrame = df_factory.create_ttd_effort_status_df(tt_df = tt_df, is_correct = True)[-10:]
 
     with pd.option_context(
         "display.max_rows", None,
