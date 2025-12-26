@@ -2003,7 +2003,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_month_spnv_tpl()
 
         # Act
-        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_year_month_spnv_tpl(
+        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_year_month_spnv_df(
             tt_df = tt_df, 
             years = years, 
             software_project_names = software_project_names,
