@@ -16,8 +16,8 @@ from nwshared import FilePathManager, FileManager, Displayer, LambdaProvider
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import COLORNAME, CRITERIA, EFFORTMODE, TTCN, TTID, DEFINITIONSTR, OPTION
-from nwtimetracking import _MessageCollection, SettingSubset, TTDataFrameFactory, TTLogger, TimeTrackingProcessor
+from nwtimetracking import TTCN, DEFINITIONSTR, OPTION, TTAdapter
+from nwtimetracking import _MessageCollection, TTDataFrameFactory, TimeTrackingProcessor
 from nwtimetracking import YearlyTarget, EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
 
@@ -98,24 +98,21 @@ class ObjectMother():
 
         setting_bag : SettingBag = SettingBag(
             options_tt = [OPTION.display],                          # type: ignore
-            options_tts_by_month = [OPTION.display, OPTION.save],   # type: ignore
+            options_tt_latest_five = [OPTION.display],              # type: ignore
+            options_tts_by_month = [OPTION.display],                # type: ignore
             options_tts_by_year = [OPTION.display],                 # type: ignore
-            options_tts_by_year_month = [OPTION.display],           # type: ignore
-            options_tts_by_year_month_spnv = [OPTION.display],      # type: ignore
-            options_tts_by_year_spnv = [OPTION.display],            # type: ignore
-            options_tts_by_spn = [OPTION.display, OPTION.logdef],   # type: ignore
-            options_tts_by_spv = [],
-            options_tts_by_hashtag = [OPTION.display],              # type: ignore
+            options_tts_by_range = [OPTION.display],                # type: ignore
+            options_tts_by_spn = [OPTION.display],                  # type: ignore
+            options_tts_by_spv = [],                                # type: ignore
             options_tts_by_hashtag_year = [OPTION.display],         # type: ignore
-            options_tts_by_efs = [OPTION.display],                  # type: ignore
-            options_tts_by_tr = [OPTION.display],                   # type: ignore
-            options_tts_gantt_spnv = [OPTION.display],              # type: ignore
-            options_tts_gantt_hseq = [OPTION.display],              # type: ignore
+            options_tts_by_hashtag = [OPTION.display],              # type: ignore
+            options_tts_by_year_month_spnv = [OPTION.display],      # type: ignore
+            options_tts_by_timeranges = [OPTION.display],           # type: ignore
+            options_ttd_effort_status = [OPTION.display],           # type: ignore
             options_definitions = [OPTION.display],                 # type: ignore
-            excel_nrows = 1301,
-            tts_by_year_month_spnv_display_only_spn = "nwtimetracking",
-            tts_by_year_spnv_display_only_spn = "nwtimetracking",
-            tts_by_spn_spv_display_only_spn = "nwtimetracking"
+            excel_nrows = 1301,                                     # type: ignore
+            tts_by_spn_software_project_names = "nwtimetracking",   # type: ignore
+            tts_by_spv_software_project_names = "nwtimetracking"    # type: ignore
         )
 
         return setting_bag
@@ -173,24 +170,6 @@ class ObjectMother():
 
         return expected_dtype_names
     @staticmethod
-    def get_yearly_targets() -> list[YearlyTarget]:
-
-        yearly_targets = [
-            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
-            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
-            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 250))
-        ]
-
-        return yearly_targets
-    
-    @staticmethod
     def get_tt_df() -> DataFrame:
 
         '''
@@ -212,163 +191,15 @@ class ObjectMother():
                 TTCN.ISRELEASEDAY: np.array([False, True, True, True, True, False, True, False, False, True, True, True, False, False, False, False, False, False, False, False, False], dtype=bool),
                 TTCN.YEAR: np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int64),
                 TTCN.MONTH: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int64),
-            }, index=pd.RangeIndex(start=980, stop=1001, step=1))
-    @staticmethod
-    def get_tts_by_year_df() -> DataFrame:
+            }, index=pd.RangeIndex(start=980, stop=1001, step=1)) 
+    @staticmethod # TBD
+    def get_tt_latest_five_df() -> DataFrame:
 
         '''
-                Year	Effort	YearlyTarget	TargetDiff	IsTargetMet
-            0	2024	36h 00m	250h 00m	    -214h 00m	False        
-        '''
-
-        return pd.DataFrame({
-                TTCN.YEAR: np.array([2024], dtype=int64),
-                TTCN.EFFORT: np.array(['36h 00m'], dtype=object),
-                TTCN.YEARLYTARGET: np.array(['250h 00m'], dtype=object),
-                TTCN.TARGETDIFF: np.array(['-214h 00m'], dtype=object),
-                TTCN.ISTARGETMET: np.array([False], dtype=bool),
-            }, index=pd.RangeIndex(start=0, stop=1, step=1))
-    @staticmethod
-    def get_tts_by_year_month_tpl() -> Tuple[DataFrame, DataFrame]:
 
         '''
-                Year	Month	Effort	YearlyTotal	ToTarget
-            0	2024	2	    36h 00m	36h 00m	    -214h 00m
 
-                Year	Month	Effort	YearlyTotal	ToTarget
-            0	2024	2	    36h 00m	36h 00m	    -214h 00m              
-        '''
-
-        df : DataFrame = pd.DataFrame({
-                TTCN.YEAR: np.array([2024], dtype=int64),
-                TTCN.MONTH: np.array([2], dtype=int64),
-                TTCN.EFFORT: np.array(['36h 00m'], dtype=object),
-                TTCN.YEARLYTOTAL: np.array(['36h 00m'], dtype=object),
-                TTCN.TOTARGET: np.array(['-214h 00m'], dtype=object),
-            }, index=pd.RangeIndex(start=0, stop=1, step=1))
-        
-        return (df, df)
-    @staticmethod
-    def get_tts_by_year_month_spnv_tpl() -> Tuple[DataFrame, DataFrame]:
-
-        '''
-                Year	Month	ProjectName	                ProjectVersion	Effort	DME	    %_DME	TME	    %_TME
-            0	2024	2	    NW.NGramTextClassification	4.2.0	        01h 15m	08h 45m	14.29	36h 00m	3.47
-            1	2024	2	    NW.Shared.Serialization	    1.0.0	        04h 15m	08h 45m	48.57	36h 00m	11.81
-            2	2024	2	    NW.UnivariateForecasting	4.2.0	        00h 45m	08h 45m	8.57	36h 00m	2.08
-            3	2024	2	    nwreadinglistmanager	    2.1.0	        02h 00m	08h 45m	22.86	36h 00m	5.56
-
-                Year	Month	ProjectName	                ProjectVersion	Effort	DME	    %_DME	TME	    %_TME
-            0	2024	2	    NW.NGramTextClassification	4.2.0	        01h 15m	08h 45m	14.29	36h 00m	3.47            
-        '''
-
-        df1 : DataFrame = pd.DataFrame({
-                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
-                TTCN.MONTH: np.array([2, 2, 2, 2], dtype=int64),
-                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
-                TTCN.DME: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                TTCN.PERCDME: np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
-                TTCN.TME: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                TTCN.PERCTME: np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
-            }, index=pd.RangeIndex(start=0, stop=4, step=1))
-        
-        df2 : DataFrame = pd.DataFrame({
-                TTCN.YEAR: np.array([2024], dtype=int64),
-                TTCN.MONTH: np.array([2], dtype=int64),
-                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
-                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0'], dtype=object),
-                TTCN.EFFORT: np.array(['01h 15m'], dtype=object),
-                TTCN.DME: np.array(['08h 45m'], dtype=object),
-                TTCN.PERCDME: np.array([14.29], dtype= np.float64),
-                TTCN.TME: np.array(['36h 00m'], dtype=object),
-                TTCN.PERCTME: np.array([3.47], dtype= np.float64),
-            }, index=pd.RangeIndex(start=0, stop=1, step=1))        
-
-        return (df1, df2)
-    @staticmethod
-    def get_tts_by_year_spnv_tpl() -> Tuple[DataFrame, DataFrame]:
-
-        '''
-                Year	ProjectName	                ProjectVersion	Effort	DYE	    %_DYE	TYE	        %_TYE
-            0	2024	NW.NGramTextClassification	4.2.0	        01h 15m	08h 45m	14.29	36h 00m	    3.47
-            1	2024	NW.Shared.Serialization	    1.0.0	        04h 15m	08h 45m	48.57	36h 00m	    11.81
-            2	2024	NW.UnivariateForecasting	4.2.0	        00h 45m	08h 45m	8.57	36h 00m	    2.08
-            3	2024	nwreadinglistmanager	    2.1.0	        02h 00m	08h 45m	22.86	36h 00m	    5.56
-
-                Year	ProjectName	                ProjectVersion	Effort	DYE	    %_DYE	TYE	        %_TYE
-            0	2024	NW.NGramTextClassification	4.2.0	        01h 15m	08h 45m	14.29	36h 00m	    3.47
-        '''
-
-        df1 : DataFrame = pd.DataFrame({
-                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
-                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
-                TTCN.DYE: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                TTCN.PERCDYE: np.array([14.29, 48.57, 8.57, 22.86], dtype= np.float64),
-                TTCN.TYE: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                TTCN.PERCTYE: np.array([3.47, 11.81, 2.08, 5.56], dtype= np.float64),
-            }, index=pd.RangeIndex(start=0, stop=4, step=1))
-
-        df2 : DataFrame = pd.DataFrame({
-                TTCN.YEAR: np.array([2024], dtype=int64),
-                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification'], dtype=object),
-                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0'], dtype=object),
-                TTCN.EFFORT: np.array(['01h 15m'], dtype=object),
-                TTCN.DYE: np.array(['08h 45m'], dtype=object),
-                TTCN.PERCDYE: np.array([14.29], dtype= np.float64),
-                TTCN.TYE: np.array(['36h 00m'], dtype=object),
-                TTCN.PERCTYE: np.array([3.47], dtype= np.float64),
-            }, index=pd.RangeIndex(start=0, stop=1, step=1))
-
-        return (df1, df2)
-    @staticmethod
-    def get_tts_by_spn_spv_df() -> DataFrame:
-
-        '''
-                ProjectName	                ProjectVersion	Effort
-            0	NW.NGramTextClassification	4.2.0	        01h 15m
-            1	NW.Shared.Serialization	    1.0.0	        04h 15m
-            2	NW.UnivariateForecasting	4.2.0	        00h 45m
-            3	nwreadinglistmanager	    2.1.0	        02h 00m
-        '''
-
-        return pd.DataFrame({
-                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
-                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
-                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
-            }, index=pd.RangeIndex(start=0, stop=4, step=1))    
-    @staticmethod
-    def get_tts_by_month_tpl() -> Tuple[DataFrame, DataFrame]:
-
-        '''
-				Month	2024
-			0	1		00h 00m
-			1	2		36h 00m
-			...
-            10	11		00h 00m
-            11  12      00h 00m
-
-				Month	2024
-            ...
-			10	11		00h 00m
-
-            now = 2024-11-30     
-        '''
-
-        df1 : DataFrame = pd.DataFrame({
-                TTCN.MONTH: np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
-                '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)				
-            }, index=pd.RangeIndex(start=0, stop=12, step=1))
-
-        df2 : DataFrame = pd.DataFrame({
-                TTCN.MONTH: np.array(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', ''], dtype=object),
-                '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', ''], dtype=object)				
-            }, index=pd.RangeIndex(start=0, stop=12, step=1))
-            
-        return (df1, df2)
+        return pd.DataFrame()
     @staticmethod
     def get_tts_by_month_df(index_list : list[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]) -> DataFrame:
 
@@ -404,60 +235,63 @@ class ObjectMother():
         df.rename(columns=lambda x: "↕" if x.startswith("↕_") else x, inplace=True)
         df = df.iloc[:, index_list]
 
-        return df    
-    @staticmethod
-    def get_tts_by_tr_df() -> DataFrame:
+        return df
+    @staticmethod # TBD
+    def get_tts_by_year_df() -> DataFrame:
 
         '''
-                TimeRangeId	Occurrences
-            0	08:00-08:30	1
-            1	08:15-12:45	1
-            2	08:45-12:15	1
-            3	10:15-13:00	1
-            4	11:00-12:30	1
-            ...        
+     
         '''
 
-        return pd.DataFrame({
-                TTCN.TIMERANGE: np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
-                TTCN.OCCURRENCES: np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
-            }, index=pd.RangeIndex(start=0, stop=21, step=1))    
+        return pd.DataFrame()
+    @staticmethod # TBD
+    def get_tts_by_range_df() -> DataFrame:
+
+        '''
+     
+        '''
+
+        return pd.DataFrame()
     @staticmethod
     def get_tts_by_spn_df() -> DataFrame:
 
         '''
-                Hashtag	ProjectName	                Effort	DE	    %_DE	TE	    %_TE
-            0	#python	nwreadinglistmanager	    02h 00m	08h 45m	22.86	36h 00m	5.56
-            1	#csharp	NW.Shared.Serialization	    04h 15m	08h 45m	48.57	36h 00m	11.81
-            2	#csharp	NW.NGramTextClassification	01h 15m	08h 45m	14.29	36h 00m	3.47
-            3	#csharp	NW.UnivariateForecasting	00h 45m	08h 45m	8.57	36h 00m	2.08        
+                SoftwareProjectName	        Effort  Hashtags
+            0   nwreadinglistmanager	    02h 00m #python
+            1	NW.Shared.Serialization	    04h 15m #csharp
+            2	NW.NGramTextClassification	01h 15m #csharp
+            3	NW.UnivariateForecasting	00h 45m #csharp
         '''
 
         return pd.DataFrame({
-                TTCN.HASHTAG: np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object),
                 TTCN.SOFTWAREPROJECTNAME: np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
                 TTCN.EFFORT: np.array(['02h 00m', '04h 15m', '01h 15m', '00h 45m'], dtype=object),
-                TTCN.DE: np.array(['08h 45m', '08h 45m', '08h 45m', '08h 45m'], dtype=object),
-                TTCN.PERCDE: np.array([22.86, 48.57, 14.29, 8.57], dtype= np.float64),
-                TTCN.TE: np.array(['36h 00m', '36h 00m', '36h 00m', '36h 00m'], dtype=object),
-                TTCN.PERCTE: np.array([5.56, 11.81, 3.47, 2.08], dtype= np.float64),
+                TTCN.HASHTAGS: np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object)
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
+    def get_tts_by_spv_df() -> DataFrame:
+
+        '''
+                SoftwareProjectName	        SoftwareProjectVersion	Effort
+            0	NW.NGramTextClassification	4.2.0	                01h 15m
+            1	NW.Shared.Serialization	    1.0.0	                04h 15m
+            2	NW.UnivariateForecasting	4.2.0	                00h 45m
+            3	nwreadinglistmanager	    2.1.0	                02h 00m
+        '''
+
+        return pd.DataFrame({
+                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+    @staticmethod # TBD
     def get_tts_by_hashtag_year_df() -> DataFrame:
 
         '''
-                Year	Hashtag	        Effort
-            0	2024	#csharp	        06h 15m
-            1	2024	#maintenance	04h 30m
-            2	2024	#python	        02h 00m
-            3	2024	#studying	    23h 15m
+
         '''
 
-        return pd.DataFrame({
-                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
-                TTCN.HASHTAG: np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
-                TTCN.EFFORT: np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
-            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+        return pd.DataFrame()
     @staticmethod
     def get_tts_by_hashtag_df() -> DataFrame:
 
@@ -475,29 +309,45 @@ class ObjectMother():
                 TTCN.EFFORTPERC: np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
+    def get_tts_by_year_month_spnv_df() -> DataFrame:
+
+        '''
+                Year	Month	SoftwareProjectName	        SoftwareProjectVersion	Effort
+            0	2024	2	    NW.NGramTextClassification	4.2.0	                01h 15m
+            1	2024	2	    NW.Shared.Serialization	    1.0.0	                04h 15m
+            2	2024	2	    NW.UnivariateForecasting	4.2.0	                00h 45m
+            3	2024	2	    nwreadinglistmanager	    2.1.0	                02h 00m      
+        '''
+
+        return pd.DataFrame({
+                TTCN.YEAR: np.array([2024, 2024, 2024, 2024], dtype=int64),
+                TTCN.MONTH: np.array([2, 2, 2, 2], dtype=int64),
+                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
+                TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
+                TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object)
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
+    @staticmethod # TBD
+    def get_tts_by_timeranges_df() -> DataFrame:
+
+        '''   
+        '''
+
+        return pd.DataFrame()    
+    @staticmethod # TBD
+    def get_ttd_effort_status_df() -> DataFrame:
+
+        '''   
+        '''
+
+        return pd.DataFrame()    
+    @staticmethod
     def get_definitions_df() -> DataFrame:
 
         columns : list[str] = [DEFINITIONSTR.TERM, DEFINITIONSTR.DEFINITION]
 
         definitions : dict[str, str] = { 
-            TTCN.DME: "Total Development Monthly Effort",
-            TTCN.TME: "Total Monthly Effort",
-            TTCN.DYE: "Total Development Yearly Effort",
-            TTCN.TYE: "Total Yearly Effort",
-            TTCN.DE: "Total Development Effort",
-            TTCN.TE: "Total Effort",
-            TTCN.PERCDME: r"% of Total Development Monthly Effort",
-            TTCN.PERCTME: r"% of Total Monthly Effort",
-            TTCN.PERCDYE: r"% of Total Development Yearly Effort",
-            TTCN.PERCTYE: r"% of Total Yearly Effort",
-            TTCN.PERCDE: r"% of Total Development Effort",
-            TTCN.PERCTE: r"% of Total Effort",
-            TTCN.EFFORTPERC: "% of Total Effort",
-            TTCN.HASHTAGSEQ: "Period of time in which the same hashtag has been used without breaks.",
-            TTCN.EFFORTH: "Total Hours of Effort between StartDate and EndDate.",
-            TTCN.DURATION: "Total number of days between StartDate and EndDate.",
-            "tts_gantt_spnv": "Shows how much subsequent work has been performed per software project name/version.",
-            "tts_gantt_hseq": "Shows how much subsequent work has been performed per hashtag."            
+            DEFINITIONSTR.TT: "Time Tracking",
+            DEFINITIONSTR.TTS: "Time Tracking Summary"   
         }
         
         definitions_df : DataFrame = DataFrame(
@@ -506,39 +356,6 @@ class ObjectMother():
         )
 
         return definitions_df
-
-    @staticmethod
-    def get_tts_by_month_sub_md() -> str:
-
-        lines: list[str] = [
-            "## Revision History",
-            "",
-            "|Date|Author|Description|",
-            "|---|---|---|",
-            "|2020-12-22|numbworks|Created.|",
-            "|2024-11-30|numbworks|Last update.|",
-            "",
-            "## Time Tracking By Month",
-            "",
-            "|   Month | 2024    |",
-            "|--------:|:--------|",
-            "|       1 | 00h 00m |",
-            "|       2 | 36h 00m |",
-            "|       3 | 00h 00m |",
-            "|       4 | 00h 00m |",
-            "|       5 | 00h 00m |",
-            "|       6 | 00h 00m |",
-            "|       7 | 00h 00m |",
-            "|       8 | 00h 00m |",
-            "|       9 | 00h 00m |",
-            "|      10 | 00h 00m |",
-            "|      11 | 00h 00m |",
-            "|      12 | 00h 00m |",
-        ]
-
-        expected: str = "\n".join(lines) + "\n"
-
-        return expected
 
 # TEST CLASSES
 class MessageCollectionTestCase(unittest.TestCase):
@@ -622,17 +439,6 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-    def test_nomdinfofound_shouldreturnexpectedmessage_wheninvoked(self):
-        
-        # Arrange
-        id : TTID = TTID.TTSBYMONTH
-        expected : str = "No MDInfo object found for id='tts_by_month'."
-
-        # Act
-        actual : str = _MessageCollection.no_mdinfo_found(id = id)
-
-        # Assert
-        self.assertEqual(expected, actual)
     def test_pleaseruninitializefirst_shouldreturnexpectedmessage_wheninvoked(self):
         
         # Arrange
@@ -640,81 +446,6 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Act
         actual : str = _MessageCollection.please_run_initialize_first()
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_thiscontentsuccessfullysavedas_shouldreturnexpectedmessage_wheninvoked(self):
-        
-        # Arrange
-        id : TTID = TTID.TTSBYMONTH
-        file_path : str = "/path/to/file.csv"
-        expected : str = "This content (id: 'tts_by_month') has been successfully saved as '/path/to/file.csv'."
-
-        # Act
-        actual : str = _MessageCollection.this_content_successfully_saved_as(id = id, file_path = file_path)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_somethingfailedwhilesaving_shouldreturnexpectedmessage_wheninvoked(self):
-        
-        # Arrange
-        file_path : str = "/path/to/file.csv"
-        expected : str = "Something failed while saving '/path/to/file.csv'."
-
-        # Act
-        actual : str = _MessageCollection.something_failed_while_saving(file_path = file_path)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_provideddfinvalidcolumnlist_shouldreturnexpectedmessage_wheninvoked(self):
-        
-        # Arrange
-        column_list : list[str] = ["Month", "2015"]
-        expected : str = (
-            f"The provided df has an invalid BYM column list ('{column_list}')."
-        )
-
-        # Act
-        actual : str = _MessageCollection.provided_df_invalid_bym_column_list(column_list = column_list)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [CRITERIA.do_nothing, "No strategy available for the provided CRITERIA ('do_nothing')."],
-        [CRITERIA.include, "No strategy available for the provided CRITERIA ('include')."],
-        [CRITERIA.exclude, "No strategy available for the provided CRITERIA ('exclude')."]
-    ])
-    def test_nostrategyavailableforprovidedcriteria_shouldreturnexpectedmessage_wheninvoked(self, criteria : CRITERIA, expected : str):
-        
-        # Arrange
-        # Act
-        actual : str = _MessageCollection.no_strategy_available_for_provided_criteria(criteria = criteria)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        ["months", "'months' can't be < 1."],
-        ["min_duration", "'min_duration' can't be < 1."],
-    ])
-    def test_variablecantbelessthanone_shouldreturnexpectedmessage_wheninvoked(self, variable_name : str, expected : str):
-        
-        # Arrange
-        # Act
-        actual : str = _MessageCollection.variable_cant_be_less_than_one(variable_name = variable_name)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    def test_providedmodenotsupported_shouldreturnexpectedmessage_wheninvalidmode(self) -> None:
-
-        # Arrange
-        invalid_mode : EFFORTMODE = cast(EFFORTMODE, "invalid")
-        expected : str = f"The provided mode is not supported: '{invalid_mode}'."
-
-        # Act
-        actual : str = _MessageCollection.provided_mode_not_supported(mode = invalid_mode)
 
         # Assert
         self.assertEqual(expected, actual)
@@ -838,82 +569,37 @@ class TTSummaryTestCase(unittest.TestCase):
         # Arrange
         empty_df : DataFrame = DataFrame()
         empty_tuple : Tuple[DataFrame, DataFrame] = (empty_df, empty_df)
-        empty_func : Callable[[], None] = lambda : None
-        empty_sub_dfs : list[DataFrame] = []
 
         # Act
         actual = TTSummary(
             tt_df = empty_df,
-            tt_styler = empty_df,
+            tt_latest_five_df = empty_df,
             tts_by_month_tpl = empty_tuple,
-            tts_by_month_styler = empty_df,
-            tts_by_month_sub_dfs = empty_sub_dfs,
             tts_by_year_df = empty_df,
-            tts_by_year_styler = empty_df,
-            tts_by_year_month_tpl = empty_tuple,
-            tts_by_year_month_styler = empty_df,
-            tts_by_year_month_spnv_tpl = empty_tuple,
-            tts_by_year_month_spnv_styler = empty_df,
-            tts_by_year_spnv_tpl = empty_tuple,
-            tts_by_year_spnv_styler = empty_df,
+            tts_by_range_df = empty_df,
             tts_by_spn_df = empty_df,
-            tts_by_spn_styler = empty_df,
             tts_by_spv_df = empty_df,
-            tts_by_hashtag_df = empty_df,
             tts_by_hashtag_year_df = empty_df,
-            tts_by_hashtag_year_styler = empty_df,
-            tts_by_efs_tpl = empty_tuple,
-            tts_by_efs_styler = empty_df,
-            tts_by_tr_df = empty_df,
-            tts_by_tr_styler = empty_df,
-            tts_gantt_spnv_df = empty_df,
-            tts_gantt_spnv_plot_function = empty_func,
-            tts_gantt_hseq_df = empty_df,
-            tts_gantt_hseq_plot_function = empty_func,
+            tts_by_hashtag_df = empty_df,
+            tts_by_year_month_spnv_df = empty_df,
+            tts_by_timeranges_df = empty_df,
+            ttd_effort_status_df = empty_df,
             definitions_df = empty_df
         )
 
         # Assert
         self.assertEqual(actual.tt_df.shape, empty_df.shape)
-        self.assertEqual(actual.tt_styler.shape, empty_df.shape)
-
+        self.assertEqual(actual.tt_latest_five_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_month_tpl, empty_tuple)
-        self.assertEqual(actual.tts_by_month_styler.shape, empty_df.shape)
-        self.assertEqual(len(actual.tts_by_month_sub_dfs), len(empty_sub_dfs))
-
         self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_year_styler.shape, empty_df.shape)
-
-        self.assertEqual(actual.tts_by_year_month_tpl, empty_tuple)
-        self.assertEqual(actual.tts_by_year_month_styler.shape, empty_df.shape)
-
-        self.assertEqual(actual.tts_by_year_month_spnv_tpl, empty_tuple)
-        self.assertEqual(actual.tts_by_year_month_spnv_styler.shape, empty_df.shape)
-
-        self.assertEqual(actual.tts_by_year_spnv_tpl, empty_tuple)
-        self.assertEqual(actual.tts_by_year_spnv_styler.shape, empty_df.shape)
-
+        self.assertEqual(actual.tts_by_range_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_spn_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_spn_styler.shape, empty_df.shape)
-
         self.assertEqual(actual.tts_by_spv_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_hashtag_df.shape, empty_df.shape)
-
         self.assertEqual(actual.tts_by_hashtag_year_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_hashtag_year_styler.shape, empty_df.shape)
-    
-        self.assertEqual(actual.tts_by_efs_tpl, empty_tuple)
-        self.assertEqual(actual.tts_by_efs_styler.shape, empty_df.shape)
-
-        self.assertEqual(actual.tts_by_tr_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_tr_styler.shape, empty_df.shape)
-
-        self.assertEqual(actual.tts_gantt_spnv_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_gantt_spnv_plot_function, empty_func)
-
-        self.assertEqual(actual.tts_gantt_hseq_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_gantt_hseq_plot_function, empty_func)
-        
+        self.assertEqual(actual.tts_by_hashtag_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_year_month_spnv_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_timeranges_df.shape, empty_df.shape)
+        self.assertEqual(actual.ttd_effort_status_df.shape, empty_df.shape)
         self.assertEqual(actual.definitions_df.shape, empty_df.shape)
 class DefaultPathProviderTestCase(unittest.TestCase):
 
@@ -1025,22 +711,10 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-    def test_getallsoftwareprojectnamesbyspv_shouldreturnexpectedlist_wheninvoked(self):
+    def test_getlatestthree_shouldreturnexpectedlist_wheninvoked(self):
 
         # Arrange
         expected : list[str] = [
-            "NW.MarkdownTables",
-            "NW.NGramTextClassification",
-            "NW.UnivariateForecasting",
-            "NW.Shared.Files",        
-            "NW.Shared.Serialization",
-            "NW.Shared.Validation",
-            "nwreadinglist",
-            "nwtimetracking",
-            "nwtraderaanalytics",
-            "nwshared",
-            "nwpackageversions",
-            "nwapolloanalytics",
             "nwbuild",
             "nwrefurbishedanalytics",
             "nwknowledgebase"
@@ -1051,268 +725,109 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+    def test_getlatest_shouldreturnexpectedlist_wheninvoked(self):
+
+        # Arrange
+        expected : list[str] = [
+            "nwknowledgebase"
+        ]
+
+        # Act
+        actual : list[str] = SoftwareProjectNameProvider().get_latest()
+
+        # Assert
+        self.assertEqual(expected, actual)
 class SettingBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
-        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                                                                           # type: ignore
-        options_tts_by_month : list[Literal[OPTION.display, OPTION.display_c, OPTION.logset]] = [OPTION.display, OPTION.save]                   # type: ignore
-        options_tts_by_year : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                                   # type: ignore
-        options_tts_by_year_month : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                             # type: ignore
-        options_tts_by_year_month_spnv : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                        # type: ignore
-        options_tts_by_year_spnv : list[Literal[OPTION.display]] = [OPTION.display]                                                             # type: ignore
-        options_tts_by_spn : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display, OPTION.logdef]      # type: ignore
-        options_tts_by_spn_spv : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display, OPTION.logdef]  # type: ignore
-        options_tts_by_hashtag : list[Literal[OPTION.display, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display]                 # type: ignore
-        options_tts_by_hashtag_year : list[Literal[OPTION.display, OPTION.logset]] = [OPTION.display]                                           # type: ignore
-        options_tts_by_efs : list[Literal[OPTION.display]] = [OPTION.display]                                                                   # type: ignore
-        options_tts_by_tr : list[Literal[OPTION.display]] = [OPTION.display]                                                                    # type: ignore
-        options_tts_gantt_spnv : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display]    # type: ignore
-        options_tts_gantt_hseq : list[Literal[OPTION.display, OPTION.plot, OPTION.logdef, OPTION.logterm, OPTION.logset]] = [OPTION.display]    # type: ignore
-        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                                                                  # type: ignore
+        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                        # type: ignore
+        options_tt_latest_five : list[Literal[OPTION.display]] = [OPTION.display]            # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display]] = [OPTION.display]              # type: ignore
+        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
+        options_tts_by_range : list[Literal[OPTION.display]] = [OPTION.display]              # type: ignore
+        options_tts_by_spn : list[Literal[OPTION.display]] = [OPTION.display]                # type: ignore
+        options_tts_by_spv : list[Literal[OPTION.display]] = [OPTION.display]                # type: ignore
+        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]       # type: ignore
+        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]            # type: ignore
+        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]    # type: ignore
+        options_tts_by_timeranges : list[Literal[OPTION.display]] = [OPTION.display]         # type: ignore
+        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
         excel_nrows : int = 100
-        tts_by_year_month_spnv_display_only_spn : Optional[str] = "SPN1"
-        tts_by_year_spnv_display_only_spn : Optional[str] = "SPN2"
-        tts_by_spn_spv_display_only_spn : Optional[str] = "SPN3"
 
+        options_ttd_effort_status : list[Literal[OPTION.display]] = [OPTION.display]         # type: ignore
         working_folder_path : str = "/home/nwtimetracking/"
-        excel_path : str = "/workspaces/nwtimetracking/"
+        excel_path : str = "/workspaces/nwtimetracking/data/"
         excel_skiprows : int = 0
         excel_tabname : str = "Sessions"
         years : list[int] = [2020, 2021, 2022]
-        yearly_targets : list = []
         now : datetime = datetime.now()
-        software_project_names : list[str] = ["ProjectA", "ProjectB"]
-        software_project_names_by_spv : list[str] = ["ProjectC"]
-        tt_head_n : uint = uint(5)
-        tt_display_head_n_with_tail : bool = True
-        tt_hide_index : bool = True
-        tts_by_month_effort_highlight : bool = True
-        tts_by_month_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
-        tts_by_year_effort_highlight : bool = True
-        tts_by_year_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
-        tts_by_year_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_year_month_display_only_years : Optional[list[int]] = [2022]
-        tts_by_year_month_effort_highlight : bool = True
-        tts_by_year_month_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
-        tts_by_year_month_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_year_month_spnv_formatters : dict[str, str] = {"%_DME" : "{:.2f}", "%_TME" : "{:.2f}"}
-        tts_by_year_month_spnv_effort_highlight : bool = True
-        tts_by_year_month_spnv_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
-        tts_by_year_month_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_year_spnv_formatters : dict[str, str] = {"%_DYE" : "{:.2f}", "%_TYE" : "{:.2f}"}
-        tts_by_year_spnv_effort_highlight : bool = True
-        tts_by_year_spnv_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
-        tts_by_year_spnv_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_spn_formatters : dict[str, str] = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
-        tts_by_spn_remove_untagged : bool = True
-        tts_by_spn_effort_highlight : bool = True
-        tts_by_spn_effort_highlight_column_names : list[str] = [TTCN.EFFORT]
-        tts_by_spn_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_three_efforts
-        tts_by_hashtag_formatters : dict[str, str] = {"Effort%" : "{:.2f}"}
-        tts_by_hashtag_year_enable_pivot : bool = False
-        tts_by_hashtag_year_effort_highlight : bool = True
-        tts_by_hashtag_year_effort_highlight_mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
-        tts_by_efs_is_correct : bool = False
-        tts_by_efs_n : uint = uint(25)
-        tts_by_tr_unknown_id : str = "Unknown"
-        tts_by_tr_remove_unknown_occurrences : bool = True
-        tts_by_tr_filter_by_top_n : uint = uint(5)
-        tts_by_tr_head_n : uint = uint(10)
-        tts_by_tr_display_head_n_with_tail : bool = False
-        tts_gantt_spnv_spns : Optional[list[str]] = []
-        tts_gantt_spnv_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing    # type: ignore
-        tts_gantt_spnv_months : int = 4
-        tts_gantt_spnv_min_duration : int = 4
-        tts_gantt_spnv_fig_size : Tuple[int, int] = (10, 6)
-        tts_gantt_spnv_title : Optional[str] = None
-        tts_gantt_spnv_x_label : Optional[str] = None
-        tts_gantt_spnv_y_label : Optional[str] = None
-        tts_gantt_spnv_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
-        tts_gantt_hseq_hashtags : Optional[list[str]] = []
-        tts_gantt_hseq_criteria : Literal[CRITERIA.do_nothing, CRITERIA.include, CRITERIA.exclude] = CRITERIA.do_nothing    # type: ignore
-        tts_gantt_hseq_months : int = 4
-        tts_gantt_hseq_min_duration : int = 4
-        tts_gantt_hseq_fig_size : Tuple[int, int] = (10, 6)
-        tts_gantt_hseq_title : Optional[str] = None
-        tts_gantt_hseq_x_label : Optional[str] = None
-        tts_gantt_hseq_y_label : Optional[str] = None
-        tts_gantt_hseq_formatters : dict = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
-        effort_highlighter_tags : Tuple[str, str] = (f"<mark style='background-color: {COLORNAME.skyblue}'>", "</mark>")
+        tts_by_spn_software_project_names : list[str] = ["SPN1", "SPN2"]
+        tts_by_spv_software_project_names : list[str] = ["SPN3"]
+        tts_by_hashtag_formatters : dict = { TTCN.EFFORTPERC : "{:.2f}" }
+        tts_by_timeranges_min_occurrences : int = 10
+        tts_by_timeranges_formatters : dict = { TTCN.OCCURRENCEPERC : "{:.2f}" }
+        ttd_effort_status_is_correct : bool = False
 
 		# Act
         actual : SettingBag = SettingBag(
             options_tt = options_tt,
+            options_tt_latest_five = options_tt_latest_five,
             options_tts_by_month = options_tts_by_month,
             options_tts_by_year = options_tts_by_year,
-            options_tts_by_year_month = options_tts_by_year_month,
-            options_tts_by_year_month_spnv = options_tts_by_year_month_spnv,
-            options_tts_by_year_spnv = options_tts_by_year_spnv,
+            options_tts_by_range = options_tts_by_range,
             options_tts_by_spn = options_tts_by_spn,
-            options_tts_by_spv = options_tts_by_spn_spv,
-            options_tts_by_hashtag = options_tts_by_hashtag,
+            options_tts_by_spv = options_tts_by_spv,
             options_tts_by_hashtag_year = options_tts_by_hashtag_year,
-            options_tts_by_efs = options_tts_by_efs,
-            options_tts_by_tr = options_tts_by_tr,
-            options_tts_gantt_spnv = options_tts_gantt_spnv,
-            options_tts_gantt_hseq = options_tts_gantt_hseq,
+            options_tts_by_hashtag = options_tts_by_hashtag,
+            options_tts_by_year_month_spnv = options_tts_by_year_month_spnv,
+            options_tts_by_timeranges = options_tts_by_timeranges,
             options_definitions = options_definitions,
             excel_nrows = excel_nrows,
-            tts_by_year_month_spnv_display_only_spn = tts_by_year_month_spnv_display_only_spn,
-            tts_by_year_spnv_display_only_spn = tts_by_year_spnv_display_only_spn,
-            tts_by_spn_spv_display_only_spn = tts_by_spn_spv_display_only_spn,
+            options_ttd_effort_status = options_ttd_effort_status,
             working_folder_path = working_folder_path,
             excel_path = excel_path,
             excel_skiprows = excel_skiprows,
             excel_tabname = excel_tabname,
             years = years,
-            yearly_targets = yearly_targets,
             now = now,
-            tts_by_spn_software_project_names = software_project_names,
-            tts_by_spv_software_project_names = software_project_names_by_spv,
-            tt_head_n = tt_head_n,
-            tt_display_head_n_with_tail = tt_display_head_n_with_tail,
-            tt_hide_index = tt_hide_index,
-            tts_by_month_effort_highlight = tts_by_month_effort_highlight,
-            tts_by_month_effort_highlight_mode = tts_by_month_effort_highlight_mode,
-            tts_by_year_effort_highlight = tts_by_year_effort_highlight,
-            tts_by_year_effort_highlight_mode = tts_by_year_effort_highlight_mode,
-            tts_by_year_effort_highlight_column_names = tts_by_year_effort_highlight_column_names,
-            tts_by_year_month_display_only_years = tts_by_year_month_display_only_years,
-            tts_by_year_month_effort_highlight = tts_by_year_month_effort_highlight,
-            tts_by_year_month_effort_highlight_mode = tts_by_year_month_effort_highlight_mode,
-            tts_by_year_month_effort_highlight_column_names = tts_by_year_month_effort_highlight_column_names,
-            tts_by_year_month_spnv_formatters = tts_by_year_month_spnv_formatters,
-            tts_by_year_month_spnv_effort_highlight = tts_by_year_month_spnv_effort_highlight,
-            tts_by_year_month_spnv_effort_highlight_mode = tts_by_year_month_spnv_effort_highlight_mode,
-            tts_by_year_month_spnv_effort_highlight_column_names = tts_by_year_month_spnv_effort_highlight_column_names,
-            tts_by_year_spnv_formatters = tts_by_year_spnv_formatters,
-            tts_by_year_spnv_effort_highlight = tts_by_year_spnv_effort_highlight,
-            tts_by_year_spnv_effort_highlight_mode = tts_by_year_spnv_effort_highlight_mode,
-            tts_by_year_spnv_effort_highlight_column_names = tts_by_year_spnv_effort_highlight_column_names,
-            tts_by_spn_formatters = tts_by_spn_formatters,
-            tts_by_spn_remove_untagged = tts_by_spn_remove_untagged,
-            tts_by_spn_effort_highlight = tts_by_spn_effort_highlight,
-            tts_by_spn_effort_highlight_mode = tts_by_spn_effort_highlight_mode,
-            tts_by_spn_effort_highlight_column_names = tts_by_spn_effort_highlight_column_names,
+            tts_by_spn_software_project_names = tts_by_spn_software_project_names,
+            tts_by_spv_software_project_names = tts_by_spv_software_project_names,
             tts_by_hashtag_formatters = tts_by_hashtag_formatters,
-            tts_by_hashtag_year_enable_pivot = tts_by_hashtag_year_enable_pivot,
-            tts_by_hashtag_year_effort_highlight = tts_by_hashtag_year_effort_highlight,
-            tts_by_hashtag_year_effort_highlight_mode = tts_by_hashtag_year_effort_highlight_mode,
-            tts_by_efs_is_correct = tts_by_efs_is_correct,
-            tts_by_efs_n = tts_by_efs_n,
-            tts_by_tr_unknown_id = tts_by_tr_unknown_id,
-            tts_by_tr_remove_unknown_occurrences = tts_by_tr_remove_unknown_occurrences,
-            tts_by_tr_filter_by_top_n = tts_by_tr_filter_by_top_n,
-            tts_by_tr_head_n = tts_by_tr_head_n,
-            tts_by_tr_display_head_n_with_tail = tts_by_tr_display_head_n_with_tail,
-            tts_gantt_spnv_spns = tts_gantt_spnv_spns,
-            tts_gantt_spnv_criteria = tts_gantt_spnv_criteria,
-            tts_gantt_spnv_months = tts_gantt_spnv_months,
-            tts_gantt_spnv_min_duration = tts_gantt_spnv_min_duration,
-            tts_gantt_spnv_fig_size = tts_gantt_spnv_fig_size,
-            tts_gantt_spnv_title = tts_gantt_spnv_title,
-            tts_gantt_spnv_x_label = tts_gantt_spnv_x_label,
-            tts_gantt_spnv_y_label = tts_gantt_spnv_y_label,
-            tts_gantt_spnv_formatters = tts_gantt_spnv_formatters,
-            tts_gantt_hseq_hashtags = tts_gantt_hseq_hashtags,
-            tts_gantt_hseq_criteria = tts_gantt_hseq_criteria,
-            tts_gantt_hseq_months = tts_gantt_hseq_months,
-            tts_gantt_hseq_min_duration = tts_gantt_hseq_min_duration,
-            tts_gantt_hseq_fig_size = tts_gantt_hseq_fig_size,
-            tts_gantt_hseq_title = tts_gantt_hseq_title,
-            tts_gantt_hseq_x_label = tts_gantt_hseq_x_label,
-            tts_gantt_hseq_y_label = tts_gantt_hseq_y_label,
-            tts_gantt_hseq_formatters = tts_gantt_hseq_formatters,
-            effort_highlighter_tags = effort_highlighter_tags
+            tts_by_timeranges_min_occurrences = tts_by_timeranges_min_occurrences,
+            tts_by_timeranges_formatters = tts_by_timeranges_formatters,
+            ttd_effort_status_is_correct = ttd_effort_status_is_correct
         )
 
 		# Assert
         self.assertEqual(actual.options_tt, options_tt)
+        self.assertEqual(actual.options_tt_latest_five, options_tt_latest_five)
         self.assertEqual(actual.options_tts_by_month, options_tts_by_month)
         self.assertEqual(actual.options_tts_by_year, options_tts_by_year)
-        self.assertEqual(actual.options_tts_by_year_month, options_tts_by_year_month)
-        self.assertEqual(actual.options_tts_by_year_month_spnv, options_tts_by_year_month_spnv)
-        self.assertEqual(actual.options_tts_by_year_spnv, options_tts_by_year_spnv)
+        self.assertEqual(actual.options_tts_by_range, options_tts_by_range)
         self.assertEqual(actual.options_tts_by_spn, options_tts_by_spn)
-        self.assertEqual(actual.options_tts_by_spv, options_tts_by_spn_spv)
-        self.assertEqual(actual.options_tts_by_hashtag, options_tts_by_hashtag)
+        self.assertEqual(actual.options_tts_by_spv, options_tts_by_spv)
         self.assertEqual(actual.options_tts_by_hashtag_year, options_tts_by_hashtag_year)
-        self.assertEqual(actual.options_tts_by_efs, options_tts_by_efs)
-        self.assertEqual(actual.options_tts_by_tr, options_tts_by_tr)
-        self.assertEqual(actual.options_tts_gantt_spnv, options_tts_gantt_spnv)
-        self.assertEqual(actual.options_tts_gantt_hseq, options_tts_gantt_hseq)
+        self.assertEqual(actual.options_tts_by_hashtag, options_tts_by_hashtag)
+        self.assertEqual(actual.options_tts_by_year_month_spnv, options_tts_by_year_month_spnv)
+        self.assertEqual(actual.options_tts_by_timeranges, options_tts_by_timeranges)
         self.assertEqual(actual.options_definitions, options_definitions)
         self.assertEqual(actual.excel_nrows, excel_nrows)
-        self.assertEqual(actual.tts_by_year_month_spnv_display_only_spn, tts_by_year_month_spnv_display_only_spn)
-        self.assertEqual(actual.tts_by_year_spnv_display_only_spn, tts_by_year_spnv_display_only_spn)
-        self.assertEqual(actual.tts_by_spn_spv_display_only_spn, tts_by_spn_spv_display_only_spn)
 
+        self.assertEqual(actual.options_ttd_effort_status, options_ttd_effort_status)
         self.assertEqual(actual.working_folder_path, working_folder_path)
         self.assertEqual(actual.excel_path, excel_path)
         self.assertEqual(actual.excel_skiprows, excel_skiprows)
         self.assertEqual(actual.excel_tabname, excel_tabname)
         self.assertEqual(actual.years, years)
-        self.assertEqual(actual.yearly_targets, yearly_targets)
         self.assertEqual(actual.now, now)
-        self.assertEqual(actual.tts_by_spn_software_project_names, software_project_names)
-        self.assertEqual(actual.tts_by_spv_software_project_names, software_project_names_by_spv)
-        self.assertEqual(actual.tt_head_n, tt_head_n)
-        self.assertEqual(actual.tt_display_head_n_with_tail, tt_display_head_n_with_tail)
-        self.assertEqual(actual.tt_hide_index, tt_hide_index)
-        self.assertEqual(actual.tts_by_month_effort_highlight, tts_by_month_effort_highlight)
-        self.assertEqual(actual.tts_by_month_effort_highlight_mode, tts_by_month_effort_highlight_mode)
-        self.assertEqual(actual.tts_by_year_effort_highlight, tts_by_year_effort_highlight)
-        self.assertEqual(actual.tts_by_year_effort_highlight_mode, tts_by_year_effort_highlight_mode)
-        self.assertEqual(actual.tts_by_year_effort_highlight_column_names, tts_by_year_effort_highlight_column_names)
-        self.assertEqual(actual.tts_by_year_month_display_only_years, tts_by_year_month_display_only_years)
-        self.assertEqual(actual.tts_by_year_month_effort_highlight, tts_by_year_month_effort_highlight)
-        self.assertEqual(actual.tts_by_year_month_effort_highlight_mode, tts_by_year_month_effort_highlight_mode)
-        self.assertEqual(actual.tts_by_year_month_effort_highlight_column_names, tts_by_year_month_effort_highlight_column_names)
-        self.assertEqual(actual.tts_by_year_month_spnv_formatters, tts_by_year_month_spnv_formatters)
-        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight, tts_by_year_month_spnv_effort_highlight)
-        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_mode, tts_by_year_month_spnv_effort_highlight_mode)
-        self.assertEqual(actual.tts_by_year_month_spnv_effort_highlight_column_names, tts_by_year_month_spnv_effort_highlight_column_names)
-        self.assertEqual(actual.tts_by_year_spnv_formatters, tts_by_year_spnv_formatters)
-        self.assertEqual(actual.tts_by_year_spnv_effort_highlight, tts_by_year_spnv_effort_highlight)
-        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_mode, tts_by_year_spnv_effort_highlight_mode)
-        self.assertEqual(actual.tts_by_year_spnv_effort_highlight_column_names, tts_by_year_spnv_effort_highlight_column_names)
-        self.assertEqual(actual.tts_by_spn_formatters, tts_by_spn_formatters)
-        self.assertEqual(actual.tts_by_spn_remove_untagged, tts_by_spn_remove_untagged)
-        self.assertEqual(actual.tts_by_spn_effort_highlight, tts_by_spn_effort_highlight)
-        self.assertEqual(actual.tts_by_spn_effort_highlight_mode, tts_by_spn_effort_highlight_mode)
-        self.assertEqual(actual.tts_by_spn_effort_highlight_column_names, tts_by_spn_effort_highlight_column_names)
+        self.assertEqual(actual.tts_by_spn_software_project_names, tts_by_spn_software_project_names)
+        self.assertEqual(actual.tts_by_spv_software_project_names, tts_by_spv_software_project_names)
         self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)
-        self.assertEqual(actual.tts_by_hashtag_year_enable_pivot, tts_by_hashtag_year_enable_pivot)
-        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight_mode, tts_by_hashtag_year_effort_highlight_mode)
-        self.assertEqual(actual.tts_by_hashtag_year_effort_highlight, tts_by_hashtag_year_effort_highlight)
-        self.assertEqual(actual.tts_by_efs_is_correct, tts_by_efs_is_correct)
-        self.assertEqual(actual.tts_by_efs_n, tts_by_efs_n)
-        self.assertEqual(actual.tts_by_tr_unknown_id, tts_by_tr_unknown_id)
-        self.assertEqual(actual.tts_by_tr_remove_unknown_occurrences, tts_by_tr_remove_unknown_occurrences)
-        self.assertEqual(actual.tts_by_tr_filter_by_top_n, tts_by_tr_filter_by_top_n)
-        self.assertEqual(actual.tts_by_tr_head_n, tts_by_tr_head_n)
-        self.assertEqual(actual.tts_by_tr_display_head_n_with_tail, tts_by_tr_display_head_n_with_tail)
-        self.assertEqual(actual.tts_gantt_spnv_spns, tts_gantt_spnv_spns)
-        self.assertEqual(actual.tts_gantt_spnv_criteria, tts_gantt_spnv_criteria)
-        self.assertEqual(actual.tts_gantt_spnv_months, tts_gantt_spnv_months)
-        self.assertEqual(actual.tts_gantt_spnv_min_duration, tts_gantt_spnv_min_duration)
-        self.assertEqual(actual.tts_gantt_spnv_fig_size, tts_gantt_spnv_fig_size)
-        self.assertEqual(actual.tts_gantt_spnv_title, tts_gantt_spnv_title)
-        self.assertEqual(actual.tts_gantt_spnv_x_label, tts_gantt_spnv_x_label)
-        self.assertEqual(actual.tts_gantt_spnv_y_label, tts_gantt_spnv_y_label)
-        self.assertEqual(actual.tts_gantt_spnv_formatters, tts_gantt_spnv_formatters)
-        self.assertEqual(actual.tts_gantt_hseq_hashtags, tts_gantt_hseq_hashtags)
-        self.assertEqual(actual.tts_gantt_hseq_criteria, tts_gantt_hseq_criteria)
-        self.assertEqual(actual.tts_gantt_hseq_months, tts_gantt_hseq_months)
-        self.assertEqual(actual.tts_gantt_hseq_min_duration, tts_gantt_hseq_min_duration)
-        self.assertEqual(actual.tts_gantt_hseq_fig_size, tts_gantt_hseq_fig_size)
-        self.assertEqual(actual.tts_gantt_hseq_title, tts_gantt_hseq_title)
-        self.assertEqual(actual.tts_gantt_hseq_x_label, tts_gantt_hseq_x_label)
-        self.assertEqual(actual.tts_gantt_hseq_y_label, tts_gantt_hseq_y_label)
-        self.assertEqual(actual.tts_gantt_hseq_formatters, tts_gantt_hseq_formatters)
-        self.assertEqual(actual.effort_highlighter_tags, effort_highlighter_tags)
+        self.assertEqual(actual.tts_by_timeranges_min_occurrences, tts_by_timeranges_min_occurrences)
+        self.assertEqual(actual.tts_by_timeranges_formatters, tts_by_timeranges_formatters)
+        self.assertEqual(actual.ttd_effort_status_is_correct, ttd_effort_status_is_correct)
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1367,162 +882,6 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected_td, actual_td)
-
-    def test_calculatepercentage_shouldreturnexpectedfloat_when0and16(self):
-
-        # Arrange
-        part : float = 0
-        whole : float = 16
-        rounding_digits : int = 2
-        expected : float = 0.00
-        
-        # Act
-        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_calculatepercentage_shouldreturnexpectedfloat_when4and0(self):
-
-        # Arrange
-        part : float = 4
-        whole : float = 0
-        rounding_digits : int = 2
-        expected : float = 0.00
-        
-        # Act
-        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
-
-        # Assert
-        self.assertEqual(expected, actual)        
-    def test_calculatepercentage_shouldreturnexpectedfloat_when4and16(self):
-
-        # Arrange
-        part : float = 4
-        whole : float = 16
-        rounding_digits : int = 2
-        expected : float = 25.00
-        
-        # Act
-        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_calculatepercentage_shouldreturnexpectedfloat_when16and16(self):
-
-        # Arrange
-        part : float = 16
-        whole : float = 16
-        rounding_digits : int = 2
-        expected : float = 100.00
-        
-        # Act
-        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
-
-        # Assert
-        self.assertEqual(expected, actual)        
-    def test_calculatepercentage_shouldreturnexpectedfloat_when3and9and4(self):
-
-        # Arrange
-        part : float = 3
-        whole : float = 9
-        rounding_digits : int = 4
-        expected : float = 33.3333
-        
-        # Act
-        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    def test_getyearlytarget_shouldreturnexpectedhours_whenyearinlist(self):
-
-        # Arrange
-        yearly_targets : list[YearlyTarget] = ObjectMother.get_yearly_targets()
-        year : int = 2024
-        expected_hours : timedelta = timedelta(hours = 250)
-
-        # Act
-        actual_hours : timedelta = cast(YearlyTarget, self.df_helper.get_yearly_target(yearly_targets = yearly_targets, year = year)).hours
-
-        # Assert
-        self.assertEqual(expected_hours, actual_hours)
-    def test_getyearlytarget_shouldreturnnone_whenyearnotinlist(self):
-
-        # Arrange
-        yearly_targets : list[YearlyTarget] = ObjectMother.get_yearly_targets()
-        year : int = 2010
-
-        # Act
-        yearly_target : Optional[YearlyTarget] = self.df_helper.get_yearly_target(yearly_targets = yearly_targets, year = year)
-
-        # Assert
-        self.assertIsNone(yearly_target)
-    def test_isyearlytargetmet_shouldreturntrue_whenyearlytargetismet(self):
-
-        # Arrange
-        effort : timedelta = pd.Timedelta(hours = 255, minutes = 30)
-        yearly_target : timedelta = pd.Timedelta(hours = 250)
-
-        # Act
-        actual : bool = self.df_helper.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
-        
-        # Assert
-        self.assertTrue(actual)
-    def test_isyearlytargetmet_shouldreturnfalse_whenyearlytargetisnotmet(self):
-
-        # Arrange
-        effort : timedelta = pd.Timedelta(hours = 249)
-        yearly_target : timedelta = pd.Timedelta(hours = 250)
-
-        # Act
-        actual : bool = self.df_helper.is_yearly_target_met(effort = effort, yearly_target = yearly_target)
-
-        # Assert
-        self.assertFalse(actual)
-    def test_extractsoftwareprojectname_shouldreturnexpectedstring_whenproperstring(self):
-
-        # Arrange
-        descriptor : str = "NW.AutoProffLibrary v1.0.0"
-        expected : str = "NW.AutoProffLibrary"
-
-        # Act
-        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_extractsoftwareprojectname_shouldreturnerrorstring_whenunproperstring(self):
-
-        # Arrange
-        descriptor : str = "Some gibberish"
-        expected : str = "ERROR"
-
-        # Act
-        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
-
-        # Assert
-        self.assertEqual(expected, actual)   
-    def test_extractsoftwareprojectversion_shouldreturnexpectedstring_whenproperstring(self):
-
-        # Arrange
-        descriptor : str = "NW.AutoProffLibrary v1.0.0"
-        expected : str = "1.0.0"
-
-        # Act
-        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
-
-        # Assert
-        self.assertEqual(expected, actual)
-    def test_extractsoftwareprojectversion_shouldreturnerrorstring_whenunproperstring(self):
-
-        # Arrange
-        descriptor : str = "Some gibberish"
-        expected : str = "ERROR"
-
-        # Act
-        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
-
-        # Assert
-        self.assertEqual(expected, actual)
 
     @parameterized.expand([
         "07:00", "07:15", "07:30", "07:45", 
@@ -1594,25 +953,6 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertTrue(expected_message in str(context.exception))
-
-    @parameterized.expand([
-        ["07:00", "08:00", "UNKNOWN", "07:00-08:00"],
-        ["", "08:00", "UNKNOWN", "UNKNOWN"],
-        ["07:00", "", "UNKNOWN", "UNKNOWN"]
-    ])
-    def test_createtimerangeid_shouldreturnexpectedtimerangeid_wheninvoked(
-            self,
-            start_time : str, 
-            end_time : str, 
-            unknown_id : str,
-            expected : str):
-
-        # Arrange
-        # Act
-        actual : str = self.df_helper.create_time_range_id(start_time = start_time, end_time = end_time, unknown_id = unknown_id)
-
-        # Assert
-        self.assertEqual(expected, actual)
 
     def test_createeffortstatus_shouldreturnexpectobject_wheneffortiscorrect(self):
 
@@ -1826,6 +1166,131 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
         # Assert
         self.assertTrue(TTCN.EFFORTSTATUS in df.columns)
 
+    def test_calculatepercentage_shouldreturnexpectedfloat_when0and16(self):
+
+        # Arrange
+        part : float = 0
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 0.00
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_calculatepercentage_shouldreturnexpectedfloat_when4and0(self):
+
+        # Arrange
+        part : float = 4
+        whole : float = 0
+        rounding_digits : int = 2
+        expected : float = 0.00
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)        
+    def test_calculatepercentage_shouldreturnexpectedfloat_when4and16(self):
+
+        # Arrange
+        part : float = 4
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 25.00
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_calculatepercentage_shouldreturnexpectedfloat_when16and16(self):
+
+        # Arrange
+        part : float = 16
+        whole : float = 16
+        rounding_digits : int = 2
+        expected : float = 100.00
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)        
+    def test_calculatepercentage_shouldreturnexpectedfloat_when3and9and4(self):
+
+        # Arrange
+        part : float = 3
+        whole : float = 9
+        rounding_digits : int = 4
+        expected : float = 33.3333
+        
+        # Act
+        actual : float = self.df_helper.calculate_percentage(part = part, whole = whole, rounding_digits = rounding_digits)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_extractsoftwareprojectname_shouldreturnexpectedstring_whenproperstring(self):
+
+        # Arrange
+        descriptor : str = "NW.AutoProffLibrary v1.0.0"
+        expected : str = "NW.AutoProffLibrary"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectname_shouldreturnerrorstring_whenunproperstring(self):
+
+        # Arrange
+        descriptor : str = "Some gibberish"
+        expected : str = "ERROR"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_name(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)   
+    def test_extractsoftwareprojectversion_shouldreturnexpectedstring_whenproperstring(self):
+
+        # Arrange
+        descriptor : str = "NW.AutoProffLibrary v1.0.0"
+        expected : str = "1.0.0"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_extractsoftwareprojectversion_shouldreturnerrorstring_whenunproperstring(self):
+
+        # Arrange
+        descriptor : str = "Some gibberish"
+        expected : str = "ERROR"
+
+        # Act
+        actual : str = self.df_helper.extract_software_project_version(descriptor = descriptor)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ["07:00", "08:00", "07:00-08:00"],
+        ["", "08:00", "UNKNOWN"],
+        ["07:00", "", "UNKNOWN"]
+    ])
+    def test_createtimerangeid_shouldreturnexpectedtimerangeid_wheninvoked(self, start_time : str, end_time : str, expected : str):
+
+        # Arrange
+        # Act
+        actual : str = self.df_helper.create_time_range_id(start_time = start_time, end_time = end_time)
+
+        # Assert
+        self.assertEqual(expected, actual)
+
     @parameterized.expand([
         (2024, True),
         (1000, True),
@@ -1858,85 +1323,11 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        [["Month", "2015"], True],
-        [["Month", "2015", "↕", "2016"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"], True],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕", "2022"], True],
-        [[], False],
-        [["Month"], False],
-        [["Month", "2015", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"], False],
-        [["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021", "↕"], False],
-        [["Month", "↕"], False],
-        [["Month", "↕", "↕"], False],
-        [["Month", "2015", "2015"], False],
-        [["Month", "2015", "↕", "↕"], False]
-    ])
-    def test_isbym_shouldreturnexpectedbool_wheninvoked(self, column_list : list[str], expected : bool) -> None:
-        
-        # Arrange
-        # Act
-        actual : bool = self.df_helper.is_bym(column_list = column_list) # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    def test_unboxbymcolumnlist_shouldrenamecolumnnamesprogressively_wheninvoked(self) -> None:
-
-        # Arrange
-        boxed_data : dict[str, list[Any]] = {
-            TTCN.MONTH: [1, 2],
-            "2015": [100, 200],
-            TTCN.TREND: ["↑", "↓"],
-            "2016": [500, 600],
-            TTCN.TREND: ["=", "↑"],
-            "2017": [900, 1000]
-        }
-        boxed_columns : list[str] = [TTCN.MONTH, "2015", TTCN.TREND, "2016", TTCN.TREND, "2017"]
-        boxed_df : DataFrame = DataFrame(boxed_data, columns = boxed_columns)
-
-        expected : list[str] = [TTCN.MONTH, "2015", f"{TTCN.TREND}1", "2016", f"{TTCN.TREND}2", "2017"]
-
-        # Act
-        actual : DataFrame = self.df_helper.unbox_bym_column_list(df = boxed_df)
-
-        # Assert
-        self.assertEqual(list(actual.columns), expected)
-    def test_boxbymcolumnlist_shouldrevertcolumnnames_wheninvoked(self) -> None:
-
-        # Arrange
-        unboxed_data : dict[str, list[Any]] = {
-            TTCN.MONTH: [1, 2],
-            "2015": [100, 200],
-            f"{TTCN.TREND}1": ["↑", "↓"],
-            "2016": [500, 600],
-            f"{TTCN.TREND}2": ["=", "↑"],
-            "2017": [900, 1000]
-        }
-        unboxed_columns : list[str] = [TTCN.MONTH, "2015", f"{TTCN.TREND}1", "2016", f"{TTCN.TREND}2", "2017"]
-        unboxed_df : DataFrame = DataFrame(unboxed_data, columns = unboxed_columns)
-
-        expected : list[str] = [TTCN.MONTH, "2015", TTCN.TREND, "2016", TTCN.TREND, "2017"]
-
-        # Act
-        actual : DataFrame = self.df_helper.box_bym_column_list(df = unboxed_df)
-
-        # Assert
-        self.assertEqual(list(actual.columns), expected)
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
         self.df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
+    
     def test_createttdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1963,7 +1354,9 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         self.assertEqual(expected_dtype_names, SupportMethodProvider().get_dtype_names(df = actual))
         self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
-        self.assertEqual(expected_nan, actual[expected_column_names[5]][0])
+        self.assertEqual(expected_nan, actual[expected_column_names[5]][0])    
+    def test_createttlatestfivedf_shouldreturnexpecteddataframe_wheninvoked(self): pass #TBD
+    def test_createttsbymonthtpl_shouldreturnexpecteddataframe_wheninvoked(self): pass #TBD
     def test_createttsbyyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1975,138 +1368,50 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-    def test_createttsbyyearmonthtpl_shouldreturnexpectedtuple_wheninvoked(self):
+    def test_createttsbyrangedf_shouldreturnexpecteddataframe_wheninvoked(self): pass #TBD
+    def test_createttsbyspndf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        years : list[int] = [2024]
-        yearly_targets : list[YearlyTarget] = [ YearlyTarget(year = 2024, hours = timedelta(hours = 250)) ]
+        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
         tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_month_tpl()
+        expected_df : DataFrame = ObjectMother().get_tts_by_spn_df()
 
         # Act
-        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_year_month_tpl(
+        actual_df : DataFrame  = self.df_factory.create_tts_by_spn_df(
             tt_df = tt_df, 
-            years = years, 
-            yearly_targets = yearly_targets,
-            display_only_years = years
+            software_project_names = software_project_names
         )
 
         # Assert
-        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
-        assert_frame_equal(expected_tpl[1] , actual_tpl[1])
-    def test_createttsbyyearmonthspnvtpl_shouldreturnexpectedtuple_wheninvoked(self):
+        assert_frame_equal(expected_df , actual_df) 
+    def test_createttsbyspvdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        years : list[int] = [2024]
         software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
         tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_month_spnv_tpl()
-
-        # Act
-        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_year_month_spnv_df(
-            tt_df = tt_df, 
-            years = years, 
-            software_project_names = software_project_names,
-            software_project_name = software_project_names[0]
-        )
-
-        # Assert
-        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
-        assert_frame_equal(expected_tpl[1] , actual_tpl[1])
-    def test_createttsbyyearspnvtpl_shouldreturnexpectedtuple_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_tpl : Tuple[DataFrame, DataFrame] = ObjectMother().get_tts_by_year_spnv_tpl()
-
-        # Act
-        actual_tpl : Tuple[DataFrame, DataFrame]  = self.df_factory.create_tts_by_year_spnv_tpl(
-            tt_df = tt_df, 
-            years = years, 
-            software_project_names = software_project_names,
-            software_project_name = software_project_names[0]
-            )
-
-        # Assert
-        assert_frame_equal(expected_tpl[0] , actual_tpl[0])
-        assert_frame_equal(expected_tpl[1] , actual_tpl[1])    
-    def test_createttsbyspnspvdf_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        years : list[int] = [2024]
-        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
-        tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_df : DataFrame = ObjectMother().get_tts_by_spn_spv_df()
+        expected_df : DataFrame = ObjectMother().get_tts_by_spv_df()
 
         # Act
         actual_df : DataFrame  = self.df_factory.create_tts_by_spv_df(
             tt_df = tt_df, 
-            years = years, 
             software_project_names = software_project_names
         )
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-    def test_createttsbytrdf_shouldreturnexpecteddataframe_wheninvoked(self):
-
-        # Arrange
-        unknown_id : str = "Unknown"
-        remove_unknown_occurrences : bool = True
-        tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_df : DataFrame = ObjectMother().get_tts_by_tr_df()
-        expected_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
-        expected_df.reset_index(drop = True, inplace = True)
-
-        # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_timeranges_df(
-            tt_df = tt_df, 
-            unknown_id = unknown_id, 
-            remove_unknown_occurrences = remove_unknown_occurrences
-        )
-        actual_df.sort_values(by = "TimeRangeId", ascending = True, inplace = True)
-        actual_df.reset_index(drop = True, inplace = True)
-
-        # Assert
-        assert_frame_equal(expected_df, actual_df)  
-    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_whenenablepivotisfalse(self):
+    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
         tt_df : DataFrame = ObjectMother().get_tt_df()
-        years : list[int] = [2024]
-        enable_pivot : bool = False
         expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_year_df()
 
         # Act
         actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(
-            tt_df = tt_df, 
-            years = years, 
-            enable_pivot = enable_pivot
+            tt_df = tt_df
         )
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-    def test_createttsbyhashtagyeardf_shouldreturnexpecteddataframe_whenenablepivotistrue(self):
-
-        # Arrange
-        tt_df : DataFrame = ObjectMother().get_tt_df()
-        years : list[int] = [2024]
-        enable_pivot : bool = True
-
-        expected_df : DataFrame = ObjectMother().get_tts_by_hashtag_year_df()
-        expected_df = expected_df.pivot(index = TTCN.HASHTAG, columns = TTCN.YEAR, values = TTCN.EFFORT).reset_index()
-        expected_df = expected_df.fillna("")
-
-        # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_hashtag_year_df(
-            tt_df = tt_df, 
-            years = years, 
-            enable_pivot = enable_pivot
-        )
-
-        # Assert
-        assert_frame_equal(expected_df , actual_df)  
     def test_createttsbyhashtagdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -2118,30 +1423,42 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-
-    @parameterized.expand([
-        [True],
-        [False]
-    ])
-    def test_createttsbyspndf_shouldreturnexpecteddataframe_wheninvoked(self, remove_untagged : bool):
+    def test_createttsbyyearmonthspnvdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        years : list[int] = [2024]
         software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
         tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_df : DataFrame = ObjectMother().get_tts_by_spn_df()
+        expected : DataFrame = ObjectMother().get_tts_by_year_month_spnv_df()
 
         # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_spn_df(
-            tt_df = tt_df, 
-            years = years, 
-            software_project_names = software_project_names, 
-            remove_untagged = remove_untagged
+        actual : DataFrame = self.df_factory.create_tts_by_year_month_spnv_df(
+            tt_df = tt_df,
+            software_project_names = software_project_names
         )
 
         # Assert
-        assert_frame_equal(expected_df , actual_df) 
+        assert_frame_equal(expected, actual)
+    def test_createttsbytimerangesdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
+        # Arrange
+        min_occurrences : int = 10
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+
+        expected_df : DataFrame = ObjectMother().get_tts_by_timeranges_df()
+        expected_df.sort_values(by = "TimeRanges", ascending = True, inplace = True)
+        expected_df.reset_index(drop = True, inplace = True)
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_timeranges_df(
+            tt_df = tt_df, 
+            min_occurrences = min_occurrences
+        )
+        actual_df.sort_values(by = "TimeRanges", ascending = True, inplace = True)
+        actual_df.reset_index(drop = True, inplace = True)
+
+        # Assert
+        assert_frame_equal(expected_df, actual_df)
+    def test_createttdeffortstatusdf_shouldreturnexpecteddataframe_wheninvoked(self): pass #TBD
     def test_createdefinitionsdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -2152,195 +1469,6 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-class SettingSubsetTestCase(unittest.TestCase):
-
-    def setUp(self) -> None:
-	
-        self.working_folder_path : str = "/home/nwtimetracking/"
-        self.excel_skiprows : int = 0
-		
-        self.subset : SettingSubset = SettingSubset(
-            working_folder_path = self.working_folder_path,
-            excel_skiprows = self.excel_skiprows
-        )
-    def test_init_shouldassignproperties_wheninvoked(self) -> None:
-
-		# Arrange
-		# Act
-        # Assert
-        self.assertEqual(self.subset.working_folder_path, self.working_folder_path)
-        self.assertEqual(self.subset.excel_skiprows, self.excel_skiprows)
-        self.assertIsInstance(self.subset.working_folder_path, str)
-        self.assertIsInstance(self.subset.excel_skiprows, int)
-    def test_str_shouldreturnexpectedstring_wheninvoked(self) -> None:
-
-        # Arrange
-        expected : str = json.dumps({
-            "working_folder_path": self.working_folder_path,
-            "excel_skiprows": self.excel_skiprows
-        })
-
-        # Act
-        actual_str : str = str(self.subset)
-        actual_repr : str = repr(self.subset)
-
-        # Assert
-        self.assertEqual(actual_str, expected)
-        self.assertEqual(actual_repr, expected)
-class TTLoggerTestCase(unittest.TestCase):
-
-    def setUp(self) -> None:
-
-        self.definitions_df : DataFrame = ObjectMother().get_definitions_df()
-        self.setting_bag : SettingBag = ObjectMother().get_setting_bag()
-    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
-
-        # Arrange
-        logging_function : Callable[[str], None] = LambdaProvider().get_default_logging_function()
-
-        # Act
-        actual : TTLogger = TTLogger(logging_function = logging_function)
-
-        # Assert
-        self.assertEqual(actual._TTLogger__logging_function, logging_function)      # type: ignore
-        self.assertIsInstance(actual._TTLogger__logging_function, FunctionType)     # type: ignore
-
-    @parameterized.expand([
-        (TTCN.DME, "Total Development Monthly Effort"),
-        (TTCN.TME, "Total Monthly Effort")
-    ])
-    def test_trylogcolumndefinitions_shouldlogdefinitions_whencolumnnamesmatch(self, column_name : str, definition : str) -> None:
-
-        # Arrange
-        logging_function : Mock = Mock()
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
-        df : DataFrame = DataFrame(columns = [column_name, "SomeColumn"])
-
-        # Act
-        tt_logger.try_log_column_definitions(df = df, definitions = self.definitions_df)
-
-        # Assert
-        logging_function.assert_any_call(f"{column_name}: {definition}")
-
-    @parameterized.expand([
-        (["SomeColumn", "SomeOtherColumn"], 0)
-    ])
-    def test_trylogcolumndefinitions_shouldnotlogdefinitions_whennomatchingcolumns(self, columns : list[str], expected_call_count : int) -> None:
-
-        # Arrange
-        logging_function : Mock = Mock()
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
-        df : DataFrame = DataFrame(columns = columns)
-
-        # Act
-        tt_logger.try_log_column_definitions(df = df, definitions = self.definitions_df)
-
-        # Assert
-        self.assertEqual(logging_function.call_count, expected_call_count)
-
-    @parameterized.expand([
-        (TTCN.DME, "Total Development Monthly Effort"),
-        (TTCN.TME, "Total Monthly Effort")
-    ])
-    def test_trylogtermdefinition_shouldlogdefinition_whenmatchingtermexists(self, term : str, definition : str) -> None:
-
-        # Arrange
-        logging_function : Mock = Mock()
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
-
-        # Act
-        tt_logger.try_log_term_definition(term = term, definitions = self.definitions_df)
-
-        # Assert
-        logging_function.assert_any_call(f"{term}: {definition}")
-
-    @parameterized.expand([
-        ("NonExistentTerm", 0)
-    ])
-    def test_trylogtermdefinition_shouldnotlogdefinition_whenmatchingtermdoesnotexist(self, term : str, expected_call_count : int) -> None:
-
-        # Arrange
-        logging_function : Mock = Mock()
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
-
-        # Act
-        tt_logger.try_log_term_definition(term = term, definitions = self.definitions_df)
-
-        # Assert
-        self.assertEqual(logging_function.call_count, expected_call_count)
-
-    def test_createsettingsubset_shouldreturnsubsetwithmatchingproperties_whenidsprovided(self) -> None:
-        
-        # Arrange
-        logging_function : Mock = Mock()
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
-        setting_names : list[str] = ["working_folder_path"]
-
-        # Act
-        actual : SettingSubset = tt_logger._TTLogger__create_setting_subset(setting_bag = self.setting_bag, setting_names = setting_names) # type: ignore
-
-        # Assert
-        self.assertIsInstance(actual, SettingSubset)
-        self.assertEqual(actual.working_folder_path, self.setting_bag.working_folder_path)
-        with self.assertRaises(AttributeError):
-            _ = actual.excel_skiprows
-    def test_trylogsettings_shouldlogsubset_whenidsprovided(self) -> None:
-        
-        # Arrange
-        messages : list[str] = []
-        logging_function : Callable[[str], None] = lambda msg : messages.append(msg)
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
-        setting_names : list[str] = ["working_folder_path"]
-
-        # Act
-        tt_logger.try_log_settings(setting_bag = self.setting_bag, setting_names = setting_names)
-
-        # Assert
-        self.assertEqual(len(messages), 1)
-        self.assertIn(self.setting_bag.working_folder_path, messages[0])
-    def test_trylogsettings_shouldnotloganything_whenidsisempty(self) -> None:
-        
-        # Arrange
-        messages : list[str] = []
-        logging_function : Callable[[str], None] = lambda msg : messages.append(msg)
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)        
-        setting_names : list[str] = []
-
-        # Act
-        tt_logger.try_log_settings(setting_bag = self.setting_bag, setting_names = setting_names)
-
-        # Assert
-        self.assertEqual(len(messages), 0)
-
-    @parameterized.expand([
-        ("Some message")
-    ])
-    def test_log_shouldlogmessage_whenmessageisprovided(self, msg : str) -> None:
-
-        # Arrange
-        logging_function : Mock = Mock()
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
-
-        # Act
-        tt_logger.log(msg = msg)
-
-        # Assert
-        logging_function.assert_called_once_with(msg)
-
-    @parameterized.expand([
-        ("")
-    ])
-    def test_log_shouldnotlogmessage_whenmessageisempty(self, msg : str) -> None:
-
-        # Arrange
-        logging_function : Mock = Mock()
-        tt_logger : TTLogger = TTLogger(logging_function = logging_function)
-
-        # Act
-        tt_logger.log(msg = msg)
-
-        # Assert
-        logging_function.assert_not_called()
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
@@ -2351,21 +1479,15 @@ class ComponentBagTestCase(unittest.TestCase):
             file_path_manager = FilePathManager(),
             file_manager = FileManager(file_path_manager = FilePathManager()),
             displayer = Displayer(),
-            tt_logger = TTLogger(logging_function = LambdaProvider().get_default_logging_function()),
-            tt_adapter = TTAdapterLegacy(
-                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()), 
-                bym_factory = BYMFactory(df_helper = TTDataFrameHelper()),
-                bym_splitter = BYMSplitter(df_helper = TTDataFrameHelper()),
-                tt_sequencer = TTSequencer(df_helper = TTDataFrameHelper()),
-                effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
+            tt_adapter = TTAdapter(
+                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
             ))
 
         # Assert
         self.assertIsInstance(component_bag.file_path_manager, FilePathManager)
         self.assertIsInstance(component_bag.file_manager, FileManager)
         self.assertIsInstance(component_bag.displayer, Displayer)
-        self.assertIsInstance(component_bag.tt_logger, TTLogger)
-        self.assertIsInstance(component_bag.tt_adapter, TTAdapterLegacy)
+        self.assertIsInstance(component_bag.tt_adapter, TTAdapter)
 class TimeTrackingProcessorTestCase(unittest.TestCase):
 
     def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -2401,13 +1523,43 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             hide_index = True,
             formatters = None
         )
+    def test_processttlatestfive_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tt_latest_five_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tt_latest_five_df = tt_latest_five_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_year_month = [OPTION.display]    # type: ignore
+
+        # Act
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()        
+        tt_processor.process_tt_latest_five()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            obj = tt_latest_five_df,
+            hide_index = True, 
+            formatters = None
+        )
     def test_processttsbymonth_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_month_styler : DataFrame = Mock()
+        tts_by_month_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_month_styler = tts_by_month_styler
+        summary.tts_by_month_df = tts_by_month_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -2427,17 +1579,17 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            obj = tts_by_month_styler, 
+            obj = tts_by_month_df, 
             hide_index = True, 
             formatters = None
         )
     def test_processttsbyyear_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_year_styler : DataFrame = Mock()
+        tts_by_year_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_year_styler = tts_by_year_styler
+        summary.tts_by_year_df = tts_by_year_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -2457,78 +1609,17 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            obj = tts_by_year_styler,
+            obj = tts_by_year_df,
             hide_index = True,
             formatters = None
-        )
-    def test_processttsbyyearmonth_shoulddisplay_whenoptionisdisplay(self) -> None:
+        )    
+    def test_processttsbyrange_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_year_month_styler : DataFrame = Mock()
+        tts_by_range_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_year_month_styler = tts_by_year_month_styler
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_month = [OPTION.display]    # type: ignore
-
-        # Act
-        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()        
-        tt_processor.process_tts_by_year_month()
-
-        # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_year_month_styler,
-            hide_index = True, 
-            formatters = None
-        )
-    def test_processttsbyyearmonthspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
-        
-        # Arrange
-        tts_by_year_month_spnv_styler : DataFrame = Mock()
-
-        summary : Mock = Mock()
-        summary.tts_by_year_month_spnv_styler = tts_by_year_month_spnv_styler
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_month_spnv = [OPTION.display]   # type: ignore
-        setting_bag.tts_by_year_month_spnv_formatters = {"%_DME": "{:.2f}", "%_TME": "{:.2f}"}
-
-        # Act
-        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()        
-        tt_processor.process_tts_by_year_month_spnv()
-
-        # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_year_month_spnv_styler,
-            hide_index = True, 
-            formatters = setting_bag.tts_by_year_month_spnv_formatters
-        )
-    def test_processttsbyyearspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
-        
-        # Arrange
-        tts_by_year_spnv_styler : DataFrame = Mock()
-
-        summary : Mock = Mock()
-        summary.tts_by_year_spnv_styler = tts_by_year_spnv_styler
+        summary.tts_by_year_spnv_styler = tts_by_range_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -2539,29 +1630,26 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
         
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_spnv = [OPTION.display]     # type: ignore
-        setting_bag.tts_by_year_spnv_formatters = {"%_DYE": "{:.2f}", "%_TYE": "{:.2f}"}
+        setting_bag.options_tts_by_range = [OPTION.display]     # type: ignore
 
         # Act
         processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         processor.initialize()        
-        processor.process_tts_by_year_spnv()
+        processor.process_tts_by_range()
 
         # Assert
         displayer.display.assert_called_once_with(
-            obj = tts_by_year_spnv_styler,
+            obj = tts_by_range_df,
             hide_index = True,
-            formatters = setting_bag.tts_by_year_spnv_formatters
+            formatters = None
         )
     def test_processttsbyspn_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_spn_styler : DataFrame = Mock()
-        definitions_df : DataFrame = Mock()
+        tts_by_spn_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_spn_styler = tts_by_spn_styler
-        summary.definitions_df = definitions_df
+        summary.tts_by_spn_df = tts_by_spn_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -2573,7 +1661,6 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         setting_bag : Mock = Mock()
         setting_bag.options_tts_by_spn = [OPTION.display]   # type: ignore
-        setting_bag.tts_by_spn_formatters = {"%_DE" : "{:.2f}", "%_TE" : "{:.2f}"}
 
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2582,82 +1669,17 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(
-            obj = tts_by_spn_styler, 
-            hide_index = True, 
-            formatters = setting_bag.tts_by_spn_formatters
-        )
-    def test_processttsbyspn_shouldlog_whenoptionislog(self) -> None:
-        
-        # Arrange
-        tts_by_spn_styler : DataFrame = Mock()
-        definitions_df : DataFrame = Mock()
-
-        summary : Mock = Mock()
-        summary.tts_by_spn_styler = tts_by_spn_styler
-        summary.definitions_df = definitions_df
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-        component_bag.tt_logger.try_log_column_definitions = Mock()
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn = [OPTION.logdef]  # type: ignore
-
-        # Act, 
-        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()
-        tt_processor.process_tts_by_spn()
-
-        # Assert
-        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
-            df = tts_by_spn_styler, 
-            definitions = definitions_df)
-    def test_processttsbyspnspv_shoulddisplay_whenoptionisdisplay(self) -> None:
-        
-        # Arrange
-        tts_by_spn_spv_df : DataFrame = Mock()
-        definitions_df : DataFrame = Mock()
-
-        summary : Mock = Mock()
-        summary.tts_by_spn_spv_df = tts_by_spn_spv_df
-        summary.definitions_df = definitions_df
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn_spv = [OPTION.display]   # type: ignore
-
-        # Act
-        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()
-        tt_processor.process_tts_by_spv()
-
-        # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_spn_spv_df, 
+            obj = tts_by_spn_df, 
             hide_index = True, 
             formatters = None
         )
-    def test_processttsbyspnspv_shouldlog_whenoptionislog(self) -> None:
+    def test_processttsbyspv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_spn_spv_df : DataFrame = Mock()
-        definitions_df : DataFrame = Mock()
+        tts_by_spv_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_spn_spv_df = tts_by_spn_spv_df
-        summary.definitions_df = definitions_df
+        summary.tts_by_spn_spv_df = tts_by_spv_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -2666,20 +1688,51 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag : Mock = Mock()
         component_bag.displayer = displayer
         component_bag.tt_adapter = tt_adapter
-        component_bag.tt_logger.try_log_column_definitions = Mock()
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_spn_spv = [OPTION.logdef]  # type: ignore
+        setting_bag.options_tts_by_spv = [OPTION.display]   # type: ignore
 
-        # Act, 
+        # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()
         tt_processor.process_tts_by_spv()
 
         # Assert
-        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
-            df = tts_by_spn_spv_df, 
-            definitions = definitions_df)
+        displayer.display.assert_called_once_with(
+            obj = tts_by_spv_df, 
+            hide_index = True, 
+            formatters = None
+        )
+    def test_processttsbyhashtagyear_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        tts_by_hashtag_year_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.tts_by_hashtag_year_df = tts_by_hashtag_year_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_tts_by_hashtag_year = [OPTION.display]  # type: ignore
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_tts_by_hashtag_year()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            obj = tts_by_hashtag_year_df, 
+            hide_index = True, 
+            formatters = None
+        )
     def test_processttsbyhashtag_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -2698,7 +1751,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         setting_bag : Mock = Mock()
         setting_bag.options_tts_by_hashtag = [OPTION.display]   # type: ignore
-        setting_bag.tts_by_hashtag_formatters = {"Effort%" : "{:.2f}"}
+        setting_bag.tts_by_hashtag_formatters = { TTCN.EFFORTPERC : "{:.2f}" }
 
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -2711,44 +1764,13 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
             hide_index = True, 
             formatters = setting_bag.tts_by_hashtag_formatters
         )
-    def test_processttsbyhashtag_shouldlog_whenoptionislog(self) -> None:
+    def test_processttsbyyearmonthspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_hashtag_df : DataFrame = Mock()
-        definitions_df : DataFrame = Mock()
+        tts_by_year_month_spnv_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_hashtag_df = tts_by_hashtag_df
-        summary.definitions_df = definitions_df
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-        component_bag.tt_logger.try_log_column_definitions = Mock()
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_hashtag = [OPTION.logdef]  # type: ignore
-
-        # Act
-        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()
-        tt_processor.process_tts_by_hashtag()
-
-        # Assert
-        component_bag.tt_logger.try_log_column_definitions.assert_called_once_with(
-            df = tts_by_hashtag_df, 
-            definitions = definitions_df)
-    def test_processttsbyefs_shoulddisplay_whenoptionisdisplay(self) -> None:
-        
-        # Arrange
-        tts_by_efs_styler : DataFrame = Mock()
-
-        summary : Mock = Mock()
-        summary.tts_by_efs_styler = tts_by_efs_styler
+        summary.tts_by_year_month_spnv_df = tts_by_year_month_spnv_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -2759,26 +1781,26 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_efs = [OPTION.display]   # type: ignore
+        setting_bag.options_tts_by_year_month_spnv = [OPTION.display]   # type: ignore
 
         # Act
-        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()
-        tt_processor.process_tts_by_efs()
+        tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()        
+        tt_processor.process_tts_by_year_month_spnv()
 
         # Assert
         displayer.display.assert_called_once_with(
-            obj = tts_by_efs_styler, 
+            obj = tts_by_year_month_spnv_df,
             hide_index = True, 
             formatters = None
         )
-    def test_processttsbytr_shoulddisplay_whenoptionisdisplay(self) -> None:
+    def test_processttsbytimeranges_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tts_by_tr_styler : DataFrame = Mock()
+        tts_by_timeranges_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_tr_styler = tts_by_tr_styler
+        summary.tts_by_timeranges_df = tts_by_timeranges_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -2789,134 +1811,50 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_tr = [OPTION.display]    # type: ignore
-        setting_bag.tts_by_tr_head_n = uint(10)
+        setting_bag.options_tts_by_timeranges = [OPTION.display]    # type: ignore
+        setting_bag.tts_by_timeranges_formatters = { TTCN.OCCURRENCEPERC : "{:.2f}" }
 
         # Act
         tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()
-        tt_processor.process_tts_by_tr()
+        tt_processor.process_tts_by_timeranges()
 
         # Assert
         displayer.display.assert_called_once_with(
-            obj = tts_by_tr_styler,
+            obj = tts_by_timeranges_df,
             hide_index = True, 
+            formatters = setting_bag.tts_by_timeranges_formatters
+        )
+    def test_processttdeffortstatus_shoulddisplay_whenoptionisdisplay(self) -> None:
+        
+        # Arrange
+        ttd_effort_status_df : DataFrame = Mock()
+
+        summary : Mock = Mock()
+        summary.ttd_effort_status_df = ttd_effort_status_df
+
+        displayer : Mock = Mock()
+        tt_adapter : Mock = Mock()
+        tt_adapter.create_summary.return_value = summary
+
+        component_bag : Mock = Mock()
+        component_bag.displayer = displayer
+        component_bag.tt_adapter = tt_adapter
+
+        setting_bag : Mock = Mock()
+        setting_bag.options_ttd_effort_status = [OPTION.display]   # type: ignore
+
+        # Act
+        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
+        tt_processor.initialize()
+        tt_processor.process_ttd_effort_status()
+
+        # Assert
+        displayer.display.assert_called_once_with(
+            obj = ttd_effort_status_df,
+            hide_index = True,
             formatters = None
-        )
-    def test_processttsganttspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
-        
-        # Arrange
-        tts_gantt_spnv_df : DataFrame = Mock()
-
-        summary : Mock = Mock()
-        summary.tts_gantt_spnv_df = tts_gantt_spnv_df
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_gantt_spnv = [OPTION.display]    # type: ignore
-        setting_bag.tts_gantt_spnv_formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
-
-        # Act
-        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()
-        tt_processor.process_tts_gantt_spnv()
-
-        # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_gantt_spnv_df,
-            hide_index = True,
-            formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
-        )
-    def test_processttsganttspnv_shouldplot_whenoptionisplot(self) -> None:
-        
-        # Arrange
-        tts_gantt_spnv_plot_function : Mock = Mock(spec = Callable[[], None])
-
-        summary : Mock = Mock()
-        summary.tts_gantt_spnv_plot_function = tts_gantt_spnv_plot_function
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_gantt_spnv = [OPTION.plot]    # type: ignore
-
-        # Act
-        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()
-        tt_processor.process_tts_gantt_spnv()
-
-        # Assert
-        summary.tts_gantt_spnv_plot_function.assert_called_once()
-    def test_processttsgantthseq_shoulddisplay_whenoptionisdisplay(self) -> None:
-        
-        # Arrange
-        tts_gantt_hseq_df : DataFrame = Mock()
-
-        summary : Mock = Mock()
-        summary.tts_gantt_hseq_df = tts_gantt_hseq_df
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_gantt_hseq = [OPTION.display]    # type: ignore
-        setting_bag.tts_gantt_hseq_formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
-
-        # Act
-        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()
-        tt_processor.process_tts_gantt_hseq()
-
-        # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_gantt_hseq_df,
-            hide_index = True,
-            formatters = { "StartDate": "{:%Y-%m-%d}", "EndDate": "{:%Y-%m-%d}" }
-        )
-    def test_processttsgantthseq_shouldplot_whenoptionisplot(self) -> None:
-        
-        # Arrange
-        tts_gantt_hseq_plot_function : Mock = Mock(spec = Callable[[], None])
-
-        summary : Mock = Mock()
-        summary.tts_gantt_hseq_plot_function = tts_gantt_hseq_plot_function
-
-        displayer : Mock = Mock()
-        tt_adapter : Mock = Mock()
-        tt_adapter.create_summary.return_value = summary
-
-        component_bag : Mock = Mock()
-        component_bag.displayer = displayer
-        component_bag.tt_adapter = tt_adapter
-
-        setting_bag : Mock = Mock()
-        setting_bag.options_tts_gantt_hseq = [OPTION.plot]    # type: ignore
-
-        # Act
-        tt_processor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
-        tt_processor.initialize()
-        tt_processor.process_tts_gantt_hseq()
-
-        # Assert
-        summary.tts_gantt_hseq_plot_function.assert_called_once()
+        )    
     def test_processdefinitions_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -2972,19 +1910,17 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
     @parameterized.expand([
         ["process_tt"],
+        ["process_tt_latest_five"],
         ["process_tts_by_month"],
         ["process_tts_by_year"],
-        ["process_tts_by_year_month"],
-        ["process_tts_by_year_month_spnv"],
-        ["process_tts_by_year_spnv"],
+        ["process_tts_by_range"],
         ["process_tts_by_spn"],
-        ["process_tts_by_spn_spv"],
-        ["process_tts_by_hashtag"],
+        ["process_tts_by_spv"],
         ["process_tts_by_hashtag_year"],
-        ["process_tts_by_efs"],
-        ["process_tts_by_tr"],
-        ["process_tts_gantt_spnv"],
-        ["process_tts_gantt_hseq"],
+        ["process_tts_by_hashtag"],
+        ["process_tts_by_year_month_spnv"],
+        ["process_tts_by_timeranges"],
+        ["process_ttd_effort_status"],
         ["process_definitions"],
         ["get_summary"]
     ])

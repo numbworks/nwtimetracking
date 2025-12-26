@@ -13,7 +13,7 @@ import matplotlib.dates as mdates
 import pandas as pd
 import re
 from dataclasses import dataclass, field, fields
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from matplotlib.dates import relativedelta
 from numpy import uint
@@ -89,46 +89,8 @@ class OPTION(StrEnum):
     '''Represents a collection of options.'''
 
     display = auto()
-    display_c = auto()
-    save = auto()
-    plot = auto()
-    logdef = auto()
-    logterm = auto()
-    logset = auto()
-class CRITERIA(StrEnum):
-
-    '''Represents a collection of criterias.'''
-
-    exclude = auto()
-    include = auto()
-    do_nothing = auto()
-class COLORNAME(StrEnum):
-
-    '''Represents a collection of color names.'''
-
-    skyblue = auto()
-    lightgreen = auto()
-class EFFORTMODE(StrEnum):
-
-    '''Represents a collection of modes for EffortHighlighter.'''
-
-    top_one_effort_per_row = auto()
-    top_three_efforts = auto()
-class TTKWARG(StrEnum):
-
-    '''Represents a collection of keys for EffortHighlighter.__process().'''
-
-    styler = auto()
-    sub_dfs = auto()
-    hide_index = auto()
-    formatters = auto()
-    id = auto()
-    content = auto()
-    plot_function = auto()
-    term = auto()
-    setting_names = auto()
-    definitions = auto()
-    setting_bag = auto()
+    save_html = auto()
+    save_pdf = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -169,33 +131,9 @@ class _MessageCollection():
         return "The effort is correct."
 
     @staticmethod
-    def no_mdinfo_found(id : TTID) -> str:
-        return f"No MDInfo object found for id='{id}'."
-    @staticmethod
     def please_run_initialize_first() -> str:
         return "Please run the 'initialize' method first."
-    @staticmethod
-    def this_content_successfully_saved_as(id : TTID, file_path : str) -> str:
-        return f"This content (id: '{id}') has been successfully saved as '{file_path}'."
-    @staticmethod
-    def something_failed_while_saving(file_path : str) -> str:
-        return f"Something failed while saving '{file_path}'."
 
-    @staticmethod
-    def provided_df_invalid_bym_column_list(column_list : list[str]) -> str:
-        return f"The provided df has an invalid BYM column list ('{column_list}')."
-
-    @staticmethod
-    def no_strategy_available_for_provided_criteria(criteria : CRITERIA) -> str:
-        return f"No strategy available for the provided CRITERIA ('{criteria}')."
-    @staticmethod
-    def variable_cant_be_less_than_one(variable_name : str) -> str:
-        return f"'{variable_name}' can't be < 1."
-
-    @staticmethod
-    def provided_mode_not_supported(mode : EFFORTMODE):
-        return f"The provided mode is not supported: '{mode}'."
- 
 # CLASSES
 @dataclass(frozen=True)
 class YearlyTarget():
@@ -563,23 +501,6 @@ class TTDataFrameHelper():
         prct = round(number = prct, ndigits = rounding_digits)
 
         return prct
-    def get_yearly_target(self, yearly_targets : list[YearlyTarget], year : int) -> Optional[YearlyTarget]:
-
-        '''Retrieves the YearlyTarget object for the provided "year" or None.'''
-
-        for yearly_target in yearly_targets:
-            if yearly_target.year == year:
-                return yearly_target
-            
-        return None
-    def is_yearly_target_met(self, effort : timedelta, yearly_target : timedelta) -> bool:
-
-        '''Returns True if effort >= yearly_target.'''
-
-        if effort >= yearly_target:
-            return True
-
-        return False
     def extract_software_project_name(self, descriptor : str) -> str:
 
         '''
@@ -651,85 +572,6 @@ class TTDataFrameHelper():
         """Returns True if number is even."""
 
         return number % 2 == 0
-    def is_bym(self, column_list : list[str]) -> bool:
-        
-        """
-            Validates the column names of a certain DataFrame according to the specified pattern.
-            
-            Valid::
-
-                ["Month", "2015"]
-                ["Month", "2015", "↕", "2016"]
-                ["Month", "2015", "↕", "2016", "↕", "2017"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕", "2021"]
-                ...
-
-            Invalid::
-
-                []
-                ["Month"]
-                ["Month", "2015", "↕"]
-                ["Month", "2015", "↕", "2016", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕"]
-                ["Month", "2015", "↕", "2016", "↕", "2017", "↕", "2018", "↕", "2019", "↕", "2020", "↕"]
-                ["Month", "↕"]
-                ["Month", "↕", "↕"]
-                ["Month", "2015", "2015"]
-                ["Month", "2015", "↕", "↕"]
-                ...
-        """
-
-        if len(column_list) < 2 or column_list[0] != TTCN.MONTH:
-            return False
-
-        for i in range(1, len(column_list)):
-            if i % 2 == 1:
-                if not self.is_year(column_list[i]):
-                    return False
-            else:
-                if column_list[i] != TTCN.TREND:
-                    return False
-
-        return self.is_even(number = len(column_list))
-    def unbox_bym_column_list(self, df : DataFrame) -> DataFrame:
-        
-        '''
-            Renames all "↕" column names by suffixing "↕" with a progressive number ["↕1", "↕2", "↕3", ...].
-
-            BYM DataFrames must be 'unboxed' before being piped into certain processing tasks due to a Pandas limitation.
-            Pandas does not support DataFrames with multiple columns sharing the same name.
-        '''
-
-        counter : int = 1
-        new_columns : list[str] = []
-
-        for col in df.columns:
-            if col == TTCN.TREND:
-                new_columns.append(f"{TTCN.TREND}{counter}")
-                counter += 1
-            else:
-                new_columns.append(col)
-
-        df.columns = Index(new_columns)
-        
-        return df
-    def box_bym_column_list(self, df : DataFrame) -> DataFrame:
-        
-        '''
-            Revert back ["↕1", "↕2", "↕3", ...] ('unboxed' column names) to "↕".
-            
-            BYM DataFrames must be 'boxed' before being displayed.
-        '''
-        
-        new_columns : list[str] = [TTCN.TREND if col.startswith(TTCN.TREND) and col[1:].isdigit() else col for col in df.columns.to_list()]
-        df.columns = Index(new_columns)
-        
-        return df
 class TTDataFrameFactory():
 
     '''Encapsulates all the logic related to dataframe creation out of "Time Tracking.xlsx".'''
@@ -1585,69 +1427,6 @@ class TTAdapter():
         )
 
         return tt_summary
-class SettingSubset(SimpleNamespace):
-
-    '''A dynamically assigned subset of SettingBag properties with a custom __str__ method that returns them as JSON.'''
-
-    def __str__(self):
-        return json.dumps(
-            {key: getattr(self, key) for key in self.__dict__}
-        )
-
-    def __repr__(self):
-        return self.__str__()
-class TTLogger():
-
-    '''Collects all the logging logic.'''
-
-    __logging_function : Callable[[str], None]
-
-    def __init__(self, logging_function : Callable[[str], None]) -> None:
-    
-        self.__logging_function = logging_function
-
-    def __create_setting_subset(self, setting_bag : SettingBag, setting_names : list[str]) -> SettingSubset:
-        
-        '''Extract all the SettingBag properties matching ids and returns a SettingSubset .'''
-
-        matching_properties : dict = {}
-
-        for field in fields(setting_bag):
-            if field.name in setting_names:
-                matching_properties[field.name] = getattr(setting_bag, field.name)
-        
-        return SettingSubset(**matching_properties)
-
-    def try_log_column_definitions(self, df : DataFrame, definitions : DataFrame) -> None:
-        
-        """Logs the definitions for matching column names in the DataFrame."""
-
-        definitions_dict : dict = definitions.set_index(DEFINITIONSTR.TERM)[DEFINITIONSTR.DEFINITION].to_dict()
-        
-        for column_name in df.columns:
-            if column_name in definitions_dict:
-                self.__logging_function(f"{column_name}: {definitions_dict[column_name]}")
-    def try_log_term_definition(self, term : str, definitions : DataFrame) -> None:
-
-        """Logs the definitions for matching term in the DataFrame."""
-
-        definitions_dict : dict = definitions.set_index(DEFINITIONSTR.TERM)[DEFINITIONSTR.DEFINITION].to_dict()
-
-        if term in definitions_dict:
-            self.__logging_function(f"{term}: {definitions_dict[term]}")        
-    def try_log_settings(self, setting_bag : SettingBag, setting_names : list[str]) -> None:
-        
-        """Logs only the settings with names contained in ids."""
-
-        if len(setting_names) > 0:
-            setting_subset : SettingSubset = self.__create_setting_subset(setting_bag = setting_bag, setting_names = setting_names)
-            self.__logging_function(f"Relevant Settings: {str(setting_subset)}")
-    def log(self, msg : str) -> None:
-
-        '''Logs the provided msg. Does nothing if msg is empty'''
-
-        if len(msg) > 0:
-            self.__logging_function(msg)
 @dataclass(frozen=True)
 class ComponentBag():
 
@@ -1656,9 +1435,6 @@ class ComponentBag():
     file_path_manager : FilePathManager = field(default = FilePathManager())
     file_manager : FileManager = field(default = FileManager(file_path_manager = FilePathManager()))
     displayer : Displayer = field(default = Displayer())
-    
-    tt_logger : TTLogger = field(default = TTLogger(
-        logging_function = LambdaProvider().get_default_logging_function()))
     
     tt_adapter : TTAdapter = field(default = TTAdapter(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper())))
