@@ -364,6 +364,7 @@ class SettingBag():
     tts_by_spv_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_latest_three())
     tts_by_hashtag_formatters : dict = field(default_factory = lambda : { TTCN.EFFORTPERC : "{:.2f}" })
     tts_by_timeranges_min_occurrences : int = field(default = 10)
+    tts_by_timeranges_formatters : dict = field(default_factory = lambda : { TTCN.OCCURRENCEPERC : "{:.2f}" })
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -1346,8 +1347,8 @@ class TTDataFrameFactory():
 
             '''
                     Occurrences Occurrence%     TimeRanges
-                0   71          22.33%          [08:00-08:45]
-                1   37          11.64%          [08:00-08:30]
+                0   71          22.33           [08:00-08:45]
+                1   37          11.64           [08:00-08:30]
                 ...
             '''
 
@@ -1379,7 +1380,7 @@ class TTDataFrameFactory():
             occurrences_total : int = int(tts_df[TTCN.OCCURRENCES].sum())
             tts_df[TTCN.OCCURRENCETOTAL] = occurrences_total
             tts_df[TTCN.OCCURRENCEPERC] = tts_df.apply(
-                lambda x : f"{self.__df_helper.calculate_percentage(float(x[TTCN.OCCURRENCES]), float(occurrences_total), 2):.2f}%", axis = 1)
+                lambda x : self.__df_helper.calculate_percentage(float(x[TTCN.OCCURRENCES]), float(occurrences_total), 2), axis = 1)
             tts_df = tts_df[[TTCN.OCCURRENCES, TTCN.OCCURRENCETOTAL, TTCN.OCCURRENCEPERC, TTCN.TIMERANGES]]
 
             condition_two : Series = (tts_df[TTCN.OCCURRENCES] >= min_occurrences)
@@ -1847,9 +1848,10 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_timeranges
         df : DataFrame = self.__tt_summary.tts_by_timeranges_df
+        formatters : dict = self.__setting_bag.tts_by_timeranges_formatters
 
         if OPTION.display in options:
-            self.__component_bag.displayer.display(obj = df)
+            self.__component_bag.displayer.display(obj = df, formatters = formatters)
 
     def get_summary(self) -> TTSummary:
 
