@@ -82,6 +82,8 @@ class DEFINITIONSTR(StrEnum):
 
     TERM = "Term"
     DEFINITION = "Definition"
+    TT = "tt"
+    TTS = "tts"
 class OPTION(StrEnum):
 
     '''Represents a collection of options.'''
@@ -239,6 +241,7 @@ class TTSummary():
     tts_by_year_month_spnv_df : DataFrame
     tts_by_timeranges_df : DataFrame
     ttd_effort_status_df : DataFrame
+    definitions_df : DataFrame
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -351,6 +354,7 @@ class SettingBag():
     options_tts_by_hashtag : list[Literal[OPTION.display]]
     options_tts_by_year_month_spnv : list[Literal[OPTION.display]]
     options_tts_by_timeranges : list[Literal[OPTION.display]]
+    options_definitions : list[Literal[OPTION.display]]
     excel_nrows : int
 
     # WITH DEFAULTS
@@ -1408,22 +1412,16 @@ class TTDataFrameFactory():
         condition : Series = (ttd_df[TTCN.ISCORRECT] == is_correct)
         ttd_df = ttd_df.loc[condition]
 
-        return ttd_df
-
-
+        return ttd_df    
     def create_definitions_df(self) -> DataFrame:
 
         '''Creates a dataframe containing all the definitions in use in this application.'''
 
         columns : list[str] = [DEFINITIONSTR.TERM, DEFINITIONSTR.DEFINITION]
 
-        definitions : dict[str, str] = { 
-            TTCN.EFFORTPERC: "% of Total Effort",
-            TTCN.HASHTAGSEQ: "Period of time in which the same hashtag has been used without breaks.",
-            TTCN.EFFORTH: "Total Hours of Effort between StartDate and EndDate.",
-            TTCN.DURATION: "Total number of days between StartDate and EndDate.",
-            "tts_gantt_spnv": "Shows how much subsequent work has been performed per software project name/version.",
-            "tts_gantt_hseq": "Shows how much subsequent work has been performed per hashtag."
+        definitions : dict[str, str] = {
+            DEFINITIONSTR.TT: "Time Tracking",
+            DEFINITIONSTR.TTS: "Time Tracking Summary"
         }
         
         definitions_df : DataFrame = DataFrame(
@@ -1568,6 +1566,7 @@ class TTAdapter():
         tts_by_year_month_spnv_df : DataFrame = self.__create_tts_by_year_month_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_timeranges_df : DataFrame = self.__create_tts_by_timeranges_df(tt_df = tt_df, setting_bag = setting_bag)
         ttd_effort_status_df : DataFrame = self.__create_ttd_effort_status_df(tt_df = tt_df, setting_bag = setting_bag)
+        definitions_df : DataFrame = self.__df_factory.create_definitions_df()
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
@@ -1581,7 +1580,8 @@ class TTAdapter():
             tts_by_hashtag_df = tts_by_hashtag_df,
             tts_by_year_month_spnv_df = tts_by_year_month_spnv_df,
             tts_by_timeranges_df = tts_by_timeranges_df,
-            ttd_effort_status_df = ttd_effort_status_df
+            ttd_effort_status_df = ttd_effort_status_df,
+            definitions_df = definitions_df
         )
 
         return tt_summary
@@ -1866,6 +1866,21 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_ttd_effort_status
         df : DataFrame = self.__tt_summary.ttd_effort_status_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df)
+    def process_definitions(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_definitions.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_definitions
+        df : DataFrame = self.__tt_summary.definitions_df
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)
