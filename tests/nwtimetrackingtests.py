@@ -206,14 +206,17 @@ class ObjectMother():
         df = df.iloc[:, index_list]
 
         return df
-    @staticmethod # TBD
+    @staticmethod
     def get_tts_by_year_df() -> DataFrame:
 
         '''
-     
+                2024
+            0	36h 00m     
         '''
 
-        return pd.DataFrame()
+        return pd.DataFrame({
+            "2024": ["36h 00m"]}
+            , index=pd.RangeIndex(start=0, stop=1, step=1))
     @staticmethod # TBD
     def get_tts_by_range_df() -> DataFrame:
 
@@ -254,14 +257,21 @@ class ObjectMother():
                 TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
                 TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
-    @staticmethod # TBD
+    @staticmethod
     def get_tts_by_hashtag_year_df() -> DataFrame:
 
         '''
-
+                Hashtag         2024
+            0   #csharp         06h 15m
+            1   #maintenance    04h 30m
+            2   #python         02h 00m
+            3   #studying       23h 15m
         '''
 
-        return pd.DataFrame()
+        return pd.DataFrame({
+                "Hashtag": ["#csharp", "#maintenance", "#python", "#studying"],
+                2024:    ["06h 15m", "04h 30m", "02h 00m", "23h 15m"],
+            }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_tts_by_hashtag_df() -> DataFrame:
 
@@ -295,14 +305,28 @@ class ObjectMother():
                 TTCN.SOFTWAREPROJECTNAME: np.array(['NW.NGramTextClassification', 'NW.Shared.Serialization', 'NW.UnivariateForecasting', 'nwreadinglistmanager'], dtype=object),
                 TTCN.SOFTWAREPROJECTVERSION: np.array(['4.2.0', '1.0.0', '4.2.0', '2.1.0'], dtype=object),
                 TTCN.EFFORT: np.array(['01h 15m', '04h 15m', '00h 45m', '02h 00m'], dtype=object)
-            }, index=pd.RangeIndex(start=0, stop=4, step=1))
-    @staticmethod # TBD
+            }, index=pd.Index([1, 2, 3, 4], dtype="int64"))
+    @staticmethod
     def get_tts_by_timeranges_df() -> DataFrame:
 
-        '''   
+        '''
+            Occurrences  Occurrence%    TimeRanges
+        0   1           100.0           ['08:00-08:30', ..., '22:00-23:00', '23:00-23:30']        
         '''
 
-        return pd.DataFrame()    
+        return pd.DataFrame({
+                TTCN.OCCURRENCES: np.array([1], dtype=int64),
+                TTCN.OCCURRENCEPERC: np.array([100.0], dtype=float),
+                TTCN.TIMERANGES: [[
+                    '08:00-08:30', '08:15-12:45', '08:45-12:15', '10:15-13:00',
+                    '11:00-12:30', '11:00-13:00', '11:15-13:00', '13:30-14:00',
+                    '13:30-15:00', '14:00-19:45', '14:30-16:45', '15:30-16:30',
+                    '15:30-18:00', '17:00-18:00', '17:15-17:45', '17:15-18:00',
+                    '20:00-20:15', '20:15-21:15', '21:00-22:00', '22:00-23:00',
+                    '23:00-23:30'
+                ]],
+            }, index=pd.RangeIndex(start=0, stop=1, step=1),
+        )   
     @staticmethod # TBD
     def get_ttd_effort_status_df() -> DataFrame:
 
@@ -1373,11 +1397,11 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
     def test_createttsbytimerangesdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        min_occurrences : int = 10
+        min_occurrences : int = 1
         tt_df : DataFrame = ObjectMother().get_tt_df()
 
         expected_df : DataFrame = ObjectMother().get_tts_by_timeranges_df()
-        expected_df.sort_values(by = "TimeRanges", ascending = True, inplace = True)
+        expected_df.sort_values(by = TTCN.TIMERANGES, ascending = True, inplace = True)
         expected_df.reset_index(drop = True, inplace = True)
 
         # Act
@@ -1385,7 +1409,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
             tt_df = tt_df, 
             min_occurrences = min_occurrences
         )
-        actual_df.sort_values(by = "TimeRanges", ascending = True, inplace = True)
+        actual_df.sort_values(by = TTCN.TIMERANGES, ascending = True, inplace = True)
         actual_df.reset_index(drop = True, inplace = True)
 
         # Assert
