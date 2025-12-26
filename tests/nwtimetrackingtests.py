@@ -18,7 +18,7 @@ import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetracking import TTCN, DEFINITIONSTR, OPTION, TTAdapter
 from nwtimetracking import _MessageCollection, TTDataFrameFactory, TimeTrackingProcessor
-from nwtimetracking import YearlyTarget, EffortStatus, TTSummary, DefaultPathProvider, YearProvider
+from nwtimetracking import EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
 
 # SUPPORT METHODS
@@ -59,36 +59,6 @@ class SupportMethodProvider():
                  ef1.is_correct == ef2.is_correct and
                  ef1.message == ef2.message
             )
-
-    @staticmethod
-    def are_yearly_targets_equal(yt1 : YearlyTarget, yt2 : YearlyTarget) -> bool:
-
-        '''
-            Returns True if all the fields of the two objects contain the same values.
-        '''
-
-        return (yt1.hours == yt2.hours and yt1.year == yt2.year)
-    @staticmethod
-    def are_lists_of_yearly_targets_equal(list1 : list[YearlyTarget], list2 : list[YearlyTarget]) -> bool:
-
-        '''
-            Returns True if all the fields of the two objects contain the same values.
-        '''
-
-        if (list1 == None and list2 == None):
-            return True
-
-        if (list1 == None or list2 == None):
-            return False
-
-        if (len(list1) != len(list2)):
-            return False
-
-        for i in range(len(list1)):
-            if (SupportMethodProvider.are_yearly_targets_equal(yt1 = list1[i], yt2 = list2[i]) == False):
-                return False
-
-        return True
 class ObjectMother():
 
     '''Collects all the DTOs required by the unit tests.'''
@@ -257,16 +227,16 @@ class ObjectMother():
 
         '''
                 SoftwareProjectName	        Effort  Hashtags
-            0   nwreadinglistmanager	    02h 00m #python
-            1	NW.Shared.Serialization	    04h 15m #csharp
+            2	NW.Shared.Serialization	    04h 15m #csharp
+            1   nwreadinglistmanager	    02h 00m #python
             2	NW.NGramTextClassification	01h 15m #csharp
             3	NW.UnivariateForecasting	00h 45m #csharp
         '''
 
         return pd.DataFrame({
-                TTCN.SOFTWAREPROJECTNAME: np.array(['nwreadinglistmanager', 'NW.Shared.Serialization', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
-                TTCN.EFFORT: np.array(['02h 00m', '04h 15m', '01h 15m', '00h 45m'], dtype=object),
-                TTCN.HASHTAGS: np.array(['#python', '#csharp', '#csharp', '#csharp'], dtype=object)
+                TTCN.SOFTWAREPROJECTNAME: np.array(['NW.Shared.Serialization', 'nwreadinglistmanager', 'NW.NGramTextClassification', 'NW.UnivariateForecasting'], dtype=object),
+                TTCN.EFFORT: np.array(['04h 15m', '02h 00m', '01h 15m', '00h 45m'], dtype=object),
+                TTCN.HASHTAGS: np.array(['#csharp', '#python', '#csharp', '#csharp'], dtype=object)
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_tts_by_spv_df() -> DataFrame:
@@ -297,16 +267,16 @@ class ObjectMother():
 
         '''
                 Hashtag	        Effort	Effort%
-            0	#studying	    23h 15m	64.58
-            1	#csharp	        06h 15m	17.36
-            2	#maintenance	04h 30m	12.50
-            3	#python	        02h 00m	5.56
+            0	#csharp	        06h 15m	17.36
+            1	#maintenance	04h 30m	12.50
+            2	#python	        02h 00m	5.56
+            3	#studying	    23h 15m	64.58
         '''
 
         return pd.DataFrame({
-                TTCN.HASHTAG: np.array(['#studying', '#csharp', '#maintenance', '#python'], dtype=object),
-                TTCN.EFFORT: np.array(['23h 15m', '06h 15m', '04h 30m', '02h 00m'], dtype=object),
-                TTCN.EFFORTPERC: np.array([64.58, 17.36, 12.5, 5.56], dtype= np.float64),
+                TTCN.HASHTAG: np.array(['#csharp', '#maintenance', '#python', '#studying'], dtype=object),
+                TTCN.EFFORT: np.array(['06h 15m', '04h 30m', '02h 00m', '23h 15m'], dtype=object),
+                TTCN.EFFORTPERC: np.array([17.36, 12.5, 5.56, 64.58], dtype= np.float64),
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_tts_by_year_month_spnv_df() -> DataFrame:
@@ -449,22 +419,6 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-class YearlyTargetTestCase(unittest.TestCase):
-
-    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
-        
-        # Arrange
-        year : int = 2024
-        hours : timedelta = timedelta(hours = 1200)
-
-        # Act
-        actual : YearlyTarget = YearlyTarget(year = year, hours = hours)
-
-        # Assert
-        self.assertEqual(actual.year, year)
-        self.assertEqual(actual.hours, hours)
-        self.assertIsInstance(actual.year, int)
-        self.assertIsInstance(actual.hours, timedelta)
 class EffortStatusTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
@@ -628,28 +582,6 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
-    def test_getallyearlytargets_shouldreturnexpectedlist_wheninvoked(self):
-
-        # Arrange
-        expected : list[YearlyTarget] = [
-            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
-            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
-            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2025, hours = timedelta(hours = 500))
-        ]
-
-        # Act
-        actual : list[YearlyTarget] = YearProvider().get_all_yearly_targets()
-
-        # Assert
-        self.assertTrue(SupportMethodProvider.are_lists_of_yearly_targets_equal(list1 = expected, list2 = actual))
     def test_getmostrecentxyears_shouldreturnlastxyears_whenxlessthantotalyears(self):
 
         # Arrange
@@ -1372,7 +1304,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
     def test_createttsbyspndf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
-        software_project_names : list[str] = ["NW.NGramTextClassification", "NW.Shared.Serialization", "NW.UnivariateForecasting", "nwreadinglistmanager"]
+        software_project_names : list[str] = ["NW.Shared.Serialization", "nwreadinglistmanager", "NW.NGramTextClassification", "NW.UnivariateForecasting"]
         tt_df : DataFrame = ObjectMother().get_tt_df()
         expected_df : DataFrame = ObjectMother().get_tts_by_spn_df()
 

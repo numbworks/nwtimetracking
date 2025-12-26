@@ -136,13 +136,6 @@ class _MessageCollection():
 
 # CLASSES
 @dataclass(frozen=True)
-class YearlyTarget():
-    
-    '''Represents an amount of hours for a given year.'''
-
-    year : int
-    hours : timedelta
-@dataclass(frozen=True)
 class EffortStatus():
     
     '''Represents an effort-related status.'''
@@ -205,25 +198,6 @@ class YearProvider():
         years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
 
         return years
-    def get_all_yearly_targets(self) -> list[YearlyTarget]:
-
-        '''Returns a list of years.'''
-
-        yearly_targets : list[YearlyTarget] = [
-            YearlyTarget(year = 2015, hours = timedelta(hours = 0)),
-            YearlyTarget(year = 2016, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2017, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2018, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2019, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2020, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2021, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2022, hours = timedelta(hours = 400)),
-            YearlyTarget(year = 2023, hours = timedelta(hours = 250)),
-            YearlyTarget(year = 2024, hours = timedelta(hours = 500)),
-            YearlyTarget(year = 2025, hours = timedelta(hours = 500))
-        ]
-
-        return yearly_targets    
     def get_most_recent_x_years(self, x : uint) -> list[int]:
 
         '''Returns a list of years.'''
