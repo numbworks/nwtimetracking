@@ -419,7 +419,7 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                TTCN.TIMERANGEID: np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
+                TTCN.TIMERANGE: np.array(['08:00-08:30', '15:30-16:30', '22:00-23:00', '21:00-22:00', '20:15-21:15', '20:00-20:15', '17:15-18:00', '17:15-17:45', '17:00-18:00', '15:30-18:00', '14:30-16:45', '08:15-12:45', '14:00-19:45', '13:30-15:00', '13:30-14:00', '11:15-13:00', '11:00-13:00', '11:00-12:30', '10:15-13:00', '08:45-12:15', '23:00-23:30'], dtype=object),
                 TTCN.OCCURRENCES: np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], dtype= np.int64),
             }, index=pd.RangeIndex(start=0, stop=21, step=1))    
     @staticmethod
@@ -2060,7 +2060,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         expected_df.reset_index(drop = True, inplace = True)
 
         # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_tr_df(
+        actual_df : DataFrame  = self.df_factory.create_tts_by_timeranges_df(
             tt_df = tt_df, 
             unknown_id = unknown_id, 
             remove_unknown_occurrences = remove_unknown_occurrences

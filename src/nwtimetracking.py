@@ -47,32 +47,25 @@ class TTCN(StrEnum):
     SOFTWAREPROJECTNAME = "SoftwareProjectName"
     SOFTWAREPROJECTVERSION = "SoftwareProjectVersion"
     HASHTAGS = "Hashtags"
-
-
-    DME = "DME"
-    TME = "TME"
-    DYE = "DYE"
-    TYE = "TYE"
     EFFORTPERC = "Effort%"
+    TIMERANGE = "TimeRange"
+    TIMERANGES = "TimeRanges"
+    OCCURRENCES = "Occurrences"
+    OCCURRENCEPERC = "Occurrence%"
+    OCCURRENCETOTAL = "OccurrenceTotal"
+
+
+
     YEARLYTARGET = "YearlyTarget"
     TARGETDIFF = "TargetDiff"
     ISTARGETMET = "IsTargetMet"
     YEARLYTOTAL = "YearlyTotal"
     TOTARGET = "ToTarget"
-    PERCDME = "%_DME"
-    PERCTME = "%_TME"
-    PERCDYE = "%_DYE"
-    PERCTYE = "%_TYE"
-    DE = "DE"
-    TE = "TE"
-    PERCDE = "%_DE"
-    PERCTE = "%_TE"
     EFFORTSTATUS = "EffortStatus"
     ESISCORRECT = "ES_IsCorrect"
     ESEXPECTED = "ES_Expected"
     ESMESSAGE = "ES_Message"
-    TIMERANGEID = "TimeRangeId"
-    OCCURRENCES = "Occurrences"
+
     STARTDATE = "StartDate"
     ENDDATE = "EndDate"
     DURATION = "Duration"
@@ -245,6 +238,7 @@ class TTSummary():
     tts_by_hashtag_year_df : DataFrame
     tts_by_hashtag_df : DataFrame
     tts_by_year_month_spnv_df : DataFrame
+    tts_by_timeranges_df : DataFrame
 class DefaultPathProvider():
 
     '''Responsible for proviving the default path to the dataset.'''
@@ -356,6 +350,7 @@ class SettingBag():
     options_tts_by_hashtag_year : list[Literal[OPTION.display]]
     options_tts_by_hashtag : list[Literal[OPTION.display]]
     options_tts_by_year_month_spnv : list[Literal[OPTION.display]]
+    options_tts_by_timeranges : list[Literal[OPTION.display]]
     excel_nrows : int
 
     # WITH DEFAULTS
@@ -368,6 +363,7 @@ class SettingBag():
     tts_by_spn_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all())
     tts_by_spv_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_latest_three())
     tts_by_hashtag_formatters : dict = field(default_factory = lambda : { TTCN.EFFORTPERC : "{:.2f}" })
+    tts_by_timeranges_min_occurrences : int = field(default = 10)
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -609,13 +605,24 @@ class TTDataFrameHelper():
             return matches[0]
 
         return "ERROR"
-    def create_time_range_id(self, start_time : str, end_time : str, unknown_id : str) -> str:
+    def create_time_range_id(self, start_time : str, end_time : str) -> str:
             
         '''
             Creates a unique time range identifier out of the provided parameters.
-            If parameters are empty, it returns unknown_id.
+
+            If parameters are empty, it returns "Unknown":
+
+                ...
+                start_time: '', end_time: '', time_range_id: 'Unknown'
+                start_time: '', end_time: '', time_range_id: 'Unknown'
+                start_time: '08:30', end_time: '09:00', time_range_id: '08:30-09:00'
+                start_time: '18:00', end_time: '19:30', time_range_id: '18:00-19:30'
+                ...
+
+            In "Time Tracking.xlsx" we don't have time ranges for the following period: [2015-10-31 -> 2019-05-31].
         '''
 
+        unknown_id : str = "Unknown"
         time_range_id : str = f"{start_time}-{end_time}"
 
         if len(start_time) == 0 or len(end_time) == 0:
@@ -972,15 +979,6 @@ class TTDataFrameFactory():
             actual_df = expansion_df
 
         return actual_df
-    def __remove_unknown_occurrences(self, tts_by_tr_df : DataFrame, unknown_id : str) -> DataFrame:
-
-        '''Removes the provided uknown_id from the "TimeRangeId" column of the provided DataFrame.'''
-
-        condition : Series = (tts_by_tr_df[TTCN.TIMERANGEID] != unknown_id)
-        tts_by_tr_df = tts_by_tr_df.loc[condition]	
-        tts_by_tr_df.reset_index(drop = True, inplace = True)
-
-        return tts_by_tr_df
     def __filter_by_is_correct(self, tts_by_efs_df : DataFrame, is_correct : bool) -> DataFrame:
 
         '''Returns a DataFrame that contains only rows that match the provided is_correct.'''
@@ -1344,6 +1342,54 @@ class TTDataFrameFactory():
         tts_df[TTCN.EFFORT] = tts_df[TTCN.EFFORT].apply(lambda x : self.__df_helper.box_effort(effort_td = x, add_plus_sign = False))
 
         return tts_df
+    def create_tts_by_timeranges_df(self, tt_df : DataFrame, min_occurrences : int) -> DataFrame:
+
+            '''
+                    Occurrences Occurrence%     TimeRanges
+                0   71          22.33%          [08:00-08:45]
+                1   37          11.64%          [08:00-08:30]
+                ...
+            '''
+
+            tts_df : DataFrame = tt_df.copy(deep = True)
+            tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
+
+            tts_df[TTCN.TIMERANGE] = tts_df.apply(
+                lambda x : self.__df_helper.create_time_range_id(
+                    start_time = x[TTCN.STARTTIME], 
+                    end_time = x[TTCN.ENDTIME]), axis = 1)
+
+            count : NamedAgg = pd.NamedAgg(column = TTCN.TIMERANGE, aggfunc = "count")
+            tts_df = tts_df[[TTCN.TIMERANGE]].groupby(by = [TTCN.TIMERANGE], as_index = False).agg(count = count)
+            tts_df.rename(columns={"count" : TTCN.OCCURRENCES}, inplace = True)
+
+            unknown_id : str = "Unknown"
+            condition_one : Series = (tts_df[TTCN.TIMERANGE] != unknown_id)
+            tts_df = tts_df.loc[condition_one]	
+            tts_df.reset_index(drop = True, inplace = True)
+
+            ascending : bool = False
+            tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = ascending).reset_index(drop = True)
+
+            timeranges : NamedAgg = pd.NamedAgg(column = TTCN.TIMERANGE, aggfunc = list)
+            tts_df = tts_df.groupby(by = [TTCN.OCCURRENCES], as_index = False).agg(TimeRanges = timeranges)
+            tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = ascending).reset_index(drop = True)
+            tts_df = tts_df[[TTCN.OCCURRENCES, TTCN.TIMERANGES]]
+
+            occurrences_total : int = int(tts_df[TTCN.OCCURRENCES].sum())
+            tts_df[TTCN.OCCURRENCETOTAL] = occurrences_total
+            tts_df[TTCN.OCCURRENCEPERC] = tts_df.apply(
+                lambda x : f"{self.__df_helper.calculate_percentage(float(x[TTCN.OCCURRENCES]), float(occurrences_total), 2):.2f}%", axis = 1)
+            tts_df = tts_df[[TTCN.OCCURRENCES, TTCN.OCCURRENCETOTAL, TTCN.OCCURRENCEPERC, TTCN.TIMERANGES]]
+
+            condition_two : Series = (tts_df[TTCN.OCCURRENCES] >= min_occurrences)
+            tts_df = tts_df.loc[condition_two]	
+            tts_df.reset_index(drop = True, inplace = True)
+
+            tts_df = tts_df[[TTCN.OCCURRENCES, TTCN.OCCURRENCEPERC, TTCN.TIMERANGES]]
+
+            return tts_df
+
 
 
     def create_tts_by_efs_tpl(self, tt_df : DataFrame, is_correct : bool) -> Tuple[DataFrame, DataFrame]:
@@ -1374,36 +1420,6 @@ class TTDataFrameFactory():
         tts_flt_df : DataFrame = self.__filter_by_is_correct(tts_by_efs_df = tts_df, is_correct = is_correct)
 
         return (tts_df, tts_flt_df)
-    def create_tts_by_tr_df(self, tt_df : DataFrame, unknown_id : str, remove_unknown_occurrences : bool) -> DataFrame:
-
-            '''
-                    TimeRangeId	Occurrences
-                0	Unknown		44
-                1	18:00-20:00	19
-                2	08:00-08:30	16
-                ...
-            '''
-
-            tts_df : DataFrame = tt_df.copy(deep = True)
-            tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
-
-            tts_df[TTCN.TIMERANGEID] = tts_df.apply(
-                lambda x : self.__df_helper.create_time_range_id(
-                    start_time = x[TTCN.STARTTIME], 
-                    end_time = x[TTCN.ENDTIME], 
-                    unknown_id = unknown_id), axis = 1)
-
-            count : NamedAgg = pd.NamedAgg(column = TTCN.TIMERANGEID, aggfunc = "count")
-            tts_df = tts_df[[TTCN.TIMERANGEID]].groupby(by = [TTCN.TIMERANGEID], as_index=False).agg(count = count)
-            tts_df.rename(columns={"count" : TTCN.OCCURRENCES}, inplace = True)
-
-            ascending : bool = False
-            tts_df = tts_df.sort_values(by = [TTCN.OCCURRENCES], ascending = ascending).reset_index(drop = True)
-
-            if remove_unknown_occurrences:
-                tts_df = self.__remove_unknown_occurrences(tts_by_tr_df = tts_df, unknown_id = unknown_id)
-
-            return tts_df
     def create_definitions_df(self) -> DataFrame:
 
         '''Creates a dataframe containing all the definitions in use in this application.'''
@@ -1411,18 +1427,6 @@ class TTDataFrameFactory():
         columns : list[str] = [DEFINITIONSTR.TERM, DEFINITIONSTR.DEFINITION]
 
         definitions : dict[str, str] = { 
-            TTCN.DME: "Total Development Monthly Effort",
-            TTCN.TME: "Total Monthly Effort",
-            TTCN.DYE: "Total Development Yearly Effort",
-            TTCN.TYE: "Total Yearly Effort",
-            TTCN.DE: "Total Development Effort",
-            TTCN.TE: "Total Effort",
-            TTCN.PERCDME: r"% of Total Development Monthly Effort",
-            TTCN.PERCTME: r"% of Total Monthly Effort",
-            TTCN.PERCDYE: r"% of Total Development Yearly Effort",
-            TTCN.PERCTYE: r"% of Total Yearly Effort",
-            TTCN.PERCDE: r"% of Total Development Effort",
-            TTCN.PERCTE: r"% of Total Effort",
             TTCN.EFFORTPERC: "% of Total Effort",
             TTCN.HASHTAGSEQ: "Period of time in which the same hashtag has been used without breaks.",
             TTCN.EFFORTH: "Total Hours of Effort between StartDate and EndDate.",
@@ -1536,7 +1540,16 @@ class TTAdapter():
         )
 
         return tts_by_year_month_spnv_df
+    def __create_tts_by_timeranges_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
+        '''Creates the expected dataframe out of the provided arguments.'''
+
+        tts_by_timeranges_df : DataFrame = self.__df_factory.create_tts_by_timeranges_df(
+            tt_df = tt_df,
+            min_occurrences = setting_bag.tts_by_timeranges_min_occurrences
+        )
+
+        return tts_by_timeranges_df
 
     def create_summary(self, setting_bag : SettingBag) -> TTSummary:
 
@@ -1552,6 +1565,7 @@ class TTAdapter():
         tts_by_hashtag_year_df : DataFrame = self.__create_tts_by_hashtag_year_df(tt_df = tt_df)
         tts_by_hashtag_df : DataFrame = self.__create_tts_by_hashtag_df(tt_df = tt_df)
         tts_by_year_month_spnv_df : DataFrame = self.__create_tts_by_year_month_spnv_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_timeranges_df : DataFrame = self.__create_tts_by_timeranges_df(tt_df = tt_df, setting_bag = setting_bag)
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
@@ -1563,7 +1577,8 @@ class TTAdapter():
             tts_by_spv_df = tts_by_spv_df,
             tts_by_hashtag_year_df = tts_by_hashtag_year_df,
             tts_by_hashtag_df = tts_by_hashtag_df,
-            tts_by_year_month_spnv_df = tts_by_year_month_spnv_df
+            tts_by_year_month_spnv_df = tts_by_year_month_spnv_df,
+            tts_by_timeranges_df = tts_by_timeranges_df
         )
 
         return tt_summary
@@ -1820,6 +1835,21 @@ class TimeTrackingProcessor():
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)
+    def process_tts_by_timeranges(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_timeranges.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_timeranges
+        df : DataFrame = self.__tt_summary.tts_by_timeranges_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df)
 
     def get_summary(self) -> TTSummary:
 
@@ -1845,9 +1875,14 @@ if __name__ == "__main__":
         excel_tabname = "Sessions"
     )
 
-    spn : list[str] = SoftwareProjectNameProvider().get_latest_three()
-    tts_df : DataFrame = df_factory.create_tts_by_year_month_spnv_df(tt_df = tt_df, software_project_names = spn)
+    tts_df : DataFrame = df_factory.create_tts_by_timeranges_df(tt_df = tt_df, min_occurrences = 10)
 
-    print(tts_df)
+    with pd.option_context(
+        "display.max_rows", None,
+        "display.max_columns", None,
+        "display.width", None,
+        "display.max_colwidth", None
+    ):
+        print(tts_df)
 
     # pass
