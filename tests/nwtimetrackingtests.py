@@ -66,7 +66,7 @@ class ObjectMother():
 
         setting_bag : SettingBag = SettingBag(
             options_tt = [OPTION.display],                          # type: ignore
-            options_tt_latest_five = [OPTION.display],              # type: ignore
+            options_tt_latest_four = [OPTION.display],              # type: ignore
             options_tts_by_month = [OPTION.display],                # type: ignore
             options_tts_by_year = [OPTION.display],                 # type: ignore
             options_tts_by_range = [OPTION.display],                # type: ignore
@@ -566,7 +566,7 @@ class TTSummaryTestCase(unittest.TestCase):
         # Act
         actual = TTSummary(
             tt_df = empty_df,
-            tt_latest_five_df = empty_df,
+            tt_latest_four_df = empty_df,
             tts_by_month_df = empty_df,
             tts_by_year_df = empty_df,
             tts_by_range_df = empty_df,
@@ -582,7 +582,7 @@ class TTSummaryTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(actual.tt_df.shape, empty_df.shape)
-        self.assertEqual(actual.tt_latest_five_df.shape, empty_df.shape)
+        self.assertEqual(actual.tt_latest_four_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_month_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_range_df.shape, empty_df.shape)
@@ -714,7 +714,7 @@ class SettingBagTestCase(unittest.TestCase):
 
         # Arrange
         options_tt : list[Literal[OPTION.display]] = [OPTION.display]                           # type: ignore
-        options_tt_latest_five : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
+        options_tt_latest_four : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
         options_tts_by_month : list[Literal[OPTION.display]] = [OPTION.display]                 # type: ignore
         options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                  # type: ignore
         options_tts_by_range : list[Literal[OPTION.display]] = [OPTION.display]                 # type: ignore
@@ -746,7 +746,7 @@ class SettingBagTestCase(unittest.TestCase):
 		# Act
         actual : SettingBag = SettingBag(
             options_tt = options_tt,
-            options_tt_latest_five = options_tt_latest_five,
+            options_tt_latest_four = options_tt_latest_four,
             options_tts_by_month = options_tts_by_month,
             options_tts_by_year = options_tts_by_year,
             options_tts_by_range = options_tts_by_range,
@@ -777,7 +777,7 @@ class SettingBagTestCase(unittest.TestCase):
 
 		# Assert
         self.assertEqual(actual.options_tt, options_tt)
-        self.assertEqual(actual.options_tt_latest_five, options_tt_latest_five)
+        self.assertEqual(actual.options_tt_latest_four, options_tt_latest_four)
         self.assertEqual(actual.options_tts_by_month, options_tts_by_month)
         self.assertEqual(actual.options_tts_by_year, options_tts_by_year)
         self.assertEqual(actual.options_tts_by_range, options_tts_by_range)
@@ -1332,14 +1332,14 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[5]][0])    
-    def test_createttlatestfivedf_shouldreturnexpecteddataframe_wheninvoked(self): 
+    def test_createttlatestfourdf_shouldreturnexpecteddataframe_wheninvoked(self): 
         
         # Arrange
         tt_df : DataFrame = ObjectMother().get_tt_df()
-        expected_df : DataFrame = tt_df[-5:]
+        expected_df : DataFrame = tt_df[-4:]
 
         # Act
-        actual_df : DataFrame  = self.df_factory.create_tt_latest_five_df(tt_df = tt_df)
+        actual_df : DataFrame  = self.df_factory.create_tt_latest_four_df(tt_df = tt_df)
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1895,13 +1895,13 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         # Assert
         displayer.display.assert_called_once_with(obj = tt_df)
-    def test_processttlatestfive_shoulddisplay_whenoptionisdisplay(self) -> None:
+    def test_processttlatestfour_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tt_latest_five_df : DataFrame = Mock()
+        tt_latest_four_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tt_latest_five_df = tt_latest_five_df
+        summary.tt_latest_four_df = tt_latest_four_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -1912,15 +1912,15 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tt_latest_five = [OPTION.display]    # type: ignore
+        setting_bag.options_tt_latest_four = [OPTION.display]    # type: ignore
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
         tt_processor.initialize()        
-        tt_processor.process_tt_latest_five()
+        tt_processor.process_tt_latest_four()
 
         # Assert
-        displayer.display.assert_called_once_with(obj = tt_latest_five_df)
+        displayer.display.assert_called_once_with(obj = tt_latest_four_df)
     def test_processttsbymonth_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -2240,7 +2240,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
     @parameterized.expand([
         ["process_tt"],
-        ["process_tt_latest_five"],
+        ["process_tt_latest_four"],
         ["process_tts_by_month"],
         ["process_tts_by_year"],
         ["process_tts_by_range"],

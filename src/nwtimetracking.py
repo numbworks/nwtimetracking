@@ -21,7 +21,7 @@ from typing import Any, Literal, Optional, Tuple, cast
 from weasyprint import CSS, HTML
 
 # LOCAL/NW MODULES
-from nwshared import FilePathManager, FileManager, Displayer, Formatter
+from nwshared import FilePathManager, FileManager, Displayer
 
 # CONSTANTS
 class TTCN(StrEnum):
@@ -78,7 +78,7 @@ class REPORTSTR(StrEnum):
     
     '''Collects all the strings related to TTReportManager.'''
 
-    TTLATESTFIVE = "Latest Five"
+    TTLATESTFIVE = "Latest Four Sessions"
     TTSBYMONTH = "By Month"
     TTSBYYEAR = "By Year"
     TTSBYRANGE = "By Range"
@@ -87,7 +87,7 @@ class REPORTSTR(StrEnum):
     TTSBYHASHTAGYEAR = "By Hashtag, Year"
     TTSBYHASHTAG = "By Hashtag"
     TTSBYYEARMONTHSPNV = "By Year, Month, Software Project"
-    TTSBYTIMERANGES = "By Timeranges"
+    TTSBYTIMERANGES = "By TimeRanges"
     DEFINITIONS = "Definitions"
 
 # STATIC CLASSES
@@ -163,7 +163,7 @@ class TTSummary():
     '''Collects all the dataframes, stylers and markdowns.'''
 
     tt_df : DataFrame
-    tt_latest_five_df : DataFrame
+    tt_latest_four_df : DataFrame
     tts_by_month_df : DataFrame
     tts_by_year_df : DataFrame
     tts_by_range_df : DataFrame
@@ -258,7 +258,7 @@ class SettingBag():
 
     # WITHOUT DEFAULTS
     options_tt : list[Literal[OPTION.display]]
-    options_tt_latest_five : list[Literal[OPTION.display]]
+    options_tt_latest_four : list[Literal[OPTION.display]]
     options_tts_by_month : list[Literal[OPTION.display]]
     options_tts_by_year : list[Literal[OPTION.display]]
     options_tts_by_range : list[Literal[OPTION.display]]
@@ -895,14 +895,14 @@ class TTDataFrameFactory():
         tt_df = self.__enforce_dataframe_definition_for_tt_df(tt_df = tt_df)
 
         return tt_df
-    def create_tt_latest_five_df(self, tt_df : DataFrame) -> DataFrame:
+    def create_tt_latest_four_df(self, tt_df : DataFrame) -> DataFrame:
 
-        '''Returns latest five rows of tt_df'''
+        '''Returns latest four rows of tt_df'''
 
-        tt_latest_five_df : DataFrame = tt_df.copy(deep = True)
-        tt_latest_five_df = tt_latest_five_df.tail(5)
+        tt_latest_four_df : DataFrame = tt_df.copy(deep = True)
+        tt_latest_four_df = tt_latest_four_df.tail(4)
 
-        return tt_latest_five_df
+        return tt_latest_four_df
     def create_tts_by_month_df(self, tt_df : DataFrame, now : datetime) -> DataFrame:
 
         '''
@@ -1488,11 +1488,11 @@ class TTAdapter():
             )
 
         return tt_df
-    def __create_tt_latest_five_df(self, tt_df : DataFrame) -> DataFrame:
+    def __create_tt_latest_four_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
-        return self.__df_factory.create_tt_latest_five_df(tt_df = tt_df)
+        return self.__df_factory.create_tt_latest_four_df(tt_df = tt_df)
     def __create_tts_by_month_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframes out of the provided arguments.'''
@@ -1591,7 +1591,7 @@ class TTAdapter():
         '''Creates a TTSummary object out of setting_bag.'''
 
         tt_df : DataFrame = self.__create_tt_df(setting_bag = setting_bag)
-        tt_latest_five_df : DataFrame = self.__create_tt_latest_five_df(tt_df = tt_df)
+        tt_latest_four_df : DataFrame = self.__create_tt_latest_four_df(tt_df = tt_df)
         tts_by_month_df : DataFrame = self.__create_tts_by_month_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
         tts_by_range_df : DataFrame = self.__create_tts_by_range_df(tt_df = tt_df)
@@ -1613,7 +1613,7 @@ class TTAdapter():
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
-            tt_latest_five_df = tt_latest_five_df,
+            tt_latest_four_df = tt_latest_four_df,
             tts_by_month_df = tts_by_month_df,
             tts_by_year_df = tts_by_year_df,
             tts_by_range_df = tts_by_range_df,
@@ -1706,7 +1706,7 @@ class TTReportManager():
 
         html_sections: list[str] = []
         
-        html_sections.append(self.__create_html(tt_summary.tt_latest_five_df, REPORTSTR.TTLATESTFIVE, formatters))
+        html_sections.append(self.__create_html(tt_summary.tt_latest_four_df, REPORTSTR.TTLATESTFIVE, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_month_df, REPORTSTR.TTSBYMONTH, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters))
@@ -1850,18 +1850,18 @@ class TimeTrackingProcessor():
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)  
-    def process_tt_latest_five(self) -> None:
+    def process_tt_latest_four(self) -> None:
 
         '''
-            Performs all the actions listed in __setting_bag.options_tt_latest_five.
+            Performs all the actions listed in __setting_bag.options_tt_latest_four.
             
             It raises an exception if the 'initialize' method has not been run yet.
         '''
 
         self.__validate_summary()
 
-        options : list = self.__setting_bag.options_tt_latest_five
-        df : DataFrame = self.__tt_summary.tt_latest_five_df
+        options : list = self.__setting_bag.options_tt_latest_four
+        df : DataFrame = self.__tt_summary.tt_latest_four_df
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)
