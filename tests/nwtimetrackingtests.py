@@ -1242,8 +1242,8 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 
     @parameterized.expand([
         ["07:00", "08:00", "07:00-08:00"],
-        ["", "08:00", "UNKNOWN"],
-        ["07:00", "", "UNKNOWN"]
+        ["", "08:00", "Unknown"],
+        ["07:00", "", "Unknown"]
     ])
     def test_createtimerangeid_shouldreturnexpectedtimerangeid_wheninvoked(self, start_time : str, end_time : str, expected : str):
 
@@ -1502,10 +1502,10 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
     def test_processtt_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
-        tt_styler : DataFrame = Mock()
+        tt_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tt_styler = tt_styler
+        summary.tt_df = tt_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -1517,9 +1517,6 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
 
         setting_bag : Mock = Mock()
         setting_bag.options_tt = [OPTION.display]   # type: ignore
-        setting_bag.tt_head_n = 5
-        setting_bag.tt_display_head_n_with_tail = False
-        setting_bag.tt_hide_index = True
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -1527,11 +1524,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_tt()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tt_styler, 
-            hide_index = True,
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = tt_df)
     def test_processttlatestfive_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -1549,7 +1542,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         component_bag.tt_adapter = tt_adapter
 
         setting_bag : Mock = Mock()
-        setting_bag.options_tts_by_year_month = [OPTION.display]    # type: ignore
+        setting_bag.options_tt_latest_five = [OPTION.display]    # type: ignore
 
         # Act
         tt_processor : TimeTrackingProcessor = TimeTrackingProcessor(component_bag = component_bag, setting_bag = setting_bag)
@@ -1557,11 +1550,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_tt_latest_five()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tt_latest_five_df,
-            hide_index = True, 
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = tt_latest_five_df)
     def test_processttsbymonth_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
