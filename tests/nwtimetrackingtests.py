@@ -7,14 +7,14 @@ from numpy import int64, uint
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Tuple, cast
 from unittest.mock import Mock, patch
 from nwshared import FilePathManager, FileManager, Displayer
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import TTCN, DEFINITIONSTR, OPTION, TTAdapter
+from nwtimetracking import EFFORTMODE, TTCN, DEFINITIONSTR, OPTION, EffortCell, EffortHighlighter, TTAdapter
 from nwtimetracking import _MessageCollection, TTDataFrameFactory, TimeTrackingProcessor
 from nwtimetracking import EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
@@ -448,6 +448,17 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)
+    def test_providedmodenotsupported_shouldreturnexpectedmessage_wheninvalidmode(self) -> None:
+
+        # Arrange
+        invalid_mode : EFFORTMODE = cast(EFFORTMODE, "invalid")
+        expected : str = f"The provided mode is not supported: '{invalid_mode}'."
+
+        # Act
+        actual : str = _MessageCollection.provided_mode_not_supported(mode = invalid_mode)
+
+        # Assert
+        self.assertEqual(expected, actual)	
 class EffortStatusTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
@@ -572,7 +583,7 @@ class TTSummaryTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(actual.tt_df.shape, empty_df.shape)
         self.assertEqual(actual.tt_latest_five_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_month_df, empty_df.shape)
+        self.assertEqual(actual.tts_by_month_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_range_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_spn_df.shape, empty_df.shape)
@@ -1475,6 +1486,192 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
+class EffortCellTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_whenvalidarguments(self) -> None:
+
+        # Arrange
+        coordinate_pair : Tuple[int, int] = (5, 10)
+        effort_str : str = "10h 00m"
+        effort_td : timedelta = timedelta(hours = 10)
+
+        # Act
+        effort_cell : EffortCell = EffortCell(
+            coordinate_pair = coordinate_pair,
+            effort_str = effort_str,
+            effort_td = effort_td
+        )
+
+        # Assert
+        self.assertEqual(effort_cell.coordinate_pair, coordinate_pair)
+        self.assertEqual(effort_cell.effort_str, effort_str)
+        self.assertEqual(effort_cell.effort_td, effort_td)
+class EffortHighlighterTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.effort_highlighter : EffortHighlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
+
+        data : dict[str, list] = {
+            "Month": ["1", "2"],
+            "2015": ["00h 00m", "00h 00m"],
+            "↕": ["↑", "↑"],
+            "2016": ["18h 00m", "45h 30m"],
+            "↕_duplicate_1": ["↑", "↑"],
+            "2017": ["88h 30m", "65h 30m"]
+        }
+        columns_01 : list[str] = ["Month", "2015", "↕", "2016", "↕", "2017"]
+        self.df_with_duplicates : DataFrame = DataFrame(data, columns = columns_01)
+
+        columns_02 : list[str] = ["Month", "2015", "↕", "2016", "↕_duplicate_1", "2017"]
+        self.df_without_duplicates : DataFrame = DataFrame(data, columns = columns_02)
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+
+        # Arrange
+        df_helper : TTDataFrameHelper = TTDataFrameHelper()
+
+        # Act
+        actual : EffortHighlighter = EffortHighlighter(df_helper = df_helper)
+
+        # Assert
+        self.assertIsInstance(actual, EffortHighlighter)
+
+    @parameterized.expand([
+        ("00h 00m", True),
+        ("10h 45m", True),
+        ("101h 30m", True),
+        ("+71h 00m", True),
+		("+159h 00m", True),
+        ("-79h 30m", True),
+        ("-455h 45m", True),
+        ("invalid", False),
+        ("10h 60m", False),
+        ("h 30m", False),
+        ("-10h m", False),
+        ("+h m", False)
+    ])
+    def test_iseffort_shouldreturnexpectedresult_wheninvoked(self, effort: str, expected: bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = self.effort_highlighter._EffortHighlighter__is_effort(cell_content = effort)    # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+    def test_appendneweffortcell_shouldappendprovidedcell_wheninvoked(self) -> None:
+        
+        # Arrange
+        effort_cells : list[EffortCell] = []
+        coordinate_pair : Tuple[int, int] = (0, 1)
+        cell_content : str = "5h 30m"
+        effort_td : timedelta = timedelta(hours = 5, minutes = 30)
+
+        # Act
+        self.effort_highlighter._EffortHighlighter__append_new_effort_cell(effort_cells, coordinate_pair, cell_content) # type: ignore
+
+        # Assert
+        self.assertEqual(len(effort_cells), 1)
+        self.assertEqual(effort_cells[0].coordinate_pair, coordinate_pair)
+        self.assertEqual(effort_cells[0].effort_str, cell_content)
+        self.assertEqual(effort_cells[0].effort_td, effort_td)
+    def test_extractrow_shouldreturneffortcells_whenrowhasvalidtimes(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m"], "↕": ["↑"], "2016": ["20h 45m"]})
+        column_names : list[str] = ["2015", "2016"]
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__extract_row(df = df, row_idx = 0, column_names = column_names)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "10h 30m")
+        self.assertEqual(actual[1].effort_str, "20h 45m")
+
+    @parameterized.expand([
+        (EFFORTMODE.top_one_effort_per_row, 1),
+        (EFFORTMODE.top_three_efforts, 3)
+    ])
+    def test_extractn_shouldreturnexpected_whenvalid(self, mode: EFFORTMODE, expected: int) -> None:
+        
+        # Arrange
+        # Act
+        actual : int = self.effort_highlighter._EffortHighlighter__extract_n(mode = mode)   # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+    def test_extractn_shouldraiseexception_wheninvalid(self) -> None:
+        
+        # Arrange
+        mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+
+        # Act & Assert
+        with self.assertRaises(Exception):
+            self.effort_highlighter._EffortHighlighter__extract_n(mode = mode)   # type: ignore
+    def test_extracttopneffortcells_shouldreturntopncells_wheninvoked(self) -> None:
+
+        # Arrange
+        effort_cells : list[EffortCell] = [
+            EffortCell(coordinate_pair = (0, 0), effort_str = "10h 00m", effort_td = timedelta(hours = 10)),
+            EffortCell(coordinate_pair = (0, 1), effort_str = "5h 30m", effort_td = timedelta(hours = 5, minutes = 30)),
+            EffortCell(coordinate_pair = (0, 2), effort_str = "20h 45m", effort_td = timedelta(hours = 20, minutes = 45))
+        ]
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__extract_top_n_effort_cells(effort_cells = effort_cells, n = 2)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "10h 00m")
+    def test_calculateeffortcells_shouldreturnexpectedcells_whentoponeeffortperrow(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        column_names : list[str] = ["2015", "2016"]
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode, column_names = column_names)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "20h 00m")
+    def test_calculateeffortcells_shouldreturnexpectedcells_whentopthreeefforts(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        column_names : list[str] = ["2015", "2016"]
+
+        # Act
+        actual : list[EffortCell] = self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode, column_names = column_names)   # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 3)
+        self.assertEqual(actual[0].effort_str, "20h 45m")
+        self.assertEqual(actual[1].effort_str, "20h 00m")
+        self.assertEqual(actual[2].effort_str, "15h 45m")
+    def test_calculateeffortcells_shouldraiseexception_wheninvalidmode(self) -> None:
+
+        # Arrange
+        df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
+        mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+        column_names : list[str] = ["2015", "2016"]
+
+        expected : str = _MessageCollection.provided_mode_not_supported(mode)
+        
+        # Act
+        with self.assertRaises(Exception) as context:
+            self.effort_highlighter._EffortHighlighter__calculate_effort_cells(df = df, mode = mode, column_names = column_names)   # type: ignore
+
+        # Assert
+        self.assertEqual(expected, str(context.exception))
+
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
@@ -1486,7 +1683,8 @@ class ComponentBagTestCase(unittest.TestCase):
             file_manager = FileManager(file_path_manager = FilePathManager()),
             displayer = Displayer(),
             tt_adapter = TTAdapter(
-                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
+                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()),
+                effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
             ))
 
         # Assert

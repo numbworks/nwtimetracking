@@ -16,7 +16,8 @@ from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
 from pandas import Timedelta
 from pandas.io.formats.style import Styler
-from typing import Any, Literal, Optional, cast
+from re import Match
+from typing import Any, Literal, Optional, Tuple, cast
 
 # LOCAL/NW MODULES
 from nwshared import FilePathManager, FileManager, Displayer
@@ -79,6 +80,12 @@ class OPTION(StrEnum):
     display = auto()
     save_html = auto()
     save_pdf = auto()
+class EFFORTMODE(StrEnum):
+
+    '''Represents a collection of modes for EffortHighlighter.'''
+
+    top_one_effort_per_row = auto()
+    top_three_efforts = auto()
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -121,6 +128,10 @@ class _MessageCollection():
     @staticmethod
     def please_run_initialize_first() -> str:
         return "Please run the 'initialize' method first."
+
+    @staticmethod
+    def provided_mode_not_supported(mode : EFFORTMODE):
+        return f"The provided mode is not supported: '{mode}'."
 
 # CLASSES
 @dataclass(frozen=True)
@@ -265,6 +276,7 @@ class SettingBag():
     excel_tabname : str = field(default = "Sessions")
     years : list[int] = field(default_factory = lambda : YearProvider().get_all_years())
     now : datetime = field(default = datetime.now())
+    enable_effort_highlighting : bool = field(default = True)
     tts_by_spn_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all())
     tts_by_spv_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_latest_three())
     tts_by_hashtag_formatters : dict = field(default_factory = lambda : { TTCN.EFFORTPERC : "{:.2f}" })
@@ -1227,15 +1239,238 @@ class TTDataFrameFactory():
         )
 
         return definitions_df
+@dataclass(frozen = True)
+class EffortCell():
+    
+    '''Collects all the information related to a DataFrame cell that are required by EffortHighlighter.'''
+
+    coordinate_pair : Tuple[int, int]
+    effort_str : str
+    effort_td : timedelta
+class EffortHighlighter():
+
+    '''Encapsulates all the logic related to highlighting cells in dataframes containing efforts.'''
+
+    __df_helper : TTDataFrameHelper
+
+    def __init__(self, df_helper : TTDataFrameHelper) -> None:
+
+        self.__df_helper = df_helper
+
+    def __is_effort(self, cell_content : str) -> bool :
+
+        '''Returns True if content in ["00h 00m", "08h 00m", "20h 45m", "101h 30m", "+71h 00m", "-455h 45m", ...].'''
+
+        pattern : str = r"^[+-]?(\d{2,})h (0[0-9]|[1-5][0-9])m$"
+        match : Optional[Match[str]] = re.fullmatch(pattern = pattern, string = cell_content)
+
+        if match is not None:
+            return True
+        else:
+            return False
+    def __append_new_effort_cell(self, effort_cells : list[EffortCell], coordinate_pair : Tuple[int, int], cell_content : str) -> None:
+
+        '''Creates and append new EffortCell object to effort_cells.'''
+
+        effort_cell : EffortCell = EffortCell(
+            coordinate_pair = coordinate_pair,
+            effort_str = cell_content,
+            effort_td = self.__df_helper.unbox_effort(effort_str = cell_content)
+        )
+        
+        effort_cells.append(effort_cell)
+    def __extract_row(self, df : DataFrame, row_idx : int, column_names : list[str]) -> list[EffortCell]:
+
+        '''Returns a collection of EffortCell objects for provided arguments.'''
+
+        effort_cells : list[EffortCell] = []
+        col_indices : list = [df.columns.get_loc(column_name) for column_name in column_names if column_name in df.columns]
+
+        for col_idx in col_indices:
+
+            coordinate_pair : Tuple[int, int] = (row_idx, col_idx)
+            cell_content : str = str(df.iloc[row_idx, col_idx])
+
+            if self.__is_effort(cell_content = cell_content):
+                self.__append_new_effort_cell(effort_cells, coordinate_pair, cell_content)
+
+        return effort_cells
+    def __extract_n(self, mode : EFFORTMODE) -> int:
+
+        '''Extracts n from mode.'''
+
+        if mode == EFFORTMODE.top_one_effort_per_row:
+            return 1
+        elif mode == EFFORTMODE.top_three_efforts:
+            return 3
+        else:
+            raise Exception(_MessageCollection.provided_mode_not_supported(mode))
+    def __extract_top_n_effort_cells(self, effort_cells : list[EffortCell], n : int) -> list[EffortCell]:
+
+        '''Extracts the n objects in bym_cells with the highest effort_td.'''
+
+        sorted_cells : list[EffortCell] = sorted(effort_cells, key = lambda cell : cell.effort_td, reverse = True)
+        top_n : list[EffortCell] = sorted_cells[:n]
+
+        return top_n
+    def __calculate_effort_cells(self, df : DataFrame, mode : EFFORTMODE, column_names : list[str]) -> list[EffortCell]:
+
+        '''Returns a list of EffortCell objects according to df and mode.'''
+
+        effort_cells : list[EffortCell] = []
+
+        last_row_idx : int = len(df)
+        n : int = self.__extract_n(mode = mode)
+        current : list[EffortCell] = []
+
+        if mode == EFFORTMODE.top_one_effort_per_row:
+            for row_idx in range(last_row_idx):
+
+                current = self.__extract_row(df = df, row_idx = row_idx, column_names = column_names)
+                current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
+                effort_cells.extend(current)
+                
+        elif mode == EFFORTMODE.top_three_efforts:
+            for row_idx in range(last_row_idx):
+                
+                current = self.__extract_row(df = df, row_idx = row_idx, column_names = column_names)
+                effort_cells.extend(current)
+
+            effort_cells = self.__extract_top_n_effort_cells(effort_cells = effort_cells, n = n)
+
+        else:
+            raise Exception(_MessageCollection.provided_mode_not_supported(mode))
+
+        return effort_cells
+    def __add_tags(self, df : DataFrame, effort_cells : list[EffortCell], tags : Tuple[str, str]) -> DataFrame:
+
+        '''Adds two HTML tags around the content of the cells listed in effort_cells.'''
+
+        tagged_df : DataFrame = df.copy(deep = True)
+
+        left_h : str = tags[0]
+        right_h : str = tags[1]
+
+        for effort_cell in effort_cells:
+
+            row, col = effort_cell.coordinate_pair
+
+            if row < len(df) and col < len(df.columns):
+                tagged_df.iloc[row, col] = f"{left_h}{str(df.iloc[row, col])}{right_h}"
+            
+        return tagged_df
+    def __highlight_dataframe(self, df : DataFrame, mode : EFFORTMODE, column_names : list[str] = []) -> DataFrame:
+
+        '''
+            Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
+            Returns a df with highlighted cells as per arguments.
+
+            Note: column names are converted to string to aid column search when the dataframe has mixed type column names.
+        '''
+
+        highlighted_df : DataFrame = df.copy(deep = True)
+        highlighted_df.columns = highlighted_df.columns.map(str)
+
+        if len(column_names) == 0:
+            column_names = highlighted_df.columns.to_list()
+
+        effort_cells : list[EffortCell] = self.__calculate_effort_cells(
+            df = highlighted_df, 
+            mode = mode,
+            column_names = column_names
+        )
+
+        tags : Tuple[str, str] = (f"<mark style='background-color: skyblue'>", "</mark>")
+        highlighted_df = self.__add_tags(df = highlighted_df, effort_cells = effort_cells, tags = tags)
+
+        return highlighted_df
+    def __get_latest_year(self, tts_by_hashtag_year_df : DataFrame) -> str:
+
+        '''
+            [ "Hashtag", "2015", "2016", "2017", "2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"]
+                -> "2025"
+        '''
+
+        latest_year : str = str(max(int(column_name) for column_name in tts_by_hashtag_year_df.columns if str(column_name).isdigit()))
+        
+        return latest_year
+
+    def highlight_tts_by_month(self, tts_by_month_df : DataFrame) -> DataFrame:
+        
+        '''Returns the provided dataframe with adequate highlights.'''
+
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+
+        highlighted_df : DataFrame = self.__highlight_dataframe(
+            df = tts_by_month_df,
+            mode = mode
+        )
+        
+        return highlighted_df
+    def highlight_tts_by_year(self, tts_by_year_df : DataFrame) -> DataFrame:
+        
+        '''Returns the provided dataframe with adequate highlights.'''
+
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+
+        highlighted_df : DataFrame = self.__highlight_dataframe(
+            df = tts_by_year_df,
+            mode = mode
+        )
+        
+        return highlighted_df
+    def highlight_tts_by_hashtag_year(self, tts_by_hashtag_year_df : DataFrame) -> DataFrame:
+        
+        '''Returns the provided dataframe with adequate highlights.'''
+
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        latest_year : str = self.__get_latest_year(tts_by_hashtag_year_df)
+
+        highlighted_df : DataFrame = self.__highlight_dataframe(
+            df = tts_by_hashtag_year_df,
+            mode = mode,
+            column_names = [latest_year]
+        )
+        
+        return highlighted_df
+    def highlight_tts_by_hashtag(self, tts_by_hashtag_df : DataFrame) -> DataFrame:
+        
+        '''Returns the provided dataframe with adequate highlights.'''
+
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+
+        highlighted_df : DataFrame = self.__highlight_dataframe(
+            df = tts_by_hashtag_df,
+            mode = mode
+        )
+        
+        return highlighted_df
+    def highlight_tts_by_year_month_spnv(self, tts_by_year_month_spnv_df : DataFrame) -> DataFrame:
+        
+        '''Returns the provided dataframe with adequate highlights.'''
+
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+
+        highlighted_df : DataFrame = self.__highlight_dataframe(
+            df = tts_by_year_month_spnv_df,
+            mode = mode
+        )
+        
+        return highlighted_df
 class TTAdapter():
 
     '''Adapts SettingBag properties for use in TT*Factory methods.'''
 
     __df_factory : TTDataFrameFactory
+    __effort_highlighter : EffortHighlighter
 
-    def __init__(self, df_factory : TTDataFrameFactory) -> None:
+    def __init__(
+        self, 
+        df_factory : TTDataFrameFactory, 
+        effort_highlighter : EffortHighlighter) -> None:
         
         self.__df_factory = df_factory
+        self.__effort_highlighter = effort_highlighter
 
     def __create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
 
@@ -1365,6 +1600,13 @@ class TTAdapter():
         ttd_effort_status_df : DataFrame = self.__create_ttd_effort_status_df(tt_df = tt_df, setting_bag = setting_bag)
         definitions_df : DataFrame = self.__df_factory.create_definitions_df()
 
+        if setting_bag.enable_effort_highlighting:
+            tts_by_month_df = self.__effort_highlighter.highlight_tts_by_month(tts_by_month_df = tts_by_month_df)
+            tts_by_year_df = self.__effort_highlighter.highlight_tts_by_year(tts_by_year_df = tts_by_year_df)
+            tts_by_hashtag_year_df = self.__effort_highlighter.highlight_tts_by_hashtag_year(tts_by_hashtag_year_df = tts_by_hashtag_year_df)
+            tts_by_hashtag_df = self.__effort_highlighter.highlight_tts_by_hashtag(tts_by_hashtag_df = tts_by_hashtag_df)
+            tts_by_year_month_spnv_df = self.__effort_highlighter.highlight_tts_by_year_month_spnv(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)
+
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
             tt_latest_five_df = tt_latest_five_df,
@@ -1392,7 +1634,8 @@ class ComponentBag():
     displayer : Displayer = field(default = Displayer())
     
     tt_adapter : TTAdapter = field(default = TTAdapter(
-        df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper())))
+        df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()),
+        effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())))
 class TimeTrackingProcessor():
 
     '''Collects all the logic related to the processing of "Time Tracking.xlsx".'''
