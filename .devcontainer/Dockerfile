@@ -8,6 +8,7 @@ RUN pip install pandas==2.2.3
 RUN pip install requests==2.32.3
 RUN pip install tabulate==0.9.0
 RUN pip install matplotlib==3.9.2
+RUN pip install weasyprint==66.0
 RUN pip install 'git+https://github.com/numbworks/nwshared.git@v1.8.1#egg=nwshared&subdirectory=src'
 
 # JUPYTER NOTEBOOK

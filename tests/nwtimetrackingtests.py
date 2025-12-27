@@ -713,27 +713,29 @@ class SettingBagTestCase(unittest.TestCase):
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
 
         # Arrange
-        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                        # type: ignore
-        options_tt_latest_five : list[Literal[OPTION.display]] = [OPTION.display]            # type: ignore
-        options_tts_by_month : list[Literal[OPTION.display]] = [OPTION.display]              # type: ignore
-        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
-        options_tts_by_range : list[Literal[OPTION.display]] = [OPTION.display]              # type: ignore
-        options_tts_by_spn : list[Literal[OPTION.display]] = [OPTION.display]                # type: ignore
-        options_tts_by_spv : list[Literal[OPTION.display]] = [OPTION.display]                # type: ignore
-        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]       # type: ignore
-        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]            # type: ignore
-        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]    # type: ignore
-        options_tts_by_timeranges : list[Literal[OPTION.display]] = [OPTION.display]         # type: ignore
-        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
+        options_tt : list[Literal[OPTION.display]] = [OPTION.display]                           # type: ignore
+        options_tt_latest_five : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
+        options_tts_by_month : list[Literal[OPTION.display]] = [OPTION.display]                 # type: ignore
+        options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                  # type: ignore
+        options_tts_by_range : list[Literal[OPTION.display]] = [OPTION.display]                 # type: ignore
+        options_tts_by_spn : list[Literal[OPTION.display]] = [OPTION.display]                   # type: ignore
+        options_tts_by_spv : list[Literal[OPTION.display]] = [OPTION.display]                   # type: ignore
+        options_tts_by_hashtag_year : list[Literal[OPTION.display]] = [OPTION.display]          # type: ignore
+        options_tts_by_hashtag : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
+        options_tts_by_year_month_spnv : list[Literal[OPTION.display]] = [OPTION.display]       # type: ignore
+        options_tts_by_timeranges : list[Literal[OPTION.display]] = [OPTION.display]            # type: ignore
+        options_definitions : list[Literal[OPTION.display]] = [OPTION.display]                  # type: ignore
+        options_report : list[Literal[OPTION.save_html, OPTION.save_pdf]] = [OPTION.save_pdf]   # type: ignore
         excel_nrows : int = 100
 
-        options_ttd_effort_status : list[Literal[OPTION.display]] = [OPTION.display]         # type: ignore
+        options_ttd_effort_status : list[Literal[OPTION.display]] = [OPTION.display]            # type: ignore
         working_folder_path : str = "/home/nwtimetracking/"
         excel_path : str = "/workspaces/nwtimetracking/data/"
         excel_skiprows : int = 0
         excel_tabname : str = "Sessions"
         years : list[int] = [2020, 2021, 2022]
         now : datetime = datetime.now()
+        enable_effort_highlighting : bool = True
         tts_by_spn_software_project_names : list[str] = ["SPN1", "SPN2"]
         tts_by_spv_software_project_names : list[str] = ["SPN3"]
         tts_by_hashtag_formatters : dict = { TTCN.EFFORTPERC : "{:.2f}" }
@@ -755,6 +757,7 @@ class SettingBagTestCase(unittest.TestCase):
             options_tts_by_year_month_spnv = options_tts_by_year_month_spnv,
             options_tts_by_timeranges = options_tts_by_timeranges,
             options_definitions = options_definitions,
+            options_report = options_report,
             excel_nrows = excel_nrows,
             options_ttd_effort_status = options_ttd_effort_status,
             working_folder_path = working_folder_path,
@@ -763,6 +766,7 @@ class SettingBagTestCase(unittest.TestCase):
             excel_tabname = excel_tabname,
             years = years,
             now = now,
+            enable_effort_highlighting = enable_effort_highlighting,
             tts_by_spn_software_project_names = tts_by_spn_software_project_names,
             tts_by_spv_software_project_names = tts_by_spv_software_project_names,
             tts_by_hashtag_formatters = tts_by_hashtag_formatters,
@@ -784,6 +788,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.options_tts_by_year_month_spnv, options_tts_by_year_month_spnv)
         self.assertEqual(actual.options_tts_by_timeranges, options_tts_by_timeranges)
         self.assertEqual(actual.options_definitions, options_definitions)
+        self.assertEqual(actual.options_report, options_report)
         self.assertEqual(actual.excel_nrows, excel_nrows)
 
         self.assertEqual(actual.options_ttd_effort_status, options_ttd_effort_status)
@@ -793,6 +798,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.excel_tabname, excel_tabname)
         self.assertEqual(actual.years, years)
         self.assertEqual(actual.now, now)
+        self.assertEqual(actual.enable_effort_highlighting, enable_effort_highlighting)
         self.assertEqual(actual.tts_by_spn_software_project_names, tts_by_spn_software_project_names)
         self.assertEqual(actual.tts_by_spv_software_project_names, tts_by_spv_software_project_names)
         self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)

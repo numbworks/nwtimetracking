@@ -15,12 +15,13 @@ from enum import StrEnum, auto
 from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
 from pandas import Timedelta
-from pandas.io.formats.style import Styler
+from pathlib import Path
 from re import Match
 from typing import Any, Literal, Optional, Tuple, cast
+from weasyprint import CSS, HTML
 
 # LOCAL/NW MODULES
-from nwshared import FilePathManager, FileManager, Displayer
+from nwshared import FilePathManager, FileManager, Displayer, Formatter
 
 # CONSTANTS
 class TTCN(StrEnum):
@@ -51,20 +52,7 @@ class TTCN(StrEnum):
     ISCORRECT = "IsCorrect"
     EXPECTED = "Expected"
     MESSAGE = "Message"
-
-
-
-    YEARLYTARGET = "YearlyTarget"
-    TARGETDIFF = "TargetDiff"
-    ISTARGETMET = "IsTargetMet"
-    YEARLYTOTAL = "YearlyTotal"
-    TOTARGET = "ToTarget"
-    STARTDATE = "StartDate"
-    ENDDATE = "EndDate"
-    DURATION = "Duration"
-    EFFORTH = "EffortH"
-    SEQRANK = "SeqRank"
-    HASHTAGSEQ = "HashtagSeq"
+    ID = "Id"
 class DEFINITIONSTR(StrEnum):
     
     '''Collects all the column names used by definitions.'''
@@ -86,6 +74,21 @@ class EFFORTMODE(StrEnum):
 
     top_one_effort_per_row = auto()
     top_three_efforts = auto()
+class REPORTSTR(StrEnum):
+    
+    '''Collects all the strings related to TTReportManager.'''
+
+    TTLATESTFIVE = "Latest Five"
+    TTSBYMONTH = "By Month"
+    TTSBYYEAR = "By Year"
+    TTSBYRANGE = "By Range"
+    TTSBYSPN = "By Software Project Name"
+    TTSBYSPV = "By Software Project Version"
+    TTSBYHASHTAGYEAR = "By Hashtag, Year"
+    TTSBYHASHTAG = "By Hashtag"
+    TTSBYYEARMONTHSPNV = "By Year, Month, Software Project"
+    TTSBYTIMERANGES = "By Timeranges"
+    DEFINITIONS = "Definitions"
 
 # STATIC CLASSES
 class _MessageCollection():
@@ -266,6 +269,7 @@ class SettingBag():
     options_tts_by_year_month_spnv : list[Literal[OPTION.display]]
     options_tts_by_timeranges : list[Literal[OPTION.display]]
     options_definitions : list[Literal[OPTION.display]]
+    options_report : list[Literal[OPTION.save_html, OPTION.save_pdf]]
     excel_nrows : int
 
     # WITH DEFAULTS
@@ -1624,6 +1628,166 @@ class TTAdapter():
         )
 
         return tt_summary
+class TTReportManager():
+
+    '''Collects all the logic related to the creation of reports out of TTSummary objects.'''
+
+    def __format_for_file_name(self, last_update : datetime) ->  str:
+
+        '''Example: "20251222".'''
+
+        return last_update.strftime("%Y%m%d")
+    def __format_for_title(self, last_update : datetime) ->  str:
+
+        '''Example: "2025-12-22".'''
+
+        return last_update.strftime("%Y-%m-%d")
+    def __create_report_file_paths(self, folder_path: str, last_update : datetime) -> Tuple[Path, Path]:
+
+        '''
+            Example: 
+                - /home/nwreadinglist/TIMETRACKINGREPORT20251222.html
+                - /home/nwreadinglist/TIMETRACKINGREPORT20251222.pdf
+        '''
+
+        file_name : str = f"TIMETRACKINGREPORT{self.__format_for_file_name(last_update)}"
+        base_path : Path = Path(folder_path) / file_name
+
+        html_path : Path = base_path.with_suffix(".html")
+        pdf_path : Path = base_path.with_suffix(".pdf")
+
+        return (html_path, pdf_path)
+    def __create_html(self, df : DataFrame, title : str, formatters : Optional[dict], footer : Optional[str] = None) -> str:
+
+        """Converts the provided DataFrame into a styled HTML table using a layout similar to Jupyter Notebook."""
+
+        styled = (
+            df.style
+            .format(formatters)
+            .hide(axis="index")
+            .set_table_styles(
+                [
+                    {
+                        "selector": "thead th", 
+                        "props": "background-color: #eeeeee; color: #333; font-weight: bold; padding: 8px 10px; text-align: left; border: none;"
+                    },
+                    {
+                        "selector": "tbody td", 
+                        "props": "padding: 8px 10px; text-align: left; border: none; white-space: nowrap;"
+                    },
+                    {
+                        "selector": "tbody tr:nth-child(even)", 
+                        "props": "background-color: #f5f5f5;"
+                    },
+                    {
+                        "selector": "", 
+                        "props": "border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12px; color: #444;"
+                    }
+                ]
+            )
+        )
+
+        footer_html : str = (
+                f"<br/><div style='margin-top: 6px; font-size: 14px; color: #666;'>{footer}</div>"
+                if footer
+                else ""
+            )
+    
+        return (
+            "<div style='margin-bottom: 20px;'>"
+            f"<h2>{title}</h2>\n"
+            f"{styled.to_html()}\n"
+            f"{footer_html}"
+            "</div>"
+            )
+    def __create_html_sections(self, tt_summary : TTSummary, formatters : Optional[dict]) -> list[str]:
+
+        '''Converts summary to a collection of HTML code blocks.'''
+
+        html_sections: list[str] = []
+        
+        html_sections.append(self.__create_html(tt_summary.tt_latest_five_df, REPORTSTR.TTLATESTFIVE, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_month_df, REPORTSTR.TTSBYMONTH, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_spn_df, REPORTSTR.TTSBYSPN, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_spv_df, REPORTSTR.TTSBYSPV, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_hashtag_year_df, REPORTSTR.TTSBYHASHTAGYEAR, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_hashtag_df, REPORTSTR.TTSBYHASHTAG, formatters))        
+        html_sections.append(self.__create_html(tt_summary.tts_by_year_month_spnv_df, REPORTSTR.TTSBYYEARMONTHSPNV, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_timeranges_df, REPORTSTR.TTSBYTIMERANGES, formatters))
+        html_sections.append(self.__create_html(tt_summary.definitions_df, REPORTSTR.DEFINITIONS, formatters))
+
+        return html_sections
+    def __create_html_template(self, html_sections : list[str], last_update : datetime) -> str:
+
+        '''Creates HTML template.'''
+
+        full_html: str = f"""
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <title>Time Tracking Report | {self.__format_for_title(last_update)}</title>
+            <style>
+                body {{
+                    font-family: Arial, sans-serif;
+                    margin: 20px;
+                }}
+                h1 {{
+                    text-align: left;
+                    margin-bottom: 40px;
+                }}
+                h2 {{
+                    margin-top: 40px;
+                    border-bottom: 2px solid #ddd;
+                    padding-bottom: 5px;
+                }}
+                p {{
+                    margin-top: 10px;
+                    margin-bottom: 10px;
+                    line-height: 1.5;
+                    font-size: 12px;
+                }}                
+            </style>
+        </head>
+        <body>
+            <img src='https://avatars.githubusercontent.com/u/10279234' alt='NW logo' style='width:120px; height:120px; margin-bottom:10px;'>
+            <h1>Time Tracking Report | {self.__format_for_title(last_update)}</h1>
+            {''.join(html_sections)}
+            <br/><p>© 2025 numbworks. This report is generated by 'nwtimetracking' and licensed under the MIT License. Additional information: <a href="https://github.com/numbworks">github.com/numbworks</a>.</p>
+        </body>
+        </html>
+        """
+        
+        return full_html
+    def __create_stylesheet(self):
+
+        '''Creates a CSS stylesheet.'''
+
+        stylesheet : CSS = CSS(string = "@page { size: A3 landscape; margin: 20mm; }")
+        
+        return stylesheet
+    
+    def save_as_report(
+        self, 
+        tt_summary: TTSummary, 
+        folder_path : str, 
+        last_update : datetime, 
+        save_html : bool, 
+        save_pdf : bool, 
+        formatters : Optional[dict] = None) -> None:
+        
+        '''Builds an HTML report from selected DataFrames in RLSummary and saves it as both HTML and PDF.'''
+
+        html_path, pdf_path = self.__create_report_file_paths(folder_path = folder_path, last_update = last_update)
+        html_sections : list[str] = self.__create_html_sections(tt_summary = tt_summary, formatters = formatters)
+        full_html : str = self.__create_html_template(html_sections = html_sections, last_update = last_update)
+
+        if save_html:
+            html_path.write_text(data = full_html, encoding = "utf-8")
+        
+        if save_pdf:
+            HTML(string = full_html).write_pdf(target = str(pdf_path), stylesheets = [self.__create_stylesheet()])
 @dataclass(frozen=True)
 class ComponentBag():
 
@@ -1632,7 +1796,7 @@ class ComponentBag():
     file_path_manager : FilePathManager = field(default = FilePathManager())
     file_manager : FileManager = field(default = FileManager(file_path_manager = FilePathManager()))
     displayer : Displayer = field(default = Displayer())
-    
+    ttr_manager : TTReportManager = field(default = TTReportManager())
     tt_adapter : TTAdapter = field(default = TTAdapter(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()),
         effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())))
@@ -1655,6 +1819,16 @@ class TimeTrackingProcessor():
 
         if not hasattr(self, '_TimeTrackingProcessor__tt_summary'):
             raise Exception(_MessageCollection.please_run_initialize_first())
+    def __merge_formatters(self) -> dict:
+
+        '''Merges all formatters in one dict'''
+
+        formatters : dict = (
+            self.__setting_bag.tts_by_hashtag_formatters | 
+            self.__setting_bag.tts_by_timeranges_formatters
+        )
+            
+        return formatters
 
     def initialize(self) -> None:
 
@@ -1870,6 +2044,30 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         return self.__tt_summary
+    def save_as_report(self) -> None:
+
+        '''Builds an HTML report from selected DataFrames in RLSummary and saves it as both HTML and PDF.'''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_report
+        formatters :dict = self.__merge_formatters()
+        save_html : bool = False
+        save_pdf : bool = False
+
+        if OPTION.save_html in options:
+            save_html = True
+
+        if OPTION.save_pdf in options:
+            save_pdf = True
+
+        self.__component_bag.ttr_manager.save_as_report(
+            tt_summary = self.__tt_summary,
+            folder_path = self.__setting_bag.working_folder_path,
+            last_update = self.__setting_bag.now,
+            save_html = save_html,
+            save_pdf = save_pdf,
+            formatters = formatters)
 
 # MAIN
 if __name__ == "__main__":
