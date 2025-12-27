@@ -242,8 +242,8 @@ class ObjectMother():
         '''
 
         return pd.DataFrame({
-                "Hashtag": ["#csharp", "#maintenance", "#python", "#studying"],
-                2024:    ["06h 15m", "04h 30m", "02h 00m", "23h 15m"],
+                TTCN.HASHTAG: ["#csharp", "#maintenance", "#python", "#studying"],
+                2024:    ["06h 15m", "04h 30m", "02h 00m", "23h 15m"]
             }, index=pd.RangeIndex(start=0, stop=4, step=1))
     @staticmethod
     def get_tts_by_hashtag_df() -> DataFrame:
@@ -1671,7 +1671,176 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, str(context.exception))
+    def test_addtags_shouldsurroundeffortcellsswithtokens_wheninvoked(self) -> None:
 
+        # Arrange
+        effort_cells : list[EffortCell] = [
+            EffortCell((0, 1), "00h 00m", timedelta(hours = 0, minutes = 0)),
+            EffortCell((1, 3), "45h 30m", timedelta(hours = 45, minutes = 30))
+        ]
+        tags : Tuple[str, str] = ("[[ ", " ]]")
+        expected : DataFrame = self.df_without_duplicates.copy(deep = True)
+        expected.iloc[0, 1] = "[[ 00h 00m ]]"
+        expected.iloc[1, 3] = "[[ 45h 30m ]]"
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__add_tags(self.df_without_duplicates, effort_cells, tags)   # type: ignore
+
+        # Assert
+        self.assertTrue(expected.equals(actual))
+    def test_highlightdataframe_shouldhighlightexpectedcells_whencolumnnamesareprovided(self) -> None:
+
+        # Arrange
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        column_names : list[str] = ["2015", "2016", "2017"]
+
+        expected : DataFrame = self.df_without_duplicates.copy(deep = True)
+        expected.iloc[0, 5] = "<mark style='background-color: skyblue'>88h 30m</mark>"
+        expected.iloc[1, 5] = "<mark style='background-color: skyblue'>65h 30m</mark>"
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__highlight_dataframe(self.df_without_duplicates, mode, column_names) # type: ignore
+
+        # Assert
+        assert_frame_equal(expected, actual)
+    def test_highlightdataframe_shouldhighlightexpectedcells_whencolumnnamesarenotprovided(self) -> None:
+
+        # Arrange
+        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        column_names : list[str] = []
+
+        expected : DataFrame = self.df_without_duplicates.copy(deep = True)
+        expected.iloc[0, 5] = "<mark style='background-color: skyblue'>88h 30m</mark>"
+        expected.iloc[1, 5] = "<mark style='background-color: skyblue'>65h 30m</mark>"
+
+        # Act
+        actual : DataFrame = self.effort_highlighter._EffortHighlighter__highlight_dataframe(self.df_without_duplicates, mode, column_names) # type: ignore
+
+        # Assert
+        assert_frame_equal(expected, actual)
+    def test_getlatestyear_shouldreturnexpectedstring_whencolumnnamesarestring(self) -> None:
+        
+        # Arrange
+        data : dict = {
+            TTCN.HASHTAG : ["#python", "#studying"],
+            "2022" : ["06h 15m", "23h 15m"],
+            "2023" : ["06h 15m", "23h 15m"],
+            "2024" : ["06h 15m", "23h 15m"],
+            "2025" : ["06h 15m", "23h 15m"]
+        }
+        tts_by_hashtag_year_df : DataFrame = DataFrame(data)
+        expected : str = "2025"
+
+        # Act
+        actual : str = self.effort_highlighter._EffortHighlighter__get_latest_year(tts_by_hashtag_year_df) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+    def test_getlatestyear_shouldreturnexpectedstring_whencolumnnamesarenotstring(self) -> None:
+        
+        # Arrange
+        data : dict = {
+            TTCN.HASHTAG : ["#python", "#studying"],
+            2022 : ["06h 15m", "23h 15m"],
+            2023 : ["06h 15m", "23h 15m"],
+            2024 : ["06h 15m", "23h 15m"],
+            2025 : ["06h 15m", "23h 15m"]
+        }
+        tts_by_hashtag_year_df : DataFrame = DataFrame(data)
+        expected : str = "2025"
+
+        # Act
+        actual : str = self.effort_highlighter._EffortHighlighter__get_latest_year(tts_by_hashtag_year_df) # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_highlightttsbymonth_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        tts_by_month_df : DataFrame = DataFrame()
+
+        highlighted_df : Mock = Mock()
+        self.effort_highlighter._EffortHighlighter__highlight_dataframe = highlighted_df  # type: ignore
+
+        # Act
+        self.effort_highlighter.highlight_tts_by_month(tts_by_month_df = tts_by_month_df)
+
+        # Assert
+        highlighted_df.assert_called_once_with(
+            df = tts_by_month_df,
+            mode = EFFORTMODE.top_three_efforts
+        )
+    def test_highlightttsbyyear_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        tts_by_year_df : DataFrame = DataFrame()
+
+        highlighted_df : Mock = Mock()
+        self.effort_highlighter._EffortHighlighter__highlight_dataframe = highlighted_df  # type: ignore
+
+        # Act
+        self.effort_highlighter.highlight_tts_by_year(tts_by_year_df = tts_by_year_df)
+
+        # Assert
+        highlighted_df.assert_called_once_with(
+            df = tts_by_year_df,
+            mode = EFFORTMODE.top_three_efforts
+        )
+    def test_highlightttsbyhashtagyear_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        tts_by_hashtag_year_df : DataFrame = DataFrame()
+        latest_year : str = "2025"
+
+        get_latest_year_mock : Mock = Mock(return_value = latest_year)
+        highlighted_df : Mock = Mock()
+
+        self.effort_highlighter._EffortHighlighter__get_latest_year = get_latest_year_mock  # type: ignore
+        self.effort_highlighter._EffortHighlighter__highlight_dataframe = highlighted_df    # type: ignore
+
+        # Act
+        self.effort_highlighter.highlight_tts_by_hashtag_year(tts_by_hashtag_year_df = tts_by_hashtag_year_df)
+
+        # Assert
+        get_latest_year_mock.assert_called_once_with(tts_by_hashtag_year_df)
+        highlighted_df.assert_called_once_with(
+            df = tts_by_hashtag_year_df,
+            mode = EFFORTMODE.top_three_efforts,
+            column_names = [latest_year]
+        )
+    def test_highlightttsbyhashtag_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        tts_by_hashtag_df : DataFrame = DataFrame()
+
+        highlighted_df : Mock = Mock()
+        self.effort_highlighter._EffortHighlighter__highlight_dataframe = highlighted_df  # type: ignore
+
+        # Act
+        self.effort_highlighter.highlight_tts_by_hashtag(tts_by_hashtag_df = tts_by_hashtag_df)
+
+        # Assert
+        highlighted_df.assert_called_once_with(
+            df = tts_by_hashtag_df,
+            mode = EFFORTMODE.top_three_efforts
+        )
+    def test_highlightttsbyyearmonthspnv_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        tts_by_year_month_spnv_df : DataFrame = DataFrame()
+
+        highlighted_df : Mock = Mock()
+        self.effort_highlighter._EffortHighlighter__highlight_dataframe = highlighted_df  # type: ignore
+
+        # Act
+        self.effort_highlighter.highlight_tts_by_year_month_spnv(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)
+
+        # Assert
+        highlighted_df.assert_called_once_with(
+            df = tts_by_year_month_spnv_df,
+            mode = EFFORTMODE.top_three_efforts
+        )
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
