@@ -162,7 +162,7 @@ class TTSummary():
 
     tt_df : DataFrame
     tt_latest_five_df : DataFrame
-    tts_by_month_tpl : Tuple[DataFrame, DataFrame]
+    tts_by_month_df : DataFrame
     tts_by_year_df : DataFrame
     tts_by_range_df : DataFrame
     tts_by_spn_df : DataFrame
@@ -899,20 +899,13 @@ class TTDataFrameFactory():
         tt_latest_five_df = tt_latest_five_df.tail(5)
 
         return tt_latest_five_df
-    def create_tts_by_month_tpl(self, tt_df : DataFrame, now : datetime) -> Tuple[DataFrame, DataFrame]:
+    def create_tts_by_month_df(self, tt_df : DataFrame, now : datetime) -> DataFrame:
 
         '''
-                Month	2016	↕   2017	    ↕	2018    ...
-            0	1	    0h 00m	↑	13h 00m		↓	0h 00m
-            1	2	    0h 00m	↑	1h 00m	    ↓	0h 00m
-            ...
-
                 2016	↕   2017	    ↕	2018    ...
             0	0h 00m	↑	13h 00m		↓	0h 00m
             1	0h 00m	↑	1h 00m	    ↓	0h 00m
             ...            
-
-            Returns: (tts_by_month_df, tts_by_month_upd_df).
         '''
 
         years : list[int] = self.__extract_years(tt_df = tt_df)
@@ -935,10 +928,10 @@ class TTDataFrameFactory():
 
         tts_df.rename(columns = (lambda x : self.__try_consolidate_trend_column_name(column_name = x)), inplace = True)
         
-        tts_upd_df : DataFrame = self.__update_future_months_to_empty(tts_by_month_df = tts_df, now = now)
-        tts_upd_df.drop(columns = [TTCN.MONTH], inplace = True)
+        tts_df = self.__update_future_months_to_empty(tts_by_month_df = tts_df, now = now)
+        tts_df.drop(columns = [TTCN.MONTH], inplace = True)
 
-        return (tts_df, tts_upd_df)
+        return tts_df
     def create_tts_by_year_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''
@@ -1273,16 +1266,16 @@ class TTAdapter():
         '''Creates the expected dataframes out of the provided arguments.'''
 
         return self.__df_factory.create_tt_latest_five_df(tt_df = tt_df)
-    def __create_tts_by_month_tpl(self, tt_df : DataFrame, setting_bag : SettingBag) -> Tuple[DataFrame, DataFrame]:
+    def __create_tts_by_month_df(self, tt_df : DataFrame, setting_bag : SettingBag) -> DataFrame:
 
         '''Creates the expected dataframes out of the provided arguments.'''
 
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__df_factory.create_tts_by_month_tpl(
+        tts_by_month_df : DataFrame = self.__df_factory.create_tts_by_month_df(
             tt_df = tt_df,
             now = setting_bag.now
         )
 
-        return tts_by_month_tpl
+        return tts_by_month_df
     def __create_tts_by_year_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''Creates the expected dataframe out of the provided arguments.'''
@@ -1372,7 +1365,7 @@ class TTAdapter():
 
         tt_df : DataFrame = self.__create_tt_df(setting_bag = setting_bag)
         tt_latest_five_df : DataFrame = self.__create_tt_latest_five_df(tt_df = tt_df)
-        tts_by_month_tpl : Tuple[DataFrame, DataFrame] = self.__create_tts_by_month_tpl(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_month_df : DataFrame = self.__create_tts_by_month_df(tt_df = tt_df, setting_bag = setting_bag)
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
         tts_by_range_df : DataFrame = self.__create_tts_by_range_df(tt_df = tt_df)
         tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
@@ -1387,7 +1380,7 @@ class TTAdapter():
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
             tt_latest_five_df = tt_latest_five_df,
-            tts_by_month_tpl = tts_by_month_tpl,
+            tts_by_month_df = tts_by_month_df,
             tts_by_year_df = tts_by_year_df,
             tts_by_range_df = tts_by_range_df,
             tts_by_spn_df = tts_by_spn_df,
@@ -1478,7 +1471,7 @@ class TimeTrackingProcessor():
         self.__validate_summary()
 
         options : list = self.__setting_bag.options_tts_by_month
-        df : DataFrame = self.__tt_summary.tts_by_month_tpl[1]
+        df : DataFrame = self.__tt_summary.tts_by_month_df
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)

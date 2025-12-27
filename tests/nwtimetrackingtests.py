@@ -553,13 +553,12 @@ class TTSummaryTestCase(unittest.TestCase):
         
         # Arrange
         empty_df : DataFrame = DataFrame()
-        empty_tuple : Tuple[DataFrame, DataFrame] = (empty_df, empty_df)
 
         # Act
         actual = TTSummary(
             tt_df = empty_df,
             tt_latest_five_df = empty_df,
-            tts_by_month_tpl = empty_tuple,
+            tts_by_month_df = empty_df,
             tts_by_year_df = empty_df,
             tts_by_range_df = empty_df,
             tts_by_spn_df = empty_df,
@@ -575,7 +574,7 @@ class TTSummaryTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(actual.tt_df.shape, empty_df.shape)
         self.assertEqual(actual.tt_latest_five_df.shape, empty_df.shape)
-        self.assertEqual(actual.tts_by_month_tpl, empty_tuple)
+        self.assertEqual(actual.tts_by_month_df, empty_df.shape)
         self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_range_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_spn_df.shape, empty_df.shape)
@@ -1336,7 +1335,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         expected_df : DataFrame = ObjectMother().get_tts_by_month_df()
 
         # Act
-        actual_df : DataFrame  = self.df_factory.create_tts_by_month_tpl(tt_df = tt_df, now = datetime(2024, 12, 1))[1]
+        actual_df : DataFrame  = self.df_factory.create_tts_by_month_df(tt_df = tt_df, now = datetime(2024, 12, 1))
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
@@ -1576,11 +1575,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_tts_by_month()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_month_df, 
-            hide_index = True, 
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = tts_by_month_df)
     def test_processttsbyyear_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
