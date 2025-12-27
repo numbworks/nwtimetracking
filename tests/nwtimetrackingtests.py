@@ -162,48 +162,20 @@ class ObjectMother():
                 TTCN.YEAR: np.array([2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024, 2024], dtype=int64),
                 TTCN.MONTH: np.array([2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], dtype=int64),
             }, index=pd.RangeIndex(start=980, stop=1001, step=1)) 
-    @staticmethod # TBD
-    def get_tt_latest_five_df() -> DataFrame:
-
-        '''
-
-        '''
-
-        return pd.DataFrame()
     @staticmethod
-    def get_tts_by_month_df(index_list : list[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]) -> DataFrame:
+    def get_tts_by_month_df() -> DataFrame:
 
         '''
-            index_list: [0, 1]
+                2024
+            0	00h 00m
+            1	36h 00m
             ...
-            index_list: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+            12	00h 00m
         '''
 
         df : DataFrame = pd.DataFrame({
-                TTCN.MONTH: np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], dtype=int64),
-                '2015': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2015': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2016': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2016': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2017': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2017': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2018': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2018': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2019': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2019': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2020': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2020': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2021': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2021': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
-                '2022': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2022': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),		
-                '2023': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object),
-                '↕_2023': np.array(['=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '=', '='], dtype=object),
                 '2024': np.array(['00h 00m', '36h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m', '00h 00m'], dtype=object)	
             }, index=pd.RangeIndex(start=0, stop=12, step=1))
-        
-        df.rename(columns=lambda x: "↕" if x.startswith("↕_") else x, inplace=True)
-        df = df.iloc[:, index_list]
 
         return df
     @staticmethod
@@ -217,14 +189,17 @@ class ObjectMother():
         return pd.DataFrame({
             "2024": ["36h 00m"]}
             , index=pd.RangeIndex(start=0, stop=1, step=1))
-    @staticmethod # TBD
+    @staticmethod
     def get_tts_by_range_df() -> DataFrame:
 
         '''
-     
+                1 Year
+            0	36h 00m
         '''
 
-        return pd.DataFrame()
+        return pd.DataFrame({
+            "1 Year": ["36h 00m"]}
+            , index=pd.RangeIndex(start=0, stop=1, step=1))
     @staticmethod
     def get_tts_by_spn_df() -> DataFrame:
 
@@ -328,12 +303,44 @@ class ObjectMother():
             }, index=pd.RangeIndex(start=0, stop=1, step=1),
         )   
     @staticmethod # TBD
-    def get_ttd_effort_status_df() -> DataFrame:
+    def get_ttd_effort_status_df(is_correct : bool) -> DataFrame:
 
-        '''   
+        '''
+            Note: this applies to: get_tt_df()[-1:]
+
+            is_correct = True:
+
+                    StartTime   EndTime     Effort  IsCorrect   Expected    Message
+                0   08:15       12:45       4h 30m  True        04h 30m     The effort is correct.
+
+            is_correct = False:
+
+                StartTime   EndTime     Effort  IsCorrect   Expected    Message
         '''
 
-        return pd.DataFrame()    
+        if is_correct:
+            return pd.DataFrame(
+                {
+                    TTCN.STARTTIME: np.array(["08:15"], dtype=object),
+                    TTCN.ENDTIME: np.array(["12:45"], dtype=object),
+                    TTCN.EFFORT: np.array(["4h 30m"], dtype=object),
+                    TTCN.ISCORRECT: np.array([True], dtype=bool),
+                    TTCN.EXPECTED: np.array(["04h 30m"], dtype=object),
+                    TTCN.MESSAGE: np.array(["The effort is correct."], dtype=object)
+                },
+                index=pd.Index([1000], dtype="int64")
+            )            
+
+        return pd.DataFrame(
+            {
+                TTCN.STARTTIME: pd.Series(dtype=object),
+                TTCN.ENDTIME: pd.Series(dtype=object),
+                TTCN.EFFORT: pd.Series(dtype=object),
+                TTCN.ISCORRECT: pd.Series(dtype=bool),
+                TTCN.EXPECTED: pd.Series(dtype=object),
+                TTCN.MESSAGE: pd.Series(dtype=object)
+            }
+        )   
     @staticmethod
     def get_definitions_df() -> DataFrame:
 
@@ -1311,8 +1318,28 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[5]][0])    
-    def test_createttlatestfivedf_shouldreturnexpecteddataframe_wheninvoked(self): pass #TBD
-    def test_createttsbymonthtpl_shouldreturnexpecteddataframe_wheninvoked(self): pass #TBD
+    def test_createttlatestfivedf_shouldreturnexpecteddataframe_wheninvoked(self): 
+        
+        # Arrange
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+        expected_df : DataFrame = tt_df[-5:]
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tt_latest_five_df(tt_df = tt_df)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
+    def test_createttsbymonthtpl_shouldreturnexpecteddataframe_wheninvoked(self): 
+        
+        # Arrange
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+        expected_df : DataFrame = ObjectMother().get_tts_by_month_df()
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_month_tpl(tt_df = tt_df, now = datetime(2024, 12, 1))[1]
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
     def test_createttsbyyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1324,7 +1351,17 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
-    def test_createttsbyrangedf_shouldreturnexpecteddataframe_wheninvoked(self): pass #TBD
+    def test_createttsbyrangedf_shouldreturnexpecteddataframe_wheninvoked(self): 
+        
+        # Arrange
+        tt_df : DataFrame = ObjectMother().get_tt_df()
+        expected_df : DataFrame = ObjectMother().get_tts_by_range_df()
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_tts_by_range_df(tt_df = tt_df)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
     def test_createttsbyspndf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1414,7 +1451,23 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df, actual_df)
-    def test_createttdeffortstatusdf_shouldreturnexpecteddataframe_wheninvoked(self): pass #TBD
+    
+    @parameterized.expand([
+        [True],
+        [False]
+    ])    
+    def test_createttdeffortstatusdf_shouldreturnexpecteddataframe_wheninvoked(self, is_correct : bool): 
+        
+        # Arrange
+        tt_df : DataFrame = ObjectMother().get_tt_df()[-1:]
+        expected_df : DataFrame = ObjectMother().get_ttd_effort_status_df(is_correct = is_correct)
+
+        # Act
+        actual_df : DataFrame  = self.df_factory.create_ttd_effort_status_df(tt_df = tt_df, is_correct = is_correct)
+
+        # Assert
+        assert_frame_equal(expected_df , actual_df)
+    
     def test_createdefinitionsdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
