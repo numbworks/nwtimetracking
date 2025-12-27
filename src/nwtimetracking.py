@@ -5,28 +5,21 @@ Alias: nwtt
 '''
 
 # GLOBAL MODULES
-import json
 import numpy as np
 import os
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import pandas as pd
 import re
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum, auto
-from matplotlib.dates import relativedelta
 from numpy import uint
-from numpy.typing import ArrayLike
-from pandas import DataFrame, Series, NamedAgg, Index
+from pandas import DataFrame, Series, NamedAgg
 from pandas import Timedelta
 from pandas.io.formats.style import Styler
-from re import Match
-from types import SimpleNamespace
-from typing import Any, Callable, Literal, Optional, Protocol, Tuple, Union, cast
+from typing import Any, Literal, Optional, cast
 
 # LOCAL/NW MODULES
-from nwshared import Formatter, FilePathManager, FileManager, LambdaProvider, MarkdownHelper, Displayer
+from nwshared import FilePathManager, FileManager, Displayer
 
 # CONSTANTS
 class TTCN(StrEnum):
@@ -71,11 +64,6 @@ class TTCN(StrEnum):
     EFFORTH = "EffortH"
     SEQRANK = "SeqRank"
     HASHTAGSEQ = "HashtagSeq"
-class TTID(StrEnum):
-    
-    '''Collects all the ids that identify the dataframes created by TTDataFrameFactory.'''
-
-    TTSBYMONTH = "tts_by_month"
 class DEFINITIONSTR(StrEnum):
     
     '''Collects all the column names used by definitions.'''
@@ -1642,24 +1630,4 @@ class TimeTrackingProcessor():
 
 # MAIN
 if __name__ == "__main__":
-
-    df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
-    
-    tt_df : DataFrame = df_factory.create_tt_df(
-        excel_path = DefaultPathProvider().get_default_time_tracking_path(), 
-        excel_skiprows= 0, 
-        excel_nrows = 1804, 
-        excel_tabname = "Sessions"
-    )
-
-    tts_df : DataFrame = df_factory.create_ttd_effort_status_df(tt_df = tt_df, is_correct = True)[-10:]
-
-    with pd.option_context(
-        "display.max_rows", None,
-        "display.max_columns", None,
-        "display.width", None,
-        "display.max_colwidth", None
-    ):
-        print(tts_df)
-
-    # pass
+    pass

@@ -1,5 +1,4 @@
 # GLOBAL MODULES
-import json
 import unittest
 import numpy as np
 import pandas as pd
@@ -8,10 +7,9 @@ from numpy import int64, uint
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
-from types import FunctionType
-from typing import Any, Callable, Literal, Optional, Tuple, cast
+from typing import Any, Literal, Optional
 from unittest.mock import Mock, patch
-from nwshared import FilePathManager, FileManager, Displayer, LambdaProvider
+from nwshared import FilePathManager, FileManager, Displayer
 
 # LOCAL MODULES
 import sys, os
@@ -1601,18 +1599,14 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_tts_by_year()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_year_df,
-            hide_index = True,
-            formatters = None
-        )    
+        displayer.display.assert_called_once_with(obj = tts_by_year_df)    
     def test_processttsbyrange_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
         tts_by_range_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_year_spnv_styler = tts_by_range_df
+        summary.tts_by_range_df = tts_by_range_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -1631,11 +1625,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         processor.process_tts_by_range()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_range_df,
-            hide_index = True,
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = tts_by_range_df)
     def test_processttsbyspn_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -1661,18 +1651,14 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_tts_by_spn()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_spn_df, 
-            hide_index = True, 
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = tts_by_spn_df)
     def test_processttsbyspv_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
         tts_by_spv_df : DataFrame = Mock()
 
         summary : Mock = Mock()
-        summary.tts_by_spn_spv_df = tts_by_spv_df
+        summary.tts_by_spv_df = tts_by_spv_df
 
         displayer : Mock = Mock()
         tt_adapter : Mock = Mock()
@@ -1691,11 +1677,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_tts_by_spv()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_spv_df, 
-            hide_index = True, 
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = tts_by_spv_df)
     def test_processttsbyhashtagyear_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -1721,11 +1703,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_tts_by_hashtag_year()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_hashtag_year_df, 
-            hide_index = True, 
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = tts_by_hashtag_year_df)
     def test_processttsbyhashtag_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -1754,7 +1732,6 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_hashtag_df, 
-            hide_index = True, 
             formatters = setting_bag.tts_by_hashtag_formatters
         )
     def test_processttsbyyearmonthspnv_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -1782,11 +1759,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_tts_by_year_month_spnv()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = tts_by_year_month_spnv_df,
-            hide_index = True, 
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = tts_by_year_month_spnv_df)
     def test_processttsbytimeranges_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -1815,7 +1788,6 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         # Assert
         displayer.display.assert_called_once_with(
             obj = tts_by_timeranges_df,
-            hide_index = True, 
             formatters = setting_bag.tts_by_timeranges_formatters
         )
     def test_processttdeffortstatus_shoulddisplay_whenoptionisdisplay(self) -> None:
@@ -1843,11 +1815,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_ttd_effort_status()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = ttd_effort_status_df,
-            hide_index = True,
-            formatters = None
-        )    
+        displayer.display.assert_called_once_with(obj = ttd_effort_status_df)    
     def test_processdefinitions_shoulddisplay_whenoptionisdisplay(self) -> None:
         
         # Arrange
@@ -1873,11 +1841,7 @@ class TimeTrackingProcessorTestCase(unittest.TestCase):
         tt_processor.process_definitions()
 
         # Assert
-        displayer.display.assert_called_once_with(
-            obj = definitions_df, 
-            hide_index = True, 
-            formatters = None
-        )
+        displayer.display.assert_called_once_with(obj = definitions_df)
     def test_getsummary_shouldreturnttsummaryobject_wheninvoked(self):
         
         # Arrange
