@@ -1,6 +1,5 @@
 # GLOBAL MODULES
 import importlib
-from pathlib import Path
 import unittest
 import numpy as np
 import pandas as pd
@@ -9,17 +8,18 @@ from numpy import int64, uint
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
+from pathlib import Path
 from typing import Any, Literal, Optional, Tuple, cast
-from unittest.mock import _Call, MagicMock, Mock, call, patch
-from nwshared import FilePathManager, FileManager, Displayer
+from unittest.mock import _Call, Mock, call, patch
 
-# LOCAL MODULES
+# LOCAL/NW MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetracking import EFFORTMODE, REPORTSTR, TTCN, DEFINITIONSTR, OPTION, EffortCell, EffortHighlighter, TTAdapter, TTReportManager
 from nwtimetracking import _MessageCollection, TTDataFrameFactory, TimeTrackingProcessor
 from nwtimetracking import EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
+from nwshared import FilePathManager, FileManager, Displayer
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -1852,6 +1852,242 @@ class EffortHighlighterTestCase(unittest.TestCase):
             df = tts_by_year_month_spnv_df,
             mode = EFFORTMODE.top_three_efforts
         )
+class TTAdapterTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.mocked_df_factory : Mock = Mock(spec = TTDataFrameFactory)
+        self.mocked_effort_highlighter : Mock = Mock(spec = EffortHighlighter)
+
+        self.adapter : TTAdapter = TTAdapter(
+            df_factory = self.mocked_df_factory,  # type: ignore
+            effort_highlighter = self.mocked_effort_highlighter  # type: ignore
+        )
+
+        self.tt_df : DataFrame = DataFrame()
+        self.setting_bag : SettingBag = SettingBag(
+            options_tt = [OPTION.display],
+            options_tt_latest_four = [OPTION.display],
+            options_tts_by_month = [OPTION.display],
+            options_tts_by_year = [OPTION.display],
+            options_tts_by_range = [OPTION.display],
+            options_tts_by_spn = [OPTION.display],
+            options_tts_by_spv = [OPTION.display],
+            options_tts_by_hashtag_year = [OPTION.display],
+            options_tts_by_hashtag = [OPTION.display],
+            options_tts_by_year_month_spnv = [OPTION.display],
+            options_tts_by_timeranges = [OPTION.display],
+            options_definitions = [OPTION.display],
+            options_report = [OPTION.save_html],
+            excel_nrows = 10,
+            now = datetime(year = 2025, month = 12, day = 22)
+        )
+    def test_createttdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tt_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tt_df(setting_bag = self.setting_bag)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tt_df.assert_called_once_with(
+            excel_path = self.setting_bag.excel_path,
+            excel_skiprows = self.setting_bag.excel_skiprows,
+            excel_nrows = self.setting_bag.excel_nrows,
+            excel_tabname = self.setting_bag.excel_tabname
+        )
+    def test_createttlatestfourdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tt_latest_four_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tt_latest_four_df(tt_df = self.tt_df)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tt_latest_four_df.assert_called_once_with(tt_df = self.tt_df)
+    def test_createttsbymonthdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_month_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_month_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_month_df.assert_called_once_with(
+            tt_df = self.tt_df,
+            now = self.setting_bag.now
+        )
+    def test_createttsbyyeardf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_year_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_year_df(tt_df = self.tt_df)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_year_df.assert_called_once_with(tt_df = self.tt_df)
+    def test_createttsbyrangedf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_range_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_range_df(tt_df = self.tt_df)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_range_df.assert_called_once_with(tt_df = self.tt_df)
+    def test_createttsbyspndf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_spn_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_spn_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_spn_df.assert_called_once_with(
+            tt_df = self.tt_df,
+            software_project_names = self.setting_bag.tts_by_spn_software_project_names
+        )
+    def test_createttsbyspvdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_spv_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_spv_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_spv_df.assert_called_once_with(
+            tt_df = self.tt_df,
+            software_project_names = self.setting_bag.tts_by_spv_software_project_names
+        )
+    def test_createttsbyhashtagyeardf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_hashtag_year_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_hashtag_year_df(tt_df = self.tt_df)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_hashtag_year_df.assert_called_once_with(tt_df = self.tt_df)
+    def test_createttsbyhashtagdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_hashtag_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_hashtag_df(tt_df = self.tt_df)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_hashtag_df.assert_called_once_with(tt_df = self.tt_df)
+    def test_createttsbyyearmonthspnvdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_year_month_spnv_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_year_month_spnv_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_year_month_spnv_df.assert_called_once_with(
+            tt_df = self.tt_df,
+            software_project_names = self.setting_bag.tts_by_spv_software_project_names
+        )
+    def test_createttsbytimerangesdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_tts_by_timeranges_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_tts_by_timeranges_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_tts_by_timeranges_df.assert_called_once_with(
+            tt_df = self.tt_df,
+            min_occurrences = self.setting_bag.tts_by_timeranges_min_occurrences
+        )
+    def test_createttdeffortstatusdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        self.mocked_df_factory.create_ttd_effort_status_df = Mock(return_value = DataFrame())
+
+        # Act
+        self.adapter._TTAdapter__create_ttd_effort_status_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
+
+        # Assert
+        self.mocked_df_factory.create_ttd_effort_status_df.assert_called_once_with(
+            tt_df = self.tt_df,
+            is_correct = self.setting_bag.ttd_effort_status_is_correct
+        )
+    def test_createsummary_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        tt_df : DataFrame = DataFrame()
+        tt_latest_four_df : DataFrame = DataFrame()
+        tts_by_month_df : DataFrame = DataFrame()
+        tts_by_year_df : DataFrame = DataFrame()
+        tts_by_range_df : DataFrame = DataFrame()
+        tts_by_spn_df : DataFrame = DataFrame()
+        tts_by_spv_df : DataFrame = DataFrame()
+        tts_by_hashtag_year_df : DataFrame = DataFrame()
+        tts_by_hashtag_df : DataFrame = DataFrame()
+        tts_by_year_month_spnv_df : DataFrame = DataFrame()
+        tts_by_timeranges_df : DataFrame = DataFrame()
+        ttd_effort_status_df : DataFrame = DataFrame()
+        definitions_df : DataFrame = DataFrame()
+
+        with (
+            patch.object(self.adapter, "_TTAdapter__create_tt_df", return_value = tt_df) as mocked_create_tt_df,
+            patch.object(self.adapter, "_TTAdapter__create_tt_latest_four_df", return_value = tt_latest_four_df) as mocked_create_tt_latest_four_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_month_df", return_value = tts_by_month_df) as mocked_create_tts_by_month_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_year_df", return_value = tts_by_year_df) as mocked_create_tts_by_year_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_range_df", return_value = tts_by_range_df) as mocked_create_tts_by_range_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_spn_df", return_value = tts_by_spn_df) as mocked_create_tts_by_spn_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_spv_df", return_value = tts_by_spv_df) as mocked_create_tts_by_spv_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_hashtag_year_df", return_value = tts_by_hashtag_year_df) as mocked_create_tts_by_hashtag_year_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_hashtag_df", return_value = tts_by_hashtag_df) as mocked_create_tts_by_hashtag_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_year_month_spnv_df", return_value = tts_by_year_month_spnv_df) as mocked_create_tts_by_year_month_spnv_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_timeranges_df", return_value = tts_by_timeranges_df) as mocked_create_tts_by_timeranges_df,
+            patch.object(self.adapter, "_TTAdapter__create_ttd_effort_status_df", return_value = ttd_effort_status_df) as mocked_create_ttd_effort_status_df,
+            patch.object(self.mocked_df_factory, "create_definitions_df", return_value = definitions_df) as mocked_create_definitions_df
+        ):
+
+            self.mocked_effort_highlighter.highlight_tts_by_month = Mock(return_value = tts_by_month_df)
+            self.mocked_effort_highlighter.highlight_tts_by_year = Mock(return_value = tts_by_year_df)
+            self.mocked_effort_highlighter.highlight_tts_by_hashtag_year = Mock(return_value = tts_by_hashtag_year_df)
+            self.mocked_effort_highlighter.highlight_tts_by_hashtag = Mock(return_value = tts_by_hashtag_df)
+            self.mocked_effort_highlighter.highlight_tts_by_year_month_spnv = Mock(return_value = tts_by_year_month_spnv_df)
+
+            # Act
+            self.adapter.create_summary(setting_bag = self.setting_bag)
+
+            # Assert
+            mocked_create_tt_df.assert_called_once_with(setting_bag = self.setting_bag)
+            mocked_create_tt_latest_four_df.assert_called_once_with(tt_df = tt_df)
+            mocked_create_tts_by_month_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            mocked_create_tts_by_year_df.assert_called_once_with(tt_df = tt_df)
+            mocked_create_tts_by_range_df.assert_called_once_with(tt_df = tt_df)
+            mocked_create_tts_by_spn_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            mocked_create_tts_by_spv_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            mocked_create_tts_by_hashtag_year_df.assert_called_once_with(tt_df = tt_df)
+            mocked_create_tts_by_hashtag_df.assert_called_once_with(tt_df = tt_df)
+            mocked_create_tts_by_year_month_spnv_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            mocked_create_tts_by_timeranges_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            mocked_create_ttd_effort_status_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+
+            mocked_create_definitions_df.assert_called_once_with()
+
+            self.mocked_effort_highlighter.highlight_tts_by_month.assert_called_once_with(tts_by_month_df = tts_by_month_df)
+            self.mocked_effort_highlighter.highlight_tts_by_year.assert_called_once_with(tts_by_year_df = tts_by_year_df)
+            self.mocked_effort_highlighter.highlight_tts_by_hashtag_year.assert_called_once_with(tts_by_hashtag_year_df = tts_by_hashtag_year_df)
+            self.mocked_effort_highlighter.highlight_tts_by_hashtag.assert_called_once_with(tts_by_hashtag_df = tts_by_hashtag_df)
+            self.mocked_effort_highlighter.highlight_tts_by_year_month_spnv.assert_called_once_with(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)
 class TTReportManagerTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
