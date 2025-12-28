@@ -1388,7 +1388,7 @@ class EffortHighlighter():
             column_names = column_names
         )
 
-        tags : Tuple[str, str] = (f"<mark style='background-color: skyblue'>", "</mark>")
+        tags : Tuple[str, str] = (f"<mark style='background-color: pink'>", "</mark>")
         highlighted_df = self.__add_tags(df = highlighted_df, effort_cells = effort_cells, tags = tags)
 
         return highlighted_df
