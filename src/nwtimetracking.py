@@ -279,7 +279,7 @@ class SettingBag():
     excel_path : str = field(default = DefaultPathProvider().get_default_time_tracking_path())
     excel_skiprows : int = field(default = 0)
     excel_tabname : str = field(default = "Sessions")
-    years : list[int] = field(default_factory = lambda : YearProvider().get_all_years())
+    years : Optional[list[int]] = field(default_factory = lambda : None)
     now : datetime = field(default = datetime.now())
     enable_effort_highlighting : bool = field(default = True)
     tts_by_spn_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all())
@@ -879,12 +879,22 @@ class TTDataFrameFactory():
         year_list : list[int] = pd.Series(tt_df[TTCN.YEAR]).dropna().astype(int).sort_values().unique().tolist()
 
         return year_list
+    def __filter_by_year(self, df : DataFrame, years : list[int]) -> DataFrame:
 
-    def create_tt_df(self, excel_path : str, excel_skiprows : int, excel_nrows : int, excel_tabname : str) -> DataFrame:
+        '''
+            Returns a DataFrame that in the "TTCN.YEAR" column has only values contained in "years". 
+        '''
+
+        filtered_df : DataFrame = df.copy(deep = True)
         
-        '''
-            Retrieves the content of the "Sessions" tab and returns it as a Dataframe. 
-        '''
+        condition : Series = filtered_df[TTCN.YEAR].isin(years)
+        filtered_df = df.loc[condition]
+
+        return filtered_df
+
+    def create_tt_df(self, excel_path : str, excel_skiprows : int, excel_nrows : int, excel_tabname : str, years : Optional[list[int]] = None) -> DataFrame:
+        
+        '''Retrieves the content of the "Sessions" tab and returns it as a Dataframe.'''
 
         tt_df : DataFrame = pd.read_excel(
             io = excel_path, 	
@@ -894,6 +904,10 @@ class TTDataFrameFactory():
             engine = 'openpyxl'
             )      
         tt_df = self.__enforce_dataframe_definition_for_tt_df(tt_df = tt_df)
+
+        if years is not None:
+            if len(years) > 0:
+                tt_df = self.__filter_by_year(df = tt_df, years = years)
 
         return tt_df
     def create_tt_latest_four_df(self, tt_df : DataFrame) -> DataFrame:
@@ -1500,8 +1514,9 @@ class TTAdapter():
             excel_path = setting_bag.excel_path,
             excel_skiprows = setting_bag.excel_skiprows,
             excel_nrows = setting_bag.excel_nrows,
-            excel_tabname = setting_bag.excel_tabname
-            )
+            excel_tabname = setting_bag.excel_tabname,
+            years = setting_bag.years
+        )
 
         return tt_df
     def __create_tt_latest_four_df(self, tt_df : DataFrame) -> DataFrame:

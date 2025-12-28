@@ -1,6 +1,7 @@
 v5.1.0 - BREAKING CHANGES
 - Notebook:
 	-	Feature: re-organized to match the layout of the report.
+	-	Feature: add possibility to filter by year at the source (tt_df).
 - Library:
 	- Feature: added the possibility to save reports as HTML and PDF.
 	- Maintenance: removed support for Markdown, bym splitting, plotting, yearly targets.

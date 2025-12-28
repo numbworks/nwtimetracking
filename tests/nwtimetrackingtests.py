@@ -738,7 +738,7 @@ class SettingBagTestCase(unittest.TestCase):
         excel_path : str = "/workspaces/nwtimetracking/data/"
         excel_skiprows : int = 0
         excel_tabname : str = "Sessions"
-        years : list[int] = [2020, 2021, 2022]
+        years : Optional[list[int]] = [2020, 2021, 2022]
         now : datetime = datetime.now()
         enable_effort_highlighting : bool = True
         tts_by_spn_software_project_names : list[str] = ["SPN1", "SPN2"]
@@ -1308,8 +1308,10 @@ class TTDataFrameHelperTestCase(unittest.TestCase):
 class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
+        
         self.df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
-    
+        self.df_factory_module : Any = importlib.import_module(TTDataFrameFactory.__module__)
+
     def test_createttdf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -1337,6 +1339,60 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         self.assertEqual(expected_nan, actual[expected_column_names[1]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[2]][0])
         self.assertEqual(expected_nan, actual[expected_column_names[5]][0])    
+    def test_createttdf_shouldnotcallfilterbyyear_whenyearsisnone(self) -> None:
+
+        # Arrange
+        excel_path : str = "/workspaces/nwtimetracking/"
+        excel_skiprows : int = 0
+        excel_nrows : int = 100
+        excel_tabname : str = "Sessions"
+        excel_data_df : DataFrame = ObjectMother().get_excel_data()
+        years : Optional[list[int]] = None
+
+        with (
+            patch.object(self.df_factory_module.pd, "read_excel", return_value = excel_data_df),
+            patch.object(self.df_factory, "_TTDataFrameFactory__enforce_dataframe_definition_for_tt_df", return_value = excel_data_df),
+            patch.object(self.df_factory, "_TTDataFrameFactory__filter_by_year", return_value = excel_data_df) as mocked_filter_by_year
+        ):
+
+            # Act
+            self.df_factory.create_tt_df(
+                excel_path = excel_path,
+                excel_skiprows = excel_skiprows,
+                excel_nrows = excel_nrows,
+                excel_tabname = excel_tabname,
+                years = years
+            )
+
+            # Assert
+            mocked_filter_by_year.assert_not_called()    
+    def test_createttdf_shouldcallfilterbyyear_whenyearsisprovided(self) -> None:
+
+            # Arrange
+            excel_path : str = "/workspaces/nwtimetracking/"
+            excel_skiprows : int = 0
+            excel_nrows : int = 100
+            excel_tabname : str = "Sessions"
+            excel_data_df : DataFrame = ObjectMother().get_excel_data()
+            years : list[int] = [2024, 2025]
+
+            with (
+                patch.object(self.df_factory_module.pd, "read_excel", return_value = excel_data_df),
+                patch.object(self.df_factory, "_TTDataFrameFactory__enforce_dataframe_definition_for_tt_df", return_value = excel_data_df),
+                patch.object(self.df_factory, "_TTDataFrameFactory__filter_by_year", return_value = excel_data_df) as mocked_filter_by_year
+            ):
+
+                # Act
+                self.df_factory.create_tt_df(
+                    excel_path = excel_path,
+                    excel_skiprows = excel_skiprows,
+                    excel_nrows = excel_nrows,
+                    excel_tabname = excel_tabname,
+                    years = years
+                )
+
+                # Assert
+                mocked_filter_by_year.assert_called_once_with(df = excel_data_df, years = years)
     def test_createttlatestfourdf_shouldreturnexpecteddataframe_wheninvoked(self): 
         
         # Arrange
@@ -1911,7 +1967,8 @@ class TTAdapterTestCase(unittest.TestCase):
             excel_path = self.setting_bag.excel_path,
             excel_skiprows = self.setting_bag.excel_skiprows,
             excel_nrows = self.setting_bag.excel_nrows,
-            excel_tabname = self.setting_bag.excel_tabname
+            excel_tabname = self.setting_bag.excel_tabname,
+            years = self.setting_bag.years
         )
     def test_createttlatestfourdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
