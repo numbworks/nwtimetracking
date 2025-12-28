@@ -34,4 +34,4 @@ RUN pip install 'git+https://github.com/numbworks/nwcommitaverages.git@v1.0.0#eg
 RUN pip install 'git+https://github.com/numbworks/nwdocstringchecking.git@v1.0.0#egg=nwdocstringchecking&subdirectory=src'
 
 # OTHERS
-RUN pip install --upgrade pip==25.1.1
+RUN pip install --upgrade pip==25.3

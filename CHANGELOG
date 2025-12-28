@@ -1,3 +1,13 @@
+v5.1.0 - BREAKING CHANGES
+- Notebook:
+	-	Feature: re-organized to match the layout of the report.
+- Library:
+	- Feature: added the possibility to save reports as HTML and PDF.
+	- Maintenance: removed support for Markdown, bym splitting, plotting, yearly targets.
+	- Maintenance: Dockerfile, added weasyprint and upgraded pip to 25.3.
+- Documentation:
+	- Feature: updated to v5.1.0.
+
 v5.0.2
 - Library:
 	- Maintenance: Dockerfile, added support for nwcommitaverages v1.0.0 and nwdocstringchecking v1.0.0.
