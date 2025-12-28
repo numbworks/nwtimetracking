@@ -184,14 +184,6 @@ A partial class diagram showing the core architecture of the application:
 
 ![Diagram-Architecture.png](Diagrams/Diagram-Architecture.png)
 
-## BYMSplitter
-
-The scope of this class is to partition a “by month” table in smaller tables, following a custom logic. 
-
-Here a visual example of how its algorithm works:
-
-![Diagram-BYMSplitter.png](Diagrams/Diagram-BYMSplitter.png)
-
 ## Known Issues - nwshared
 
 If `nwshared` creates some issues for you, please refer to [its documentation on Github](https://github.com/numbworks/nwshared/blob/master/docs/docs-nwshared.md).
