@@ -61,6 +61,7 @@ class DEFINITIONSTR(StrEnum):
     DEFINITION = "Definition"
     TT = "tt"
     TTS = "tts"
+    TIMETRACKING = "Time Tracking"
 class OPTION(StrEnum):
 
     '''Represents a collection of options.'''
@@ -1233,8 +1234,11 @@ class TTDataFrameFactory():
         columns : list[str] = [DEFINITIONSTR.TERM, DEFINITIONSTR.DEFINITION]
 
         definitions : dict[str, str] = {
-            DEFINITIONSTR.TT: "Time Tracking",
-            DEFINITIONSTR.TTS: "Time Tracking Summary"
+            DEFINITIONSTR.TIMETRACKING: "Time Tracking is the process of keeping track of all self-growth sessions.",
+            TTCN.TIMERANGE: "A time range is defined by a start time, an end time, and an effort expressed in hours and minutes.",
+            TTCN.HASHTAG: "A hashtag is a category label that summarizes the content of a self-growth session.",
+            TTCN.DESCRIPTOR: "A descriptor contains additional information about the self-growth session - e.g. the software project name and version.",
+            f"Trend ({TTCN.TREND})": "A trend is a gamification metric that indicates whether a measure (e.g., total work hours) has increased or decreased over time."
         }
         
         definitions_df : DataFrame = DataFrame(
