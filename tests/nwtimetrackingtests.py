@@ -1,4 +1,6 @@
 # GLOBAL MODULES
+import importlib
+from pathlib import Path
 import unittest
 import numpy as np
 import pandas as pd
@@ -8,13 +10,13 @@ from pandas import DataFrame
 from pandas.testing import assert_frame_equal
 from parameterized import parameterized
 from typing import Any, Literal, Optional, Tuple, cast
-from unittest.mock import Mock, patch
+from unittest.mock import _Call, MagicMock, Mock, call, patch
 from nwshared import FilePathManager, FileManager, Displayer
 
 # LOCAL MODULES
 import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import EFFORTMODE, TTCN, DEFINITIONSTR, OPTION, EffortCell, EffortHighlighter, TTAdapter
+from nwtimetracking import EFFORTMODE, REPORTSTR, TTCN, DEFINITIONSTR, OPTION, EffortCell, EffortHighlighter, TTAdapter, TTReportManager
 from nwtimetracking import _MessageCollection, TTDataFrameFactory, TimeTrackingProcessor
 from nwtimetracking import EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
@@ -1704,8 +1706,8 @@ class EffortHighlighterTestCase(unittest.TestCase):
         column_names : list[str] = ["2015", "2016", "2017"]
 
         expected : DataFrame = self.df_without_duplicates.copy(deep = True)
-        expected.iloc[0, 5] = "<mark style='background-color: skyblue'>88h 30m</mark>"
-        expected.iloc[1, 5] = "<mark style='background-color: skyblue'>65h 30m</mark>"
+        expected.iloc[0, 5] = "<mark style='background-color: pink'>88h 30m</mark>"
+        expected.iloc[1, 5] = "<mark style='background-color: pink'>65h 30m</mark>"
 
         # Act
         actual : DataFrame = self.effort_highlighter._EffortHighlighter__highlight_dataframe(self.df_without_duplicates, mode, column_names) # type: ignore
@@ -1719,8 +1721,8 @@ class EffortHighlighterTestCase(unittest.TestCase):
         column_names : list[str] = []
 
         expected : DataFrame = self.df_without_duplicates.copy(deep = True)
-        expected.iloc[0, 5] = "<mark style='background-color: skyblue'>88h 30m</mark>"
-        expected.iloc[1, 5] = "<mark style='background-color: skyblue'>65h 30m</mark>"
+        expected.iloc[0, 5] = "<mark style='background-color: pink'>88h 30m</mark>"
+        expected.iloc[1, 5] = "<mark style='background-color: pink'>65h 30m</mark>"
 
         # Act
         actual : DataFrame = self.effort_highlighter._EffortHighlighter__highlight_dataframe(self.df_without_duplicates, mode, column_names) # type: ignore
@@ -1850,6 +1852,212 @@ class EffortHighlighterTestCase(unittest.TestCase):
             df = tts_by_year_month_spnv_df,
             mode = EFFORTMODE.top_three_efforts
         )
+class TTReportManagerTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.report_manager : TTReportManager = TTReportManager()
+        self.report_module : Any = importlib.import_module(TTReportManager.__module__)
+
+        empty_df : DataFrame = DataFrame()
+        self.tt_summary : TTSummary = TTSummary(
+            tt_df = empty_df,
+            tt_latest_four_df = empty_df,
+            tts_by_month_df = empty_df,
+            tts_by_year_df = empty_df,
+            tts_by_range_df = empty_df,
+            tts_by_spn_df = empty_df,
+            tts_by_spv_df = empty_df,
+            tts_by_hashtag_year_df = empty_df,
+            tts_by_hashtag_df = empty_df,
+            tts_by_year_month_spnv_df = empty_df,
+            tts_by_timeranges_df = empty_df,
+            ttd_effort_status_df = empty_df,
+            definitions_df = empty_df
+        )
+    def test_formatforfilename_shouldreturnexpectedstring_wheninvoked(self) -> None:
+
+        # Arrange
+        last_update : datetime = datetime(year = 2025, month = 12, day = 22, hour = 15, minute = 30, second = 45)
+        expected : str = "20251222"
+
+        # Act
+        actual : str = self.report_manager._TTReportManager__format_for_file_name(last_update = last_update)  # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+    def test_formatfortitle_shouldreturnexpectedstring_wheninvoked(self) -> None:
+
+        # Arrange
+        last_update : datetime = datetime(year = 2025, month = 12, day = 22, hour = 15, minute = 30, second = 45)
+        expected : str = "2025-12-22"
+
+        # Act
+        actual : str = self.report_manager._TTReportManager__format_for_title(last_update = last_update)  # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+    def test_createreportfilepaths_shouldreturnexpectedpaths_wheninvoked(self) -> None:
+
+        # Arrange
+        folder_path : str = "/home/nwreadinglist"
+        last_update : datetime = datetime(year = 2025, month = 12, day = 22)
+        expected_html_path : Path = Path("/home/nwreadinglist") / "TIMETRACKINGREPORT20251222.html"
+        expected_pdf_path : Path = Path("/home/nwreadinglist") / "TIMETRACKINGREPORT20251222.pdf"
+
+        # Act
+        actual : Tuple[Path, Path] = self.report_manager._TTReportManager__create_report_file_paths(folder_path = folder_path,last_update = last_update)  # type: ignore
+        actual_html_path : Path = actual[0]
+        actual_pdf_path : Path = actual[1]
+
+        # Assert
+        self.assertEqual(actual_html_path, expected_html_path)
+        self.assertEqual(actual_pdf_path, expected_pdf_path)
+    def test_createhtml_shouldcontainexpectedhtmlexcerpts_whenfooterisnotprovided(self) -> None:
+
+        # Arrange
+        df : DataFrame = DataFrame(data = {"A": [1.234]})
+        title : str = "Some Title"
+        formatters : Optional[dict] = {"A": "{:.2f}"}
+
+        # Act
+        actual : str = self.report_manager._TTReportManager__create_html(df = df, title = title, formatters = formatters)  # type: ignore
+
+        # Assert
+        self.assertIn("<div style='margin-bottom: 20px;'>", actual)
+        self.assertIn(f"<h2>{title}</h2>", actual)
+        self.assertIn("</div>", actual)
+        self.assertIn(">1.23<", actual)
+        self.assertIn("background-color: #eeeeee", actual)
+        self.assertIn("white-space: nowrap", actual)
+        self.assertIn("border-collapse: collapse", actual)
+        self.assertNotIn("margin-top: 6px", actual)
+    def test_createhtml_shouldcontainexpectedhtmlexcerpts_whenfooterisprovided(self) -> None:
+
+        # Arrange
+        df : DataFrame = DataFrame(data = {"A": [1.234]})
+        title : str = "Some Title"
+        formatters : Optional[dict] = {"A": "{:.2f}"}
+        footer : Optional[str] = "Some Footer"
+
+        # Act
+        actual : str = self.report_manager._TTReportManager__create_html(df = df, title = title, formatters = formatters, footer = footer)  # type: ignore
+
+        # Assert
+        self.assertIn(f"{footer}", actual)
+        self.assertIn("margin-top: 6px", actual)
+        self.assertIn("<br/><div", actual)
+    def test_createhtmlsections_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        formatters : Optional[dict] = None
+
+        expected_call_00 : _Call = call(self.tt_summary.tt_latest_four_df, REPORTSTR.TTLATESTFIVE, formatters)
+        expected_call_01 : _Call = call(self.tt_summary.tts_by_month_df, REPORTSTR.TTSBYMONTH, formatters)
+        expected_call_02 : _Call = call(self.tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters)
+        expected_call_03 : _Call = call(self.tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters)
+        expected_call_04 : _Call = call(self.tt_summary.tts_by_spn_df, REPORTSTR.TTSBYSPN, formatters)
+        expected_call_05 : _Call = call(self.tt_summary.tts_by_spv_df, REPORTSTR.TTSBYSPV, formatters)
+        expected_call_06 : _Call = call(self.tt_summary.tts_by_hashtag_year_df, REPORTSTR.TTSBYHASHTAGYEAR, formatters)
+        expected_call_07 : _Call = call(self.tt_summary.tts_by_hashtag_df, REPORTSTR.TTSBYHASHTAG, formatters)
+        expected_call_08 : _Call = call(self.tt_summary.tts_by_year_month_spnv_df, REPORTSTR.TTSBYYEARMONTHSPNV, formatters)
+        expected_call_09 : _Call = call(self.tt_summary.tts_by_timeranges_df, REPORTSTR.TTSBYTIMERANGES, formatters)
+        expected_call_10 : _Call = call(self.tt_summary.definitions_df, REPORTSTR.DEFINITIONS, formatters)
+        expected_calls : int = 11
+
+        with patch.object(self.report_manager, "_TTReportManager__create_html", return_value = "<div></div>") as mocked_create_html:
+
+            # Act
+            actual : list[str] = self.report_manager._TTReportManager__create_html_sections(tt_summary = self.tt_summary, formatters = formatters)  # type: ignore
+
+            # Assert
+            self.assertEqual(expected_call_00, mocked_create_html.call_args_list[0])
+            self.assertEqual(expected_call_01, mocked_create_html.call_args_list[1])
+            self.assertEqual(expected_call_02, mocked_create_html.call_args_list[2])
+            self.assertEqual(expected_call_03, mocked_create_html.call_args_list[3])
+            self.assertEqual(expected_call_04, mocked_create_html.call_args_list[4])
+            self.assertEqual(expected_call_05, mocked_create_html.call_args_list[5])
+            self.assertEqual(expected_call_06, mocked_create_html.call_args_list[6])
+            self.assertEqual(expected_call_07, mocked_create_html.call_args_list[7])
+            self.assertEqual(expected_call_08, mocked_create_html.call_args_list[8])
+            self.assertEqual(expected_call_09, mocked_create_html.call_args_list[9])
+            self.assertEqual(expected_call_10, mocked_create_html.call_args_list[10])
+            self.assertEqual(len(actual), expected_calls)
+    def test_createhtmltemplate_shouldcontainexpectedhtmlexcerpts_wheninvoked(self) -> None:
+
+        # Arrange
+        html_sections : list[str] = ["<div>One</div>", "<div>Two</div>"]
+        last_update : datetime = datetime(year = 2025, month = 12, day = 22)
+        report_title : str = "Time Tracking Report"
+        app_name : str = "nwtimetracking"
+
+        # Act
+        actual : str = self.report_manager._TTReportManager__create_html_template(html_sections = html_sections, last_update = last_update) # type: ignore
+
+        # Assert
+        self.assertIn("<meta charset=\"utf-8\">", actual)
+        self.assertIn(f"<title>{report_title} | 2025-12-22</title>", actual)
+        self.assertIn(f"<h1>{report_title} | 2025-12-22</h1>", actual)
+        self.assertIn("".join(html_sections), actual)
+        self.assertIn("avatars.githubusercontent.com/u/10279234", actual)
+        self.assertIn(f"This report is generated by '{app_name}'", actual)
+        self.assertIn("© 2025 numbworks.", actual)
+    def test_createstylesheet_shouldcallcsswiththeexpectedstring_wheninvoked(self) -> None:
+
+        # Arrange
+        css_mock = Mock()
+
+        with patch.object(self.report_module, "CSS", css_mock):
+
+            # Act
+            self.report_manager._TTReportManager__create_stylesheet()  # type: ignore
+
+            # Assert
+            css_mock.assert_called_once_with(string = "@page { size: A3 landscape; margin: 20mm; }")
+    def test_saveasreport_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        folder_path : str = "/home"
+        last_update : datetime = datetime(year = 2025, month = 12, day = 22)
+        save_html : bool = True
+        save_pdf : bool = True
+        formatters : Optional[dict] = None
+
+        html_sections : list[str] = ["<div>Section</div>"]
+        full_html : str = "<html><body>Report</body></html>"
+        stylesheet : object = object()
+        html_path : Path = Path("/home/some_file_name.html")
+        pdf_path : Path = Path("/home/some_file_name.pdf")
+
+        html_instance : Mock = Mock()
+
+        with (
+            patch.object(self.report_manager, "_TTReportManager__create_report_file_paths", return_value = (html_path, pdf_path)) as mocked_create_report_file_paths,
+            patch.object(self.report_manager, "_TTReportManager__create_html_sections", return_value = html_sections) as mocked_create_html_sections,
+            patch.object(self.report_manager, "_TTReportManager__create_html_template", return_value = full_html) as mocked_create_html_template,
+            patch.object(self.report_manager, "_TTReportManager__create_stylesheet", return_value = stylesheet) as mocked_create_stylesheet,
+            patch.object(Path, "write_text", autospec = True) as mocked_write_text,
+            patch.object(self.report_module, "HTML", return_value = html_instance) as mocked_html
+        ):
+
+            # Act
+            self.report_manager.save_as_report(
+                tt_summary = self.tt_summary,
+                folder_path = folder_path,
+                last_update = last_update,
+                save_html = save_html,
+                save_pdf = save_pdf,
+                formatters = formatters
+            )
+
+            # Assert
+            mocked_create_report_file_paths.assert_called_once_with(folder_path = folder_path, last_update = last_update)
+            mocked_create_html_sections.assert_called_once_with(tt_summary = self.tt_summary, formatters = formatters)
+            mocked_create_html_template.assert_called_once_with(html_sections = html_sections, last_update = last_update)
+            mocked_write_text.assert_called_once_with(html_path, data = full_html, encoding = "utf-8")
+            mocked_html.assert_called_once_with(string = full_html)
+            mocked_create_stylesheet.assert_called_once()
+            html_instance.write_pdf.assert_called_once_with(target = str(pdf_path), stylesheets = [stylesheet])
 class ComponentBagTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_whendefault(self) -> None:
