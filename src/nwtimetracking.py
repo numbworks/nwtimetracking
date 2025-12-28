@@ -1427,6 +1427,18 @@ class EffortHighlighter():
         )
         
         return highlighted_df
+    def highlight_tts_by_spv(self, tts_by_spv_df : DataFrame) -> DataFrame:
+    
+        '''Returns the provided dataframe with adequate highlights.'''
+
+        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+
+        highlighted_df : DataFrame = self.__highlight_dataframe(
+            df = tts_by_spv_df,
+            mode = mode
+        )
+        
+        return highlighted_df
     def highlight_tts_by_hashtag_year(self, tts_by_hashtag_year_df : DataFrame) -> DataFrame:
         
         '''Returns the provided dataframe with adequate highlights.'''
@@ -1611,6 +1623,7 @@ class TTAdapter():
         if setting_bag.enable_effort_highlighting:
             tts_by_month_df = self.__effort_highlighter.highlight_tts_by_month(tts_by_month_df = tts_by_month_df)
             tts_by_year_df = self.__effort_highlighter.highlight_tts_by_year(tts_by_year_df = tts_by_year_df)
+            tts_by_spv_df = self.__effort_highlighter.highlight_tts_by_spv(tts_by_spv_df = tts_by_spv_df)
             tts_by_hashtag_year_df = self.__effort_highlighter.highlight_tts_by_hashtag_year(tts_by_hashtag_year_df = tts_by_hashtag_year_df)
             tts_by_hashtag_df = self.__effort_highlighter.highlight_tts_by_hashtag(tts_by_hashtag_df = tts_by_hashtag_df)
             tts_by_year_month_spnv_df = self.__effort_highlighter.highlight_tts_by_year_month_spnv(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)

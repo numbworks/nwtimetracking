@@ -1798,6 +1798,22 @@ class EffortHighlighterTestCase(unittest.TestCase):
             df = tts_by_year_df,
             mode = EFFORTMODE.top_three_efforts
         )
+    def test_highlightttsbyspv_shouldperformexpectedcalls_wheninvoked(self) -> None:
+
+        # Arrange
+        tts_by_spv_df : DataFrame = DataFrame()
+
+        highlighted_df : Mock = Mock()
+        self.effort_highlighter._EffortHighlighter__highlight_dataframe = highlighted_df  # type: ignore
+
+        # Act
+        self.effort_highlighter.highlight_tts_by_spv(tts_by_spv_df = tts_by_spv_df)
+
+        # Assert
+        highlighted_df.assert_called_once_with(
+            df = tts_by_spv_df,
+            mode = EFFORTMODE.top_three_efforts
+        )    
     def test_highlightttsbyhashtagyear_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
@@ -2060,6 +2076,7 @@ class TTAdapterTestCase(unittest.TestCase):
 
             self.mocked_effort_highlighter.highlight_tts_by_month = Mock(return_value = tts_by_month_df)
             self.mocked_effort_highlighter.highlight_tts_by_year = Mock(return_value = tts_by_year_df)
+            self.mocked_effort_highlighter.highlight_tts_by_spv = Mock(return_value = tts_by_spv_df)
             self.mocked_effort_highlighter.highlight_tts_by_hashtag_year = Mock(return_value = tts_by_hashtag_year_df)
             self.mocked_effort_highlighter.highlight_tts_by_hashtag = Mock(return_value = tts_by_hashtag_df)
             self.mocked_effort_highlighter.highlight_tts_by_year_month_spnv = Mock(return_value = tts_by_year_month_spnv_df)
@@ -2085,6 +2102,7 @@ class TTAdapterTestCase(unittest.TestCase):
 
             self.mocked_effort_highlighter.highlight_tts_by_month.assert_called_once_with(tts_by_month_df = tts_by_month_df)
             self.mocked_effort_highlighter.highlight_tts_by_year.assert_called_once_with(tts_by_year_df = tts_by_year_df)
+            self.mocked_effort_highlighter.highlight_tts_by_spv.assert_called_once_with(tts_by_spv_df = tts_by_spv_df)
             self.mocked_effort_highlighter.highlight_tts_by_hashtag_year.assert_called_once_with(tts_by_hashtag_year_df = tts_by_hashtag_year_df)
             self.mocked_effort_highlighter.highlight_tts_by_hashtag.assert_called_once_with(tts_by_hashtag_df = tts_by_hashtag_df)
             self.mocked_effort_highlighter.highlight_tts_by_year_month_spnv.assert_called_once_with(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)
