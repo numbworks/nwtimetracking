@@ -6,23 +6,7 @@ Contact: numbworks@gmail.com
 | Date | Author | Description |
 |---|---|---|
 | 2023-08-21 | numbworks | Created. |
-| 2024-01-16 | numbworks | Updated to v1.3.0. |
-| 2024-01-21 | numbworks | Updated to v2.0.0. |
-| 2024-03-19 | numbworks | Updated to v3.0.0. |
-| 2024-05-19 | numbworks | Updated to v3.2.0. |
-| 2024-05-20 | numbworks | Updated to v3.3.0. |
-| 2024-08-12 | numbworks | Updated to v3.4.0. |
-| 2024-10-01 | numbworks | Updated to v3.7.0. |
-| 2024-10-28 | numbworks | Updated to v3.8.0. |
-| 2024-12-01 | numbworks | Updated to v3.9.0. |
-| 2024-12-05 | numbworks | Updated to v4.0.0. |
-| 2024-12-17 | numbworks | Updated to v4.5.0. |
-| 2024-12-21 | numbworks | Updated to v4.6.0. |
-| 2024-12-24 | numbworks | Updated to v4.7.0. |
-| 2024-12-26 | numbworks | Updated to v4.8.0. |
-| 2024-12-29 | numbworks | Updated to v5.0.0. |
-| 2025-01-05 | numbworks | Updated to v5.0.1. |
-| 2025-05-26 | numbworks | Updated to v5.0.2. |
+| 2025-12-22 | numbworks | Updated to v5.1.0. |
 
 ## Introduction
 
@@ -169,7 +153,7 @@ The expected outcome for `all-concise` is:
 
 ```
 MODULE_NAME: nwtimetracking
-MODULE_VERSION: 5.0.2
+MODULE_VERSION: 5.1.0
 COVERAGE_THRESHOLD: 70%
 [OK] type-concise: passed!
 [OK] changelog-concise: 'CHANGELOG' updated to current version!
@@ -199,14 +183,6 @@ Considering the old-fashioned syntax adopted by both `make` and `bash`, here a s
 A partial class diagram showing the core architecture of the application:
 
 ![Diagram-Architecture.png](Diagrams/Diagram-Architecture.png)
-
-## BYMSplitter
-
-The scope of this class is to partition a “by month” table in smaller tables, following a custom logic. 
-
-Here a visual example of how its algorithm works:
-
-![Diagram-BYMSplitter.png](Diagrams/Diagram-BYMSplitter.png)
 
 ## Known Issues - nwshared
 
