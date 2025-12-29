@@ -233,6 +233,7 @@ class SoftwareProjectNameProvider():
             "nwpackageversions",
             "nwapolloanalytics",
             "nwbuild",
+            "nwmakefiler",
             "nwrefurbishedanalytics",
             "nwknowledgebase"
         ]

@@ -678,6 +678,7 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwpackageversions",
             "nwapolloanalytics",
             "nwbuild",
+            "nwmakefiler",
             "nwrefurbishedanalytics",
             "nwknowledgebase"
         ]
@@ -691,7 +692,7 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Arrange
         expected : list[str] = [
-            "nwbuild",
+            "nwmakefiler",
             "nwrefurbishedanalytics",
             "nwknowledgebase"
         ]
