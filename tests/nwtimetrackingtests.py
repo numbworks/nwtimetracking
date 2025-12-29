@@ -2212,10 +2212,10 @@ class TTReportManagerTestCase(unittest.TestCase):
     def test_createreportfilepaths_shouldreturnexpectedpaths_wheninvoked(self) -> None:
 
         # Arrange
-        folder_path : str = "/home/nwreadinglist"
+        folder_path : str = "/home/nwtimetracking"
         last_update : datetime = datetime(year = 2025, month = 12, day = 22)
-        expected_html_path : Path = Path("/home/nwreadinglist") / "TIMETRACKINGREPORT20251222.html"
-        expected_pdf_path : Path = Path("/home/nwreadinglist") / "TIMETRACKINGREPORT20251222.pdf"
+        expected_html_path : Path = Path("/home/nwtimetracking") / "TIMETRACKINGREPORT20251222.html"
+        expected_pdf_path : Path = Path("/home/nwtimetracking") / "TIMETRACKINGREPORT20251222.pdf"
 
         # Act
         actual : Tuple[Path, Path] = self.report_manager._TTReportManager__create_report_file_paths(folder_path = folder_path,last_update = last_update)  # type: ignore
