@@ -1815,6 +1815,9 @@ class TTReportManager():
         
         '''Builds an HTML report from selected DataFrames in RLSummary and saves it as both HTML and PDF.'''
 
+        if save_html == False and save_pdf == False:
+            return
+
         html_path, pdf_path = self.__create_report_file_paths(folder_path = folder_path, last_update = last_update)
         html_sections : list[str] = self.__create_html_sections(tt_summary = tt_summary, formatters = formatters)
         full_html : str = self.__create_html_template(html_sections = html_sections, last_update = last_update)
