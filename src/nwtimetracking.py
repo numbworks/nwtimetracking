@@ -198,7 +198,7 @@ class YearProvider():
 
         '''Returns a list of years.'''
 
-        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
 
         return years
     def get_most_recent_x_years(self, x : uint) -> list[int]:
