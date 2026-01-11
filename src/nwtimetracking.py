@@ -232,7 +232,7 @@ class SoftwareProjectNameProvider():
             "nwshared",
             "nwpackageversions",
             "nwapolloanalytics",
-            "nwbuild",
+            "nwbuilds",
             "nwmakefiler",
             "nwrefurbishedanalytics",
             "nwknowledgebase"
