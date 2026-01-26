@@ -619,7 +619,7 @@ class YearProviderTestCase(unittest.TestCase):
     def test_getallyears_shouldreturnexpectedlist_wheninvoked(self):
 
         # Arrange
-        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
 
         # Act
         actual : list[int] = YearProvider().get_all_years()
@@ -630,7 +630,7 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Arrange
         x : uint = uint(5)
-        expected : list[int] = [2021, 2022, 2023, 2024, 2025]
+        expected : list[int] = [2022, 2023, 2024, 2025, 2026]
         
         # Act
         actual : list[int] = YearProvider().get_most_recent_x_years(x)
@@ -641,7 +641,7 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Arrange
         x : uint = uint(15)
-        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
         
         # Act
         actual : list[int] = YearProvider().get_most_recent_x_years(x)
@@ -677,10 +677,11 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwshared",
             "nwpackageversions",
             "nwapolloanalytics",
-            "nwbuild",
+            "nwbuilds",
             "nwmakefiler",
             "nwrefurbishedanalytics",
-            "nwknowledgebase"
+            "nwknowledgebase",
+            "nwversioninfofiles"
         ]
 
         # Act
@@ -692,9 +693,9 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Arrange
         expected : list[str] = [
-            "nwmakefiler",
             "nwrefurbishedanalytics",
-            "nwknowledgebase"
+            "nwknowledgebase",
+            "nwversioninfofiles"
         ]
 
         # Act
@@ -706,7 +707,7 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Arrange
         expected : list[str] = [
-            "nwknowledgebase"
+            "nwversioninfofiles"
         ]
 
         # Act

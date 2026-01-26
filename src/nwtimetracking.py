@@ -235,7 +235,8 @@ class SoftwareProjectNameProvider():
             "nwbuilds",
             "nwmakefiler",
             "nwrefurbishedanalytics",
-            "nwknowledgebase"
+            "nwknowledgebase",
+            "nwversioninfofiles"
         ]
 
         return software_project_names
