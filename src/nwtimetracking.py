@@ -236,7 +236,8 @@ class SoftwareProjectNameProvider():
             "nwmakefiler",
             "nwrefurbishedanalytics",
             "nwknowledgebase",
-            "nwversioninfofiles"
+            "nwversioninfofiles",
+            "NW.ZooSketchDownloader"
         ]
 
         return software_project_names
