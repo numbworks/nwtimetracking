@@ -1,0 +1,23 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Debug: nwtimetrackingcli",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/nwtimetrackingcli.py",
+            "console": "integratedTerminal",
+            "args": [
+                "save", 
+                "--input_path", 
+                "/workspaces/nwtimetracking/data/Time Tracking.xlsx", 
+                "--nrows", 
+                "2040",
+                "--folder_path",
+                "/home/nwtimetracking/"
+            ],
+            "justMyCode": true
+        }
+    ]
+}
