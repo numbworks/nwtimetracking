@@ -677,11 +677,12 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwshared",
             "nwpackageversions",
             "nwapolloanalytics",
-            "nwbuilds",
+            "nwbuilders",
             "nwmakefiler",
             "nwrefurbishedanalytics",
             "nwknowledgebase",
-            "nwversioninfofiles"
+            "nwversioninfofiles",
+            "NW.ZooSketchDownloader"
         ]
 
         # Act
@@ -693,9 +694,9 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Arrange
         expected : list[str] = [
-            "nwrefurbishedanalytics",
             "nwknowledgebase",
-            "nwversioninfofiles"
+            "nwversioninfofiles",
+            "NW.ZooSketchDownloader"
         ]
 
         # Act
@@ -707,7 +708,7 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Arrange
         expected : list[str] = [
-            "nwversioninfofiles"
+            "NW.ZooSketchDownloader"
         ]
 
         # Act
