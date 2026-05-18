@@ -42,6 +42,12 @@ This project includes portions of the `nwmakefiles` project, which is documented
 
 - [docs-nwmakefiles.md](SeeAlso-nwmakefiles/docs-nwmakefiles.md)
 
+## See Also: `knownissues`
+
+To learn more about some known issues that might have required a workaround to make this project work, please have a look at the following document:
+
+- [docs-knownissues-python.md](SeeAlso-knownissues/docs-knownissues-python.md)
+
 ## Markdown Toolset
 
 Suggested toolset to view and edit this Markdown file:
