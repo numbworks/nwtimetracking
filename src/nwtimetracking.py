@@ -20,7 +20,6 @@ from pandas import Timedelta
 from pathlib import Path
 from re import Match
 from typing import Any, Literal, Optional, Tuple, Union, cast
-from weasyprint import CSS, HTML
 
 # LOCAL/NW MODULES
 # CONSTANTS
@@ -2000,13 +1999,6 @@ class TTReportManager():
         """
         
         return full_html
-    def __create_stylesheet(self):
-
-        '''Creates a CSS stylesheet.'''
-
-        stylesheet : CSS = CSS(string = "@page { size: A3 landscape; margin: 20mm; }")
-        
-        return stylesheet
     
     def save_as_report(
         self, 
@@ -2030,7 +2022,9 @@ class TTReportManager():
             html_path.write_text(data = full_html, encoding = "utf-8")
         
         if save_pdf:
-            HTML(string = full_html).write_pdf(target = str(pdf_path), stylesheets = [self.__create_stylesheet()])
+            from weasyprint import CSS, HTML
+            stylesheet : CSS = CSS(string = "@page { size: A3 landscape; margin: 20mm; }")
+            HTML(string = full_html).write_pdf(target = str(pdf_path), stylesheets = [stylesheet])
 @dataclass(frozen=True)
 class ComponentBag():
 
