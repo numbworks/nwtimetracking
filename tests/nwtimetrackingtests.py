@@ -1,25 +1,29 @@
 # GLOBAL MODULES
+import copy
 import importlib
-import unittest
+import os
 import numpy as np
 import pandas as pd
+import sys
+import unittest
+from contextlib import redirect_stdout
 from datetime import datetime, date, timedelta
 from numpy import int64, uint
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
+from pandas.io.formats.style import Styler
 from parameterized import parameterized
 from pathlib import Path
-from typing import Any, Literal, Optional, Tuple, cast
-from unittest.mock import _Call, Mock, call, patch
+from typing import Any, Literal, Optional, Tuple, Union, cast
+from unittest.mock import _Call, Mock, call, mock_open, patch
 
 # LOCAL/NW MODULES
-import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
+from nwtimetracking import FilePathManager, FileManager, Displayer
 from nwtimetracking import EFFORTMODE, REPORTSTR, TTCN, DEFINITIONSTR, OPTION, EffortCell, EffortHighlighter, TTAdapter, TTReportManager
 from nwtimetracking import _MessageCollection, TTDataFrameFactory, TimeTrackingProcessor
 from nwtimetracking import EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
-from nwshared import FilePathManager, FileManager, Displayer
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -302,7 +306,7 @@ class ObjectMother():
                 ]],
             }, index=pd.RangeIndex(start=0, stop=1, step=1),
         )   
-    @staticmethod # TBD
+    @staticmethod
     def get_ttd_effort_status_df(is_correct : bool) -> DataFrame:
 
         '''
@@ -316,31 +320,47 @@ class ObjectMother():
             is_correct = False:
 
                 StartTime   EndTime     Effort  IsCorrect   Expected    Message
+
+            Pandas 2.1.4:
+                - May infer StringDtype for empty filtered DataFrames, making testing outcome undeterministic, so we re-apply the expected dtypes before returning.
         '''
 
-        if is_correct:
-            return pd.DataFrame(
-                {
-                    TTCN.STARTTIME: np.array(["08:15"], dtype=object),
-                    TTCN.ENDTIME: np.array(["12:45"], dtype=object),
-                    TTCN.EFFORT: np.array(["4h 30m"], dtype=object),
-                    TTCN.ISCORRECT: np.array([True], dtype=bool),
-                    TTCN.EXPECTED: np.array(["04h 30m"], dtype=object),
-                    TTCN.MESSAGE: np.array(["The effort is correct."], dtype=object)
-                },
-                index=pd.Index([1000], dtype="int64")
-            )            
-
-        return pd.DataFrame(
+        ttd_effort_status_df : DataFrame = pd.DataFrame(
             {
-                TTCN.STARTTIME: pd.Series(dtype=object),
-                TTCN.ENDTIME: pd.Series(dtype=object),
-                TTCN.EFFORT: pd.Series(dtype=object),
-                TTCN.ISCORRECT: pd.Series(dtype=bool),
-                TTCN.EXPECTED: pd.Series(dtype=object),
-                TTCN.MESSAGE: pd.Series(dtype=object)
+                TTCN.STARTTIME: np.array([], dtype=object),
+                TTCN.ENDTIME: np.array([], dtype=object),
+                TTCN.EFFORT: np.array([], dtype=object),
+                TTCN.ISCORRECT: np.array([], dtype=bool),
+                TTCN.EXPECTED: np.array([], dtype=object),
+                TTCN.MESSAGE: np.array([], dtype=object)
             }
-        )   
+        )
+
+        if is_correct:
+            ttd_effort_status_df = pd.DataFrame(
+            {
+                TTCN.STARTTIME: np.array(["08:15"], dtype=object),
+                TTCN.ENDTIME: np.array(["12:45"], dtype=object),
+                TTCN.EFFORT: np.array(["4h 30m"], dtype=object),
+                TTCN.ISCORRECT: np.array([True], dtype=bool),
+                TTCN.EXPECTED: np.array(["04h 30m"], dtype=object),
+                TTCN.MESSAGE: np.array(["The effort is correct."], dtype=object)
+            },
+            index=pd.Index([1000], dtype="int64")
+        )
+            
+        ttd_effort_status_df = ttd_effort_status_df.astype(
+            {
+                TTCN.STARTTIME: object,
+                TTCN.ENDTIME: object,
+                TTCN.EFFORT: object,
+                TTCN.ISCORRECT: bool,
+                TTCN.EXPECTED: object,
+                TTCN.MESSAGE: object
+            }
+        )
+
+        return ttd_effort_status_df
     @staticmethod
     def get_definitions_df() -> DataFrame:
 
@@ -464,6 +484,378 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)	
+class FilePathManagerTestCase(unittest.TestCase):
+
+    def test_createfilepath_shouldreturnexpectedfilepath_whenproperarguments(self):
+        
+        '''"C:/", "somefile.txt" => "C:/somefile.txt"'''
+
+        # Arrange
+        # Act
+        actual : str = FilePathManager().create_file_path(folder_path = "C:/", file_name = "somefile.txt")
+        
+        # Assert
+        self.assertEqual("C:/somefile.txt", actual)
+    def test_createnumberedfilepath_shouldreturnexpectedfilepath_whenproperarguments(self):
+
+        '''"C:/", "html" => "C:/1.html"'''        
+        
+        # Arrange
+        
+        # Act
+        actual : str = FilePathManager().create_numbered_file_path(folder_path = "C:/", number = 1, extension = "html")
+        
+        # Assert
+        self.assertEqual("C:/1.html", actual)
+    def test_createnumberedfilepaths_shouldreturnexpectedfilepaths_whenproperarguments(self):
+
+        '''
+            "C:/", 1, 3 => [ "C:/1.html", "C:/2.html" ]
+        ''' 
+
+        # Arrange
+        expected : list[str] = ["C:/1.html", "C:/2.html"]
+
+        # Act
+        actual : list[str] = FilePathManager().create_numbered_file_paths(folder_path = "C:/", range_start = 1, range_end = 3, extension = "html")
+        
+        # Assert
+        self.assertEqual(expected, actual)
+class FileManagerTestCase(unittest.TestCase):
+
+    def test_removefiles_shouldremoveallfileswithprovidedextensions_whenfilesareinworkingfolder(self):
+        
+        # Arrange
+        file_names : list[str] = [
+            "0.html",
+            "1.html",
+            "0.json",
+            "dataframe.csv",
+            "log.txt"
+        ]
+        extensions : list[str] = ["html"]
+        working_folder_path : str = "C:/nwshared/"
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())
+        with patch.object(os, 'listdir', return_value = file_names) as mocked_listdir:
+            with patch.object(os, 'remove', return_value = None) as mocked_remove:
+                file_manager.remove_files(extensions = extensions, working_folder_path = working_folder_path)
+
+        # Assert
+        self.assertEqual(2, mocked_remove.call_count)
+        mocked_remove.assert_has_calls([ 
+            call(os.path.join(working_folder_path, file_names[0])),
+            call(os.path.join(working_folder_path, file_names[1]))
+        ])
+    def test_removefiles_shoulddonothing_whenfilesarenotinworkingfolder(self):
+        
+        # Arrange
+        file_names : list[str] = [
+            "0.json",
+            "dataframe.csv",
+            "log.txt"
+        ]
+        extensions : list[str] = ["html"]
+        working_folder_path : str = "C:/nwshared/"
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())
+        with patch.object(os, 'listdir', return_value = file_names) as mocked_listdir:
+            with patch.object(os, 'remove', return_value = None) as mocked_remove:
+                file_manager.remove_files(extensions = extensions, working_folder_path = working_folder_path)
+
+        # Assert
+        self.assertEqual(0, mocked_remove.call_count)
+    def test_loadcontent_shouldreadfilecontent_whenproperarguments(self):
+
+        # Arrange
+        file_path : str = "C:/0.html"
+        content : str = "Some content."
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())        
+        with patch("builtins.open", mock_open(read_data = content)) as mocked_open:
+            actual : str = file_manager.load_content(file_path = file_path)
+
+        # Assert
+        mocked_open.assert_has_calls([ 
+            call(file_path, 'r', encoding='utf-8'),
+            call().__enter__(),
+            call().read(),
+            call().__exit__(None, None, None)
+        ])
+    def test_loadcontents_shouldreadfilecontents_whenproperarguments(self):
+        
+        # Arrange
+        file_names : list[str] = [
+            "0.html",
+            "1.html",
+            "0.json",
+            "dataframe.csv",
+            "log.txt"
+        ]
+        extension : str = "html"
+        working_folder_path : str = "C:/nwshared/"
+        content : str = "Some content."        
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())
+        with patch.object(os, 'listdir', return_value = file_names) as mocked_listdir:
+            with patch("builtins.open", mock_open(read_data = content)) as mocked_open:
+                actual : list[str] = file_manager.load_contents(working_folder_path = working_folder_path, extension = extension)
+
+        # Assert
+        self.assertEqual(2, mocked_open.call_count)
+        mocked_open.assert_has_calls([ 
+            call(os.path.join(working_folder_path, file_names[0]), 'r', encoding='utf-8'),
+            call().__enter__(),
+            call().read(),
+            call().__exit__(None, None, None),            
+            call(os.path.join(working_folder_path, file_names[1]), 'r', encoding='utf-8'),
+            call().__enter__(),
+            call().read(),
+            call().__exit__(None, None, None)
+        ])
+    def test_savecontent_shouldwritecontenttofile_whenproperarguments(self):
+
+        # Arrange
+        file_path : str = "C:/0.html"
+        content : str = "Some content."
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())        
+        with patch("builtins.open", mock_open()) as mocked_open:
+            file_manager.save_content(content = content, file_path = file_path)
+
+        # Assert
+        mocked_open.assert_has_calls([ 
+            call(file_path, 'w', encoding='utf-8'),
+            call().__enter__(),
+            call().write(content),
+            call().__exit__(None, None, None)
+        ])
+    def test_savecontents_shouldwritecontentstofiles_whenproperarguments(self):
+
+        # Arrange
+        file_paths : list[str] = [ 
+            "C:/0.html", 
+            "C:/1.html" 
+        ]
+        contents : list[str] = [ 
+            "Some content.", 
+            "Some content."
+        ]
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())        
+        with patch("builtins.open", mock_open()) as mocked_open:
+            file_manager.save_contents(contents = contents, file_paths = file_paths)
+
+        # Assert
+        self.assertEqual(2, mocked_open.call_count)            
+        mocked_open.assert_has_calls([ 
+            call(file_paths[0], 'w', encoding='utf-8'),
+            call().__enter__(),
+            call().write(contents[0]),
+            call().__exit__(None, None, None),            
+            call(file_paths[1], 'w', encoding='utf-8'),
+            call().__enter__(),
+            call().write(contents[1]),
+            call().__exit__(None, None, None)
+        ])
+    def test_savelog_shouldwritecontentsasloglinestofile_whenproperarguments(self):
+
+        # Arrange
+        working_folder_path : str = "C:/nwshared/"
+        file_name : str = "log.txt"
+        contents : list[str] = [
+            "[2024-03-16 23:13:19] Analysis session started.",
+            "[2024-03-16 23:13:19] The dataframe has been successfully created.",
+            "[2024-03-16 23:13:19] Analysis session completed."
+        ]
+        file_path : str = "C:/nwshared/log.txt"
+        lines : list[str] = [
+            "[2024-03-16 23:13:19] Analysis session started.",
+            "\n",
+            "[2024-03-16 23:13:19] The dataframe has been successfully created.",
+            "\n",            
+            "[2024-03-16 23:13:19] Analysis session completed.",
+            "\n"            
+        ]
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())        
+        with patch("builtins.open", mock_open()) as mocked_open:
+            file_manager.save_log(contents = contents, working_folder_path = working_folder_path, file_name = file_name)
+
+        # Assert
+        mocked_open.assert_has_calls([ 
+            call(file_path, 'w', encoding='utf-8'),
+            call().__enter__(),
+            call().writelines(lines),
+            call().__exit__(None, None, None)
+        ])
+class DisplayerTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.df : DataFrame = DataFrame({"A": [1.123456, 2.654321], "B": [3.987654, 4.123456]})
+        self.formatters : Optional[dict] = {"A" : "{:.2f}"}
+
+        self.styled_df : DataFrame = DataFrame('', index = self.df.index, columns = self.df.columns)
+        self.styled_df.iloc[0, 0] = f"background-color: lightgreen"
+        self.styler : Styler = self.df.style.apply(lambda _ : self.styled_df, axis = None)
+
+    def test_displaydf_shouldcallstyle_whenhideindexisfalseandformattersisnone(self):
+        
+        # Arrange
+        hide_index : bool = False
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(DataFrame, "style") as style:
+    
+                # Act
+                Displayer()._Displayer__display_df(df = self.df, hide_index = hide_index, formatters = None) # type: ignore
+
+                # Assert
+                style.format.assert_has_calls([call()])
+    def test_displaydf_shouldcallstyle_whenhideindexisfalseandformattersisnotnone(self):
+        
+        # Arrange
+        hide_index : bool = False
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(DataFrame, "style") as style:
+    
+                # Act
+                Displayer()._Displayer__display_df(df = self.df, hide_index = hide_index, formatters = self.formatters) # type: ignore
+
+                # Assert
+                style.format.assert_has_calls([call(), call(self.formatters)])
+    def test_displaydf_shouldcallhide_whenhideindexistrue(self):
+        
+        # Arrange
+        hide_index : bool = True
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "hide") as hide:
+    
+                # Act
+                Displayer()._Displayer__display_df(df = self.df, hide_index = hide_index) # type: ignore
+
+                # Assert
+                self.assertTrue(hide.called)
+    def test_displaydf_shouldnotcallhide_whenhideindexisfalse(self):
+        
+        # Arrange
+        hide_index : bool = False
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "hide") as hide:
+    
+                # Act
+                Displayer()._Displayer__display_df(df = self.df, hide_index = hide_index) # type: ignore
+
+                # Assert
+                self.assertFalse(hide.called)
+
+    def test_displaystyler_shouldcalldeepcopy_wheninvoked(self):
+        
+        # Arrange
+        # Act, Assert
+        with patch.object(copy, "deepcopy") as deepcopy:
+
+            # Act
+            Displayer()._Displayer__display_styler(styler = self.styler, hide_index = False, formatters = None) # type: ignore
+
+            # Assert
+            deepcopy.assert_called_once()
+    def test_displaystyler_shouldcallformat_whenhideindexisfalseandformattersisnotnone(self):
+        
+        # Arrange
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "format") as format:        
+        
+                # Act
+                Displayer()._Displayer__display_styler(styler = self.styler, hide_index = False, formatters = self.formatters) # type: ignore
+
+                # Assert
+                format.assert_called_with(self.formatters)
+    def test_displaystyler_shouldcallhide_whenhideindexistrue(self):
+        
+        # Arrange
+        hide_index : bool = True
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "hide") as hide:        
+        
+                # Act
+                Displayer()._Displayer__display_styler(styler = self.styler, hide_index = hide_index) # type: ignore
+
+                # Assert
+                hide.assert_called()
+    def test_displaystyler_shouldnotcallhide_whenhideindexisfalse(self):
+        
+        # Arrange
+        hide_index : bool = False
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "hide") as hide:        
+        
+                # Act
+                Displayer()._Displayer__display_styler(styler = self.styler, hide_index = hide_index) # type: ignore
+
+                # Assert
+                self.assertFalse(hide.called)
+
+    def test_display_shouldcalldisplaydf_whenobjisdataframe(self):
+
+        # Arrange
+        hide_index : bool = True
+
+        # Act, Assert
+        with patch.object(Displayer, "_Displayer__display_df") as display_df:
+
+            # Act
+            Displayer().display(obj = self.df, hide_index = hide_index, formatters = self.formatters)
+
+            # Assert
+            display_df.assert_called_once_with(df = self.df, hide_index = hide_index, formatters = self.formatters)
+    def test_display_shouldcalldisplaystyler_whenobjisstyler(self):
+
+        # Arrange
+        hide_index : bool = True
+
+        # Act, Assert
+        with patch.object(Displayer, "_Displayer__display_styler") as display_styler:
+
+            # Act
+            Displayer().display(obj = self.styler, hide_index = hide_index, formatters = None)
+
+            # Assert
+            display_styler.assert_called_once_with(styler = self.styler, hide_index = hide_index, formatters = None)
+
+    def test_displaycascade_shouldcalldisplayforeachobject_whenobjsislist(self):
+
+        # Arrange
+        hide_index : bool = True
+        objs : list[Union[DataFrame, Styler]] = [self.df, self.styler]
+        
+        with patch.object(Displayer, "display") as display:
+
+            # Act
+            Displayer().display_cascade(objs = objs, hide_index = hide_index, formatters = self.formatters)
+
+            # Assert
+            self.assertEqual(display.call_count, len(objs))
 class EffortStatusTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
@@ -619,7 +1011,7 @@ class YearProviderTestCase(unittest.TestCase):
     def test_getallyears_shouldreturnexpectedlist_wheninvoked(self):
 
         # Arrange
-        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
 
         # Act
         actual : list[int] = YearProvider().get_all_years()
@@ -630,7 +1022,7 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Arrange
         x : uint = uint(5)
-        expected : list[int] = [2021, 2022, 2023, 2024, 2025]
+        expected : list[int] = [2022, 2023, 2024, 2025, 2026]
         
         # Act
         actual : list[int] = YearProvider().get_most_recent_x_years(x)
@@ -641,7 +1033,7 @@ class YearProviderTestCase(unittest.TestCase):
 
         # Arrange
         x : uint = uint(15)
-        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+        expected : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
         
         # Act
         actual : list[int] = YearProvider().get_most_recent_x_years(x)
@@ -677,9 +1069,12 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
             "nwshared",
             "nwpackageversions",
             "nwapolloanalytics",
-            "nwbuild",
+            "nwbuilders",
+            "nwmakefiler",
             "nwrefurbishedanalytics",
-            "nwknowledgebase"
+            "nwknowledgebase",
+            "nwversioninfofiles",
+            "NW.ZooSketchDownloader"
         ]
 
         # Act
@@ -691,9 +1086,9 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Arrange
         expected : list[str] = [
-            "nwbuild",
-            "nwrefurbishedanalytics",
-            "nwknowledgebase"
+            "nwknowledgebase",
+            "nwversioninfofiles",
+            "NW.ZooSketchDownloader"
         ]
 
         # Act
@@ -705,7 +1100,7 @@ class SoftwareProjectNameProviderTestCase(unittest.TestCase):
 
         # Arrange
         expected : list[str] = [
-            "nwknowledgebase"
+            "NW.ZooSketchDownloader"
         ]
 
         # Act
@@ -1528,8 +1923,8 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         assert_frame_equal(expected_df, actual_df)
     
     @parameterized.expand([
-        [True],
-        [False]
+        ([True]),
+        ([False])
     ])    
     def test_createttdeffortstatusdf_shouldreturnexpecteddataframe_wheninvoked(self, is_correct : bool): 
         
@@ -2211,10 +2606,10 @@ class TTReportManagerTestCase(unittest.TestCase):
     def test_createreportfilepaths_shouldreturnexpectedpaths_wheninvoked(self) -> None:
 
         # Arrange
-        folder_path : str = "/home/nwreadinglist"
+        folder_path : str = "/home/nwtimetracking"
         last_update : datetime = datetime(year = 2025, month = 12, day = 22)
-        expected_html_path : Path = Path("/home/nwreadinglist") / "TIMETRACKINGREPORT20251222.html"
-        expected_pdf_path : Path = Path("/home/nwreadinglist") / "TIMETRACKINGREPORT20251222.pdf"
+        expected_html_path : Path = Path("/home/nwtimetracking") / "TIMETRACKINGREPORT20251222.html"
+        expected_pdf_path : Path = Path("/home/nwtimetracking") / "TIMETRACKINGREPORT20251222.pdf"
 
         # Act
         actual : Tuple[Path, Path] = self.report_manager._TTReportManager__create_report_file_paths(folder_path = folder_path,last_update = last_update)  # type: ignore
@@ -2312,19 +2707,7 @@ class TTReportManagerTestCase(unittest.TestCase):
         self.assertIn("".join(html_sections), actual)
         self.assertIn("avatars.githubusercontent.com/u/10279234", actual)
         self.assertIn(f"This report is generated by '{app_name}'", actual)
-        self.assertIn("© 2025 numbworks.", actual)
-    def test_createstylesheet_shouldcallcsswiththeexpectedstring_wheninvoked(self) -> None:
-
-        # Arrange
-        css_mock = Mock()
-
-        with patch.object(self.report_module, "CSS", css_mock):
-
-            # Act
-            self.report_manager._TTReportManager__create_stylesheet()  # type: ignore
-
-            # Assert
-            css_mock.assert_called_once_with(string = "@page { size: A3 landscape; margin: 20mm; }")
+        self.assertIn("© numbworks.", actual)
     def test_saveasreport_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
@@ -2340,15 +2723,21 @@ class TTReportManagerTestCase(unittest.TestCase):
         html_path : Path = Path("/home/some_file_name.html")
         pdf_path : Path = Path("/home/some_file_name.pdf")
 
+        stylesheet : object = Mock()
         html_instance : Mock = Mock()
 
+        # These two are declared outside with() to avoid Pylance complaining.
+        # patch() is dynamically typed and the overload resolution sometimes breaks inside a parenthesized with (...) block.
+        css_patch = patch("weasyprint.CSS", return_value = stylesheet)      
+        html_patch = patch("weasyprint.HTML", return_value = html_instance)
+
         with (
-            patch.object(self.report_manager, "_TTReportManager__create_report_file_paths", return_value = (html_path, pdf_path)) as mocked_create_report_file_paths,
-            patch.object(self.report_manager, "_TTReportManager__create_html_sections", return_value = html_sections) as mocked_create_html_sections,
-            patch.object(self.report_manager, "_TTReportManager__create_html_template", return_value = full_html) as mocked_create_html_template,
-            patch.object(self.report_manager, "_TTReportManager__create_stylesheet", return_value = stylesheet) as mocked_create_stylesheet,
-            patch.object(Path, "write_text", autospec = True) as mocked_write_text,
-            patch.object(self.report_module, "HTML", return_value = html_instance) as mocked_html
+            patch.object(self.report_manager, "_TTReportManager__create_report_file_paths", return_value = (html_path, pdf_path)) as create_report_file_paths,
+            patch.object(self.report_manager, "_TTReportManager__create_html_sections", return_value = html_sections) as create_html_sections,
+            patch.object(self.report_manager, "_TTReportManager__create_html_template", return_value = full_html) as create_html_template,
+            patch.object(Path, "write_text", autospec = True) as write_text,
+            css_patch as css,
+            html_patch as html
         ):
 
             # Act
@@ -2362,12 +2751,14 @@ class TTReportManagerTestCase(unittest.TestCase):
             )
 
             # Assert
-            mocked_create_report_file_paths.assert_called_once_with(folder_path = folder_path, last_update = last_update)
-            mocked_create_html_sections.assert_called_once_with(tt_summary = self.tt_summary, formatters = formatters)
-            mocked_create_html_template.assert_called_once_with(html_sections = html_sections, last_update = last_update)
-            mocked_write_text.assert_called_once_with(html_path, data = full_html, encoding = "utf-8")
-            mocked_html.assert_called_once_with(string = full_html)
-            mocked_create_stylesheet.assert_called_once()
+            create_report_file_paths.assert_called_once_with(folder_path = folder_path, last_update = last_update)
+            create_html_sections.assert_called_once_with(tt_summary = self.tt_summary, formatters = formatters)
+            create_html_template.assert_called_once_with(html_sections = html_sections, last_update = last_update)
+
+            write_text.assert_called_once_with(html_path, data = full_html, encoding = "utf-8")
+
+            css.assert_called_once_with(string = "@page { size: A3 landscape; margin: 20mm; }")
+            html.assert_called_once_with(string = full_html)
             html_instance.write_pdf.assert_called_once_with(target = str(pdf_path), stylesheets = [stylesheet])
 class ComponentBagTestCase(unittest.TestCase):
 

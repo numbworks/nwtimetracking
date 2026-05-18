@@ -1,0 +1,27 @@
+include makefile
+
+MODULE_NAME = "nwtimetracking"
+
+.PHONY: \
+	clear \
+	makefile-info \
+	codemetrics-concise \
+	compile-concise \
+	coverage-concise \
+	setupinfo-concise \
+	tryinstall-concise \
+	type-concise \
+	unittest-concise \
+	all-concise
+
+all-concise: \
+	clear \
+	makefile-info \
+	changelog-concise \
+	codemetrics-concise \
+	compile-concise \
+	coverage-concise \
+	setupinfo-concise \
+	tryinstall-concise \
+	type-concise \
+	unittest-concise

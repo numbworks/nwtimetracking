@@ -1,6 +1,8 @@
 # nwtimetracking
 
-![codecoverage_library.svg](codecoverage.svg)
+| <sub>nwtimetracking</sub> | <sub>nwtimetrackingcli</sub> |
+|---|---|
+|![codecoverage-nwtimetracking.svg](codecoverage-nwtimetracking.svg)|![codecoverage-nwtimetrackingcli.svg](codecoverage-nwtimetrackingcli.svg)|
 
 Contact: numbworks@gmail.com
 
@@ -8,11 +10,14 @@ Contact: numbworks@gmail.com
 
 From the documentation:
 
-> `nwtimetracking` is an application designed to run automated data analysis tasks on `Time Tracking.xlsx`. This file is the one I use to annotate the durations of all my sessions of extra work and continuos learning. This application is born to overcome the lack of support for durations (timedeltas) in Excel.
+> `nwtimetracking` is a library that can run several automated data analysis tasks on a time tracking file and save the results as a PDF report. It’s designed to facilitate and gamify a continuous learning journey.
+
+> `nwtimetrackingcli` is a command-line application built on the top of `nwtimetracking`.
 
 ## Getting started
 
-- [Documentation](docs/docs-nwtimetracking.md)
+- [Documentation (nwtimetracking)](docs/docs-nwtimetracking.md)
+- [Documentation (nwtimetrackingcli)](docs/docs-nwtimetrackingcli.md)
 
 ## Other links
 

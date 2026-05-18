@@ -1,10 +1,11 @@
 '''
-A collection of components to handle "Time Tracking.xlsx".
+A library that can run several automated data analysis tasks on a time tracking file and save the results as a PDF report.
 
-Alias: nwtt
+Alias: nwtime
 '''
 
 # GLOBAL MODULES
+import copy
 import numpy as np
 import os
 import pandas as pd
@@ -14,15 +15,13 @@ from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
+from pandas.io.formats.style import Styler
 from pandas import Timedelta
 from pathlib import Path
 from re import Match
-from typing import Any, Literal, Optional, Tuple, cast
-from weasyprint import CSS, HTML
+from typing import Any, Literal, Optional, Tuple, Union, cast
 
 # LOCAL/NW MODULES
-from nwshared import FilePathManager, FileManager, Displayer
-
 # CONSTANTS
 class TTCN(StrEnum):
     
@@ -138,6 +137,188 @@ class _MessageCollection():
         return f"The provided mode is not supported: '{mode}'."
 
 # CLASSES
+class FilePathManager():
+    
+    '''Collects all the logic related to the file path management.'''
+
+    def create_file_path(self, folder_path : str, file_name : str) -> str:
+
+        '''Creates a file path.'''
+
+        return os.path.join(folder_path, file_name) 
+    def create_numbered_file_path(self, folder_path : str, number : int, extension : str) -> str:
+
+        r'''Creates a numbered file path. Example: ("C:\\", 1, "html") => "C:\\1.html"'''
+
+        file_name : str = f"{number}.{extension}"
+        file_path : str = self.create_file_path(folder_path = folder_path, file_name = file_name)    
+
+        return file_path
+    def create_numbered_file_paths(self, folder_path : str, range_start : int, range_end : int, extension : str) -> list[str]:
+
+        '''
+            Creates a collection of numbered file paths.
+
+            If range_start = 1 and range_end = 3, only two items will be created (range_end is excluded).
+        '''
+
+        file_paths : list[str] = []
+        for i in range(range_start, range_end):
+            file_path : str = self.create_numbered_file_path(folder_path = folder_path, number = i, extension = extension)
+            file_paths.append(file_path)
+
+        return file_paths
+class FileManager():
+    
+    '''Collects all the logic related to the file management.'''
+
+    __file_path_manager : FilePathManager
+
+    def __init__(self, file_path_manager : FilePathManager) -> None:
+        
+        self.__file_path_manager = file_path_manager
+    def __create_file_paths(self, working_folder_path : str, extension : str) -> list[str]:
+
+        '''Creates file paths.'''
+
+        if not extension.startswith("."):
+            extension = f".{extension}"
+
+        file_paths : list[str] = []
+        for file_name in os.listdir(path = working_folder_path):
+            if file_name.endswith(extension):
+                file_path : str = self.__file_path_manager.create_file_path(folder_path = working_folder_path, file_name = file_name)   
+                file_paths.append(file_path)
+
+        return file_paths
+    def __convert_contents_to_lines(self, contents : list[str]) -> list[str]:
+
+        '''Converts contents to lines.'''
+
+        lines : list[str] = []
+        for i in range(len(contents)):
+            lines.append(contents[i])
+            lines.append('\n')
+
+        return lines
+
+    def remove_files(self, extensions : list[str], working_folder_path : str) -> None:
+
+        '''Delete all the files of the provided extensions from the provided folder.'''    
+
+        for file_name in os.listdir(path = working_folder_path):
+            for extension in extensions:
+                if file_name.endswith(extension):
+                    os.remove(os.path.join(working_folder_path, file_name))
+    def load_content(self, file_path : str) -> str:
+        
+        '''Reads the content of the provided text file and returns it as string.'''
+
+        content : str = ""
+        with open(file_path, 'r', encoding = 'utf-8') as file:
+            content = file.read()
+
+        return content
+    def load_contents(self, working_folder_path : str, extension : str) -> list[str]:
+
+        '''Reads the contents of all the text files in the provided folder and returns them as a collection of strings.'''
+
+        file_paths : list[str] = self.__create_file_paths(working_folder_path = working_folder_path, extension = extension)
+
+        contents : list[str] = []
+        for file_path in file_paths:
+            content : str = self.load_content(file_path = file_path)
+            contents.append(content)
+
+        return contents
+    def save_content(self, content : str, file_path : str) -> None:    
+
+        '''Writes the provided content to the provided file path.'''
+
+        with open(file_path, 'w', encoding = 'utf-8') as new_file:
+            new_file.write(content)
+    def save_contents(self, contents : list[str], file_paths : list[str]) -> None: 
+
+        '''Writes the provided contents to the provided file paths.'''
+
+        for i in range(len(contents)):
+            self.save_content(content = str(contents[i]), file_path = file_paths[i]) # without str() it returns 'bytes' (?)
+    def save_log(self, contents : list[str], working_folder_path : str, file_name : str) -> None:
+
+        '''Writes the provided collection of strings as newline-separated lines into the provided file.'''
+
+        file_path : str = self.__file_path_manager.create_file_path(folder_path = working_folder_path, file_name  = file_name)
+        lines : list[str] = self.__convert_contents_to_lines(contents = contents)
+
+        with open(file_path, 'w', encoding = 'utf-8') as new_file:
+            new_file.writelines(lines)
+class Displayer():
+
+    '''Adapter around IPython.core.display.display().'''
+
+    def __display(self, obj: Any) -> None:
+
+        '''Safely calls IPython display() or do nothing.'''
+        
+        try:
+            from IPython.core.display import display
+            display(obj)
+        except ImportError:
+            pass
+    def __display_df(self, df : DataFrame, hide_index : bool = True, formatters : Optional[dict] = None) -> None:
+
+        '''Displays df in Jupyter Notebook according to provided arguments.'''
+
+        styler : Styler = df.style.format()
+
+        if formatters:
+            styler = df.style.format(formatters)
+
+        if hide_index:
+            styler.hide()
+
+        self.__display(styler)
+    def __display_styler(self, styler : Styler, hide_index : bool = True, formatters : Optional[dict] = None) -> None:
+
+        '''Displays styler in Jupyter Notebook according to provided arguments.'''
+
+        new_styler : Styler = copy.deepcopy(styler)
+
+        if formatters:
+            new_styler.format(formatters)
+
+        if hide_index:
+            new_styler.hide()
+
+        self.__display(new_styler)
+    
+    def display(self, obj : Union[DataFrame, Styler], hide_index : bool = True, formatters : Optional[dict] = None) -> None:
+
+        '''
+            Displays obj in Jupyter Notebook according to provided arguments.
+
+            Example for 'formatters':
+
+                formatters : dict = { "Price" : "{:.2f}" }
+        '''
+
+        if isinstance(obj, DataFrame):
+            self.__display_df(df = obj, hide_index = hide_index, formatters = formatters)
+
+        if isinstance(obj, Styler):
+            self.__display_styler(styler = obj, hide_index = hide_index, formatters = formatters)
+    def display_cascade(self, objs : list[Union[DataFrame, Styler]], hide_index : bool = True, formatters : Optional[dict] = None) -> None:
+
+        '''
+            Displays objects as a cascade in a Jupyter Notebook based on the provided arguments.
+
+            Example for 'formatters':
+
+                formatters : dict = { "Price" : "{:.2f}" }
+        '''
+
+        for obj in objs:
+            self.display(obj = obj, hide_index = hide_index, formatters = formatters)
 @dataclass(frozen=True)
 class EffortStatus():
     
@@ -198,7 +379,7 @@ class YearProvider():
 
         '''Returns a list of years.'''
 
-        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+        years : list[int] = [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026]
 
         return years
     def get_most_recent_x_years(self, x : uint) -> list[int]:
@@ -232,9 +413,12 @@ class SoftwareProjectNameProvider():
             "nwshared",
             "nwpackageversions",
             "nwapolloanalytics",
-            "nwbuild",
+            "nwbuilders",
+            "nwmakefiler",
             "nwrefurbishedanalytics",
-            "nwknowledgebase"
+            "nwknowledgebase",
+            "nwversioninfofiles",
+            "NW.ZooSketchDownloader"
         ]
 
         return software_project_names
@@ -592,9 +776,9 @@ class TTDataFrameFactory():
         tt_df = tt_df.astype({column_names[8]: int})
         tt_df = tt_df.astype({column_names[9]: int})
 
-        tt_df[column_names[1]] = tt_df[column_names[1]].replace('nan', '')
-        tt_df[column_names[2]] = tt_df[column_names[2]].replace('nan', '')
-        tt_df[column_names[5]] = tt_df[column_names[5]].replace('nan', '')
+        tt_df[column_names[1]] = tt_df[column_names[1]].fillna('').map(str)
+        tt_df[column_names[2]] = tt_df[column_names[2]].fillna('').map(str)
+        tt_df[column_names[5]] = tt_df[column_names[5]].fillna('').map(str)
 
         return tt_df    
     def __enforce_dataframe_definition_for_raw_ttm_df(self, df : DataFrame) -> DataFrame:
@@ -866,10 +1050,16 @@ class TTDataFrameFactory():
 
         condition : Series = (tts_by_month_upd_df[TTCN.MONTH] > now_month)
         tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
-            
+        
         idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
-        idx_trend : int = (idx_year - 1)
-        tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
+
+        if idx_year > 0:
+
+            idx_trend : int = idx_year - 1
+            column_name = tts_by_month_upd_df.columns[idx_trend]
+
+            if column_name == TTCN.TREND:
+                tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
 
         return tts_by_month_upd_df
     def __extract_years(self, tt_df : DataFrame) -> list[int]:
@@ -1220,6 +1410,10 @@ class TTDataFrameFactory():
             StartTime	EndTime	Effort	IsCorrect	Expected    Message
             21:00       23:00   1h 00m  False       2h 00m      ...
             ...
+
+            Pandas 2.1.4:
+                - May convert missing values to the literal string "nan", so we normalize them to empty strings before validation.
+                - May infer StringDtype for empty filtered DataFrames, making testing outcome undeterministic, so we re-apply the expected dtypes before returning.
         '''
 
         ttd_df : DataFrame = tt_df.copy(deep = True)
@@ -1227,9 +1421,9 @@ class TTDataFrameFactory():
         ttd_df[TTCN.EFFORTSTATUS] = ttd_df.apply(
             lambda x : self.__df_helper.create_effort_status_and_cast_to_any(
                     idx = x.name, 
-                    start_time_str = x[TTCN.STARTTIME],
-                    end_time_str = x[TTCN.ENDTIME],
-                    effort_str = x[TTCN.EFFORT]),
+                    start_time_str = '' if str(x[TTCN.STARTTIME]).lower() == 'nan' else str(x[TTCN.STARTTIME]),
+                    end_time_str = '' if str(x[TTCN.ENDTIME]).lower() == 'nan' else str(x[TTCN.ENDTIME]),
+                    effort_str = '' if str(x[TTCN.EFFORT]).lower() == 'nan' else str(x[TTCN.EFFORT])),
             axis = 1)
         
         ttd_df[TTCN.ISCORRECT] = ttd_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
@@ -1239,6 +1433,17 @@ class TTDataFrameFactory():
 
         condition : Series = (ttd_df[TTCN.ISCORRECT] == is_correct)
         ttd_df = ttd_df.loc[condition]
+
+        ttd_df = ttd_df.astype(
+            {
+                TTCN.STARTTIME: object,
+                TTCN.ENDTIME: object,
+                TTCN.EFFORT: object,
+                TTCN.ISCORRECT: bool,
+                TTCN.EXPECTED: object,
+                TTCN.MESSAGE: object
+            }
+        )
 
         return ttd_df    
     def create_definitions_df(self) -> DataFrame:
@@ -1713,7 +1918,7 @@ class TTReportManager():
                     },
                     {
                         "selector": "", 
-                        "props": "border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12px; color: #444;"
+                        "props": "border-collapse: collapse; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12px; color: #444;"
                     }
                 ]
             )
@@ -1789,19 +1994,12 @@ class TTReportManager():
             <img src='https://avatars.githubusercontent.com/u/10279234' alt='NW logo' style='width:120px; height:120px; margin-bottom:10px;'>
             <h1>{report_title} | {self.__format_for_title(last_update)}</h1>
             {''.join(html_sections)}
-            <br/><p>© 2025 numbworks. This report is generated by '{app_name}' and licensed under the MIT License. Additional information: <a href="https://github.com/numbworks">github.com/numbworks</a>.</p>
+            <br/><p>© numbworks. This report is generated by '{app_name}' and licensed under the MIT License. Additional information: <a href="https://github.com/numbworks">github.com/numbworks</a>.</p>
         </body>
         </html>
         """
         
         return full_html
-    def __create_stylesheet(self):
-
-        '''Creates a CSS stylesheet.'''
-
-        stylesheet : CSS = CSS(string = "@page { size: A3 landscape; margin: 20mm; }")
-        
-        return stylesheet
     
     def save_as_report(
         self, 
@@ -1814,6 +2012,9 @@ class TTReportManager():
         
         '''Builds an HTML report from selected DataFrames in RLSummary and saves it as both HTML and PDF.'''
 
+        if save_html == False and save_pdf == False:
+            return
+
         html_path, pdf_path = self.__create_report_file_paths(folder_path = folder_path, last_update = last_update)
         html_sections : list[str] = self.__create_html_sections(tt_summary = tt_summary, formatters = formatters)
         full_html : str = self.__create_html_template(html_sections = html_sections, last_update = last_update)
@@ -1822,7 +2023,9 @@ class TTReportManager():
             html_path.write_text(data = full_html, encoding = "utf-8")
         
         if save_pdf:
-            HTML(string = full_html).write_pdf(target = str(pdf_path), stylesheets = [self.__create_stylesheet()])
+            from weasyprint import CSS, HTML
+            stylesheet : CSS = CSS(string = "@page { size: A3 landscape; margin: 20mm; }")
+            HTML(string = full_html).write_pdf(target = str(pdf_path), stylesheets = [stylesheet])
 @dataclass(frozen=True)
 class ComponentBag():
 
