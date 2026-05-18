@@ -1918,7 +1918,7 @@ class TTReportManager():
                     },
                     {
                         "selector": "", 
-                        "props": "border-collapse: collapse; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12px; color: #444;"
+                        "props": "border-collapse: collapse; font-family: 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12px; color: #444;"
                     }
                 ]
             )
