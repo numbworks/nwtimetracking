@@ -321,8 +321,8 @@ class ObjectMother():
 
                 StartTime   EndTime     Effort  IsCorrect   Expected    Message
 
-            Before returning, we re-apply the expected dtypes because Pandas 2.1.x may infer 
-            StringDtype for empty filtered DataFrames, making testing outcome undeterministic.
+            Pandas 2.1.4:
+                - May infer StringDtype for empty filtered DataFrames, making testing outcome undeterministic, so we re-apply the expected dtypes before returning.
         '''
 
         ttd_effort_status_df : DataFrame = pd.DataFrame(

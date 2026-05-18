@@ -1411,8 +1411,9 @@ class TTDataFrameFactory():
             21:00       23:00   1h 00m  False       2h 00m      ...
             ...
 
-            Before returning, we re-apply the expected dtypes because Pandas 2.1.x may infer 
-            StringDtype for empty filtered DataFrames, making testing outcome undeterministic.
+            Pandas 2.1.4:
+                - May convert missing values to the literal string "nan", so we normalize them to empty strings before validation.
+                - May infer StringDtype for empty filtered DataFrames, making testing outcome undeterministic, so we re-apply the expected dtypes before returning.
         '''
 
         ttd_df : DataFrame = tt_df.copy(deep = True)
@@ -1420,9 +1421,9 @@ class TTDataFrameFactory():
         ttd_df[TTCN.EFFORTSTATUS] = ttd_df.apply(
             lambda x : self.__df_helper.create_effort_status_and_cast_to_any(
                     idx = x.name, 
-                    start_time_str = x[TTCN.STARTTIME],
-                    end_time_str = x[TTCN.ENDTIME],
-                    effort_str = x[TTCN.EFFORT]),
+                    start_time_str = '' if str(x[TTCN.STARTTIME]).lower() == 'nan' else str(x[TTCN.STARTTIME]),
+                    end_time_str = '' if str(x[TTCN.ENDTIME]).lower() == 'nan' else str(x[TTCN.ENDTIME]),
+                    effort_str = '' if str(x[TTCN.EFFORT]).lower() == 'nan' else str(x[TTCN.EFFORT])),
             axis = 1)
         
         ttd_df[TTCN.ISCORRECT] = ttd_df[TTCN.EFFORTSTATUS].apply(lambda x : x.is_correct)
