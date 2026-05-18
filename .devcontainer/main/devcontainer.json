@@ -1,0 +1,25 @@
+{
+	"name": "main",
+	"image": "nwtimetracking:main",
+	"initializeCommand": "docker build -f .devcontainer/main/Dockerfile -t nwtimetracking:main .",
+	"runArgs": ["--name", "nwtimetracking-main"],
+	"containerEnv": {
+		"TZ": "Europe/Stockholm",
+		"DEVCONTAINER_NAME": "main"
+	},
+	"customizations": {
+		"vscode": {
+			"settings": {},
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance",
+				"ms-toolsai.jupyter",
+				"ms-toolsai.datawrangler",
+				"shd101wyy.markdown-preview-enhanced"
+			]
+		}
+	},
+	"mounts": [
+			"source=${localEnv:USERPROFILE}/Desktop/nwtimetracking/,target=/home/nwtimetracking/,type=bind,consistency=cached"
+	]
+}
