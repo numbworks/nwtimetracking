@@ -595,9 +595,9 @@ class TTDataFrameFactory():
         tt_df = tt_df.astype({column_names[8]: int})
         tt_df = tt_df.astype({column_names[9]: int})
 
-        tt_df[column_names[1]] = tt_df[column_names[1]].replace('nan', '')
-        tt_df[column_names[2]] = tt_df[column_names[2]].replace('nan', '')
-        tt_df[column_names[5]] = tt_df[column_names[5]].replace('nan', '')
+        tt_df[column_names[1]] = tt_df[column_names[1]].fillna('').astype(str)
+        tt_df[column_names[2]] = tt_df[column_names[2]].fillna('').astype(str)
+        tt_df[column_names[5]] = tt_df[column_names[5]].fillna('').astype(str)
 
         return tt_df    
     def __enforce_dataframe_definition_for_raw_ttm_df(self, df : DataFrame) -> DataFrame:
