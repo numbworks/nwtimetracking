@@ -595,9 +595,9 @@ class TTDataFrameFactory():
         tt_df = tt_df.astype({column_names[8]: int})
         tt_df = tt_df.astype({column_names[9]: int})
 
-        tt_df[column_names[1]] = tt_df[column_names[1]].fillna('').astype(str)
-        tt_df[column_names[2]] = tt_df[column_names[2]].fillna('').astype(str)
-        tt_df[column_names[5]] = tt_df[column_names[5]].fillna('').astype(str)
+        tt_df[column_names[1]] = tt_df[column_names[1]].fillna('').map(str)
+        tt_df[column_names[2]] = tt_df[column_names[2]].fillna('').map(str)
+        tt_df[column_names[5]] = tt_df[column_names[5]].fillna('').map(str)
 
         return tt_df    
     def __enforce_dataframe_definition_for_raw_ttm_df(self, df : DataFrame) -> DataFrame:
@@ -869,10 +869,16 @@ class TTDataFrameFactory():
 
         condition : Series = (tts_by_month_upd_df[TTCN.MONTH] > now_month)
         tts_by_month_upd_df[cn_year] = np.where(condition, new_value, tts_by_month_upd_df[cn_year])
-            
+        
         idx_year : int = cast(int, tts_by_month_upd_df.columns.get_loc(cn_year))
-        idx_trend : int = (idx_year - 1)
-        tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
+
+        if idx_year > 0:
+
+            idx_trend : int = idx_year - 1
+            column_name = tts_by_month_upd_df.columns[idx_trend]
+
+            if column_name == TTCN.TREND:
+                tts_by_month_upd_df.iloc[:, idx_trend] = np.where(condition, new_value, tts_by_month_upd_df.iloc[:, idx_trend])
 
         return tts_by_month_upd_df
     def __extract_years(self, tt_df : DataFrame) -> list[int]:
@@ -1223,6 +1229,9 @@ class TTDataFrameFactory():
             StartTime	EndTime	Effort	IsCorrect	Expected    Message
             21:00       23:00   1h 00m  False       2h 00m      ...
             ...
+
+            Before returning, we re-apply the expected dtypes because Pandas 2.1.x may infer 
+            StringDtype for empty filtered DataFrames, making testing outcome undeterministic.
         '''
 
         ttd_df : DataFrame = tt_df.copy(deep = True)
@@ -1242,6 +1251,17 @@ class TTDataFrameFactory():
 
         condition : Series = (ttd_df[TTCN.ISCORRECT] == is_correct)
         ttd_df = ttd_df.loc[condition]
+
+        ttd_df = ttd_df.astype(
+            {
+                TTCN.STARTTIME: object,
+                TTCN.ENDTIME: object,
+                TTCN.EFFORT: object,
+                TTCN.ISCORRECT: bool,
+                TTCN.EXPECTED: object,
+                TTCN.MESSAGE: object
+            }
+        )
 
         return ttd_df    
     def create_definitions_df(self) -> DataFrame:

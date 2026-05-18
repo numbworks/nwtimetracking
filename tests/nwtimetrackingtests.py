@@ -302,7 +302,7 @@ class ObjectMother():
                 ]],
             }, index=pd.RangeIndex(start=0, stop=1, step=1),
         )   
-    @staticmethod # TBD
+    @staticmethod
     def get_ttd_effort_status_df(is_correct : bool) -> DataFrame:
 
         '''
@@ -316,31 +316,47 @@ class ObjectMother():
             is_correct = False:
 
                 StartTime   EndTime     Effort  IsCorrect   Expected    Message
+
+            Before returning, we re-apply the expected dtypes because Pandas 2.1.x may infer 
+            StringDtype for empty filtered DataFrames, making testing outcome undeterministic.
         '''
 
-        if is_correct:
-            return pd.DataFrame(
-                {
-                    TTCN.STARTTIME: np.array(["08:15"], dtype=object),
-                    TTCN.ENDTIME: np.array(["12:45"], dtype=object),
-                    TTCN.EFFORT: np.array(["4h 30m"], dtype=object),
-                    TTCN.ISCORRECT: np.array([True], dtype=bool),
-                    TTCN.EXPECTED: np.array(["04h 30m"], dtype=object),
-                    TTCN.MESSAGE: np.array(["The effort is correct."], dtype=object)
-                },
-                index=pd.Index([1000], dtype="int64")
-            )            
-
-        return pd.DataFrame(
+        ttd_effort_status_df : DataFrame = pd.DataFrame(
             {
-                TTCN.STARTTIME: pd.Series(dtype=object),
-                TTCN.ENDTIME: pd.Series(dtype=object),
-                TTCN.EFFORT: pd.Series(dtype=object),
-                TTCN.ISCORRECT: pd.Series(dtype=bool),
-                TTCN.EXPECTED: pd.Series(dtype=object),
-                TTCN.MESSAGE: pd.Series(dtype=object)
+                TTCN.STARTTIME: np.array([], dtype=object),
+                TTCN.ENDTIME: np.array([], dtype=object),
+                TTCN.EFFORT: np.array([], dtype=object),
+                TTCN.ISCORRECT: np.array([], dtype=bool),
+                TTCN.EXPECTED: np.array([], dtype=object),
+                TTCN.MESSAGE: np.array([], dtype=object)
             }
-        )   
+        )
+
+        if is_correct:
+            ttd_effort_status_df = pd.DataFrame(
+            {
+                TTCN.STARTTIME: np.array(["08:15"], dtype=object),
+                TTCN.ENDTIME: np.array(["12:45"], dtype=object),
+                TTCN.EFFORT: np.array(["4h 30m"], dtype=object),
+                TTCN.ISCORRECT: np.array([True], dtype=bool),
+                TTCN.EXPECTED: np.array(["04h 30m"], dtype=object),
+                TTCN.MESSAGE: np.array(["The effort is correct."], dtype=object)
+            },
+            index=pd.Index([1000], dtype="int64")
+        )
+            
+        ttd_effort_status_df = ttd_effort_status_df.astype(
+            {
+                TTCN.STARTTIME: object,
+                TTCN.ENDTIME: object,
+                TTCN.EFFORT: object,
+                TTCN.ISCORRECT: bool,
+                TTCN.EXPECTED: object,
+                TTCN.MESSAGE: object
+            }
+        )
+
+        return ttd_effort_status_df
     @staticmethod
     def get_definitions_df() -> DataFrame:
 
@@ -1531,8 +1547,8 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
         assert_frame_equal(expected_df, actual_df)
     
     @parameterized.expand([
-        [True],
-        [False]
+        ([True]),
+        ([False])
     ])    
     def test_createttdeffortstatusdf_shouldreturnexpecteddataframe_wheninvoked(self, is_correct : bool): 
         
