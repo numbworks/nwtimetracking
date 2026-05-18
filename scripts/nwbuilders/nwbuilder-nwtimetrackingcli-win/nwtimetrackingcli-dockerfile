@@ -1,0 +1,163 @@
+FROM python:3.12.5-bookworm AS builder
+
+# --- NWBUILDER ENVIRONMENT --- #
+RUN pip install --upgrade pip==26.0.1
+
+RUN dpkg --add-architecture i386 && \
+    apt -y update; \
+    apt -y install wget=1.21.3-1+deb12u1; \
+    apt -y install cabextract=1.9-3; \
+    apt -y install unzip=6.0-28; \
+    apt -y install xvfb=2:21.1.7-3+deb12u11; \
+    apt -y install xauth=1:1.1.2-1; \
+    apt -y install p7zip-full=16.02+dfsg-8; \
+    apt -y install zip=3.0-13; \
+    mkdir -p /etc/apt/keyrings; \
+    wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key; \
+    wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources; \
+    apt update; \
+    apt -y install winehq-stable=11.0.0.0~bookworm-1; \
+    apt -y install wine-stable=11.0.0.0~bookworm-1; \
+    apt -y install wine-stable-amd64=11.0.0.0~bookworm-1; \
+    apt -y install wine-stable-i386=11.0.0.0~bookworm-1
+
+RUN wget https://www.python.org/ftp/python/3.12.5/python-3.12.5-amd64.exe -O /home/python-3.12.5-amd64.exe
+
+ENV WINEPREFIX=/opt/wine64 \
+    WINEARCH=win64 \
+    WINEDLLOVERRIDES="ucrtbase=n,b;mscoree,mshtml=" \
+    WINEDEBUG=-all \
+    WINEDEBUGGER=/bin/true
+
+RUN mkdir -p /opt/wine64
+
+RUN timeout 300s dbus-run-session -- xvfb-run -a sh -lc \
+        'wineboot -u' \
+    ; wineserver -k 2>/dev/null || true
+
+RUN timeout 30s dbus-run-session -- xvfb-run -a sh -lc \
+        'wine reg add "HKCU\\Software\\Wine" /v Version /t REG_SZ /d win10 /f; echo exit=$?' \
+    ; wineserver -k 2>/dev/null || true
+
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc \
+    'wine /home/python-3.12.5-amd64.exe /quiet InstallAllUsers=1 PrependPath=1 Include_test=0 TargetDir="C:\\Python312" /log "C:\\python-install.log"' \
+    ; wineserver -k 2>/dev/null || true
+
+RUN timeout 300s dbus-run-session -- xvfb-run -a sh -lc \
+    'ls -la "$WINEPREFIX/drive_c/Python312" || true; \
+     test -f "$WINEPREFIX/drive_c/Python312/python.exe"; \
+     wine C:\\Python312\\python.exe --version'
+
+RUN timeout 120s dbus-run-session -- xvfb-run -a sh -lc \
+     'wine C:\\Python312\\python.exe -m ensurepip --upgrade; echo exit=$?' \
+ ; wineserver -k 2>/dev/null || true
+
+RUN timeout 900s dbus-run-session -- xvfb-run -a sh -lc \
+     'wine C:\\Python312\\python.exe -m pip install --upgrade pip==26.0.1 wheel==0.45.1 setuptools==80.9.0 pyinstaller==6.11.1' \
+ ; wineserver -k 2>/dev/null || true
+
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc \
+     'wine C:\\Python312\\python.exe -m pip install "https://github.com/numbworks/nwversioninfofiles/archive/refs/tags/v2.0.0.zip#subdirectory=src"; echo exit=$?' \
+ ; wineserver -k 2>/dev/null || true
+
+COPY ucrtbase.dll /home/ucrtbase.dll
+RUN cp -f /home/ucrtbase.dll /opt/wine64/drive_c/windows/system32/ucrtbase.dll
+
+
+# --- PROJECT DEPENDENCIES --- #
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install numpy==1.26.4; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install pyarrow==23.0.0; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install openpyxl==3.1.5; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install pandas==2.1.4; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install requests==2.32.3; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install matplotlib==3.9.2; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install tabulate==0.9.0; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install sparklines==0.5.0; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install weasyprint==66.0; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install ipython==7.23.1; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install jinja2==3.1.6; echo exit=$?'; wineserver -k 2>/dev/null || true
+
+RUN wget -O /home/gtk3-runtime.exe \
+    https://github.com/tschoonj/GTK-for-Windows-Runtime-Environment-Installer/releases/download/2022-01-04/gtk3-runtime-3.24.31-2022-01-04-ts-win64.exe
+
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc \
+     'wine /home/gtk3-runtime.exe /S' \
+ ; wineserver -k 2>/dev/null || true
+ 
+
+# --- NWBUILDER COMMAND --- #
+COPY . /workspace
+WORKDIR /workspace
+
+ARG PROJECT_NAME
+ARG PROJECT_VERSION
+ARG PROJECT_ALIAS
+ARG CLI_NAME
+ARG COMPANY_NAME
+ARG COPYRIGHT
+ARG TRADEMARK
+ARG FILE_DESCRIPTION
+
+RUN FILENAME="${PROJECT_ALIAS}-v${PROJECT_VERSION}-win64" && \
+    TMPDIR="/tmp/pyinstaller" && \
+    VERSION_FILE="${TMPDIR}/version_info.txt" && \
+    ROOT_DIR="/workspace" && \
+    mkdir -p "${TMPDIR}" "/output" && \
+    cp "/workspace/${CLI_NAME}-icon.ico" "${TMPDIR}/icon.ico" && \
+    export XDG_RUNTIME_DIR=$(mktemp -d) && \
+    CHECK_OUTPUT=$(export PYTHONPATH="${ROOT_DIR}"; wine C:\\Python312\\python.exe -c "import ${CLI_NAME}" 2>&1) || (echo "$CHECK_OUTPUT" && exit 1) && \
+    output=$(wine C:\\Python312\\python.exe -m nwversioninfofilescli \
+        --company_name "${COMPANY_NAME}" \
+        --file_description "${FILE_DESCRIPTION}" \
+        --file_version "${PROJECT_VERSION}" \
+        --legal_copyright "${COPYRIGHT}" \
+        --original_filename "${PROJECT_ALIAS}.exe" \
+        --product_name "${PROJECT_NAME}" \
+        --verify \
+        --output_path "${VERSION_FILE}" 2>&1) || (echo "$output" && exit 1) && \
+    WIN_ROOT_DIR="$(winepath -w "${ROOT_DIR}")" && \
+    WIN_ENTRY="${WIN_ROOT_DIR}\\${CLI_NAME}.py" && \
+    WIN_ICON="$(winepath -w "${TMPDIR}/icon.ico")" && \
+    WIN_DIST="$(winepath -w "/output")" && \
+    WIN_VER_FILE="$(winepath -w "${VERSION_FILE}")" && \
+    timeout 36000s dbus-run-session -- xvfb-run -a sh -lc "\
+        wine C:\\\\Python312\\\\python.exe -m PyInstaller \
+            --noconfirm \
+			--onefile \
+            --name '${PROJECT_ALIAS}' \
+            --icon '${WIN_ICON}' \
+            --version-file '${WIN_VER_FILE}' \
+            --distpath '${WIN_DIST}' \
+            --workpath '$(winepath -w "${TMPDIR}/work")' \
+            --specpath '$(winepath -w "${TMPDIR}/spec")' \
+            --exclude-module IPython \
+            --exclude-module matplotlib \
+            --exclude-module pkg_resources \
+            --hidden-import ${PROJECT_NAME} \
+            --hidden-import openpyxl \
+            --hidden-import tabulate \
+            --hidden-import sparklines \
+			--collect-all jinja2 \
+            --collect-all numpy \
+            --collect-all pandas \
+			--collect-all pyarrow \
+            --collect-all weasyprint \
+            --collect-submodules=charset_normalizer \
+            --collect-binaries cairocffi \
+            --collect-binaries cffi \
+            --collect-binaries weasyprint \
+			--add-binary \"C:\\Program Files\\GTK3-Runtime Win64\\bin\\libgobject-2.0-0.dll;.\" \
+			--add-binary \"C:\\Program Files\\GTK3-Runtime Win64\\bin\\libglib-2.0-0.dll;.\" \
+			--add-binary \"C:\\Program Files\\GTK3-Runtime Win64\\bin\\libgio-2.0-0.dll;.\" \
+			--add-binary \"C:\\Program Files\\GTK3-Runtime Win64\\bin\\libpango-1.0-0.dll;.\" \
+			--add-binary \"C:\\Program Files\\GTK3-Runtime Win64\\bin\\libpangocairo-1.0-0.dll;.\" \
+			--add-binary \"C:\\Program Files\\GTK3-Runtime Win64\\bin\\libcairo-2.dll;.\" \
+            '${WIN_ENTRY}' \
+    " && \
+    zip -9 -j "/output/${FILENAME}.zip" "/output/${PROJECT_ALIAS}.exe" && \
+    rm -f "/output/${PROJECT_ALIAS}.exe"
+
+
+# --- NWBUILDER EXPORT --- #
+FROM scratch AS exporter
+COPY --from=builder /output/*.zip / 
