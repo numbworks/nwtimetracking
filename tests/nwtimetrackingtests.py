@@ -1,25 +1,29 @@
 # GLOBAL MODULES
+import copy
 import importlib
-import unittest
+import os
 import numpy as np
 import pandas as pd
+import sys
+import unittest
+from contextlib import redirect_stdout
 from datetime import datetime, date, timedelta
 from numpy import int64, uint
 from pandas import DataFrame
 from pandas.testing import assert_frame_equal
+from pandas.io.formats.style import Styler
 from parameterized import parameterized
 from pathlib import Path
-from typing import Any, Literal, Optional, Tuple, cast
-from unittest.mock import _Call, Mock, call, patch
+from typing import Any, Literal, Optional, Tuple, Union, cast
+from unittest.mock import _Call, Mock, call, mock_open, patch
 
 # LOCAL/NW MODULES
-import sys, os
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
+from nwtimetracking import FilePathManager, FileManager, Displayer
 from nwtimetracking import EFFORTMODE, REPORTSTR, TTCN, DEFINITIONSTR, OPTION, EffortCell, EffortHighlighter, TTAdapter, TTReportManager
 from nwtimetracking import _MessageCollection, TTDataFrameFactory, TimeTrackingProcessor
 from nwtimetracking import EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
-from nwshared import FilePathManager, FileManager, Displayer
 
 # SUPPORT METHODS
 class SupportMethodProvider():
@@ -480,6 +484,378 @@ class MessageCollectionTestCase(unittest.TestCase):
 
         # Assert
         self.assertEqual(expected, actual)	
+class FilePathManagerTestCase(unittest.TestCase):
+
+    def test_createfilepath_shouldreturnexpectedfilepath_whenproperarguments(self):
+        
+        '''"C:/", "somefile.txt" => "C:/somefile.txt"'''
+
+        # Arrange
+        # Act
+        actual : str = FilePathManager().create_file_path(folder_path = "C:/", file_name = "somefile.txt")
+        
+        # Assert
+        self.assertEqual("C:/somefile.txt", actual)
+    def test_createnumberedfilepath_shouldreturnexpectedfilepath_whenproperarguments(self):
+
+        '''"C:/", "html" => "C:/1.html"'''        
+        
+        # Arrange
+        
+        # Act
+        actual : str = FilePathManager().create_numbered_file_path(folder_path = "C:/", number = 1, extension = "html")
+        
+        # Assert
+        self.assertEqual("C:/1.html", actual)
+    def test_createnumberedfilepaths_shouldreturnexpectedfilepaths_whenproperarguments(self):
+
+        '''
+            "C:/", 1, 3 => [ "C:/1.html", "C:/2.html" ]
+        ''' 
+
+        # Arrange
+        expected : list[str] = ["C:/1.html", "C:/2.html"]
+
+        # Act
+        actual : list[str] = FilePathManager().create_numbered_file_paths(folder_path = "C:/", range_start = 1, range_end = 3, extension = "html")
+        
+        # Assert
+        self.assertEqual(expected, actual)
+class FileManagerTestCase(unittest.TestCase):
+
+    def test_removefiles_shouldremoveallfileswithprovidedextensions_whenfilesareinworkingfolder(self):
+        
+        # Arrange
+        file_names : list[str] = [
+            "0.html",
+            "1.html",
+            "0.json",
+            "dataframe.csv",
+            "log.txt"
+        ]
+        extensions : list[str] = ["html"]
+        working_folder_path : str = "C:/nwshared/"
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())
+        with patch.object(os, 'listdir', return_value = file_names) as mocked_listdir:
+            with patch.object(os, 'remove', return_value = None) as mocked_remove:
+                file_manager.remove_files(extensions = extensions, working_folder_path = working_folder_path)
+
+        # Assert
+        self.assertEqual(2, mocked_remove.call_count)
+        mocked_remove.assert_has_calls([ 
+            call(os.path.join(working_folder_path, file_names[0])),
+            call(os.path.join(working_folder_path, file_names[1]))
+        ])
+    def test_removefiles_shoulddonothing_whenfilesarenotinworkingfolder(self):
+        
+        # Arrange
+        file_names : list[str] = [
+            "0.json",
+            "dataframe.csv",
+            "log.txt"
+        ]
+        extensions : list[str] = ["html"]
+        working_folder_path : str = "C:/nwshared/"
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())
+        with patch.object(os, 'listdir', return_value = file_names) as mocked_listdir:
+            with patch.object(os, 'remove', return_value = None) as mocked_remove:
+                file_manager.remove_files(extensions = extensions, working_folder_path = working_folder_path)
+
+        # Assert
+        self.assertEqual(0, mocked_remove.call_count)
+    def test_loadcontent_shouldreadfilecontent_whenproperarguments(self):
+
+        # Arrange
+        file_path : str = "C:/0.html"
+        content : str = "Some content."
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())        
+        with patch("builtins.open", mock_open(read_data = content)) as mocked_open:
+            actual : str = file_manager.load_content(file_path = file_path)
+
+        # Assert
+        mocked_open.assert_has_calls([ 
+            call(file_path, 'r', encoding='utf-8'),
+            call().__enter__(),
+            call().read(),
+            call().__exit__(None, None, None)
+        ])
+    def test_loadcontents_shouldreadfilecontents_whenproperarguments(self):
+        
+        # Arrange
+        file_names : list[str] = [
+            "0.html",
+            "1.html",
+            "0.json",
+            "dataframe.csv",
+            "log.txt"
+        ]
+        extension : str = "html"
+        working_folder_path : str = "C:/nwshared/"
+        content : str = "Some content."        
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())
+        with patch.object(os, 'listdir', return_value = file_names) as mocked_listdir:
+            with patch("builtins.open", mock_open(read_data = content)) as mocked_open:
+                actual : list[str] = file_manager.load_contents(working_folder_path = working_folder_path, extension = extension)
+
+        # Assert
+        self.assertEqual(2, mocked_open.call_count)
+        mocked_open.assert_has_calls([ 
+            call(os.path.join(working_folder_path, file_names[0]), 'r', encoding='utf-8'),
+            call().__enter__(),
+            call().read(),
+            call().__exit__(None, None, None),            
+            call(os.path.join(working_folder_path, file_names[1]), 'r', encoding='utf-8'),
+            call().__enter__(),
+            call().read(),
+            call().__exit__(None, None, None)
+        ])
+    def test_savecontent_shouldwritecontenttofile_whenproperarguments(self):
+
+        # Arrange
+        file_path : str = "C:/0.html"
+        content : str = "Some content."
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())        
+        with patch("builtins.open", mock_open()) as mocked_open:
+            file_manager.save_content(content = content, file_path = file_path)
+
+        # Assert
+        mocked_open.assert_has_calls([ 
+            call(file_path, 'w', encoding='utf-8'),
+            call().__enter__(),
+            call().write(content),
+            call().__exit__(None, None, None)
+        ])
+    def test_savecontents_shouldwritecontentstofiles_whenproperarguments(self):
+
+        # Arrange
+        file_paths : list[str] = [ 
+            "C:/0.html", 
+            "C:/1.html" 
+        ]
+        contents : list[str] = [ 
+            "Some content.", 
+            "Some content."
+        ]
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())        
+        with patch("builtins.open", mock_open()) as mocked_open:
+            file_manager.save_contents(contents = contents, file_paths = file_paths)
+
+        # Assert
+        self.assertEqual(2, mocked_open.call_count)            
+        mocked_open.assert_has_calls([ 
+            call(file_paths[0], 'w', encoding='utf-8'),
+            call().__enter__(),
+            call().write(contents[0]),
+            call().__exit__(None, None, None),            
+            call(file_paths[1], 'w', encoding='utf-8'),
+            call().__enter__(),
+            call().write(contents[1]),
+            call().__exit__(None, None, None)
+        ])
+    def test_savelog_shouldwritecontentsasloglinestofile_whenproperarguments(self):
+
+        # Arrange
+        working_folder_path : str = "C:/nwshared/"
+        file_name : str = "log.txt"
+        contents : list[str] = [
+            "[2024-03-16 23:13:19] Analysis session started.",
+            "[2024-03-16 23:13:19] The dataframe has been successfully created.",
+            "[2024-03-16 23:13:19] Analysis session completed."
+        ]
+        file_path : str = "C:/nwshared/log.txt"
+        lines : list[str] = [
+            "[2024-03-16 23:13:19] Analysis session started.",
+            "\n",
+            "[2024-03-16 23:13:19] The dataframe has been successfully created.",
+            "\n",            
+            "[2024-03-16 23:13:19] Analysis session completed.",
+            "\n"            
+        ]
+
+        # Act
+        file_manager : FileManager = FileManager(file_path_manager = FilePathManager())        
+        with patch("builtins.open", mock_open()) as mocked_open:
+            file_manager.save_log(contents = contents, working_folder_path = working_folder_path, file_name = file_name)
+
+        # Assert
+        mocked_open.assert_has_calls([ 
+            call(file_path, 'w', encoding='utf-8'),
+            call().__enter__(),
+            call().writelines(lines),
+            call().__exit__(None, None, None)
+        ])
+class DisplayerTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        self.df : DataFrame = DataFrame({"A": [1.123456, 2.654321], "B": [3.987654, 4.123456]})
+        self.formatters : Optional[dict] = {"A" : "{:.2f}"}
+
+        self.styled_df : DataFrame = DataFrame('', index = self.df.index, columns = self.df.columns)
+        self.styled_df.iloc[0, 0] = f"background-color: lightgreen"
+        self.styler : Styler = self.df.style.apply(lambda _ : self.styled_df, axis = None)
+
+    def test_displaydf_shouldcallstyle_whenhideindexisfalseandformattersisnone(self):
+        
+        # Arrange
+        hide_index : bool = False
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(DataFrame, "style") as style:
+    
+                # Act
+                Displayer()._Displayer__display_df(df = self.df, hide_index = hide_index, formatters = None) # type: ignore
+
+                # Assert
+                style.format.assert_has_calls([call()])
+    def test_displaydf_shouldcallstyle_whenhideindexisfalseandformattersisnotnone(self):
+        
+        # Arrange
+        hide_index : bool = False
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(DataFrame, "style") as style:
+    
+                # Act
+                Displayer()._Displayer__display_df(df = self.df, hide_index = hide_index, formatters = self.formatters) # type: ignore
+
+                # Assert
+                style.format.assert_has_calls([call(), call(self.formatters)])
+    def test_displaydf_shouldcallhide_whenhideindexistrue(self):
+        
+        # Arrange
+        hide_index : bool = True
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "hide") as hide:
+    
+                # Act
+                Displayer()._Displayer__display_df(df = self.df, hide_index = hide_index) # type: ignore
+
+                # Assert
+                self.assertTrue(hide.called)
+    def test_displaydf_shouldnotcallhide_whenhideindexisfalse(self):
+        
+        # Arrange
+        hide_index : bool = False
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "hide") as hide:
+    
+                # Act
+                Displayer()._Displayer__display_df(df = self.df, hide_index = hide_index) # type: ignore
+
+                # Assert
+                self.assertFalse(hide.called)
+
+    def test_displaystyler_shouldcalldeepcopy_wheninvoked(self):
+        
+        # Arrange
+        # Act, Assert
+        with patch.object(copy, "deepcopy") as deepcopy:
+
+            # Act
+            Displayer()._Displayer__display_styler(styler = self.styler, hide_index = False, formatters = None) # type: ignore
+
+            # Assert
+            deepcopy.assert_called_once()
+    def test_displaystyler_shouldcallformat_whenhideindexisfalseandformattersisnotnone(self):
+        
+        # Arrange
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "format") as format:        
+        
+                # Act
+                Displayer()._Displayer__display_styler(styler = self.styler, hide_index = False, formatters = self.formatters) # type: ignore
+
+                # Assert
+                format.assert_called_with(self.formatters)
+    def test_displaystyler_shouldcallhide_whenhideindexistrue(self):
+        
+        # Arrange
+        hide_index : bool = True
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "hide") as hide:        
+        
+                # Act
+                Displayer()._Displayer__display_styler(styler = self.styler, hide_index = hide_index) # type: ignore
+
+                # Assert
+                hide.assert_called()
+    def test_displaystyler_shouldnotcallhide_whenhideindexisfalse(self):
+        
+        # Arrange
+        hide_index : bool = False
+
+        # Act, Assert
+        with redirect_stdout(None):
+            with patch.object(Styler, "hide") as hide:        
+        
+                # Act
+                Displayer()._Displayer__display_styler(styler = self.styler, hide_index = hide_index) # type: ignore
+
+                # Assert
+                self.assertFalse(hide.called)
+
+    def test_display_shouldcalldisplaydf_whenobjisdataframe(self):
+
+        # Arrange
+        hide_index : bool = True
+
+        # Act, Assert
+        with patch.object(Displayer, "_Displayer__display_df") as display_df:
+
+            # Act
+            Displayer().display(obj = self.df, hide_index = hide_index, formatters = self.formatters)
+
+            # Assert
+            display_df.assert_called_once_with(df = self.df, hide_index = hide_index, formatters = self.formatters)
+    def test_display_shouldcalldisplaystyler_whenobjisstyler(self):
+
+        # Arrange
+        hide_index : bool = True
+
+        # Act, Assert
+        with patch.object(Displayer, "_Displayer__display_styler") as display_styler:
+
+            # Act
+            Displayer().display(obj = self.styler, hide_index = hide_index, formatters = None)
+
+            # Assert
+            display_styler.assert_called_once_with(styler = self.styler, hide_index = hide_index, formatters = None)
+
+    def test_displaycascade_shouldcalldisplayforeachobject_whenobjsislist(self):
+
+        # Arrange
+        hide_index : bool = True
+        objs : list[Union[DataFrame, Styler]] = [self.df, self.styler]
+        
+        with patch.object(Displayer, "display") as display:
+
+            # Act
+            Displayer().display_cascade(objs = objs, hide_index = hide_index, formatters = self.formatters)
+
+            # Assert
+            self.assertEqual(display.call_count, len(objs))
 class EffortStatusTestCase(unittest.TestCase):
 
     def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:

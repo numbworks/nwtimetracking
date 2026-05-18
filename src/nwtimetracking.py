@@ -1,10 +1,11 @@
 '''
-A collection of components to handle "Time Tracking.xlsx".
+A library that can run several automated data analysis tasks on a time tracking file and save the results as a PDF report.
 
-Alias: nwtt
+Alias: nwtime
 '''
 
 # GLOBAL MODULES
+import copy
 import numpy as np
 import os
 import pandas as pd
@@ -14,15 +15,14 @@ from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from numpy import uint
 from pandas import DataFrame, Series, NamedAgg
+from pandas.io.formats.style import Styler
 from pandas import Timedelta
 from pathlib import Path
 from re import Match
-from typing import Any, Literal, Optional, Tuple, cast
+from typing import Any, Literal, Optional, Tuple, Union, cast
 from weasyprint import CSS, HTML
 
 # LOCAL/NW MODULES
-from nwshared import FilePathManager, FileManager, Displayer
-
 # CONSTANTS
 class TTCN(StrEnum):
     
@@ -138,6 +138,188 @@ class _MessageCollection():
         return f"The provided mode is not supported: '{mode}'."
 
 # CLASSES
+class FilePathManager():
+    
+    '''Collects all the logic related to the file path management.'''
+
+    def create_file_path(self, folder_path : str, file_name : str) -> str:
+
+        '''Creates a file path.'''
+
+        return os.path.join(folder_path, file_name) 
+    def create_numbered_file_path(self, folder_path : str, number : int, extension : str) -> str:
+
+        r'''Creates a numbered file path. Example: ("C:\\", 1, "html") => "C:\\1.html"'''
+
+        file_name : str = f"{number}.{extension}"
+        file_path : str = self.create_file_path(folder_path = folder_path, file_name = file_name)    
+
+        return file_path
+    def create_numbered_file_paths(self, folder_path : str, range_start : int, range_end : int, extension : str) -> list[str]:
+
+        '''
+            Creates a collection of numbered file paths.
+
+            If range_start = 1 and range_end = 3, only two items will be created (range_end is excluded).
+        '''
+
+        file_paths : list[str] = []
+        for i in range(range_start, range_end):
+            file_path : str = self.create_numbered_file_path(folder_path = folder_path, number = i, extension = extension)
+            file_paths.append(file_path)
+
+        return file_paths
+class FileManager():
+    
+    '''Collects all the logic related to the file management.'''
+
+    __file_path_manager : FilePathManager
+
+    def __init__(self, file_path_manager : FilePathManager) -> None:
+        
+        self.__file_path_manager = file_path_manager
+    def __create_file_paths(self, working_folder_path : str, extension : str) -> list[str]:
+
+        '''Creates file paths.'''
+
+        if not extension.startswith("."):
+            extension = f".{extension}"
+
+        file_paths : list[str] = []
+        for file_name in os.listdir(path = working_folder_path):
+            if file_name.endswith(extension):
+                file_path : str = self.__file_path_manager.create_file_path(folder_path = working_folder_path, file_name = file_name)   
+                file_paths.append(file_path)
+
+        return file_paths
+    def __convert_contents_to_lines(self, contents : list[str]) -> list[str]:
+
+        '''Converts contents to lines.'''
+
+        lines : list[str] = []
+        for i in range(len(contents)):
+            lines.append(contents[i])
+            lines.append('\n')
+
+        return lines
+
+    def remove_files(self, extensions : list[str], working_folder_path : str) -> None:
+
+        '''Delete all the files of the provided extensions from the provided folder.'''    
+
+        for file_name in os.listdir(path = working_folder_path):
+            for extension in extensions:
+                if file_name.endswith(extension):
+                    os.remove(os.path.join(working_folder_path, file_name))
+    def load_content(self, file_path : str) -> str:
+        
+        '''Reads the content of the provided text file and returns it as string.'''
+
+        content : str = ""
+        with open(file_path, 'r', encoding = 'utf-8') as file:
+            content = file.read()
+
+        return content
+    def load_contents(self, working_folder_path : str, extension : str) -> list[str]:
+
+        '''Reads the contents of all the text files in the provided folder and returns them as a collection of strings.'''
+
+        file_paths : list[str] = self.__create_file_paths(working_folder_path = working_folder_path, extension = extension)
+
+        contents : list[str] = []
+        for file_path in file_paths:
+            content : str = self.load_content(file_path = file_path)
+            contents.append(content)
+
+        return contents
+    def save_content(self, content : str, file_path : str) -> None:    
+
+        '''Writes the provided content to the provided file path.'''
+
+        with open(file_path, 'w', encoding = 'utf-8') as new_file:
+            new_file.write(content)
+    def save_contents(self, contents : list[str], file_paths : list[str]) -> None: 
+
+        '''Writes the provided contents to the provided file paths.'''
+
+        for i in range(len(contents)):
+            self.save_content(content = str(contents[i]), file_path = file_paths[i]) # without str() it returns 'bytes' (?)
+    def save_log(self, contents : list[str], working_folder_path : str, file_name : str) -> None:
+
+        '''Writes the provided collection of strings as newline-separated lines into the provided file.'''
+
+        file_path : str = self.__file_path_manager.create_file_path(folder_path = working_folder_path, file_name  = file_name)
+        lines : list[str] = self.__convert_contents_to_lines(contents = contents)
+
+        with open(file_path, 'w', encoding = 'utf-8') as new_file:
+            new_file.writelines(lines)
+class Displayer():
+
+    '''Adapter around IPython.core.display.display().'''
+
+    def __display(self, obj: Any) -> None:
+
+        '''Safely calls IPython display() or do nothing.'''
+        
+        try:
+            from IPython.core.display import display
+            display(obj)
+        except ImportError:
+            pass
+    def __display_df(self, df : DataFrame, hide_index : bool = True, formatters : Optional[dict] = None) -> None:
+
+        '''Displays df in Jupyter Notebook according to provided arguments.'''
+
+        styler : Styler = df.style.format()
+
+        if formatters:
+            styler = df.style.format(formatters)
+
+        if hide_index:
+            styler.hide()
+
+        self.__display(styler)
+    def __display_styler(self, styler : Styler, hide_index : bool = True, formatters : Optional[dict] = None) -> None:
+
+        '''Displays styler in Jupyter Notebook according to provided arguments.'''
+
+        new_styler : Styler = copy.deepcopy(styler)
+
+        if formatters:
+            new_styler.format(formatters)
+
+        if hide_index:
+            new_styler.hide()
+
+        self.__display(new_styler)
+    
+    def display(self, obj : Union[DataFrame, Styler], hide_index : bool = True, formatters : Optional[dict] = None) -> None:
+
+        '''
+            Displays obj in Jupyter Notebook according to provided arguments.
+
+            Example for 'formatters':
+
+                formatters : dict = { "Price" : "{:.2f}" }
+        '''
+
+        if isinstance(obj, DataFrame):
+            self.__display_df(df = obj, hide_index = hide_index, formatters = formatters)
+
+        if isinstance(obj, Styler):
+            self.__display_styler(styler = obj, hide_index = hide_index, formatters = formatters)
+    def display_cascade(self, objs : list[Union[DataFrame, Styler]], hide_index : bool = True, formatters : Optional[dict] = None) -> None:
+
+        '''
+            Displays objects as a cascade in a Jupyter Notebook based on the provided arguments.
+
+            Example for 'formatters':
+
+                formatters : dict = { "Price" : "{:.2f}" }
+        '''
+
+        for obj in objs:
+            self.display(obj = obj, hide_index = hide_index, formatters = formatters)
 @dataclass(frozen=True)
 class EffortStatus():
     
