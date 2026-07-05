@@ -5,12 +5,14 @@ import unittest
 from argparse import _SubParsersAction, ArgumentParser, Namespace
 from io import StringIO
 from parameterized import parameterized
+from subprocess import CompletedProcess
+from typing import Optional
 from unittest.mock import MagicMock, Mock, patch
 
 # LOCAL/NW MODULES
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
 from nwtimetracking import ComponentBag, TimeTrackingProcessor, SettingBag
-from nwtimetrackingcli import CLISTRING, _MessageCollectionCLIManager, APFactory, AsciiBannerManager, _MessageCollection
+from nwtimetrackingcli import CLISTRING, _MessageCollectionCLIManager, APFactory, AsciiBannerManager, _MessageCollection, TerminalWindowManager
 from nwtimetrackingcli import CLIManager, CLIValidator, TimeTrackingProcessorFactory, Validator
 
 # SUPPORT METHODS
@@ -85,6 +87,159 @@ class AsciiBannerManagerTestCase(unittest.TestCase):
             self.assertIn("top_border", actual)
             self.assertIn("ascii_art", actual)
             self.assertIn("bottom_border", actual)
+
+class TerminalWindowManagerTestCase(unittest.TestCase):
+
+    def test_defaultshutilwidthfunction_shouldreturncolumns_whenshutilissuccessful(self) -> None:
+
+        # Arrange
+        expected : int = 80
+
+        with patch("shutil.get_terminal_size") as get_terminal_size:
+
+            get_terminal_size.return_value = os.terminal_size((expected, 24))
+
+            # Act
+            actual : Optional[int] = TerminalWindowManager.default_shutil_width_function()
+
+            # Assert
+            self.assertEqual(actual, expected)
+    def test_defaultshutilwidthfunction_shouldreturnnone_whenexceptionisraised(self) -> None:
+
+        # Arrange
+        with patch("nwtimetrackingcli.get_terminal_size", side_effect = Exception("Error")):
+
+            # Act
+            actual : Optional[int] = TerminalWindowManager.default_shutil_width_function()
+
+            # Assert
+            self.assertIsNone(actual)
+    
+    def test_defaultsttywidthfunction_shouldreturnwidth_whensttyissuccessful(self) -> None:
+
+        # Arrange
+        expected : int = 100
+
+        process : Mock = Mock(spec = CompletedProcess)
+        process.stdout = f"  {expected}  \n"
+        
+        with patch("subprocess.run", return_value = process) as mock_run:
+
+            # Act
+            actual : Optional[int] = TerminalWindowManager.default_stty_width_function()
+
+            # Assert
+            mock_run.assert_called_once_with(
+                ["/bin/sh", "-c", "stty size | cut -d' ' -f2"],
+                capture_output = True,
+                text = True,
+                check = False,
+            )
+            self.assertEqual(actual, expected)
+    def test_defaultsttywidthfunction_shouldreturnnone_whensttyreturnsnegative(self) -> None:
+
+        # Arrange
+        process : Mock = Mock(spec = CompletedProcess)
+        process.stdout = "-10\n"
+        
+        with patch("subprocess.run", return_value = process):
+
+            # Act
+            actual_width : Optional[int] = TerminalWindowManager.default_stty_width_function()
+
+            # Assert
+            self.assertIsNone(actual_width)
+    def test_defaultsttywidthfunction_shouldreturnnone_whenexceptionisraised(self) -> None:
+
+        # Arrange
+        with patch("subprocess.run", side_effect = Exception("Error")):
+
+            # Act
+            actual_width : Optional[int] = TerminalWindowManager.default_stty_width_function()
+
+            # Assert
+            self.assertIsNone(actual_width)
+
+    def test_init_shouldassignprovidedfunctions_wheninvokedwitharguments(self) -> None:
+
+        # Arrange
+        shutil_width_function : Mock = Mock()
+        stty_width_function : Mock = Mock()
+
+        # Act
+        tw_manager : TerminalWindowManager = TerminalWindowManager(
+            shutil_width_function = shutil_width_function,
+            stty_width_function = stty_width_function
+        )
+
+        # Assert
+        self.assertEqual(tw_manager._TerminalWindowManager__shutil_width_function, shutil_width_function)   # type: ignore
+        self.assertEqual(tw_manager._TerminalWindowManager__stty_width_function, stty_width_function)       # type: ignore
+    def test_init_shouldassigndefaultfunctions_wheninvokedwithoutarguments(self) -> None:
+
+        # Arrange
+        tw_manager : TerminalWindowManager = TerminalWindowManager()
+
+        # Assert
+        self.assertEqual(tw_manager._TerminalWindowManager__shutil_width_function, TerminalWindowManager.default_shutil_width_function) # type: ignore
+        self.assertEqual(tw_manager._TerminalWindowManager__stty_width_function, TerminalWindowManager.default_stty_width_function)     # type: ignore
+
+    def test_getorcutoff_shouldreturnshutilwidth_whenshutilissuccessful(self) -> None:
+
+        # Arrange
+        expected : int = 120
+        shutil_width_function : Mock = Mock(return_value = expected)
+        stty_width_function : Mock = Mock()
+        
+        tw_manager : TerminalWindowManager = TerminalWindowManager(
+            shutil_width_function = shutil_width_function,
+            stty_width_function = stty_width_function
+        )
+
+        # Act
+        actual : int = tw_manager.get_or_cutoff()
+
+        # Assert
+        self.assertEqual(actual, expected)
+        shutil_width_function.assert_called_once()
+        stty_width_function.assert_not_called()
+    def test_getorcutoff_shouldreturnsttywidth_whenshutilfailsandsttyissuccessful(self) -> None:
+
+        # Arrange
+        expected : int = 90
+        shutil_width_function : Mock = Mock(return_value = None)
+        stty_width_function : Mock = Mock(return_value = expected)
+        
+        tw_manager : TerminalWindowManager = TerminalWindowManager(
+            shutil_width_function = shutil_width_function,
+            stty_width_function = stty_width_function
+        )
+
+        # Act
+        actual : int = tw_manager.get_or_cutoff()
+
+        # Assert
+        self.assertEqual(actual, expected)
+        shutil_width_function.assert_called_once()
+        stty_width_function.assert_called_once()
+    def test_getorcutoff_shouldreturncutoffwidth_whenbothfunctionsfail(self) -> None:
+
+        # Arrange
+        shutil_width_function : Mock = Mock(return_value = None)
+        stty_width_function : Mock = Mock(return_value = None)
+        
+        tw_manager : TerminalWindowManager = TerminalWindowManager(
+            shutil_width_function = shutil_width_function,
+            stty_width_function = stty_width_function
+        )
+
+        # Act
+        actual : int = tw_manager.get_or_cutoff()
+
+        # Assert
+        self.assertEqual(actual, TerminalWindowManager.cutoff_width)
+        shutil_width_function.assert_called_once()
+        stty_width_function.assert_called_once()
 class ValidatorTestCase(unittest.TestCase):
 
     def test_validatefilepath_shouldraiseexceptionwithexpectedmessage_whenfiledoesnotexist(self):
