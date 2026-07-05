@@ -62,32 +62,91 @@ class AsciiBannerManagerTestCase(unittest.TestCase):
         # Assert
         self.assertEqual(expected_top_line, top_line)
         self.assertEqual(expected_bottom_line, bottom_line)
-    def test_create_shouldcallexpectedprivatemethodsandreturnbanner_wheninvoked(self) -> None:
+    def test_createstandard_shouldcallexpectedprivatemethodsandreturnbanner_wheninvoked(self) -> None:
 
         # Arrange
         ascii_banner_manager : AsciiBannerManager = AsciiBannerManager()
-        version : str = "1.0.5"
+        version : str = "1.0.1"
         max_lenght : int = 65
         
         figlet_tpl : tuple = ("ascii_art", max_lenght)
         frame_tpl : tuple = ("top_border", "bottom_border")
 
-        with patch.object(ascii_banner_manager, "_AsciiBannerManager__validate") as mocked_validate, \
-                patch.object(ascii_banner_manager, "_AsciiBannerManager__create_figlet", return_value = figlet_tpl) as mocked_create_figlet, \
-                patch.object(ascii_banner_manager, "_AsciiBannerManager__create_frame", return_value = frame_tpl) as mocked_create_frame:
+        with patch.object(ascii_banner_manager, "_AsciiBannerManager__validate") as validate, \
+                patch.object(ascii_banner_manager, "_AsciiBannerManager__create_figlet", return_value = figlet_tpl) as create_figlet, \
+                patch.object(ascii_banner_manager, "_AsciiBannerManager__create_frame", return_value = frame_tpl) as create_frame:
 
             # Act
-            actual : str = ascii_banner_manager.create(version = version)
+            actual : str = ascii_banner_manager.create_standard(version = version)
 
             # Assert
-            mocked_validate.assert_called_once_with(version)
-            mocked_create_figlet.assert_called_once()
-            mocked_create_frame.assert_called_once_with(version, max_lenght)
+            validate.assert_called_once_with(version)
+            create_figlet.assert_called_once()
+            create_frame.assert_called_once_with(version, max_lenght)
 
             self.assertIn("top_border", actual)
             self.assertIn("ascii_art", actual)
             self.assertIn("bottom_border", actual)
+    def test_createmini_shouldcallexpectedprivatemethodsandreturnminibanner_wheninvoked(self) -> None:
 
+        # Arrange
+        ascii_banner_manager : AsciiBannerManager = AsciiBannerManager()
+        version : str = "1.0.1"
+        expected : str = os.linesep.join([
+            "*****************",
+            "* NWTIME v1.0.1 *",
+            "*****************",
+            ""
+        ])
+
+        with patch.object(ascii_banner_manager, "_AsciiBannerManager__validate") as validate:
+
+            # Act
+            actual : str = ascii_banner_manager.create_mini(version = version)
+
+            # Assert
+            validate.assert_called_once_with(version)
+            self.assertEqual(expected, actual)
+    def test_create_shouldreturnstandardbanner_whenterminalwidthisgreaterthanorequaltomaxlength(self) -> None:
+
+        # Arrange
+        ascii_banner_manager : AsciiBannerManager = AsciiBannerManager()
+        version : str = "1.0.1"
+        terminal_width : int = 80
+        max_length : int = 54
+        figlet_tpl : tuple = ("ascii_art", max_length)
+        expected_banner : str = "standard_banner"
+
+        with patch.object(ascii_banner_manager, "_AsciiBannerManager__create_figlet", return_value = figlet_tpl) as create_figlet, \
+                patch.object(ascii_banner_manager, "create_standard", return_value = expected_banner) as create_standard:
+
+            # Act
+            actual : str = ascii_banner_manager.create(version = version, terminal_width = terminal_width)
+
+            # Assert
+            create_figlet.assert_called_once()
+            create_standard.assert_called_once_with(version)
+            self.assertEqual(expected_banner, actual)
+    def test_create_shouldreturnminibanner_whenterminalwidthislessthanmaxlength(self) -> None:
+
+        # Arrange
+        ascii_banner_manager : AsciiBannerManager = AsciiBannerManager()
+        version : str = "1.0.1"
+        terminal_width : int = 40
+        max_length : int = 54
+        figlet_tpl : tuple = ("ascii_art", max_length)
+        expected_banner : str = "mini_banner"
+
+        with patch.object(ascii_banner_manager, "_AsciiBannerManager__create_figlet", return_value = figlet_tpl) as create_figlet, \
+                patch.object(ascii_banner_manager, "create_mini", return_value = expected_banner) as create_mini:
+
+            # Act
+            actual : str = ascii_banner_manager.create(version = version, terminal_width = terminal_width)
+
+            # Assert
+            create_figlet.assert_called_once()
+            create_mini.assert_called_once_with(version)
+            self.assertEqual(expected_banner, actual)
 class TerminalWindowManagerTestCase(unittest.TestCase):
 
     def test_defaultshutilwidthfunction_shouldreturncolumns_whenshutilissuccessful(self) -> None:

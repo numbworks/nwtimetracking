@@ -81,7 +81,13 @@ class _MessageCollection(
 # CLASSES
 class AsciiBannerManager:
 
-    """Creates the ASCII banner for the provided library's version."""
+    """
+        Creates the ASCII banner for the provided library's version.
+
+        The figlet can be generated using 
+            - 'http://www.network-science.de/ascii/' (font: "banner3-D", width: 120)
+            - 'https://www.askapache.com/online-tools/figlet-ascii/'.
+    """
 
     def __validate(self, version: str) -> None:
         
@@ -119,9 +125,9 @@ class AsciiBannerManager:
 
         return (top_line, bottom_line)
 
-    def create(self, version: str) -> str:
+    def create_standard(self, version : str) -> str:
         
-        """Creates the formatted ASCII banner with a versioned frame."""
+        """Creates the standard ASCII banner."""
         
         self.__validate(version)
 
@@ -136,8 +142,42 @@ class AsciiBannerManager:
         ])
 
         return ascii_banner
+    def create_mini(self, version : str) -> str:
 
+        """
+            Creates the mini ASCII banner:
+            
+                *****************
+                * NWTIME v1.0.0 *
+                *****************
+        """
 
+        self.__validate(version)
+
+        assembly_name : str = "NWTIME"
+        middle_line : str = f"* {assembly_name} v{version} *"
+        
+        top_line : str = "*" * len(middle_line)
+        bottom_line : str = top_line
+
+        ascii_banner : str = os.linesep.join([
+            top_line,
+            middle_line,
+            bottom_line,
+            ""
+        ])
+
+        return ascii_banner
+    def create(self, version : str, terminal_width : int) -> str:
+
+        """Creates either a standard or mini ASCII banner depending on the terminal width."""
+        
+        _, max_length = self.__create_figlet()
+
+        if max_length <= terminal_width:
+            return self.create_standard(version)
+        else:
+            return self.create_mini(version)
 class TerminalWindowManager:
 
     '''Handles terminal window size.'''
@@ -371,7 +411,11 @@ class CLIManager():
 
         '''Logs the ASCII banner.'''
 
-        self.__logging_function(self.__ascii_banner_manager.create(PROJECT_VERSION))
+        terminal_width : int = self.__tw_manager.get_or_cutoff()
+        ascii_banner : str = self.__ascii_banner_manager.create(PROJECT_VERSION, terminal_width)
+
+        self.__logging_function("")
+        self.__logging_function(ascii_banner)
     def __log_namespace(self, namespace : Namespace):
 
         '''Logs the provided args.'''
