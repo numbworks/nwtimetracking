@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 ROOT_DIR := $(shell cd .. && cd .. && pwd)
-PROJECT_VERSION = "6.0.0"
+PROJECT_VERSION = "6.0.1"
 COVERAGE_THRESHOLD = 70
 
 changelog-concise:
