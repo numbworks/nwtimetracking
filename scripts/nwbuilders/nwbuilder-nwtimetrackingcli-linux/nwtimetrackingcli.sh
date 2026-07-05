@@ -2,14 +2,14 @@
 
 # --- CONFIGURATION ---
 PROJECT_NAME="nwtimetracking"
-PROJECT_VERSION="6.0.0"
+PROJECT_VERSION="6.0.1"
 PROJECT_ALIAS="nwtime"
 CLI_NAME="nwtimetrackingcli"
 
 COMPANY_NAME="numbworks"
 COPYRIGHT="numbworks"
 TRADEMARK="numbworks"
-FILE_DESCRIPTION="A library that can run several automated data analysis tasks on a time tracking file and save the results as a PDF report."
+FILE_DESCRIPTION="A CLI application that can run several automated data analysis tasks on a time tracking file and save the results as a PDF report."
 
 DOCKER_FILE="nwtimetrackingcli-dockerfile"
 BASE_IMAGE="python:3.12.5-bookworm"
