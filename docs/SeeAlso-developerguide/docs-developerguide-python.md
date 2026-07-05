@@ -1,4 +1,4 @@
-# developmentguide-python
+# developerguide-python
 Contact: numbworks@gmail.com
 
 ## Revision History
@@ -6,13 +6,13 @@ Contact: numbworks@gmail.com
 | Date | Author | Description |
 |---|---|---|
 | 2026-05-10 | numbworks | Created. |
-| 2026-05-10 | numbworks | Last update. |
+| 2026-07-04 | numbworks | Last update. |
 
 ## Introduction
 
-This development guide collects all the information to get started with a `nw` project as a developer.
+This guide collects all the information to get started with a `nw` project as a developer.
 
-## Getting Started
+## Getting Started (as a developer)
 
 To run this application on Windows and Linux:
 
