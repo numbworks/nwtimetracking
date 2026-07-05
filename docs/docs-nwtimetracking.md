@@ -6,7 +6,7 @@ Contact: numbworks@gmail.com
 | Date | Author | Description |
 |---|---|---|
 | 2023-08-21 | numbworks | Created. |
-| 2026-05-18 | numbworks | Last update (6.0.0). |
+| 2026-07-05 | numbworks | Last update (6.0.1). |
 
 ## Introduction
 
@@ -47,6 +47,12 @@ This project includes portions of the `nwbuilders` project, which is documented 
 This project includes portions of the `nwmakefiles` project, which is documented here:
 
 - [docs-nwmakefiles.md](SeeAlso-nwmakefiles/docs-nwmakefiles.md)
+
+## See Also: `userguide`
+
+To get started with this project as a user, please give a look to the following document:
+
+- [docs-userguide-python.md](SeeAlso-userguide/docs-userguide-python.md)
 
 ## Markdown Toolset
 
