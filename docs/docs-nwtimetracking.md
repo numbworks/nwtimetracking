@@ -30,6 +30,12 @@ To get started with this project as a developer, please give a look to the follo
 
 - [docs-developerguide-python.md](SeeAlso-developerguide/docs-developerguide-python.md)
 
+## See Also: `frameworkfreeze`
+
+To learn more about the "framework freeze" strategy adopted by this project, please have a look at the following document:
+
+- [docs-frameworkfreeze-python.md](SeeAlso-frameworkfreeze/docs-frameworkfreeze-python.md)
+
 ## See Also: `knownissues`
 
 To learn more about some known issues that might have required a workaround to make this project work, please have a look at the following document:
