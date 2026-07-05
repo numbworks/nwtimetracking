@@ -2719,7 +2719,6 @@ class TTReportManagerTestCase(unittest.TestCase):
 
         html_sections : list[str] = ["<div>Section</div>"]
         full_html : str = "<html><body>Report</body></html>"
-        stylesheet : object = object()
         html_path : Path = Path("/home/some_file_name.html")
         pdf_path : Path = Path("/home/some_file_name.pdf")
 
