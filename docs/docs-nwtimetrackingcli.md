@@ -6,7 +6,7 @@ Contact: numbworks@gmail.com
 | Date | Author | Description |
 |---|---|---|
 | 2026-05-12 | numbworks | Created. |
-| 2026-05-18 | numbworks | Last update (6.0.0). |
+| 2026-07-05 | numbworks | Last update (6.0.1). |
 
 ## Introduction
 
@@ -45,11 +45,11 @@ root@e584fefc57f0:/# nwtime --input_path "/data/Time Tracking.xlsx" --nrow 2040
  ##:. ###: ##: ##: ##:::: ##::::: ##:: ##:.:: ##: ##:::::::
  ##::. ##:. ###. ###::::: ##::::'####: ##:::: ##: ########:
 ..::::..:::...::...::::::..:::::....::..:::::..::........::
-****************************************Version: 6.0.0*****
+****************************************Version: 6.0.1*****
 
 command: 'save'
 input_path: '/data/Time Tracking.xlsx'
-nrows: '2040'
+nrows: '2082'
 folder_path: 'None'
 
 The PDF report has been successfully saved.
