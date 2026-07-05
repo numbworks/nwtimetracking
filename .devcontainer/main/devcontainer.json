@@ -5,7 +5,9 @@
 	"runArgs": ["--name", "nwtimetracking-main"],
 	"containerEnv": {
 		"TZ": "Europe/Stockholm",
-		"DEVCONTAINER_NAME": "main"
+		"DEVCONTAINER_NAME": "main",
+		"PYTHONPYCACHEPREFIX": "/home/vscode/.cache/pycache",
+		"MYPY_CACHE_DIR": "/home/vscode/.cache/mypy_cache"
 	},
 	"customizations": {
 		"vscode": {
@@ -20,6 +22,7 @@
 		}
 	},
 	"mounts": [
-			"source=${localEnv:USERPROFILE}/Desktop/nwtimetracking/,target=/home/nwtimetracking/,type=bind,consistency=cached"
+			"source=${localEnv:USERPROFILE}/Desktop/nwtimetracking/,target=/home/nwtimetracking/,type=bind,consistency=cached",
+			"source=nwtimetracking-cache,target=/home/vscode/.cache,type=volume"
 	]
 }
