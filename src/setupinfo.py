@@ -1,7 +1,7 @@
 '''Contains project information.'''
 
 # INFORMATION
-PROJECT_VERSION : str = "6.0.0"
+PROJECT_VERSION : str = "6.0.1"
 PROJECT_AUTHOR : str = "numbworks"
 PROJECT_ALIAS : str = "nwtime"
 

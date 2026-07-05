@@ -35,7 +35,7 @@ Shows help and usage information.
 ```text
 nwtime \
 	--input_path "/data/Time Tracking.xlsx" \
-	--nrow 371 
+	--nrow 2082
 ```
 
 **Run it against a time tracking file with custom `folder_path`:**
@@ -43,7 +43,7 @@ nwtime \
 ```text
 nwtime \
 	--input_path "/data/Time Tracking.xlsx" \
-	--nrow 371 \
+	--nrow 2082 \
 	--folder_path "/home/nwtimetracking/"
 ```
 
