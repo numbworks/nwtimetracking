@@ -6,7 +6,7 @@ Contact: numbworks@gmail.com
 | Date | Author | Description |
 |---|---|---|
 | 2026-05-07 | numbworks | Created. |
-| 2026-05-07 | numbworks | Last update. |
+| 2026-06-28 | numbworks | Last update. |
 
 ## Introduction
 
@@ -14,20 +14,15 @@ The `AsciiBannerManager` class is responsible for providing a custom ASCII banne
 
 ## Overview
 
-The `AsciiBannerManager` class is based on the concept of **figlet**, which is commonly described as "_a computer program that generates text banners, in a variety of typefaces, composed of letters made up of conglomerations of smaller ASCII characters_" (source: Wikipedia).
+The vision behind the `AsciiBannerManager` class is to provide an ASCII banner that fits the current terminal width, preventing horizontal scrolling when the CLI application displays it and preserving the banner's intended visual impact.
 
-Implementing the whole figlet logic is out of the scope of this class. The class hardcodes an ASCII banner created by a third-party figlet and add some custom logic around it. 
+To achieve the goal, is important to:
 
-The ASCII banner commonly returned by the `AsciiBannerManager` class can be generated using the following figlets and the "banner3-D" style:
- 
-- http://www.network-science.de/ascii/ 
-- https://www.askapache.com/online-tools/figlet-ascii/
+1. Develop an understanding of the most common terminal‑width values;
+2. Provide both a standard banner and a fallback banner for very small consoles;
+3. Enable the class to make decisions according to the current terminal width.
 
-## The Minimum Width
-
-To avoid that the banner triggers some horizontal scrolling when the CLI application displays it, it was important to have a minimum width to use as reference. 
-
-Therefore I run the following command on the smallest devices in my collection, all running Linux: 
+Concerning point (1), I run the following command on the smallest Linux devices in my collection: 
 
 ```sh
 stty size
@@ -35,19 +30,27 @@ stty size
 
 The command returned the following data:
 
-| Device        | Output (stty) | Resolution | Terminal Font       |
-|---------------|---------------|------------|---------------------|
-| Hackberry Pi  | 33 x 70       | 720 x 720  | Monospace 12px      |
-| Asus CM30     | 35 x 157      | 1200 x 750 | Noto Sans Mono 13px |
-| Thinkpad x250 | 36 x 150      | 1200 x 800 | Monospace 12px      |
+| Device             | Output (stty) | 
+|--------------------|---------------|
+| Motorola G86 Power | 33 x 61       | 
+| Hackberry Pi       | 33 x 70       |
+| Asus CM30          | 35 x 157      |
+| Thinkpad x250      | 36 x 150      |
 
-The reference minimum width I was looking for was **70 columns**. 
+Concerning point (2), I established that for larger terminals I would provide a standard banner based on the concept of **figlet**, which is commonly described as "_a computer program that generates text banners, in a variety of typefaces, composed of letters made up of conglomerations of smaller ASCII characters_" (source: Wikipedia).
 
-In the figlet world, to have your banner render within this minimum width when using "banner3-D", the name of the CLI application (used in the banner) must not have more than **six letters**. 
+Implementing the whole figlet logic is out of the scope of this class. The class hardcodes an ASCII banner created by a third-party figlet and add some custom logic around it. The ASCII banner commonly returned by the `AsciiBannerManager` class can be generated using the following figlets and the "banner3-D" style:
+ 
+- http://www.network-science.de/ascii/ 
+- https://www.askapache.com/online-tools/figlet-ascii/
 
-## Examples
+Smaller terminal instead receive a mini banner that displays the application name and the version number within three lines of asterisks.
 
-Here some examples of ASCII banners provided by this class:
+Concerning point (3), I verified that in the figlet world, to have your banner render within a terminal width of **70 columns** when using "banner3-D", the name of the CLI application (used in the banner) must not exceed **six letters**. 
+
+Once I had collected all this information, I was able to define the requirements for my `AsciiBannerManager` and implement it in all the programming languages I use for developing CLI applications.
+
+## Examples of Standard Banner
 
 ```
 *****************************************************************
@@ -72,33 +75,21 @@ Here some examples of ASCII banners provided by this class:
  ##:. ###: ##: ##: ##:: ##::::::'##::: ##: ##:::: ##:
  ##::. ##:. ###. ###:: ########:. ######:: ########::
 ..::::..:::...::...:::........:::......:::........:::
-********************************Version: 2.0.0.0*****
+********************************Version: 2.0.0*******
+```
+
+## Examples of Mini Banner
+
+```
+*****************
+* NWCAVG v2.0.0 *
+*****************
 ```
 
 ```
-******************************************************
-'##::: ##:'##:::::'##:'########::'#######:::'#######::
- ###:: ##: ##:'##: ##:..... ##::'##.... ##:'##.... ##:
- ####: ##: ##: ##: ##::::: ##::: ##:::: ##: ##:::: ##:
- ## ## ##: ##: ##: ##:::: ##:::: ##:::: ##: ##:::: ##:
- ##. ####: ##: ##: ##::: ##::::: ##:::: ##: ##:::: ##:
- ##:. ###: ##: ##: ##:: ##:::::: ##:::: ##: ##:::: ##:
- ##::. ##:. ###. ###:: ########:. #######::. #######::
-..::::..:::...::...:::........:::.......::::.......:::
-***********************************Version: 3.0.0*****
-```
-
-```
-*************************************************
-'##::: ##:'##:::::'##:'########:::'######::'####:
- ###:: ##: ##:'##: ##: ##.... ##:'##... ##:. ##::
- ####: ##: ##: ##: ##: ##:::: ##: ##:::..::: ##::
- ## ## ##: ##: ##: ##: ########::. ######::: ##::
- ##. ####: ##: ##: ##: ##.... ##::..... ##:: ##::
- ##:. ###: ##: ##: ##: ##:::: ##:'##::: ##:: ##::
- ##::. ##:. ###. ###:: ########::. ######::'####:
-..::::..:::...::...:::........::::......:::....::
-******************************Version: 3.0.0*****
+****************
+* NWZSD v2.0.0 *
+****************
 ```
 
 ## Markdown Toolset
