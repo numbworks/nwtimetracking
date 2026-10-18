@@ -453,6 +453,7 @@ class SettingBag():
     options_tt : list[Literal[OPTION.display]]
     options_tt_latest_four : list[Literal[OPTION.display]]
     options_tts_by_month : list[Literal[OPTION.display]]
+    options_tts_by_month_mom : list[Literal[OPTION.display]]
     options_tts_by_year : list[Literal[OPTION.display]]
     options_tts_by_range : list[Literal[OPTION.display]]
     options_tts_by_spn : list[Literal[OPTION.display]]

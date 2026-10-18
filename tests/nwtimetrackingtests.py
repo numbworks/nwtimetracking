@@ -1118,6 +1118,7 @@ class SettingBagTestCase(unittest.TestCase):
         options_tt : list[Literal[OPTION.display]] = [OPTION.display]                           # type: ignore
         options_tt_latest_four : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
         options_tts_by_month : list[Literal[OPTION.display]] = [OPTION.display]                 # type: ignore
+        options_tts_by_month_mom : list[Literal[OPTION.display]] = [OPTION.display]             # type: ignore
         options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                  # type: ignore
         options_tts_by_range : list[Literal[OPTION.display]] = [OPTION.display]                 # type: ignore
         options_tts_by_spn : list[Literal[OPTION.display]] = [OPTION.display]                   # type: ignore
@@ -1150,6 +1151,7 @@ class SettingBagTestCase(unittest.TestCase):
             options_tt = options_tt,
             options_tt_latest_four = options_tt_latest_four,
             options_tts_by_month = options_tts_by_month,
+            options_tts_by_month_mom = options_tts_by_month_mom,
             options_tts_by_year = options_tts_by_year,
             options_tts_by_range = options_tts_by_range,
             options_tts_by_spn = options_tts_by_spn,
@@ -1181,6 +1183,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.options_tt, options_tt)
         self.assertEqual(actual.options_tt_latest_four, options_tt_latest_four)
         self.assertEqual(actual.options_tts_by_month, options_tts_by_month)
+        self.assertEqual(actual.options_tts_by_month_mom, options_tts_by_month_mom)
         self.assertEqual(actual.options_tts_by_year, options_tts_by_year)
         self.assertEqual(actual.options_tts_by_range, options_tts_by_range)
         self.assertEqual(actual.options_tts_by_spn, options_tts_by_spn)
@@ -2479,6 +2482,7 @@ class TTAdapterTestCase(unittest.TestCase):
             options_tt = [OPTION.display],
             options_tt_latest_four = [OPTION.display],
             options_tts_by_month = [OPTION.display],
+            options_tts_by_month_mom = [OPTION.display],
             options_tts_by_year = [OPTION.display],
             options_tts_by_range = [OPTION.display],
             options_tts_by_spn = [OPTION.display],
