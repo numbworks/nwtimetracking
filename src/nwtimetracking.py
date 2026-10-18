@@ -475,6 +475,7 @@ class SettingBag():
     years : Optional[list[int]] = field(default_factory = lambda : None)
     now : datetime = field(default = datetime.now())
     enable_effort_highlighting : bool = field(default = True)
+    enable_int_highlighting : bool = field(default = True)
     tts_by_spn_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all())
     tts_by_spv_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_latest_three())
     tts_by_hashtag_formatters : dict = field(default_factory = lambda : { TTCN.EFFORTPERC : "{:.2f}" })

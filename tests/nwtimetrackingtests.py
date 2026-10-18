@@ -1139,6 +1139,7 @@ class SettingBagTestCase(unittest.TestCase):
         years : Optional[list[int]] = [2020, 2021, 2022]
         now : datetime = datetime.now()
         enable_effort_highlighting : bool = True
+        enable_int_highlighting : bool = True
         tts_by_spn_software_project_names : list[str] = ["SPN1", "SPN2"]
         tts_by_spv_software_project_names : list[str] = ["SPN3"]
         tts_by_hashtag_formatters : dict = { TTCN.EFFORTPERC : "{:.2f}" }
@@ -1171,6 +1172,7 @@ class SettingBagTestCase(unittest.TestCase):
             years = years,
             now = now,
             enable_effort_highlighting = enable_effort_highlighting,
+            enable_int_highlighting = enable_int_highlighting,
             tts_by_spn_software_project_names = tts_by_spn_software_project_names,
             tts_by_spv_software_project_names = tts_by_spv_software_project_names,
             tts_by_hashtag_formatters = tts_by_hashtag_formatters,
@@ -1204,6 +1206,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.years, years)
         self.assertEqual(actual.now, now)
         self.assertEqual(actual.enable_effort_highlighting, enable_effort_highlighting)
+        self.assertEqual(actual.enable_int_highlighting, enable_int_highlighting)
         self.assertEqual(actual.tts_by_spn_software_project_names, tts_by_spn_software_project_names)
         self.assertEqual(actual.tts_by_spv_software_project_names, tts_by_spv_software_project_names)
         self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)
