@@ -518,10 +518,11 @@ class MomentumManager():
 
         trend_values : list[str] = []
 
-        for idx in row.index:
+        for i in range(len(row)):
+            idx : Any = row.index[i]
             if str(idx).startswith(TTCN.TREND):
 
-                value : Optional[Any] = row[idx]
+                value : Optional[Any] = row.iloc[i]
 
                 if pd.isna(value) or value == "" or value is None or (isinstance(value, str) and value.strip() == ""):
                     trend_values.append("E")
@@ -2257,6 +2258,21 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_month
         df : DataFrame = self.__tt_summary.tts_by_month_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df)
+    def process_tts_by_month_mom(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_month_mom.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_month_mom
+        df : DataFrame = self.__tt_summary.tts_by_month_mom_df
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)
