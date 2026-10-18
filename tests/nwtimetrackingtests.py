@@ -965,6 +965,7 @@ class TTSummaryTestCase(unittest.TestCase):
             tt_df = empty_df,
             tt_latest_four_df = empty_df,
             tts_by_month_df = empty_df,
+            tts_by_month_mom_df = empty_df,
             tts_by_year_df = empty_df,
             tts_by_range_df = empty_df,
             tts_by_spn_df = empty_df,
@@ -981,6 +982,7 @@ class TTSummaryTestCase(unittest.TestCase):
         self.assertEqual(actual.tt_df.shape, empty_df.shape)
         self.assertEqual(actual.tt_latest_four_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_month_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_month_mom_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_range_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_spn_df.shape, empty_df.shape)
@@ -2711,6 +2713,7 @@ class TTReportManagerTestCase(unittest.TestCase):
             tt_df = empty_df,
             tt_latest_four_df = empty_df,
             tts_by_month_df = empty_df,
+            tts_by_month_mom_df = empty_df,
             tts_by_year_df = empty_df,
             tts_by_range_df = empty_df,
             tts_by_spn_df = empty_df,

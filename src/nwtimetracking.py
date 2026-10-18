@@ -354,6 +354,7 @@ class TTSummary():
     tt_df : DataFrame
     tt_latest_four_df : DataFrame
     tts_by_month_df : DataFrame
+    tts_by_month_mom_df : DataFrame
     tts_by_year_df : DataFrame
     tts_by_range_df : DataFrame
     tts_by_spn_df : DataFrame
