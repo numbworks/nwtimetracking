@@ -1,7 +1,7 @@
 FROM python:3.12.5-bookworm AS builder
 
 # --- NWBUILDER ENVIRONMENT --- #
-RUN pip install --upgrade pip==26.0.1
+RUN pip install --upgrade pip==26.2.1
 
 RUN dpkg --add-architecture i386 && \
     apt -y update; \
