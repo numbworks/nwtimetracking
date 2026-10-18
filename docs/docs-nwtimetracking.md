@@ -58,7 +58,7 @@ This project includes portions of the `nwbuilders` project, which is documented 
 
 This project includes portions of the `nwmakefiles` project, which is documented here:
 
-- [docs-nwmakefiles.md](SeeAlso-nwmakefiles/docs-nwmakefiles.md)
+- [docs-nwmakefiles-python.md](SeeAlso-nwmakefiles/docs-nwmakefiles-python.md)
 
 ## See Also: `userguide`
 
