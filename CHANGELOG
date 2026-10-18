@@ -2,7 +2,10 @@ v6.1.0
 - Application:
 	- Feature: added support for monthly momentums.
 - Maintenance:
-	- Devcontainer: migrated nw* dependencies from Github to PyPi, upgraded pip to 26.2.1. 
+	- Devcontainer: migrated nw* dependencies from Github to PyPi, upgraded pip to 26.2.1.
+	- Devcontainer/docs/tasks.json: added support for nwpublishers.
+	- SeeAlso-contributionguide: added.
+	- SeeAlso-nwbuilders, SeeAlso-nwmakefiles: updated.
 - Documentation:
 	- Feature: updated to v6.1.0.
 
