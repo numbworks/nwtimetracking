@@ -1,3 +1,11 @@
+v6.1.0
+- Application:
+	- Feature: added support for monthly momentums.
+- Maintenance:
+	- Devcontainer: migrated nw* dependencies from Github to PyPi, upgraded pip to 26.2.1. 
+- Documentation:
+	- Feature: updated to v6.1.0.
+
 v6.0.1
 - Application:
 	- Feature: added support for mini banner.
