@@ -21,7 +21,7 @@ RUN wget https://github.com/jgm/pandoc/releases/download/3.4/pandoc-3.4-1-amd64.
     && dpkg -i pandoc-3.4-1-amd64.deb \
     && rm -f pandoc-3.4-1-amd64.deb
 
-# MAKEFILE
+# NWMAKEFILES
 RUN pip install mypy==1.13.0
 RUN pip install pandas-stubs==2.1.4.231227
 RUN pip install types-openpyxl==3.1.5.20241126
@@ -31,6 +31,10 @@ RUN pip install pylint==3.3.3
 RUN pip install nwpackageversions==2.0.1
 RUN pip install nwcommitaverages==2.0.1
 RUN pip install nwdocstringchecking==2.0.1
+
+# NWPUBLISHERS
+RUN pip install build==1.6.1 
+RUN pip install twine==7.0.0
 
 # OTHERS
 RUN pip install --upgrade pip==26.2.1

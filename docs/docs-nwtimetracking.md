@@ -60,6 +60,12 @@ This project includes portions of the `nwmakefiles` project, which is documented
 
 - [docs-nwmakefiles-python.md](SeeAlso-nwmakefiles/docs-nwmakefiles-python.md)
 
+## See Also: `nwpublishers`
+
+To know more about the package publishing logic, please give a look to the following document:
+
+- [docs-nwpublishers-python.md](SeeAlso-nwpublishers/docs-nwpublishers-python.md)
+
 ## See Also: `userguide`
 
 To get started with this project as a user, please give a look to the following document:

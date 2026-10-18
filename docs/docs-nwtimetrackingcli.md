@@ -29,7 +29,6 @@ Contact: numbworks@gmail.com
 
 Run it against a reading list:
 
-
 ```sh
 root@e584fefc57f0:/# alias nwtime="python src/nwtimetrackingcli.py"
 root@e584fefc57f0:/# nwtime --input_path "/data/Time Tracking.xlsx" --nrow 2040
@@ -45,7 +44,7 @@ root@e584fefc57f0:/# nwtime --input_path "/data/Time Tracking.xlsx" --nrow 2040
  ##:. ###: ##: ##: ##:::: ##::::: ##:: ##:.:: ##: ##:::::::
  ##::. ##:. ###. ###::::: ##::::'####: ##:::: ##: ########:
 ..::::..:::...::...::::::..:::::....::..:::::..::........::
-****************************************Version: 6.0.1*****
+****************************************Version: 6.1.0*****
 
 command: 'save'
 input_path: '/data/Time Tracking.xlsx'
@@ -56,7 +55,6 @@ The PDF report has been successfully saved.
 ```
 
 Run it against a reading list with custom `folder_path`:
-
 
 ```sh
 root@e584fefc57f0:/# alias nwtime="python src/nwtimetrackingcli.py"
