@@ -1955,7 +1955,7 @@ class IntHighlighter():
             
         return tagged_df
 
-    def highlight_dataframe(self, df : DataFrame, mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three, column_names : list[str] = []) -> DataFrame:
+    def highlight(self, df : DataFrame, mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three, column_names : list[str] = []) -> DataFrame:
 
         '''
             Expects a df containing integer cell formats - i.e. 42, 1050.
@@ -1984,14 +1984,17 @@ class TTAdapter():
 
     __df_factory : TTDataFrameFactory
     __effort_highlighter : EffortHighlighter
+    __int_highlighter : IntHighlighter
 
     def __init__(
         self, 
         df_factory : TTDataFrameFactory, 
-        effort_highlighter : EffortHighlighter) -> None:
+        effort_highlighter : EffortHighlighter,
+        int_highlighter : IntHighlighter) -> None:
         
         self.__df_factory = df_factory
         self.__effort_highlighter = effort_highlighter
+        self.__int_highlighter = int_highlighter
 
     def __create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
 
@@ -2130,6 +2133,9 @@ class TTAdapter():
             tts_by_hashtag_year_df = self.__effort_highlighter.highlight_tts_by_hashtag_year(tts_by_hashtag_year_df = tts_by_hashtag_year_df)
             tts_by_hashtag_df = self.__effort_highlighter.highlight_tts_by_hashtag(tts_by_hashtag_df = tts_by_hashtag_df)
             tts_by_year_month_spnv_df = self.__effort_highlighter.highlight_tts_by_year_month_spnv(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)
+
+        if setting_bag.enable_int_highlighting:
+            tts_by_month_mom_df = self.__int_highlighter.highlight(df = tts_by_month_mom_df)
 
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
@@ -2322,7 +2328,8 @@ class ComponentBag():
     ttr_manager : TTReportManager = field(default = TTReportManager())
     tt_adapter : TTAdapter = field(default = TTAdapter(
         df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper(), momentum_manager = MomentumManager()),
-        effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())))
+        effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper()),
+        int_highlighter = IntHighlighter()))
 class TimeTrackingProcessor():
 
     '''Collects all the logic related to the processing of "Time Tracking.xlsx".'''
