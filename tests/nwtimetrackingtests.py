@@ -2642,6 +2642,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : DataFrame = DataFrame()
         tt_latest_four_df : DataFrame = DataFrame()
         tts_by_month_df : DataFrame = DataFrame()
+        tts_by_month_mom_df : DataFrame = DataFrame()
         tts_by_year_df : DataFrame = DataFrame()
         tts_by_range_df : DataFrame = DataFrame()
         tts_by_spn_df : DataFrame = DataFrame()
@@ -2657,6 +2658,7 @@ class TTAdapterTestCase(unittest.TestCase):
             patch.object(self.adapter, "_TTAdapter__create_tt_df", return_value = tt_df) as mocked_create_tt_df,
             patch.object(self.adapter, "_TTAdapter__create_tt_latest_four_df", return_value = tt_latest_four_df) as mocked_create_tt_latest_four_df,
             patch.object(self.adapter, "_TTAdapter__create_tts_by_month_df", return_value = tts_by_month_df) as mocked_create_tts_by_month_df,
+            patch.object(self.mocked_df_factory, "create_tts_by_month_mom_df", return_value = tts_by_month_mom_df) as mocked_create_tts_by_month_mom_df,
             patch.object(self.adapter, "_TTAdapter__create_tts_by_year_df", return_value = tts_by_year_df) as mocked_create_tts_by_year_df,
             patch.object(self.adapter, "_TTAdapter__create_tts_by_range_df", return_value = tts_by_range_df) as mocked_create_tts_by_range_df,
             patch.object(self.adapter, "_TTAdapter__create_tts_by_spn_df", return_value = tts_by_spn_df) as mocked_create_tts_by_spn_df,
@@ -2683,6 +2685,9 @@ class TTAdapterTestCase(unittest.TestCase):
             mocked_create_tt_df.assert_called_once_with(setting_bag = self.setting_bag)
             mocked_create_tt_latest_four_df.assert_called_once_with(tt_df = tt_df)
             mocked_create_tts_by_month_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+
+            mocked_create_tts_by_month_mom_df.assert_called_once_with(tts_by_month_df = tts_by_month_df)
+
             mocked_create_tts_by_year_df.assert_called_once_with(tt_df = tt_df)
             mocked_create_tts_by_range_df.assert_called_once_with(tt_df = tt_df)
             mocked_create_tts_by_spn_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)

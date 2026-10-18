@@ -1968,6 +1968,7 @@ class TTAdapter():
         tt_df : DataFrame = self.__create_tt_df(setting_bag = setting_bag)
         tt_latest_four_df : DataFrame = self.__create_tt_latest_four_df(tt_df = tt_df)
         tts_by_month_df : DataFrame = self.__create_tts_by_month_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_month_mom_df : DataFrame = self.__df_factory.create_tts_by_month_mom_df(tts_by_month_df = tts_by_month_df)
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
         tts_by_range_df : DataFrame = self.__create_tts_by_range_df(tt_df = tt_df)
         tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
@@ -1991,6 +1992,7 @@ class TTAdapter():
             tt_df = tt_df,
             tt_latest_four_df = tt_latest_four_df,
             tts_by_month_df = tts_by_month_df,
+            tts_by_month_mom_df = tts_by_month_mom_df,
             tts_by_year_df = tts_by_year_df,
             tts_by_range_df = tts_by_range_df,
             tts_by_spn_df = tts_by_spn_df,
