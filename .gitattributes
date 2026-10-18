@@ -29,3 +29,9 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Force LF for EOL‑sensitive files (CRLF breaks them on Linux)
+CHANGELOG text eol=lf
+*.sh text eol=lf
+makefile* text eol=lf
+nwtime.md text eol=lf
