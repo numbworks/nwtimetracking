@@ -14,9 +14,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from numpy import uint
-from pandas import DataFrame, Series, NamedAgg
+from pandas import DataFrame, Series, NamedAgg, Timedelta
 from pandas.io.formats.style import Styler
-from pandas import Timedelta
 from pathlib import Path
 from re import Match
 from typing import Any, Literal, Optional, Tuple, Union, cast
