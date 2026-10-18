@@ -1205,6 +1205,127 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.tts_by_timeranges_min_occurrences, tts_by_timeranges_min_occurrences)
         self.assertEqual(actual.tts_by_timeranges_formatters, tts_by_timeranges_formatters)
         self.assertEqual(actual.ttd_effort_status_is_correct, ttd_effort_status_is_correct)
+class MomentumManagerTestCase(unittest.TestCase):
+
+    @parameterized.expand([
+        (0, "January"), 
+        (1, "February"), 
+        (2, "March"), 
+        (3, "April"), 
+        (4, "May"), 
+        (5, "June"), 
+        (6, "July"), 
+        (7, "August"), 
+        (8, "September"), 
+        (9, "October"), 
+        (10, "November"), 
+        (11, "December")
+    ])
+    def test_converttomonth_shouldreturnexpectedmonth_whenvalidrowindex(self, row_index : int, expected : str) -> None:
+
+        # Arrange
+        # Act
+        actual: str = MomentumManager()._MomentumManager__convert_to_month(row_index = row_index)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (pd.Series(["↑", np.nan], index=[f"{TTCN.TREND}1", f"{TTCN.TREND}2"]), "↑E"),
+        (pd.Series(["↑", "↓", "="], index=[f"{TTCN.TREND}1", f"{TTCN.TREND}2", f"{TTCN.TREND}3"]), "↑↓=")
+    ])
+    def test_createtrendsequence_shouldreturnexpectedsequence_whenvalidrow(self, row : Series, expected : str) -> None:
+
+        # Arrange
+        # Act
+        actual: str = MomentumManager()._MomentumManager__create_trend_sequence(row = row)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ("==========", 0),
+        ("↑", 1),
+        ("↓", -1),
+        ("↑E", 1),
+        ("↓E", -1),
+        ("↑↑↑↑↑↑↑↑↑↑", 10),
+        ("↓↓↓↓↓↓↓↓↓↓", -10),
+        ("↑↑↑↑↑↑↑↑↑=", 9),
+        ("↑↑↑↑↑↑↑↑↑↓", 9),
+        ("↑↑↑↓↓↑↓↓↑↑", 3),
+        ("↑↓↑↓↓↑↑↓↑↑", 2),
+        ("↑↑↓↓↑↓↓", -2)
+    ])
+    def test_calculatemomentum_shouldreturnexpectedmomentum_whenvalidsequence(self, sequence : str, expected : int) -> None:
+
+        # Arrange
+        # Act
+        actual: int = MomentumManager()._MomentumManager__calculate_momentum(sequence = sequence)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_createbymonthmomdf_shouldreturnexpecteddataframe_whenvaliddf(self) -> None:
+
+        # Arrange
+        data : dict = {
+            "2024": ["45h 45m"] * 12,
+            TTCN.TREND: ["↑", "↓", "↓", "↑", "↑", "↑", "↑", "↑", "↑", "↓", "↑", "↓"],
+            "2025": ["79h 00m"] * 12,
+        }
+        by_month_df : DataFrame = DataFrame(data, index = range(12))
+
+        expected_months: list[str] = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
+        expected_sequences: list[str] = [
+            "↑",
+            "↓",
+            "↓",
+            "↑",
+            "↑",
+            "↑",
+            "↑",
+            "↑",
+            "↑",
+            "↓",
+            "↑",
+            "↓",
+        ]
+        expected_momentums: list[int] = [1, -1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1]
+
+        # Act
+        actual: DataFrame = MomentumManager().create_by_month_mom_df(by_month_df = by_month_df)
+
+        # Assert
+        self.assertEqual(expected_months, actual["Month"].tolist())
+        self.assertEqual(expected_sequences, actual["Sequence"].tolist())
+        self.assertEqual(expected_momentums, actual["Momentum"].tolist())
+    def test_createbymonthmomdf_shouldraisevalueerror_wheninvalidindexorlength(self) -> None:
+
+        # Arrange
+        by_month_df : DataFrame = DataFrame({"2024": ["45h 45m"]}, index=[1])
+
+        # Act, Assert
+        with self.assertRaises(ValueError) as context:
+            
+            MomentumManager().create_by_month_mom_df(by_month_df = by_month_df)
+
+            self.assertEqual(
+                str(context.exception), 
+                _MessageCollectionMomentumManager.provided_by_month_df_doesnt_contain_expected_index())
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1704,7 +1825,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
         
-        self.df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
+        self.df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper(), momentum_manager = MomentumManager())
         self.df_factory_module : Any = importlib.import_module(TTDataFrameFactory.__module__)
 
     def test_createttdf_shouldreturnexpecteddataframe_wheninvoked(self):
@@ -1810,6 +1931,26 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
+    def test_createttsbymonthmomdf_shouldperformexpectedcall_wheninvoked(self) -> None:
+
+        # Arrange
+        tts_by_month_df : DataFrame = DataFrame()
+        expected_df : DataFrame = DataFrame()
+
+        momentum_manager : Mock = Mock(spec = MomentumManager)
+        momentum_manager.create_by_month_mom_df = Mock(return_value = expected_df)
+
+        df_factory : TTDataFrameFactory = TTDataFrameFactory(
+            df_helper = TTDataFrameHelper(),
+            momentum_manager = momentum_manager
+        )
+
+        # Act
+        actual : DataFrame = df_factory.create_tts_by_month_mom_df(tts_by_month_df = tts_by_month_df)
+
+        # Assert
+        momentum_manager.create_by_month_mom_df.assert_called_once_with(by_month_df = tts_by_month_df)
+        assert_frame_equal(expected_df, actual)
     def test_createttsbyyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -2319,127 +2460,6 @@ class EffortHighlighterTestCase(unittest.TestCase):
             df = tts_by_year_month_spnv_df,
             mode = EFFORTMODE.top_three_efforts
         )
-class MomentumManagerTestCase(unittest.TestCase):
-
-    @parameterized.expand([
-        (0, "January"), 
-        (1, "February"), 
-        (2, "March"), 
-        (3, "April"), 
-        (4, "May"), 
-        (5, "June"), 
-        (6, "July"), 
-        (7, "August"), 
-        (8, "September"), 
-        (9, "October"), 
-        (10, "November"), 
-        (11, "December")
-    ])
-    def test_converttomonth_shouldreturnexpectedmonth_whenvalidrowindex(self, row_index : int, expected : str) -> None:
-
-        # Arrange
-        # Act
-        actual: str = MomentumManager()._MomentumManager__convert_to_month(row_index = row_index)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        (pd.Series(["↑", np.nan], index=[f"{TTCN.TREND}1", f"{TTCN.TREND}2"]), "↑E"),
-        (pd.Series(["↑", "↓", "="], index=[f"{TTCN.TREND}1", f"{TTCN.TREND}2", f"{TTCN.TREND}3"]), "↑↓=")
-    ])
-    def test_createtrendsequence_shouldreturnexpectedsequence_whenvalidrow(self, row : Series, expected : str) -> None:
-
-        # Arrange
-        # Act
-        actual: str = MomentumManager()._MomentumManager__create_trend_sequence(row = row)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    @parameterized.expand([
-        ("==========", 0),
-        ("↑", 1),
-        ("↓", -1),
-        ("↑E", 1),
-        ("↓E", -1),
-        ("↑↑↑↑↑↑↑↑↑↑", 10),
-        ("↓↓↓↓↓↓↓↓↓↓", -10),
-        ("↑↑↑↑↑↑↑↑↑=", 9),
-        ("↑↑↑↑↑↑↑↑↑↓", 9),
-        ("↑↑↑↓↓↑↓↓↑↑", 3),
-        ("↑↓↑↓↓↑↑↓↑↑", 2),
-        ("↑↑↓↓↑↓↓", -2)
-    ])
-    def test_calculatemomentum_shouldreturnexpectedmomentum_whenvalidsequence(self, sequence : str, expected : int) -> None:
-
-        # Arrange
-        # Act
-        actual: int = MomentumManager()._MomentumManager__calculate_momentum(sequence = sequence)  # type: ignore
-
-        # Assert
-        self.assertEqual(expected, actual)
-
-    def test_createbymonthmomdf_shouldreturnexpecteddataframe_whenvaliddf(self) -> None:
-
-        # Arrange
-        data : dict = {
-            "2024": ["45h 45m"] * 12,
-            TTCN.TREND: ["↑", "↓", "↓", "↑", "↑", "↑", "↑", "↑", "↑", "↓", "↑", "↓"],
-            "2025": ["79h 00m"] * 12,
-        }
-        by_month_df : DataFrame = DataFrame(data, index = range(12))
-
-        expected_months: list[str] = [
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December",
-        ]
-        expected_sequences: list[str] = [
-            "↑",
-            "↓",
-            "↓",
-            "↑",
-            "↑",
-            "↑",
-            "↑",
-            "↑",
-            "↑",
-            "↓",
-            "↑",
-            "↓",
-        ]
-        expected_momentums: list[int] = [1, -1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1]
-
-        # Act
-        actual: DataFrame = MomentumManager().create_by_month_mom_df(by_month_df = by_month_df)
-
-        # Assert
-        self.assertEqual(expected_months, actual["Month"].tolist())
-        self.assertEqual(expected_sequences, actual["Sequence"].tolist())
-        self.assertEqual(expected_momentums, actual["Momentum"].tolist())
-    def test_createbymonthmomdf_shouldraisevalueerror_wheninvalidindexorlength(self) -> None:
-
-        # Arrange
-        by_month_df : DataFrame = DataFrame({"2024": ["45h 45m"]}, index=[1])
-
-        # Act, Assert
-        with self.assertRaises(ValueError) as context:
-            
-            MomentumManager().create_by_month_mom_df(by_month_df = by_month_df)
-
-            self.assertEqual(
-                str(context.exception), 
-                _MessageCollectionMomentumManager.provided_by_month_df_doesnt_contain_expected_index())
 class TTAdapterTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -2891,7 +2911,7 @@ class ComponentBagTestCase(unittest.TestCase):
             file_manager = FileManager(file_path_manager = FilePathManager()),
             displayer = Displayer(),
             tt_adapter = TTAdapter(
-                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()),
+                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper(), momentum_manager = MomentumManager()),
                 effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
             ))
 

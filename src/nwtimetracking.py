@@ -869,10 +869,12 @@ class TTDataFrameFactory():
     '''Encapsulates all the logic related to dataframe creation out of "Time Tracking.xlsx".'''
 
     __df_helper : TTDataFrameHelper
+    __momentum_manager : MomentumManager
 
-    def __init__(self, df_helper : TTDataFrameHelper) -> None:
+    def __init__(self, df_helper : TTDataFrameHelper, momentum_manager : MomentumManager) -> None:
 
         self.__df_helper = df_helper
+        self.__momentum_manager = momentum_manager
 
     def __enforce_dataframe_definition_for_tt_df(self, tt_df : DataFrame) -> DataFrame:
 
@@ -1270,6 +1272,13 @@ class TTDataFrameFactory():
         tts_df.drop(columns = [TTCN.MONTH], inplace = True)
 
         return tts_df
+    def create_tts_by_month_mom_df(self, tts_by_month_df : DataFrame) -> DataFrame:
+
+        '''Calculates momentum for the provided DataFrame.'''
+
+        tts_by_month_mom_df : DataFrame = self.__momentum_manager.create_by_month_mom_df(by_month_df = tts_by_month_df)
+
+        return tts_by_month_mom_df
     def create_tts_by_year_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''
@@ -2165,7 +2174,7 @@ class ComponentBag():
     displayer : Displayer = field(default = Displayer())
     ttr_manager : TTReportManager = field(default = TTReportManager())
     tt_adapter : TTAdapter = field(default = TTAdapter(
-        df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()),
+        df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper(), momentum_manager = MomentumManager()),
         effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())))
 class TimeTrackingProcessor():
 
