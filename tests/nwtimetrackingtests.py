@@ -2813,16 +2813,17 @@ class TTReportManagerTestCase(unittest.TestCase):
 
         expected_call_00 : _Call = call(self.tt_summary.tt_latest_four_df, REPORTSTR.TTLATESTFIVE, formatters)
         expected_call_01 : _Call = call(self.tt_summary.tts_by_month_df, REPORTSTR.TTSBYMONTH, formatters)
-        expected_call_02 : _Call = call(self.tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters)
-        expected_call_03 : _Call = call(self.tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters)
-        expected_call_04 : _Call = call(self.tt_summary.tts_by_spn_df, REPORTSTR.TTSBYSPN, formatters)
-        expected_call_05 : _Call = call(self.tt_summary.tts_by_spv_df, REPORTSTR.TTSBYSPV, formatters)
-        expected_call_06 : _Call = call(self.tt_summary.tts_by_hashtag_year_df, REPORTSTR.TTSBYHASHTAGYEAR, formatters)
-        expected_call_07 : _Call = call(self.tt_summary.tts_by_hashtag_df, REPORTSTR.TTSBYHASHTAG, formatters)
-        expected_call_08 : _Call = call(self.tt_summary.tts_by_year_month_spnv_df, REPORTSTR.TTSBYYEARMONTHSPNV, formatters)
-        expected_call_09 : _Call = call(self.tt_summary.tts_by_timeranges_df, REPORTSTR.TTSBYTIMERANGES, formatters)
-        expected_call_10 : _Call = call(self.tt_summary.definitions_df, REPORTSTR.DEFINITIONS, formatters)
-        expected_calls : int = 11
+        expected_call_02 : _Call = call(self.tt_summary.tts_by_month_mom_df, REPORTSTR.TTSBYMONTHMOM, formatters)
+        expected_call_03 : _Call = call(self.tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters)
+        expected_call_04 : _Call = call(self.tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters)
+        expected_call_05 : _Call = call(self.tt_summary.tts_by_spn_df, REPORTSTR.TTSBYSPN, formatters)
+        expected_call_06 : _Call = call(self.tt_summary.tts_by_spv_df, REPORTSTR.TTSBYSPV, formatters)
+        expected_call_07 : _Call = call(self.tt_summary.tts_by_hashtag_year_df, REPORTSTR.TTSBYHASHTAGYEAR, formatters)
+        expected_call_08 : _Call = call(self.tt_summary.tts_by_hashtag_df, REPORTSTR.TTSBYHASHTAG, formatters)
+        expected_call_09 : _Call = call(self.tt_summary.tts_by_year_month_spnv_df, REPORTSTR.TTSBYYEARMONTHSPNV, formatters)
+        expected_call_10 : _Call = call(self.tt_summary.tts_by_timeranges_df, REPORTSTR.TTSBYTIMERANGES, formatters)
+        expected_call_11 : _Call = call(self.tt_summary.definitions_df, REPORTSTR.DEFINITIONS, formatters)
+        expected_calls : int = 12
 
         with patch.object(self.report_manager, "_TTReportManager__create_html", return_value = "<div></div>") as mocked_create_html:
 
@@ -2841,6 +2842,7 @@ class TTReportManagerTestCase(unittest.TestCase):
             self.assertEqual(expected_call_08, mocked_create_html.call_args_list[8])
             self.assertEqual(expected_call_09, mocked_create_html.call_args_list[9])
             self.assertEqual(expected_call_10, mocked_create_html.call_args_list[10])
+            self.assertEqual(expected_call_11, mocked_create_html.call_args_list[11])
             self.assertEqual(len(actual), expected_calls)
     def test_createhtmltemplate_shouldcontainexpectedhtmlexcerpts_wheninvoked(self) -> None:
 

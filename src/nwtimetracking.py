@@ -80,6 +80,7 @@ class REPORTSTR(StrEnum):
 
     TTLATESTFIVE = "Latest Four Sessions"
     TTSBYMONTH = "By Month"
+    TTSBYMONTHMOM = "By Month (Momentum)"
     TTSBYYEAR = "By Year"
     TTSBYRANGE = "By Range"
     TTSBYSPN = "By Software Project Name"
@@ -2088,6 +2089,7 @@ class TTReportManager():
         
         html_sections.append(self.__create_html(tt_summary.tt_latest_four_df, REPORTSTR.TTLATESTFIVE, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_month_df, REPORTSTR.TTSBYMONTH, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_month_mom_df, REPORTSTR.TTSBYMONTHMOM, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_spn_df, REPORTSTR.TTSBYSPN, formatters))
