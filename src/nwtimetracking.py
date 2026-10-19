@@ -1506,10 +1506,16 @@ class TTDataFrameFactory():
                 0   71          22.33           [08:00-08:45]
                 1   37          11.64           [08:00-08:30]
                 ...
+
+                Cell pairs containing "NaN" are removed, to avoid "nan-nan" to appear as timerange.
             '''
 
             tts_df : DataFrame = tt_df.copy(deep = True)
             tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
+
+            tts_df = tts_df.replace(r'^\s*$', np.nan, regex = True)
+            tts_df = tts_df.replace(['NaN', 'nan'], np.nan)
+            tts_df = tts_df.dropna(how = "all", subset = [TTCN.STARTTIME, TTCN.ENDTIME]).reset_index(drop = True)
 
             tts_df[TTCN.TIMERANGE] = tts_df.apply(
                 lambda x : self.__df_helper.create_time_range_id(
