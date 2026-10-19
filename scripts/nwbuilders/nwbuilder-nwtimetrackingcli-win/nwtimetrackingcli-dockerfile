@@ -1,21 +1,23 @@
 FROM python:3.12.5-bookworm AS builder
 
 # --- NWBUILDER ENVIRONMENT --- #
-RUN pip install --upgrade pip==26.0.1
+RUN pip install --upgrade pip==26.2.1
 
 RUN dpkg --add-architecture i386 && \
     apt -y update; \
     apt -y install wget=1.21.3-1+deb12u1; \
     apt -y install cabextract=1.9-3; \
-    apt -y install unzip=6.0-28; \
-    apt -y install xvfb=2:21.1.7-3+deb12u11; \
+    apt -y install unzip=6.0-28+deb12u1; \
+    apt -y install xvfb=2:21.1.7-3+deb12u13; \
     apt -y install xauth=1:1.1.2-1; \
-    apt -y install p7zip-full=16.02+dfsg-8; \
-    apt -y install zip=3.0-13; \
-    mkdir -p /etc/apt/keyrings; \
+    apt -y install p7zip-full=16.02+really26.02+dfsg-0+deb12u1; \
+    apt -y install zip=3.0-13+deb12u1
+
+RUN mkdir -p /etc/apt/keyrings; \
     wget -O /etc/apt/keyrings/winehq-archive.key https://dl.winehq.org/wine-builds/winehq.key; \
-    wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources; \
-    apt update; \
+    wget -NP /etc/apt/sources.list.d/ https://dl.winehq.org/wine-builds/debian/dists/bookworm/winehq-bookworm.sources
+
+RUN apt update; \
     apt -y install winehq-stable=11.0.0.0~bookworm-1; \
     apt -y install wine-stable=11.0.0.0~bookworm-1; \
     apt -y install wine-stable-amd64=11.0.0.0~bookworm-1; \
@@ -53,12 +55,10 @@ RUN timeout 120s dbus-run-session -- xvfb-run -a sh -lc \
  ; wineserver -k 2>/dev/null || true
 
 RUN timeout 900s dbus-run-session -- xvfb-run -a sh -lc \
-     'wine C:\\Python312\\python.exe -m pip install --upgrade pip==26.0.1 wheel==0.45.1 setuptools==80.9.0 pyinstaller==6.11.1' \
+     'wine C:\\Python312\\python.exe -m pip install --upgrade pip==26.2.1 wheel==0.45.1 setuptools==82.0.1 pyinstaller==6.11.1' \
  ; wineserver -k 2>/dev/null || true
 
-RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc \
-     'wine C:\\Python312\\python.exe -m pip install "https://github.com/numbworks/nwversioninfofiles/archive/refs/tags/v2.0.0.zip#subdirectory=src"; echo exit=$?' \
- ; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install nwversioninfofiles==2.0.1; echo exit=$?'; wineserver -k 2>/dev/null || true
 
 COPY ucrtbase.dll /home/ucrtbase.dll
 RUN cp -f /home/ucrtbase.dll /opt/wine64/drive_c/windows/system32/ucrtbase.dll
@@ -66,11 +66,11 @@ RUN cp -f /home/ucrtbase.dll /opt/wine64/drive_c/windows/system32/ucrtbase.dll
 
 # --- PROJECT DEPENDENCIES --- #
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install numpy==1.26.4; echo exit=$?'; wineserver -k 2>/dev/null || true
-RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install pyarrow==23.0.0; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install pyarrow==17.0.0; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install openpyxl==3.1.5; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install pandas==2.1.4; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install requests==2.32.3; echo exit=$?'; wineserver -k 2>/dev/null || true
-RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install matplotlib==3.9.2; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install matplotlib==3.9.2 numpy==1.26.4; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install tabulate==0.9.0; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install sparklines==0.5.0; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install weasyprint==66.0; echo exit=$?'; wineserver -k 2>/dev/null || true

@@ -9,7 +9,7 @@ import unittest
 from contextlib import redirect_stdout
 from datetime import datetime, date, timedelta
 from numpy import int64, uint
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from pandas.testing import assert_frame_equal
 from pandas.io.formats.style import Styler
 from parameterized import parameterized
@@ -19,8 +19,8 @@ from unittest.mock import _Call, Mock, call, mock_open, patch
 
 # LOCAL/NW MODULES
 sys.path.append(os.path.dirname(__file__).replace('tests', 'src'))
-from nwtimetracking import FilePathManager, FileManager, Displayer
-from nwtimetracking import EFFORTMODE, REPORTSTR, TTCN, DEFINITIONSTR, OPTION, EffortCell, EffortHighlighter, TTAdapter, TTReportManager
+from nwtimetracking import _MessageCollectionMomentumManager, FilePathManager, FileManager, Displayer, IntCell, IntHighlighter, MomentumManager
+from nwtimetracking import HIGHLIGHTERMODE, REPORTSTR, TTCN, DEFINITIONSTR, OPTION, EffortCell, EffortHighlighter, TTAdapter, TTReportManager
 from nwtimetracking import _MessageCollection, TTDataFrameFactory, TimeTrackingProcessor
 from nwtimetracking import EffortStatus, TTSummary, DefaultPathProvider, YearProvider
 from nwtimetracking import SoftwareProjectNameProvider, SettingBag, ComponentBag, TTDataFrameHelper
@@ -476,7 +476,7 @@ class MessageCollectionTestCase(unittest.TestCase):
     def test_providedmodenotsupported_shouldreturnexpectedmessage_wheninvalidmode(self) -> None:
 
         # Arrange
-        invalid_mode : EFFORTMODE = cast(EFFORTMODE, "invalid")
+        invalid_mode : HIGHLIGHTERMODE = cast(HIGHLIGHTERMODE, "invalid")
         expected : str = f"The provided mode is not supported: '{invalid_mode}'."
 
         # Act
@@ -965,6 +965,7 @@ class TTSummaryTestCase(unittest.TestCase):
             tt_df = empty_df,
             tt_latest_four_df = empty_df,
             tts_by_month_df = empty_df,
+            tts_by_month_mom_df = empty_df,
             tts_by_year_df = empty_df,
             tts_by_range_df = empty_df,
             tts_by_spn_df = empty_df,
@@ -981,6 +982,7 @@ class TTSummaryTestCase(unittest.TestCase):
         self.assertEqual(actual.tt_df.shape, empty_df.shape)
         self.assertEqual(actual.tt_latest_four_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_month_df.shape, empty_df.shape)
+        self.assertEqual(actual.tts_by_month_mom_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_year_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_range_df.shape, empty_df.shape)
         self.assertEqual(actual.tts_by_spn_df.shape, empty_df.shape)
@@ -1116,6 +1118,7 @@ class SettingBagTestCase(unittest.TestCase):
         options_tt : list[Literal[OPTION.display]] = [OPTION.display]                           # type: ignore
         options_tt_latest_four : list[Literal[OPTION.display]] = [OPTION.display]               # type: ignore
         options_tts_by_month : list[Literal[OPTION.display]] = [OPTION.display]                 # type: ignore
+        options_tts_by_month_mom : list[Literal[OPTION.display]] = [OPTION.display]             # type: ignore
         options_tts_by_year : list[Literal[OPTION.display]] = [OPTION.display]                  # type: ignore
         options_tts_by_range : list[Literal[OPTION.display]] = [OPTION.display]                 # type: ignore
         options_tts_by_spn : list[Literal[OPTION.display]] = [OPTION.display]                   # type: ignore
@@ -1136,6 +1139,7 @@ class SettingBagTestCase(unittest.TestCase):
         years : Optional[list[int]] = [2020, 2021, 2022]
         now : datetime = datetime.now()
         enable_effort_highlighting : bool = True
+        enable_int_highlighting : bool = True
         tts_by_spn_software_project_names : list[str] = ["SPN1", "SPN2"]
         tts_by_spv_software_project_names : list[str] = ["SPN3"]
         tts_by_hashtag_formatters : dict = { TTCN.EFFORTPERC : "{:.2f}" }
@@ -1148,6 +1152,7 @@ class SettingBagTestCase(unittest.TestCase):
             options_tt = options_tt,
             options_tt_latest_four = options_tt_latest_four,
             options_tts_by_month = options_tts_by_month,
+            options_tts_by_month_mom = options_tts_by_month_mom,
             options_tts_by_year = options_tts_by_year,
             options_tts_by_range = options_tts_by_range,
             options_tts_by_spn = options_tts_by_spn,
@@ -1167,6 +1172,7 @@ class SettingBagTestCase(unittest.TestCase):
             years = years,
             now = now,
             enable_effort_highlighting = enable_effort_highlighting,
+            enable_int_highlighting = enable_int_highlighting,
             tts_by_spn_software_project_names = tts_by_spn_software_project_names,
             tts_by_spv_software_project_names = tts_by_spv_software_project_names,
             tts_by_hashtag_formatters = tts_by_hashtag_formatters,
@@ -1179,6 +1185,7 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.options_tt, options_tt)
         self.assertEqual(actual.options_tt_latest_four, options_tt_latest_four)
         self.assertEqual(actual.options_tts_by_month, options_tts_by_month)
+        self.assertEqual(actual.options_tts_by_month_mom, options_tts_by_month_mom)
         self.assertEqual(actual.options_tts_by_year, options_tts_by_year)
         self.assertEqual(actual.options_tts_by_range, options_tts_by_range)
         self.assertEqual(actual.options_tts_by_spn, options_tts_by_spn)
@@ -1199,12 +1206,134 @@ class SettingBagTestCase(unittest.TestCase):
         self.assertEqual(actual.years, years)
         self.assertEqual(actual.now, now)
         self.assertEqual(actual.enable_effort_highlighting, enable_effort_highlighting)
+        self.assertEqual(actual.enable_int_highlighting, enable_int_highlighting)
         self.assertEqual(actual.tts_by_spn_software_project_names, tts_by_spn_software_project_names)
         self.assertEqual(actual.tts_by_spv_software_project_names, tts_by_spv_software_project_names)
         self.assertEqual(actual.tts_by_hashtag_formatters, tts_by_hashtag_formatters)
         self.assertEqual(actual.tts_by_timeranges_min_occurrences, tts_by_timeranges_min_occurrences)
         self.assertEqual(actual.tts_by_timeranges_formatters, tts_by_timeranges_formatters)
         self.assertEqual(actual.ttd_effort_status_is_correct, ttd_effort_status_is_correct)
+class MomentumManagerTestCase(unittest.TestCase):
+
+    @parameterized.expand([
+        (0, "January"), 
+        (1, "February"), 
+        (2, "March"), 
+        (3, "April"), 
+        (4, "May"), 
+        (5, "June"), 
+        (6, "July"), 
+        (7, "August"), 
+        (8, "September"), 
+        (9, "October"), 
+        (10, "November"), 
+        (11, "December")
+    ])
+    def test_converttomonth_shouldreturnexpectedmonth_whenvalidrowindex(self, row_index : int, expected : str) -> None:
+
+        # Arrange
+        # Act
+        actual: str = MomentumManager()._MomentumManager__convert_to_month(row_index = row_index)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        (pd.Series(["↑", np.nan], index=[f"{TTCN.TREND}1", f"{TTCN.TREND}2"]), "↑E"),
+        (pd.Series(["↑", "↓", "="], index=[f"{TTCN.TREND}1", f"{TTCN.TREND}2", f"{TTCN.TREND}3"]), "↑↓=")
+    ])
+    def test_createtrendsequence_shouldreturnexpectedsequence_whenvalidrow(self, row : Series, expected : str) -> None:
+
+        # Arrange
+        # Act
+        actual: str = MomentumManager()._MomentumManager__create_trend_sequence(row = row)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    @parameterized.expand([
+        ("==========", 0),
+        ("↑", 1),
+        ("↓", -1),
+        ("↑E", 1),
+        ("↓E", -1),
+        ("↑↑↑↑↑↑↑↑↑↑", 10),
+        ("↓↓↓↓↓↓↓↓↓↓", -10),
+        ("↑↑↑↑↑↑↑↑↑=", 9),
+        ("↑↑↑↑↑↑↑↑↑↓", 9),
+        ("↑↑↑↓↓↑↓↓↑↑", 3),
+        ("↑↓↑↓↓↑↑↓↑↑", 2),
+        ("↑↑↓↓↑↓↓", -2)
+    ])
+    def test_calculatemomentum_shouldreturnexpectedmomentum_whenvalidsequence(self, sequence : str, expected : int) -> None:
+
+        # Arrange
+        # Act
+        actual: int = MomentumManager()._MomentumManager__calculate_momentum(sequence = sequence)  # type: ignore
+
+        # Assert
+        self.assertEqual(expected, actual)
+
+    def test_createbymonthmomdf_shouldreturnexpecteddataframe_whenvaliddf(self) -> None:
+
+        # Arrange
+        data : dict = {
+            "2024": ["45h 45m"] * 12,
+            TTCN.TREND: ["↑", "↓", "↓", "↑", "↑", "↑", "↑", "↑", "↑", "↓", "↑", "↓"],
+            "2025": ["79h 00m"] * 12,
+        }
+        by_month_df : DataFrame = DataFrame(data, index = range(12))
+
+        expected_months: list[str] = [
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
+        ]
+        expected_sequences: list[str] = [
+            "↑",
+            "↓",
+            "↓",
+            "↑",
+            "↑",
+            "↑",
+            "↑",
+            "↑",
+            "↑",
+            "↓",
+            "↑",
+            "↓",
+        ]
+        expected_momentums: list[int] = [1, -1, -1, 1, 1, 1, 1, 1, 1, -1, 1, -1]
+
+        # Act
+        actual: DataFrame = MomentumManager().create_by_month_mom_df(by_month_df = by_month_df)
+
+        # Assert
+        self.assertEqual(expected_months, actual["Month"].tolist())
+        self.assertEqual(expected_sequences, actual["Sequence"].tolist())
+        self.assertEqual(expected_momentums, actual["Momentum"].tolist())
+    def test_createbymonthmomdf_shouldraisevalueerror_wheninvalidindexorlength(self) -> None:
+
+        # Arrange
+        by_month_df : DataFrame = DataFrame({"2024": ["45h 45m"]}, index=[1])
+
+        # Act, Assert
+        with self.assertRaises(ValueError) as context:
+            
+            MomentumManager().create_by_month_mom_df(by_month_df = by_month_df)
+
+            self.assertEqual(
+                str(context.exception), 
+                _MessageCollectionMomentumManager.provided_by_month_df_doesnt_contain_expected_index())
 class TTDataFrameHelperTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -1704,7 +1833,7 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
     def setUp(self):
         
-        self.df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper())
+        self.df_factory : TTDataFrameFactory = TTDataFrameFactory(df_helper = TTDataFrameHelper(), momentum_manager = MomentumManager())
         self.df_factory_module : Any = importlib.import_module(TTDataFrameFactory.__module__)
 
     def test_createttdf_shouldreturnexpecteddataframe_wheninvoked(self):
@@ -1810,6 +1939,26 @@ class TTDataFrameFactoryTestCase(unittest.TestCase):
 
         # Assert
         assert_frame_equal(expected_df , actual_df)
+    def test_createttsbymonthmomdf_shouldperformexpectedcall_wheninvoked(self) -> None:
+
+        # Arrange
+        tts_by_month_df : DataFrame = DataFrame()
+        expected_df : DataFrame = DataFrame()
+
+        momentum_manager : Mock = Mock(spec = MomentumManager)
+        momentum_manager.create_by_month_mom_df = Mock(return_value = expected_df)
+
+        df_factory : TTDataFrameFactory = TTDataFrameFactory(
+            df_helper = TTDataFrameHelper(),
+            momentum_manager = momentum_manager
+        )
+
+        # Act
+        actual : DataFrame = df_factory.create_tts_by_month_mom_df(tts_by_month_df = tts_by_month_df)
+
+        # Assert
+        momentum_manager.create_by_month_mom_df.assert_called_once_with(by_month_df = tts_by_month_df)
+        assert_frame_equal(expected_df, actual)
     def test_createttsbyyeardf_shouldreturnexpecteddataframe_wheninvoked(self):
 
         # Arrange
@@ -2053,10 +2202,10 @@ class EffortHighlighterTestCase(unittest.TestCase):
         self.assertEqual(actual[1].effort_str, "20h 45m")
 
     @parameterized.expand([
-        (EFFORTMODE.top_one_effort_per_row, 1),
-        (EFFORTMODE.top_three_efforts, 3)
+        (HIGHLIGHTERMODE.top_one_per_row, 1),
+        (HIGHLIGHTERMODE.top_three, 3)
     ])
-    def test_extractn_shouldreturnexpected_whenvalid(self, mode: EFFORTMODE, expected: int) -> None:
+    def test_extractn_shouldreturnexpected_whenvalid(self, mode: HIGHLIGHTERMODE, expected: int) -> None:
         
         # Arrange
         # Act
@@ -2068,7 +2217,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
     def test_extractn_shouldraiseexception_wheninvalid(self) -> None:
         
         # Arrange
-        mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+        mode : HIGHLIGHTERMODE = cast(HIGHLIGHTERMODE, "Invalid")
 
         # Act & Assert
         with self.assertRaises(Exception):
@@ -2093,7 +2242,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         
         # Arrange
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
-        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_one_per_row
         column_names : list[str] = ["2015", "2016"]
 
         # Act
@@ -2107,7 +2256,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         
         # Arrange
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
-        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three
         column_names : list[str] = ["2015", "2016"]
 
         # Act
@@ -2122,7 +2271,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
 
         # Arrange
         df : DataFrame = DataFrame({"2015": ["10h 30m", "15h 45m"], "↕": ["↑", "↑"], "2016": ["20h 45m", "20h 00m"]})
-        mode : EFFORTMODE = cast(EFFORTMODE, "Invalid")
+        mode : HIGHLIGHTERMODE = cast(HIGHLIGHTERMODE, "Invalid")
         column_names : list[str] = ["2015", "2016"]
 
         expected : str = _MessageCollection.provided_mode_not_supported(mode)
@@ -2153,7 +2302,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
     def test_highlightdataframe_shouldhighlightexpectedcells_whencolumnnamesareprovided(self) -> None:
 
         # Arrange
-        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_one_per_row
         column_names : list[str] = ["2015", "2016", "2017"]
 
         expected : DataFrame = self.df_without_duplicates.copy(deep = True)
@@ -2168,7 +2317,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
     def test_highlightdataframe_shouldhighlightexpectedcells_whencolumnnamesarenotprovided(self) -> None:
 
         # Arrange
-        mode : EFFORTMODE = EFFORTMODE.top_one_effort_per_row
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_one_per_row
         column_names : list[str] = []
 
         expected : DataFrame = self.df_without_duplicates.copy(deep = True)
@@ -2231,7 +2380,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Assert
         highlighted_df.assert_called_once_with(
             df = tts_by_month_df,
-            mode = EFFORTMODE.top_three_efforts
+            mode = HIGHLIGHTERMODE.top_three
         )
     def test_highlightttsbyyear_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
@@ -2247,7 +2396,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Assert
         highlighted_df.assert_called_once_with(
             df = tts_by_year_df,
-            mode = EFFORTMODE.top_three_efforts
+            mode = HIGHLIGHTERMODE.top_three
         )
     def test_highlightttsbyspv_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
@@ -2263,7 +2412,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Assert
         highlighted_df.assert_called_once_with(
             df = tts_by_spv_df,
-            mode = EFFORTMODE.top_three_efforts
+            mode = HIGHLIGHTERMODE.top_three
         )    
     def test_highlightttsbyhashtagyear_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
@@ -2284,7 +2433,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         get_latest_year_mock.assert_called_once_with(tts_by_hashtag_year_df)
         highlighted_df.assert_called_once_with(
             df = tts_by_hashtag_year_df,
-            mode = EFFORTMODE.top_three_efforts,
+            mode = HIGHLIGHTERMODE.top_three,
             column_names = [latest_year]
         )
     def test_highlightttsbyhashtag_shouldperformexpectedcalls_wheninvoked(self) -> None:
@@ -2301,7 +2450,7 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Assert
         highlighted_df.assert_called_once_with(
             df = tts_by_hashtag_df,
-            mode = EFFORTMODE.top_three_efforts
+            mode = HIGHLIGHTERMODE.top_three
         )
     def test_highlightttsbyyearmonthspnv_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
@@ -2317,18 +2466,229 @@ class EffortHighlighterTestCase(unittest.TestCase):
         # Assert
         highlighted_df.assert_called_once_with(
             df = tts_by_year_month_spnv_df,
-            mode = EFFORTMODE.top_three_efforts
+            mode = HIGHLIGHTERMODE.top_three
         )
+class IntCellTestCase(unittest.TestCase):
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_whenvalidarguments(self) -> None:
+
+        # Arrange
+        coordinate_pair : Tuple[int, int] = (5, 10)
+        raw_value : str = "1050"
+        numeric_value : int = 1050
+
+        # Act
+        int_cell: IntCell = IntCell(
+            coordinate_pair = coordinate_pair,
+            raw_value = raw_value,
+            numeric_value = numeric_value
+        )
+
+        # Assert
+        self.assertEqual(int_cell.coordinate_pair, coordinate_pair)
+        self.assertEqual(int_cell.raw_value, raw_value)
+        self.assertEqual(int_cell.numeric_value, numeric_value)
+class IntHighlighterTestCase(unittest.TestCase):
+
+    def setUp(self) -> None:
+
+        data : dict[str, list] = {
+            "Month": ["1", "2"],
+            "Count": ["42", "150"],
+            "↕": ["↑", "↑"],
+            "Score": ["10", "5"],
+            "↕_duplicate_1": ["↑", "↑"],
+            "Total": ["1050", "2000"]
+        }
+        columns_01 : list[str] = ["Month", "Count", "↕", "Score", "↕", "Total"]
+        self.df_with_duplicates : DataFrame = DataFrame(data, columns = columns_01)
+
+        columns_02 : list[str] = ["Month", "Count", "↕", "Score", "↕_duplicate_1", "Total"]
+        self.df_without_duplicates : DataFrame = DataFrame(data, columns = columns_02)
+
+    def test_init_shouldinitializeobjectwithexpectedproperties_wheninvoked(self) -> None:
+        
+        # Arrange
+        # Act
+        actual : IntHighlighter = IntHighlighter()
+
+        # Assert
+        self.assertIsInstance(actual, IntHighlighter)
+
+    @parameterized.expand([
+        ("42", True),
+        ("1050", True),
+        ("0", True),
+        ("2.09", False),
+        ("invalid", False),
+        ("-5", False)
+    ])
+    def test_isint_shouldreturnexpectedresult_wheninvoked(self, cell_content : str, expected : bool) -> None:
+        
+        # Arrange
+        # Act
+        actual : bool = IntHighlighter()._IntHighlighter__is_int(cell_content = cell_content)  # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+    @parameterized.expand([
+        ("42", 42),
+        ("1050", 1050)
+    ])
+    def test_unboxint_shouldreturnexpectedint_wheninvoked(self, cell_content : str, expected : int) -> None:
+        
+        # Arrange
+        # Act
+        actual : int = IntHighlighter()._IntHighlighter__unbox_int(cell_content = cell_content)  # type: ignore
+
+        # Assert
+        self.assertEqual(actual, expected)
+
+    def test_appendnewintcell_shouldappendprovidedcell_wheninvoked(self) -> None:
+
+        # Arrange
+        int_cells : list[IntCell] = []
+        coordinate_pair : Tuple[int, int] = (5, 10)
+        raw_value : str = "1050"
+        numeric_value : int = 1050
+
+        # Act
+        IntHighlighter()._IntHighlighter__append_new_int_cell(int_cells, coordinate_pair, raw_value)  # type: ignore
+
+        # Assert
+        self.assertEqual(len(int_cells), 1)
+        self.assertEqual(int_cells[0].coordinate_pair, coordinate_pair)
+        self.assertEqual(int_cells[0].raw_value, raw_value)
+        self.assertEqual(int_cells[0].numeric_value, numeric_value)
+    def test_extractrow_shouldreturnintcells_whenrowhasvalidints(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"Count": ["42"], "↕": ["↑"], "Total": ["1050"]})
+        column_names : list[str] = ["Count", "Total"]
+
+        # Act
+        actual : list[IntCell] = IntHighlighter()._IntHighlighter__extract_row(df = df, row_idx = 0, column_names = column_names)  # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].raw_value, "42")
+        self.assertEqual(actual[1].raw_value, "1050")  
+    def test_extracttopnintcells_shouldreturntopncells_wheninvoked(self) -> None:
+        
+        # Arrange
+        int_cells : list[IntCell] = [
+            IntCell(coordinate_pair = (0, 0), raw_value = "42", numeric_value = 42),
+            IntCell(coordinate_pair = (0, 1), raw_value = "150", numeric_value = 150),
+            IntCell(coordinate_pair = (0, 2), raw_value = "1050", numeric_value = 1050)
+        ]
+
+        # Act
+        actual : list[IntCell] = IntHighlighter()._IntHighlighter__extract_top_n_int_cells(int_cells = int_cells, n = 2)  # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].raw_value, "1050")
+        self.assertEqual(actual[1].raw_value, "150")
+    def test_calculateintcells_shouldreturnexpectedcells_whentoponeperrow(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"Count": ["42", "150"], "↕": ["↑", "↑"], "Total": ["1050", "2000"]})
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_one_per_row
+        column_names : list[str] = ["Count", "Total"]
+
+        # Act
+        actual : list[IntCell] = IntHighlighter()._IntHighlighter__calculate_int_cells(df = df, mode = mode, column_names = column_names)  # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 2)
+        self.assertEqual(actual[0].raw_value, "1050")
+        self.assertEqual(actual[1].raw_value, "2000")
+    def test_calculateintcells_shouldreturnexpectedcells_whentopthree(self) -> None:
+        
+        # Arrange
+        df : DataFrame = DataFrame({"Count": ["42", "150"], "Total": ["1050", "2000"]})
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three
+        column_names : list[str] = ["Count", "Total"]
+
+        # Act
+        actual : list[IntCell] = IntHighlighter()._IntHighlighter__calculate_int_cells(df=df, mode=mode, column_names=column_names)  # type: ignore
+
+        # Assert
+        self.assertEqual(len(actual), 3)
+        self.assertEqual(actual[0].raw_value, "2000")
+        self.assertEqual(actual[1].raw_value, "1050")
+        self.assertEqual(actual[2].raw_value, "150")
+    def test_calculateintcells_shouldraiseexception_whenmodenotsupported(self) -> None:
+        
+        # Arrange
+        df: DataFrame = DataFrame({"Count": ["42"]})
+        
+        # Act, Assert
+        with self.assertRaises(Exception):
+            IntHighlighter()._IntHighlighter__calculate_int_cells(df = df, mode = "unsupported_mode", column_names = ["Count"])  # type: ignore
+    def test_addtags_shouldsurroundintcellswithtokens_wheninvoked(self) -> None:
+        
+        # Arrange
+        int_cells : list[IntCell] = [
+            IntCell(coordinate_pair = (0, 1), raw_value = "42", numeric_value = 42),
+            IntCell(coordinate_pair = (1, 3), raw_value = "5", numeric_value = 5)
+        ]
+        tags : Tuple[str, str] = ("[[ ", " ]]")
+        expected : DataFrame = self.df_without_duplicates.copy(deep=True)
+        expected.iloc[0, 1] = "[[ 42 ]]"
+        expected.iloc[1, 3] = "[[ 5 ]]"
+
+        # Act
+        actual : DataFrame = IntHighlighter()._IntHighlighter__add_tags(self.df_without_duplicates, int_cells, tags)  # type: ignore
+
+        # Assert
+        self.assertTrue(expected.equals(actual))
+    def test_extractn_shouldraiseexception_whenmodenotsupported(self) -> None:
+        
+        # Arrange
+        # Act
+        # Assert
+        with self.assertRaises(Exception):
+            IntHighlighter()._IntHighlighter__extract_n(mode = "unsupported_mode")  # type: ignore
+
+    def test_highlightdataframe_shouldhighlightexpectedcells_whencolumnnamesareprovided(self) -> None:
+        
+        # Arrange
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_one_per_row
+        column_names : list[str] = ["Count", "Score", "Total"]
+
+        expected : DataFrame = self.df_without_duplicates.copy(deep=True)
+        expected.iloc[0, 5] = "<mark style='background-color: pink'>1050</mark>"
+        expected.iloc[1, 5] = "<mark style='background-color: pink'>2000</mark>"
+
+        # Act
+        actual : DataFrame = IntHighlighter().highlight(self.df_without_duplicates, mode, column_names)
+
+        # Assert
+        assert_frame_equal(expected, actual)
+    def test_highlightdataframe_shoulduseallcolumns_whencolumnnamesareempty(self) -> None:
+        
+        # Arrange
+        mode: HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_one_per_row
+
+        # Act
+        actual: DataFrame = IntHighlighter().highlight(self.df_without_duplicates, mode, [])
+
+        # Assert
+        self.assertIsNotNone(actual)
 class TTAdapterTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
 
-        self.mocked_df_factory : Mock = Mock(spec = TTDataFrameFactory)
-        self.mocked_effort_highlighter : Mock = Mock(spec = EffortHighlighter)
+        self.df_factory : Mock = Mock(spec = TTDataFrameFactory)
+        self.effort_highlighter : Mock = Mock(spec = EffortHighlighter)
+        self.int_highlighter : Mock = Mock(spec = IntHighlighter)
 
         self.adapter : TTAdapter = TTAdapter(
-            df_factory = self.mocked_df_factory,  # type: ignore
-            effort_highlighter = self.mocked_effort_highlighter  # type: ignore
+            df_factory = self.df_factory,                    # type: ignore
+            effort_highlighter = self.effort_highlighter,    # type: ignore
+            int_highlighter = self.int_highlighter           # type: ignore
         )
 
         self.tt_df : DataFrame = DataFrame()
@@ -2336,6 +2696,7 @@ class TTAdapterTestCase(unittest.TestCase):
             options_tt = [OPTION.display],
             options_tt_latest_four = [OPTION.display],
             options_tts_by_month = [OPTION.display],
+            options_tts_by_month_mom = [OPTION.display],
             options_tts_by_year = [OPTION.display],
             options_tts_by_range = [OPTION.display],
             options_tts_by_spn = [OPTION.display],
@@ -2352,13 +2713,13 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tt_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tt_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tt_df(setting_bag = self.setting_bag)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tt_df.assert_called_once_with(
+        self.df_factory.create_tt_df.assert_called_once_with(
             excel_path = self.setting_bag.excel_path,
             excel_skiprows = self.setting_bag.excel_skiprows,
             excel_nrows = self.setting_bag.excel_nrows,
@@ -2368,128 +2729,128 @@ class TTAdapterTestCase(unittest.TestCase):
     def test_createttlatestfourdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tt_latest_four_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tt_latest_four_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tt_latest_four_df(tt_df = self.tt_df)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tt_latest_four_df.assert_called_once_with(tt_df = self.tt_df)
+        self.df_factory.create_tt_latest_four_df.assert_called_once_with(tt_df = self.tt_df)
     def test_createttsbymonthdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_month_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_month_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_month_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_month_df.assert_called_once_with(
+        self.df_factory.create_tts_by_month_df.assert_called_once_with(
             tt_df = self.tt_df,
             now = self.setting_bag.now
         )
     def test_createttsbyyeardf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_year_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_year_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_year_df(tt_df = self.tt_df)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_year_df.assert_called_once_with(tt_df = self.tt_df)
+        self.df_factory.create_tts_by_year_df.assert_called_once_with(tt_df = self.tt_df)
     def test_createttsbyrangedf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_range_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_range_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_range_df(tt_df = self.tt_df)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_range_df.assert_called_once_with(tt_df = self.tt_df)
+        self.df_factory.create_tts_by_range_df.assert_called_once_with(tt_df = self.tt_df)
     def test_createttsbyspndf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_spn_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_spn_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_spn_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_spn_df.assert_called_once_with(
+        self.df_factory.create_tts_by_spn_df.assert_called_once_with(
             tt_df = self.tt_df,
             software_project_names = self.setting_bag.tts_by_spn_software_project_names
         )
     def test_createttsbyspvdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_spv_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_spv_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_spv_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_spv_df.assert_called_once_with(
+        self.df_factory.create_tts_by_spv_df.assert_called_once_with(
             tt_df = self.tt_df,
             software_project_names = self.setting_bag.tts_by_spv_software_project_names
         )
     def test_createttsbyhashtagyeardf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_hashtag_year_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_hashtag_year_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_hashtag_year_df(tt_df = self.tt_df)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_hashtag_year_df.assert_called_once_with(tt_df = self.tt_df)
+        self.df_factory.create_tts_by_hashtag_year_df.assert_called_once_with(tt_df = self.tt_df)
     def test_createttsbyhashtagdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_hashtag_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_hashtag_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_hashtag_df(tt_df = self.tt_df)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_hashtag_df.assert_called_once_with(tt_df = self.tt_df)
+        self.df_factory.create_tts_by_hashtag_df.assert_called_once_with(tt_df = self.tt_df)
     def test_createttsbyyearmonthspnvdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_year_month_spnv_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_year_month_spnv_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_year_month_spnv_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_year_month_spnv_df.assert_called_once_with(
+        self.df_factory.create_tts_by_year_month_spnv_df.assert_called_once_with(
             tt_df = self.tt_df,
             software_project_names = self.setting_bag.tts_by_spv_software_project_names
         )
     def test_createttsbytimerangesdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_tts_by_timeranges_df = Mock(return_value = DataFrame())
+        self.df_factory.create_tts_by_timeranges_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_tts_by_timeranges_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_tts_by_timeranges_df.assert_called_once_with(
+        self.df_factory.create_tts_by_timeranges_df.assert_called_once_with(
             tt_df = self.tt_df,
             min_occurrences = self.setting_bag.tts_by_timeranges_min_occurrences
         )
     def test_createttdeffortstatusdf_shouldperformexpectedcalls_wheninvoked(self) -> None:
 
         # Arrange
-        self.mocked_df_factory.create_ttd_effort_status_df = Mock(return_value = DataFrame())
+        self.df_factory.create_ttd_effort_status_df = Mock(return_value = DataFrame())
 
         # Act
         self.adapter._TTAdapter__create_ttd_effort_status_df(tt_df = self.tt_df, setting_bag = self.setting_bag)  # type: ignore
 
         # Assert
-        self.mocked_df_factory.create_ttd_effort_status_df.assert_called_once_with(
+        self.df_factory.create_ttd_effort_status_df.assert_called_once_with(
             tt_df = self.tt_df,
             is_correct = self.setting_bag.ttd_effort_status_is_correct
         )
@@ -2499,6 +2860,7 @@ class TTAdapterTestCase(unittest.TestCase):
         tt_df : DataFrame = DataFrame()
         tt_latest_four_df : DataFrame = DataFrame()
         tts_by_month_df : DataFrame = DataFrame()
+        tts_by_month_mom_df : DataFrame = DataFrame()
         tts_by_year_df : DataFrame = DataFrame()
         tts_by_range_df : DataFrame = DataFrame()
         tts_by_spn_df : DataFrame = DataFrame()
@@ -2511,53 +2873,61 @@ class TTAdapterTestCase(unittest.TestCase):
         definitions_df : DataFrame = DataFrame()
 
         with (
-            patch.object(self.adapter, "_TTAdapter__create_tt_df", return_value = tt_df) as mocked_create_tt_df,
-            patch.object(self.adapter, "_TTAdapter__create_tt_latest_four_df", return_value = tt_latest_four_df) as mocked_create_tt_latest_four_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_month_df", return_value = tts_by_month_df) as mocked_create_tts_by_month_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_year_df", return_value = tts_by_year_df) as mocked_create_tts_by_year_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_range_df", return_value = tts_by_range_df) as mocked_create_tts_by_range_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_spn_df", return_value = tts_by_spn_df) as mocked_create_tts_by_spn_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_spv_df", return_value = tts_by_spv_df) as mocked_create_tts_by_spv_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_hashtag_year_df", return_value = tts_by_hashtag_year_df) as mocked_create_tts_by_hashtag_year_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_hashtag_df", return_value = tts_by_hashtag_df) as mocked_create_tts_by_hashtag_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_year_month_spnv_df", return_value = tts_by_year_month_spnv_df) as mocked_create_tts_by_year_month_spnv_df,
-            patch.object(self.adapter, "_TTAdapter__create_tts_by_timeranges_df", return_value = tts_by_timeranges_df) as mocked_create_tts_by_timeranges_df,
-            patch.object(self.adapter, "_TTAdapter__create_ttd_effort_status_df", return_value = ttd_effort_status_df) as mocked_create_ttd_effort_status_df,
-            patch.object(self.mocked_df_factory, "create_definitions_df", return_value = definitions_df) as mocked_create_definitions_df
+            patch.object(self.adapter, "_TTAdapter__create_tt_df", return_value = tt_df) as create_tt_df,
+            patch.object(self.adapter, "_TTAdapter__create_tt_latest_four_df", return_value = tt_latest_four_df) as create_tt_latest_four_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_month_df", return_value = tts_by_month_df) as create_tts_by_month_df,
+            patch.object(self.df_factory, "create_tts_by_month_mom_df", return_value = tts_by_month_mom_df) as create_tts_by_month_mom_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_year_df", return_value = tts_by_year_df) as create_tts_by_year_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_range_df", return_value = tts_by_range_df) as create_tts_by_range_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_spn_df", return_value = tts_by_spn_df) as create_tts_by_spn_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_spv_df", return_value = tts_by_spv_df) as create_tts_by_spv_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_hashtag_year_df", return_value = tts_by_hashtag_year_df) as create_tts_by_hashtag_year_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_hashtag_df", return_value = tts_by_hashtag_df) as create_tts_by_hashtag_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_year_month_spnv_df", return_value = tts_by_year_month_spnv_df) as create_tts_by_year_month_spnv_df,
+            patch.object(self.adapter, "_TTAdapter__create_tts_by_timeranges_df", return_value = tts_by_timeranges_df) as create_tts_by_timeranges_df,
+            patch.object(self.adapter, "_TTAdapter__create_ttd_effort_status_df", return_value = ttd_effort_status_df) as create_ttd_effort_status_df,
+            patch.object(self.df_factory, "create_definitions_df", return_value = definitions_df) as create_definitions_df
         ):
 
-            self.mocked_effort_highlighter.highlight_tts_by_month = Mock(return_value = tts_by_month_df)
-            self.mocked_effort_highlighter.highlight_tts_by_year = Mock(return_value = tts_by_year_df)
-            self.mocked_effort_highlighter.highlight_tts_by_spv = Mock(return_value = tts_by_spv_df)
-            self.mocked_effort_highlighter.highlight_tts_by_hashtag_year = Mock(return_value = tts_by_hashtag_year_df)
-            self.mocked_effort_highlighter.highlight_tts_by_hashtag = Mock(return_value = tts_by_hashtag_df)
-            self.mocked_effort_highlighter.highlight_tts_by_year_month_spnv = Mock(return_value = tts_by_year_month_spnv_df)
+            self.effort_highlighter.highlight_tts_by_month = Mock(return_value = tts_by_month_df)
+            self.effort_highlighter.highlight_tts_by_year = Mock(return_value = tts_by_year_df)
+            self.effort_highlighter.highlight_tts_by_spv = Mock(return_value = tts_by_spv_df)
+            self.effort_highlighter.highlight_tts_by_hashtag_year = Mock(return_value = tts_by_hashtag_year_df)
+            self.effort_highlighter.highlight_tts_by_hashtag = Mock(return_value = tts_by_hashtag_df)
+            self.effort_highlighter.highlight_tts_by_year_month_spnv = Mock(return_value = tts_by_year_month_spnv_df)
+
+            self.int_highlighter.highlight = Mock(return_value = tts_by_month_mom_df)
 
             # Act
             self.adapter.create_summary(setting_bag = self.setting_bag)
 
             # Assert
-            mocked_create_tt_df.assert_called_once_with(setting_bag = self.setting_bag)
-            mocked_create_tt_latest_four_df.assert_called_once_with(tt_df = tt_df)
-            mocked_create_tts_by_month_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
-            mocked_create_tts_by_year_df.assert_called_once_with(tt_df = tt_df)
-            mocked_create_tts_by_range_df.assert_called_once_with(tt_df = tt_df)
-            mocked_create_tts_by_spn_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
-            mocked_create_tts_by_spv_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
-            mocked_create_tts_by_hashtag_year_df.assert_called_once_with(tt_df = tt_df)
-            mocked_create_tts_by_hashtag_df.assert_called_once_with(tt_df = tt_df)
-            mocked_create_tts_by_year_month_spnv_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
-            mocked_create_tts_by_timeranges_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
-            mocked_create_ttd_effort_status_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            create_tt_df.assert_called_once_with(setting_bag = self.setting_bag)
+            create_tt_latest_four_df.assert_called_once_with(tt_df = tt_df)
+            create_tts_by_month_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
 
-            mocked_create_definitions_df.assert_called_once_with()
+            create_tts_by_month_mom_df.assert_called_once_with(tts_by_month_df = tts_by_month_df)
 
-            self.mocked_effort_highlighter.highlight_tts_by_month.assert_called_once_with(tts_by_month_df = tts_by_month_df)
-            self.mocked_effort_highlighter.highlight_tts_by_year.assert_called_once_with(tts_by_year_df = tts_by_year_df)
-            self.mocked_effort_highlighter.highlight_tts_by_spv.assert_called_once_with(tts_by_spv_df = tts_by_spv_df)
-            self.mocked_effort_highlighter.highlight_tts_by_hashtag_year.assert_called_once_with(tts_by_hashtag_year_df = tts_by_hashtag_year_df)
-            self.mocked_effort_highlighter.highlight_tts_by_hashtag.assert_called_once_with(tts_by_hashtag_df = tts_by_hashtag_df)
-            self.mocked_effort_highlighter.highlight_tts_by_year_month_spnv.assert_called_once_with(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)
+            create_tts_by_year_df.assert_called_once_with(tt_df = tt_df)
+            create_tts_by_range_df.assert_called_once_with(tt_df = tt_df)
+            create_tts_by_spn_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            create_tts_by_spv_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            create_tts_by_hashtag_year_df.assert_called_once_with(tt_df = tt_df)
+            create_tts_by_hashtag_df.assert_called_once_with(tt_df = tt_df)
+            create_tts_by_year_month_spnv_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            create_tts_by_timeranges_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+            create_ttd_effort_status_df.assert_called_once_with(tt_df = tt_df, setting_bag = self.setting_bag)
+
+            create_definitions_df.assert_called_once_with()
+
+            self.effort_highlighter.highlight_tts_by_month.assert_called_once_with(tts_by_month_df = tts_by_month_df)
+            self.effort_highlighter.highlight_tts_by_year.assert_called_once_with(tts_by_year_df = tts_by_year_df)
+            self.effort_highlighter.highlight_tts_by_spv.assert_called_once_with(tts_by_spv_df = tts_by_spv_df)
+            self.effort_highlighter.highlight_tts_by_hashtag_year.assert_called_once_with(tts_by_hashtag_year_df = tts_by_hashtag_year_df)
+            self.effort_highlighter.highlight_tts_by_hashtag.assert_called_once_with(tts_by_hashtag_df = tts_by_hashtag_df)
+            self.effort_highlighter.highlight_tts_by_year_month_spnv.assert_called_once_with(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)
+
+            self.int_highlighter.highlight.assert_called_once_with(df = tts_by_month_mom_df)
 class TTReportManagerTestCase(unittest.TestCase):
 
     def setUp(self) -> None:
@@ -2570,6 +2940,7 @@ class TTReportManagerTestCase(unittest.TestCase):
             tt_df = empty_df,
             tt_latest_four_df = empty_df,
             tts_by_month_df = empty_df,
+            tts_by_month_mom_df = empty_df,
             tts_by_year_df = empty_df,
             tts_by_range_df = empty_df,
             tts_by_spn_df = empty_df,
@@ -2660,16 +3031,17 @@ class TTReportManagerTestCase(unittest.TestCase):
 
         expected_call_00 : _Call = call(self.tt_summary.tt_latest_four_df, REPORTSTR.TTLATESTFIVE, formatters)
         expected_call_01 : _Call = call(self.tt_summary.tts_by_month_df, REPORTSTR.TTSBYMONTH, formatters)
-        expected_call_02 : _Call = call(self.tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters)
-        expected_call_03 : _Call = call(self.tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters)
-        expected_call_04 : _Call = call(self.tt_summary.tts_by_spn_df, REPORTSTR.TTSBYSPN, formatters)
-        expected_call_05 : _Call = call(self.tt_summary.tts_by_spv_df, REPORTSTR.TTSBYSPV, formatters)
-        expected_call_06 : _Call = call(self.tt_summary.tts_by_hashtag_year_df, REPORTSTR.TTSBYHASHTAGYEAR, formatters)
-        expected_call_07 : _Call = call(self.tt_summary.tts_by_hashtag_df, REPORTSTR.TTSBYHASHTAG, formatters)
-        expected_call_08 : _Call = call(self.tt_summary.tts_by_year_month_spnv_df, REPORTSTR.TTSBYYEARMONTHSPNV, formatters)
-        expected_call_09 : _Call = call(self.tt_summary.tts_by_timeranges_df, REPORTSTR.TTSBYTIMERANGES, formatters)
-        expected_call_10 : _Call = call(self.tt_summary.definitions_df, REPORTSTR.DEFINITIONS, formatters)
-        expected_calls : int = 11
+        expected_call_02 : _Call = call(self.tt_summary.tts_by_month_mom_df, REPORTSTR.TTSBYMONTHMOM, formatters)
+        expected_call_03 : _Call = call(self.tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters)
+        expected_call_04 : _Call = call(self.tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters)
+        expected_call_05 : _Call = call(self.tt_summary.tts_by_spn_df, REPORTSTR.TTSBYSPN, formatters)
+        expected_call_06 : _Call = call(self.tt_summary.tts_by_spv_df, REPORTSTR.TTSBYSPV, formatters)
+        expected_call_07 : _Call = call(self.tt_summary.tts_by_hashtag_year_df, REPORTSTR.TTSBYHASHTAGYEAR, formatters)
+        expected_call_08 : _Call = call(self.tt_summary.tts_by_hashtag_df, REPORTSTR.TTSBYHASHTAG, formatters)
+        expected_call_09 : _Call = call(self.tt_summary.tts_by_year_month_spnv_df, REPORTSTR.TTSBYYEARMONTHSPNV, formatters)
+        expected_call_10 : _Call = call(self.tt_summary.tts_by_timeranges_df, REPORTSTR.TTSBYTIMERANGES, formatters)
+        expected_call_11 : _Call = call(self.tt_summary.definitions_df, REPORTSTR.DEFINITIONS, formatters)
+        expected_calls : int = 12
 
         with patch.object(self.report_manager, "_TTReportManager__create_html", return_value = "<div></div>") as mocked_create_html:
 
@@ -2688,6 +3060,7 @@ class TTReportManagerTestCase(unittest.TestCase):
             self.assertEqual(expected_call_08, mocked_create_html.call_args_list[8])
             self.assertEqual(expected_call_09, mocked_create_html.call_args_list[9])
             self.assertEqual(expected_call_10, mocked_create_html.call_args_list[10])
+            self.assertEqual(expected_call_11, mocked_create_html.call_args_list[11])
             self.assertEqual(len(actual), expected_calls)
     def test_createhtmltemplate_shouldcontainexpectedhtmlexcerpts_wheninvoked(self) -> None:
 
@@ -2770,8 +3143,9 @@ class ComponentBagTestCase(unittest.TestCase):
             file_manager = FileManager(file_path_manager = FilePathManager()),
             displayer = Displayer(),
             tt_adapter = TTAdapter(
-                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()),
-                effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())
+                df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper(), momentum_manager = MomentumManager()),
+                effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper()),
+                int_highlighter = IntHighlighter()
             ))
 
         # Assert

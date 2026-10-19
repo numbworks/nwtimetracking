@@ -14,9 +14,8 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import StrEnum, auto
 from numpy import uint
-from pandas import DataFrame, Series, NamedAgg
+from pandas import DataFrame, Series, NamedAgg, Timedelta
 from pandas.io.formats.style import Styler
-from pandas import Timedelta
 from pathlib import Path
 from re import Match
 from typing import Any, Literal, Optional, Tuple, Union, cast
@@ -68,18 +67,19 @@ class OPTION(StrEnum):
     display = auto()
     save_html = auto()
     save_pdf = auto()
-class EFFORTMODE(StrEnum):
+class HIGHLIGHTERMODE(StrEnum):
 
-    '''Represents a collection of modes for EffortHighlighter.'''
+    '''Represents a collection of modes for *Highlighter.'''
 
-    top_one_effort_per_row = auto()
-    top_three_efforts = auto()
+    top_one_per_row = auto()
+    top_three = auto()
 class REPORTSTR(StrEnum):
     
     '''Collects all the strings related to TTReportManager.'''
 
     TTLATESTFIVE = "Latest Four Sessions"
     TTSBYMONTH = "By Month"
+    TTSBYMONTHMOM = "By Month (Momentum)"
     TTSBYYEAR = "By Year"
     TTSBYRANGE = "By Range"
     TTSBYSPN = "By Software Project Name"
@@ -133,8 +133,15 @@ class _MessageCollection():
         return "Please run the 'initialize' method first."
 
     @staticmethod
-    def provided_mode_not_supported(mode : EFFORTMODE):
+    def provided_mode_not_supported(mode : HIGHLIGHTERMODE):
         return f"The provided mode is not supported: '{mode}'."
+class _MessageCollectionMomentumManager():
+
+    '''Collects all the messages used for logging and for the exceptions.'''
+
+    @staticmethod
+    def provided_by_month_df_doesnt_contain_expected_index() -> str:
+        return "The provided DataFrame doesn't contain the expected 0-11 index."
 
 # CLASSES
 class FilePathManager():
@@ -347,6 +354,7 @@ class TTSummary():
     tt_df : DataFrame
     tt_latest_four_df : DataFrame
     tts_by_month_df : DataFrame
+    tts_by_month_mom_df : DataFrame
     tts_by_year_df : DataFrame
     tts_by_range_df : DataFrame
     tts_by_spn_df : DataFrame
@@ -445,6 +453,7 @@ class SettingBag():
     options_tt : list[Literal[OPTION.display]]
     options_tt_latest_four : list[Literal[OPTION.display]]
     options_tts_by_month : list[Literal[OPTION.display]]
+    options_tts_by_month_mom : list[Literal[OPTION.display]]
     options_tts_by_year : list[Literal[OPTION.display]]
     options_tts_by_range : list[Literal[OPTION.display]]
     options_tts_by_spn : list[Literal[OPTION.display]]
@@ -466,12 +475,136 @@ class SettingBag():
     years : Optional[list[int]] = field(default_factory = lambda : None)
     now : datetime = field(default = datetime.now())
     enable_effort_highlighting : bool = field(default = True)
+    enable_int_highlighting : bool = field(default = True)
     tts_by_spn_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_all())
     tts_by_spv_software_project_names : list[str] = field(default_factory = lambda : SoftwareProjectNameProvider().get_latest_three())
     tts_by_hashtag_formatters : dict = field(default_factory = lambda : { TTCN.EFFORTPERC : "{:.2f}" })
     tts_by_timeranges_min_occurrences : int = field(default = 10)
     tts_by_timeranges_formatters : dict = field(default_factory = lambda : { TTCN.OCCURRENCEPERC : "{:.2f}" })
     ttd_effort_status_is_correct : bool = field(default = False)
+class MomentumManager():
+
+    '''Collects all the logic related to the momentum, which represents the longest consecutive run of ups or downs.'''
+
+    def __convert_to_month(self, row_index : int) -> str:
+
+        '''
+            0 -> "January"
+            ...
+            11 -> "December"
+        '''
+
+        months : list[str] = [
+            "January", 
+            "February", 
+            "March", 
+            "April", 
+            "May", 
+            "June",
+			"July", 
+            "August", 
+            "September", 
+            "October", 
+            "November", 
+            "December"
+		]
+
+        return months[row_index]
+    def __create_trend_sequence(self, row : Series) -> str:
+
+        '''
+            ["↑", NaN]      -> "↑E"
+            ["↑", "↓", "="] -> "↑↓="
+        '''
+
+        trend_values : list[str] = []
+
+        for i in range(len(row)):
+            idx : Any = row.index[i]
+            if str(idx).startswith(TTCN.TREND):
+
+                value : Optional[Any] = row.iloc[i]
+
+                if pd.isna(value) or value == "" or value is None or (isinstance(value, str) and value.strip() == ""):
+                    trend_values.append("E")
+                else:
+                    trend_values.append(str(value).strip())
+
+        return "".join(trend_values)
+    def __calculate_momentum(self, sequence : str) -> int:
+
+        '''
+            "==========" -> "" -> 0
+            "↑"  -> 1
+            "↓"  -> -1
+            "↑E" -> "↑"  -> 1
+            "↓E" -> "↓"  -> -1
+            "↑↑↑↑↑↑↑↑↑↑" -> 10
+            "↓↓↓↓↓↓↓↓↓↓" -> -10
+            "↑↑↑↑↑↑↑↑↑=" -> "↑↑↑↑↑↑↑↑↑" -> 9
+            "↑↑↑↑↑↑↑↑↑↓" -> 9
+            "↑↑↑↓↓↑↓↓↑↑" -> 3
+
+            If multiple streaks with equal value, only the most recent counts:
+			
+            "↑↓↑↓↓↑↑↓↑↑" -> [-2, 2, 2] -> 2 ()
+            "↑↑↓↓↑↓↓" -> [2, -2, -2] -> -2
+            ...
+        '''
+
+        matches : list[Any] = re.findall(r'(↑+|↓+)', sequence)
+        if not matches:
+            return 0
+
+        streaks : list[int] = []
+        for m in matches:
+            if m.startswith("↑"):
+                streaks.append(len(m))
+            else:
+                streaks.append(-len(m))
+
+        max_abs : int = max(abs(streak) for streak in streaks)
+        candidates : list[int] = [streak for streak in streaks if abs(streak) == max_abs]
+
+        return candidates[-1]
+
+    def create_by_month_mom_df(self, by_month_df : DataFrame) -> DataFrame:
+
+        '''
+            Calculates momentum for the provided DataFrame. 
+
+            | Month     | Sequence | Momentum |
+            |-----------|----------|----------|
+            | January   | ↑↑       | 2        |
+            | February  | ↓↓       | -2       |
+            ...
+        '''
+
+        if len(by_month_df) != 12 or not (list(by_month_df.index) == list(range(12))):
+            raise ValueError(_MessageCollectionMomentumManager.provided_by_month_df_doesnt_contain_expected_index())
+
+        months : list[str] = []
+        sequences : list[str] = []
+        momentums : list[int] = []
+
+        for idx, row in by_month_df.iterrows():
+
+            month : str = self.__convert_to_month(row_index = int(cast(Any, idx)))
+            months.append(month)
+
+            sequence : str = self.__create_trend_sequence(row = row)
+            sequences.append(sequence)
+
+            momentum : int = self.__calculate_momentum(sequence = sequence)
+            momentums.append(momentum)
+
+        by_month_mom_df : DataFrame = DataFrame({
+            "Month": months,
+            "Sequence": sequences,
+            "Momentum": momentums
+        })
+
+        return by_month_mom_df
 class TTDataFrameHelper():
 
     '''Collects helper functions for TTDataFrameFactory.'''
@@ -740,10 +873,12 @@ class TTDataFrameFactory():
     '''Encapsulates all the logic related to dataframe creation out of "Time Tracking.xlsx".'''
 
     __df_helper : TTDataFrameHelper
+    __momentum_manager : MomentumManager
 
-    def __init__(self, df_helper : TTDataFrameHelper) -> None:
+    def __init__(self, df_helper : TTDataFrameHelper, momentum_manager : MomentumManager) -> None:
 
         self.__df_helper = df_helper
+        self.__momentum_manager = momentum_manager
 
     def __enforce_dataframe_definition_for_tt_df(self, tt_df : DataFrame) -> DataFrame:
 
@@ -1141,6 +1276,13 @@ class TTDataFrameFactory():
         tts_df.drop(columns = [TTCN.MONTH], inplace = True)
 
         return tts_df
+    def create_tts_by_month_mom_df(self, tts_by_month_df : DataFrame) -> DataFrame:
+
+        '''Calculates momentum for the provided DataFrame.'''
+
+        tts_by_month_mom_df : DataFrame = self.__momentum_manager.create_by_month_mom_df(by_month_df = tts_by_month_df)
+
+        return tts_by_month_mom_df
     def create_tts_by_year_df(self, tt_df : DataFrame) -> DataFrame:
 
         '''
@@ -1364,10 +1506,16 @@ class TTDataFrameFactory():
                 0   71          22.33           [08:00-08:45]
                 1   37          11.64           [08:00-08:30]
                 ...
+
+                Cell pairs containing "NaN" are removed, to avoid "nan-nan" to appear as timerange.
             '''
 
             tts_df : DataFrame = tt_df.copy(deep = True)
             tts_df = tts_df[[TTCN.STARTTIME, TTCN.ENDTIME]]
+
+            tts_df = tts_df.replace(r'^\s*$', np.nan, regex = True)
+            tts_df = tts_df.replace(['NaN', 'nan'], np.nan)
+            tts_df = tts_df.dropna(how = "all", subset = [TTCN.STARTTIME, TTCN.ENDTIME]).reset_index(drop = True)
 
             tts_df[TTCN.TIMERANGE] = tts_df.apply(
                 lambda x : self.__df_helper.create_time_range_id(
@@ -1522,13 +1670,13 @@ class EffortHighlighter():
                 self.__append_new_effort_cell(effort_cells, coordinate_pair, cell_content)
 
         return effort_cells
-    def __extract_n(self, mode : EFFORTMODE) -> int:
+    def __extract_n(self, mode : HIGHLIGHTERMODE) -> int:
 
         '''Extracts n from mode.'''
 
-        if mode == EFFORTMODE.top_one_effort_per_row:
+        if mode == HIGHLIGHTERMODE.top_one_per_row:
             return 1
-        elif mode == EFFORTMODE.top_three_efforts:
+        elif mode == HIGHLIGHTERMODE.top_three:
             return 3
         else:
             raise Exception(_MessageCollection.provided_mode_not_supported(mode))
@@ -1540,7 +1688,7 @@ class EffortHighlighter():
         top_n : list[EffortCell] = sorted_cells[:n]
 
         return top_n
-    def __calculate_effort_cells(self, df : DataFrame, mode : EFFORTMODE, column_names : list[str]) -> list[EffortCell]:
+    def __calculate_effort_cells(self, df : DataFrame, mode : HIGHLIGHTERMODE, column_names : list[str]) -> list[EffortCell]:
 
         '''Returns a list of EffortCell objects according to df and mode.'''
 
@@ -1550,14 +1698,14 @@ class EffortHighlighter():
         n : int = self.__extract_n(mode = mode)
         current : list[EffortCell] = []
 
-        if mode == EFFORTMODE.top_one_effort_per_row:
+        if mode == HIGHLIGHTERMODE.top_one_per_row:
             for row_idx in range(last_row_idx):
 
                 current = self.__extract_row(df = df, row_idx = row_idx, column_names = column_names)
                 current = self.__extract_top_n_effort_cells(effort_cells = current, n = n)
                 effort_cells.extend(current)
                 
-        elif mode == EFFORTMODE.top_three_efforts:
+        elif mode == HIGHLIGHTERMODE.top_three:
             for row_idx in range(last_row_idx):
                 
                 current = self.__extract_row(df = df, row_idx = row_idx, column_names = column_names)
@@ -1586,7 +1734,7 @@ class EffortHighlighter():
                 tagged_df.iloc[row, col] = f"{left_h}{str(df.iloc[row, col])}{right_h}"
             
         return tagged_df
-    def __highlight_dataframe(self, df : DataFrame, mode : EFFORTMODE, column_names : list[str] = []) -> DataFrame:
+    def __highlight_dataframe(self, df : DataFrame, mode : HIGHLIGHTERMODE, column_names : list[str] = []) -> DataFrame:
 
         '''
             Expects a df containing efforts into cells - i.e. "45h 45m", "77h 45m".
@@ -1626,7 +1774,7 @@ class EffortHighlighter():
         
         '''Returns the provided dataframe with adequate highlights.'''
 
-        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three
 
         highlighted_df : DataFrame = self.__highlight_dataframe(
             df = tts_by_month_df,
@@ -1638,7 +1786,7 @@ class EffortHighlighter():
         
         '''Returns the provided dataframe with adequate highlights.'''
 
-        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three
 
         highlighted_df : DataFrame = self.__highlight_dataframe(
             df = tts_by_year_df,
@@ -1650,7 +1798,7 @@ class EffortHighlighter():
     
         '''Returns the provided dataframe with adequate highlights.'''
 
-        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three
 
         highlighted_df : DataFrame = self.__highlight_dataframe(
             df = tts_by_spv_df,
@@ -1662,7 +1810,7 @@ class EffortHighlighter():
         
         '''Returns the provided dataframe with adequate highlights.'''
 
-        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three
         latest_year : str = self.__get_latest_year(tts_by_hashtag_year_df)
 
         highlighted_df : DataFrame = self.__highlight_dataframe(
@@ -1676,7 +1824,7 @@ class EffortHighlighter():
         
         '''Returns the provided dataframe with adequate highlights.'''
 
-        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three
 
         highlighted_df : DataFrame = self.__highlight_dataframe(
             df = tts_by_hashtag_df,
@@ -1688,7 +1836,7 @@ class EffortHighlighter():
         
         '''Returns the provided dataframe with adequate highlights.'''
 
-        mode : EFFORTMODE = EFFORTMODE.top_three_efforts
+        mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three
 
         highlighted_df : DataFrame = self.__highlight_dataframe(
             df = tts_by_year_month_spnv_df,
@@ -1696,20 +1844,163 @@ class EffortHighlighter():
         )
         
         return highlighted_df
+@dataclass(frozen = True)
+class IntCell():
+    
+    '''Collects all the information related to a DataFrame cell that are required by IntHighlighter.'''
+
+    coordinate_pair : Tuple[int, int]
+    raw_value : str
+    numeric_value : int
+class IntHighlighter():
+
+    '''Encapsulates all the logic related to highlighting cells in dataframes containing integer numbers.'''
+
+    def __is_int(self, cell_content : str) -> bool:
+
+        '''Returns True if content matches integer format (e.g., 42, 1050).'''
+
+        pattern : str = r"^\d+$"
+        match : Optional[Match[str]] = re.fullmatch(pattern = pattern, string = cell_content)
+
+        return match is not None
+    def __unbox_int(self, cell_content : str) -> int:
+
+        '''Extracts the numerical integer value from the cell content.'''
+
+        return int(cell_content)
+    def __append_new_int_cell(self, int_cells : list[IntCell], coordinate_pair : Tuple[int, int], cell_content : str) -> None:
+
+        '''Creates and appends a new IntCell object to int_cells.'''
+
+        numeric_value : int = self.__unbox_int(cell_content = cell_content)
+
+        int_cell : IntCell = IntCell(
+            coordinate_pair = coordinate_pair,
+            raw_value = cell_content,
+            numeric_value = numeric_value,
+        )
+        
+        int_cells.append(int_cell)
+    def __extract_row(self, df : DataFrame, row_idx : int, column_names : list[str]) -> list[IntCell]:
+
+        '''Returns a collection of IntCell objects for provided arguments.'''
+
+        int_cells : list[IntCell] = []
+        col_indices : list = [df.columns.get_loc(column_name) for column_name in column_names if column_name in df.columns]
+
+        for col_idx in col_indices:
+
+            coordinate_pair : Tuple[int, int] = (row_idx, col_idx)
+            cell_content : str = str(df.iloc[row_idx, col_idx])
+
+            if self.__is_int(cell_content = cell_content):
+                self.__append_new_int_cell(int_cells, coordinate_pair, cell_content)
+
+        return int_cells
+    def __extract_n(self, mode : HIGHLIGHTERMODE) -> int:
+
+        '''Extracts n from mode.'''
+
+        if mode == HIGHLIGHTERMODE.top_three:
+            return 3
+        elif mode == HIGHLIGHTERMODE.top_one_per_row:
+            return 1
+        else:
+            raise Exception(_MessageCollection.provided_mode_not_supported(mode))
+    def __extract_top_n_int_cells(self, int_cells : list[IntCell], n : int) -> list[IntCell]:
+
+        '''Extracts the n objects in int_cells with the highest numeric values.'''
+
+        sorted_cells : list[IntCell] = sorted(int_cells, key = lambda cell : cell.numeric_value, reverse = True)
+        top_n : list[IntCell] = sorted_cells[:n]
+
+        return top_n
+    def __calculate_int_cells(self, df : DataFrame, mode : HIGHLIGHTERMODE, column_names : list[str]) -> list[IntCell]:
+
+        '''Returns a list of IntCell objects according to df and mode.'''
+
+        int_cells : list[IntCell] = []
+
+        last_row_idx : int = len(df)
+        n : int = self.__extract_n(mode = mode)
+        current : list[IntCell] = []
+
+        if mode == HIGHLIGHTERMODE.top_one_per_row:
+            for row_idx in range(last_row_idx):
+                current = self.__extract_row(df = df, row_idx = row_idx, column_names = column_names)
+                current = self.__extract_top_n_int_cells(int_cells = current, n = n)
+                int_cells.extend(current)
+                
+        elif mode == HIGHLIGHTERMODE.top_three:
+            for row_idx in range(last_row_idx):
+                current = self.__extract_row(df = df, row_idx = row_idx, column_names = column_names)
+                int_cells.extend(current)
+
+            int_cells = self.__extract_top_n_int_cells(int_cells = int_cells, n = n)
+
+        else:
+            raise Exception(_MessageCollection.provided_mode_not_supported(mode))
+
+        return int_cells
+    def __add_tags(self, df : DataFrame, int_cells : list[IntCell], tags : Tuple[str, str]) -> DataFrame:
+
+        '''Adds two HTML tags around the content of the cells listed in int_cells.'''
+
+        tagged_df : DataFrame = df.copy(deep = True).astype(object)
+
+        left_h : str = tags[0]
+        right_h : str = tags[1]
+
+        for int_cell in int_cells:
+
+            row, col = int_cell.coordinate_pair
+
+            if row < len(df) and col < len(df.columns):
+                tagged_df.iloc[row, col] = f"{left_h}{str(df.iloc[row, col])}{right_h}"
+            
+        return tagged_df
+
+    def highlight(self, df : DataFrame, mode : HIGHLIGHTERMODE = HIGHLIGHTERMODE.top_three, column_names : list[str] = []) -> DataFrame:
+
+        '''
+            Expects a df containing integer cell formats - i.e. 42, 1050.
+            Returns a df with highlighted cells as per arguments.
+        '''
+
+        highlighted_df : DataFrame = df.copy(deep = True)
+        highlighted_df.columns = highlighted_df.columns.map(str)
+
+        if len(column_names) == 0:
+            column_names = highlighted_df.columns.to_list()
+
+        int_cells : list[IntCell] = self.__calculate_int_cells(
+            df = highlighted_df, 
+            mode = mode,
+            column_names = column_names
+        )
+
+        tags : Tuple[str, str] = (f"<mark style='background-color: pink'>", "</mark>")
+        highlighted_df = self.__add_tags(df = highlighted_df, int_cells = int_cells, tags = tags)
+
+        return highlighted_df
 class TTAdapter():
 
     '''Adapts SettingBag properties for use in TT*Factory methods.'''
 
     __df_factory : TTDataFrameFactory
     __effort_highlighter : EffortHighlighter
+    __int_highlighter : IntHighlighter
 
     def __init__(
         self, 
         df_factory : TTDataFrameFactory, 
-        effort_highlighter : EffortHighlighter) -> None:
+        effort_highlighter : EffortHighlighter,
+        int_highlighter : IntHighlighter) -> None:
         
         self.__df_factory = df_factory
         self.__effort_highlighter = effort_highlighter
+        self.__int_highlighter = int_highlighter
 
     def __create_tt_df(self, setting_bag : SettingBag) -> DataFrame:
 
@@ -1829,6 +2120,7 @@ class TTAdapter():
         tt_df : DataFrame = self.__create_tt_df(setting_bag = setting_bag)
         tt_latest_four_df : DataFrame = self.__create_tt_latest_four_df(tt_df = tt_df)
         tts_by_month_df : DataFrame = self.__create_tts_by_month_df(tt_df = tt_df, setting_bag = setting_bag)
+        tts_by_month_mom_df : DataFrame = self.__df_factory.create_tts_by_month_mom_df(tts_by_month_df = tts_by_month_df)
         tts_by_year_df : DataFrame = self.__create_tts_by_year_df(tt_df = tt_df)
         tts_by_range_df : DataFrame = self.__create_tts_by_range_df(tt_df = tt_df)
         tts_by_spn_df : DataFrame = self.__create_tts_by_spn_df(tt_df = tt_df, setting_bag = setting_bag)
@@ -1848,10 +2140,14 @@ class TTAdapter():
             tts_by_hashtag_df = self.__effort_highlighter.highlight_tts_by_hashtag(tts_by_hashtag_df = tts_by_hashtag_df)
             tts_by_year_month_spnv_df = self.__effort_highlighter.highlight_tts_by_year_month_spnv(tts_by_year_month_spnv_df = tts_by_year_month_spnv_df)
 
+        if setting_bag.enable_int_highlighting:
+            tts_by_month_mom_df = self.__int_highlighter.highlight(df = tts_by_month_mom_df)
+
         tt_summary : TTSummary = TTSummary(
             tt_df = tt_df,
             tt_latest_four_df = tt_latest_four_df,
             tts_by_month_df = tts_by_month_df,
+            tts_by_month_mom_df = tts_by_month_mom_df,
             tts_by_year_df = tts_by_year_df,
             tts_by_range_df = tts_by_range_df,
             tts_by_spn_df = tts_by_spn_df,
@@ -1945,6 +2241,7 @@ class TTReportManager():
         
         html_sections.append(self.__create_html(tt_summary.tt_latest_four_df, REPORTSTR.TTLATESTFIVE, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_month_df, REPORTSTR.TTSBYMONTH, formatters))
+        html_sections.append(self.__create_html(tt_summary.tts_by_month_mom_df, REPORTSTR.TTSBYMONTHMOM, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_year_df, REPORTSTR.TTSBYYEAR, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_range_df, REPORTSTR.TTSBYRANGE, formatters))
         html_sections.append(self.__create_html(tt_summary.tts_by_spn_df, REPORTSTR.TTSBYSPN, formatters))
@@ -2036,8 +2333,9 @@ class ComponentBag():
     displayer : Displayer = field(default = Displayer())
     ttr_manager : TTReportManager = field(default = TTReportManager())
     tt_adapter : TTAdapter = field(default = TTAdapter(
-        df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper()),
-        effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper())))
+        df_factory = TTDataFrameFactory(df_helper = TTDataFrameHelper(), momentum_manager = MomentumManager()),
+        effort_highlighter = EffortHighlighter(df_helper = TTDataFrameHelper()),
+        int_highlighter = IntHighlighter()))
 class TimeTrackingProcessor():
 
     '''Collects all the logic related to the processing of "Time Tracking.xlsx".'''
@@ -2115,6 +2413,21 @@ class TimeTrackingProcessor():
 
         options : list = self.__setting_bag.options_tts_by_month
         df : DataFrame = self.__tt_summary.tts_by_month_df
+
+        if OPTION.display in options:
+            self.__component_bag.displayer.display(obj = df)
+    def process_tts_by_month_mom(self) -> None:
+
+        '''
+            Performs all the actions listed in __setting_bag.options_tts_by_month_mom.
+            
+            It raises an exception if the 'initialize' method has not been run yet.
+        '''
+
+        self.__validate_summary()
+
+        options : list = self.__setting_bag.options_tts_by_month_mom
+        df : DataFrame = self.__tt_summary.tts_by_month_mom_df
 
         if OPTION.display in options:
             self.__component_bag.displayer.display(obj = df)
