@@ -7,7 +7,7 @@ RUN pip install openpyxl==3.1.5
 RUN pip install pandas==2.1.4
 RUN pip install requests==2.32.3
 RUN pip install tabulate==0.9.0
-RUN pip install matplotlib==3.9.2
+RUN pip install matplotlib==3.9.2 numpy==1.26.4
 RUN pip install weasyprint==66.0
 
 # JUPYTER NOTEBOOK
