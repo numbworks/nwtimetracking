@@ -440,6 +440,7 @@ class CLIManager():
             options_tt = [OPTION.display],
             options_tt_latest_four = [OPTION.display],
             options_tts_by_month = [OPTION.display],
+            options_tts_by_month_mom = [OPTION.display],
             options_tts_by_year = [OPTION.display],
             options_tts_by_range = [OPTION.display],
             options_tts_by_spn = [OPTION.display],

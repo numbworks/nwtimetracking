@@ -36,6 +36,21 @@
             "type": "shell",
             "command": "cd ${workspaceFolder}/scripts/nwmakefiles && make -f makefile-nwtimetrackingcli update-codecoverage",
             "problemMatcher": []
+        },
+
+        // nwpublishers
+
+        {
+            "label": "nwpublishers: TestPyPI",
+            "type": "shell",
+            "command": "python3 ${workspaceFolder}/scripts/nwpublishers/nwpublisher.py --enable_testpypi",
+            "problemMatcher": []
+        },
+        {
+            "label": "nwpublishers: PyPI",
+            "type": "shell",
+            "command": "python3 ${workspaceFolder}/scripts/nwpublishers/nwpublisher.py --enable_pypi",
+            "problemMatcher": []
         }
     ]
 }

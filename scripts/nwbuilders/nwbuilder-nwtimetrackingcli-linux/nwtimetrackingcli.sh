@@ -2,7 +2,7 @@
 
 # --- CONFIGURATION ---
 PROJECT_NAME="nwtimetracking"
-PROJECT_VERSION="6.0.1"
+PROJECT_VERSION="6.1.0"
 PROJECT_ALIAS="nwtime"
 CLI_NAME="nwtimetrackingcli"
 
