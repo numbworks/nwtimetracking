@@ -1941,7 +1941,7 @@ class IntHighlighter():
 
         '''Adds two HTML tags around the content of the cells listed in int_cells.'''
 
-        tagged_df : DataFrame = df.copy(deep = True)
+        tagged_df : DataFrame = df.copy(deep = True).astype(object)
 
         left_h : str = tags[0]
         right_h : str = tags[1]
