@@ -65,7 +65,7 @@ RUN cp -f /home/ucrtbase.dll /opt/wine64/drive_c/windows/system32/ucrtbase.dll
 
 
 # --- PROJECT DEPENDENCIES --- #
-RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install pyarrow==23.0.0; echo exit=$?'; wineserver -k 2>/dev/null || true
+RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install pyarrow==17.0.0; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install openpyxl==3.1.5; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install requests==2.32.3; echo exit=$?'; wineserver -k 2>/dev/null || true
 RUN timeout 1800s dbus-run-session -- xvfb-run -a sh -lc 'wine C:\\Python312\\python.exe -m pip install matplotlib==3.9.2; echo exit=$?'; wineserver -k 2>/dev/null || true
